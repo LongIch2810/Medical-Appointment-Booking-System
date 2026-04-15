@@ -1,77 +1,128 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Not, QueryFailedError, Repository } from 'typeorm';
 import Channel from 'src/entities/channel.entity';
-import { Repository } from 'typeorm';
 import ChannelMembers from 'src/entities/channelMembers.entity';
+import { UsersService } from '../users/users.service';
+import { ChannelsMapper } from './channels.mapper';
+import { BodyFilterChannelsDto } from './dto/request/bodyFilterChannels.dto';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 @Injectable()
 export class ChannelsService {
   constructor(
-    @InjectRepository(Channel) private channelRepo: Repository<Channel>,
-    @InjectRepository(ChannelMembers)
-    private channelMembersRepo: Repository<ChannelMembers>,
+    @InjectRepository(Channel)
+    private readonly channelRepo: Repository<Channel>,
+    private readonly usersService: UsersService,
+    private dataSource: DataSource,
   ) {}
 
   async createChannel(member_ids: number[]) {
-    const createdChannel = this.channelRepo.create();
-    const newChannel = await this.channelRepo.save(createdChannel);
-    const members = member_ids.map((m) =>
-      this.channelMembersRepo.create({ channel: newChannel, user: { id: m } }),
+    try {
+      return await this.dataSource.transaction(async (manager) => {
+        const createdChannel = manager.create(Channel);
+        await manager.save(Channel, createdChannel);
+        const members = member_ids.map((m) =>
+          manager.create(ChannelMembers, {
+            channel: createdChannel,
+            user: { id: m },
+          }),
+        );
+        await manager.save(ChannelMembers, members);
+        return this.getChannel(createdChannel.id);
+      });
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        error.driverError?.code === '23505'
+      ) {
+        throw new ConflictException(
+          'Kênh trò chuyện đã tồn tại giữa những người dùng này.',
+        );
+      }
+      throw error;
+    }
+  }
+
+  async findChannelsByUserId(
+    userId: number,
+    objectFilters: BodyFilterChannelsDto,
+  ) {
+    let { page, limit, search, arrange } = objectFilters;
+    const isUserExists = await this.usersService.isUserExists(userId);
+    if (!isUserExists) {
+      throw new BadRequestException('Người dùng không tồn tại');
+    }
+    page = Math.max(page, 1);
+    limit = Math.max(limit, 1);
+    const skip = (page - 1) * limit;
+    const query = this.baseChannelsQuery()
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('cm.channel.id')
+          .from('channel_members', 'cm')
+          .innerJoin('users', 'u', ' cm.user.id = u.id')
+          .where('u.id = :userId');
+
+        return `channel.id IN ${subQuery.getQuery()}`;
+      })
+      .setParameter('userId', userId)
+      .orderBy('channel.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
+      .skip(skip)
+      .take(limit)
+      .distinct(true);
+
+    if (search) {
+      query.andWhere(
+        '(user.id != :userId AND (user.username ILIKE :search OR user.fullname ILIKE :search))',
+        { userId, search: `%${search}%` },
+      );
+    }
+
+    const [channels, total] = await query.getManyAndCount();
+
+    return new PaginationResultDto(
+      'channels',
+      ChannelsMapper.toChannelResponseDtoList(channels),
+      total,
+      page,
+      limit,
     );
+  }
 
-    await this.channelMembersRepo.save(members);
+  async getChannel(channelId: number) {
+    const channel = await this.findByChannelId(channelId);
+    return ChannelsMapper.toChannelResponseDto(channel);
+  }
 
-    return await this.channelRepo.findOne({
-      where: { id: newChannel.id },
-      relations: ['participants', 'participants.user'],
+  async findByChannelId(channelId: number) {
+    const channel = await this.channelRepo.findOne({
+      where: { id: channelId },
+      relations: ['participants', 'participants.user', 'chat_messages'],
     });
-  }
-
-  findChannelsByUserId(userId: number) {}
-
-  async findChannelByParticipants(senderId: number, receiverId: number) {
-    if (senderId === receiverId) {
-      throw new BadRequestException('');
-    }
-    let channel = await this.channelRepo
-      .createQueryBuilder('channel')
-      .innerJoin('channel.participants', 'participant')
-      .innerJoin('participant.user', 'user')
-      .where('user.id IN (:...ids)', { ids: [senderId, receiverId] })
-      .groupBy('channel.id')
-      .having('COUNT(DISTINCT user.id) = 2')
-      .getOne();
-
     if (!channel) {
-      channel = await this.createChannel([senderId, receiverId]);
+      throw new BadRequestException('Kênh trò chuyện không tồn tại');
     }
-
-    return await this.getChannelByChannelId(channel!.id);
+    return channel;
   }
 
-  async getChannelByChannelId(channelId: number) {
-    const result = await this.channelRepo
-      .createQueryBuilder('c')
-      .select('c.id', 'channel_id')
-      .addSelect('c.created_at', 'created_at')
-      .addSelect('c.updated_at', 'updated_at')
-      .addSelect(
-        `json_agg(json_build_object(
-        'id', u.id,
-        'fullname',u.fullname,
-        'username', u.username,
-        'picture', u.picture
-      ))`,
-        'participants',
-      )
-      .innerJoin('c.participants', 'p')
-      .innerJoin('p.user', 'u')
-      .where('c.id = :channelId', { channelId })
-      .groupBy('c.id')
-      .addGroupBy('c.created_at')
-      .addGroupBy('c.updated_at')
-      .getRawOne();
+  async isChannelExists(userId: number, channelId: number): Promise<boolean> {
+    const channel = await this.channelRepo.findOne({
+      where: { id: channelId, participants: { user: { id: userId } } },
+    });
+    return !!channel;
+  }
 
-    return result;
+  private baseChannelsQuery() {
+    return this.channelRepo
+      .createQueryBuilder('channel')
+      .leftJoinAndSelect('channel.chat_messages', 'chatMessages')
+      .leftJoinAndSelect('channel.participants', 'participant')
+      .leftJoinAndSelect('participant.user', 'user');
   }
 }

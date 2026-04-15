@@ -24,10 +24,15 @@ async function bootstrap() {
     new RemoveFieldPasswordInterceptor(),
     new DateFormatInterceptor(),
     new ResponseInterceptor(),
-    new LoggingInterceptor(),
+    // new LoggingInterceptor(),
   );
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+    }),
+  );
   const config = new DocumentBuilder()
     .setTitle('System Booking Doctor')
     .setDescription('API cho hệ thống đặt lịch khám bác sĩ')

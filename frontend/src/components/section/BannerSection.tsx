@@ -1,66 +1,53 @@
 import { motion } from "framer-motion";
-import { Input } from "../ui/input";
-import { Typewriter } from "react-simple-typewriter";
 import FadeInView from "../view/FadeInView";
+import { Button } from "../ui/button";
+
 const BannerSection = () => {
   return (
     <FadeInView>
-      <section className="container mx-auto w-full h-[500px] relative rounded-2xl overflow-hidden shadow-xl flex flex-col md:flex-row">
-        {/* Left column - 30% image */}
-        <div className="md:w-1/3 w-full h-60 md:h-auto">
-          <img
-            src="/banner.jpg"
-            alt="Banner"
-            className="w-full h-full object-cover"
-          />
-        </div>
+      <section className="relative w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[750px] xl:min-h-[850px] overflow-hidden rounded-md">
+        {/* Ảnh nền full width */}
+        <img
+          src="/banner.png"
+          alt="Banner"
+          className="absolute inset-0 w-full h-full object-contain sm:object-cover object-center"
+        />
 
-        {/* Right column - 70% content */}
-        <div
-          className="flex-1 flex flex-col items-center justify-center text-center px-6 space-y-4"
-          style={{ backgroundColor: "oklch(0.72 0.11 178)" }}
-        >
-          {/* Main title */}
-          <motion.h2
-            initial={{ opacity: 0, y: -10 }}
+        {/* Lớp phủ mờ (overlay sáng nhẹ) */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-black/25 to-transparent"></div>
+
+        {/* Nội dung */}
+        <div className="relative z-10 flex flex-col justify-center items-center text-center text-white min-h-[400px] sm:min-h-[500px] px-6 py-10">
+          {/* Tiêu đề */}
+          <motion.h1
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-white text-xl md:text-3xl font-extrabold"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight drop-shadow-lg"
           >
-            Ứng dụng đặt khám
-          </motion.h2>
+            Chăm sóc sức khỏe toàn diện <br />
+            cùng <span className="text-[#45bba5]">LifeHealth</span>
+          </motion.h1>
 
-          {/* Typewriter description */}
+          {/* Mô tả */}
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.0, duration: 0.6 }}
-            className="text-white text-xs md:text-base font-semibold px-4 py-2 max-w-2xl"
+            transition={{ duration: 1, delay: 0.2, ease: "easeOut" }}
+            className="mt-5 text-sm sm:text-base md:text-xl max-w-2xl text-gray-100 leading-relaxed"
           >
-            <Typewriter
-              words={[
-                "Đặt khám với hơn 1000+ bác sĩ, 25+ bệnh viện, 100+ phòng khám trên LifeHealth để có số thứ tự và khung giờ khám trước.",
-              ]}
-              loop={true}
-              cursor
-              cursorStyle="|"
-              typeSpeed={70}
-              deleteSpeed={50}
-              delaySpeed={1500}
-            />
+            Đặt lịch khám nhanh chóng, nhận tư vấn thông minh, và theo dõi lộ
+            trình sức khỏe của bạn — tất cả chỉ trong một nền tảng duy nhất.
           </motion.p>
 
-          {/* Search input */}
+          {/* CTA */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2, duration: 0.6 }}
-            className="w-full max-w-md"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.6, ease: "easeOut" }}
+            className="mt-8"
           >
-            <Input
-              placeholder="Tìm kiếm bác sĩ..."
-              className="w-full px-5 py-4 rounded-full border-2 bg-white border-gray-300 placeholder:text-gray-400 shadow-md text-gray-800 italic"
-            />
+            <Button>Đặt lịch khám ngay</Button>
           </motion.div>
         </div>
       </section>

@@ -15,7 +15,7 @@ import User from './user.entity';
 @Entity('conversation')
 export default class Conversation {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({
     type: 'enum',
@@ -23,21 +23,21 @@ export default class Conversation {
     enumName: 'role_message',
     enum: RoleMessage,
   })
-  role: RoleMessage;
+  role!: RoleMessage;
 
   @Column({ nullable: false })
-  content: string;
+  content!: string;
 
   @ManyToOne(() => User, (u) => u.messages)
   @JoinColumn({ name: 'user_id' })
-  user: Relation<User>;
+  user!: Relation<User>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

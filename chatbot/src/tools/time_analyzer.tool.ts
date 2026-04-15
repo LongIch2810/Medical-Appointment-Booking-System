@@ -9,8 +9,8 @@ dotenv.config();
 const dateTimeSchema = z.object({
   appointment_date: z
     .string()
-    .min(1, "appointment_date is required")
     .describe("Ngày đặt lịch theo định dạng YYYY-MM-DD. Ví dụ: 2025-08-28"),
+  day_of_week: z.string().describe("Thứ trong tuần, Ví dụ: Tuesday"),
   start_time: z
     .string()
     .describe(
@@ -35,19 +35,30 @@ const today = new Date();
 const currentDate = today.toISOString().split("T")[0];
 
 const systemPrompt = `
-Bạn là hệ thống trích xuất thông tin thời gian đặt lịch khám từ văn bản tiếng Việt.
+Bạn là hệ thống phân tích thời gian đặt lịch khám bệnh từ tiếng Việt.
 
-Nhiệm vụ:
-- Xác định ngày đặt lịch (appointment_date) dựa vào thời gian ngày hiện tại là ${currentDate},
-- Xác định giờ bắt đầu (start_time) và giờ kết thúc (end_time)
-- Chuẩn hóa:
-  - Ngày: YYYY-MM-DD
-  - Giờ: HH:mm
-- Nếu không có giờ kết thúc → cộng thêm 30 phút.
-- Nếu chỉ nói "sáng", mặc định 08:00 - 12:00
-- Nếu chỉ nói "chiều", mặc định 13:00 - 17:00
-- Nếu chỉ nói "tối", mặc định 18:00 - 21:00
-- Nếu không rõ, để chuỗi rỗng.
+Mục tiêu: Trích xuất chính xác 3 thông tin sau:
+- appointment_date: Ngày đặt lịch theo định dạng YYYY-MM-DD
+- start_time: Giờ bắt đầu theo định dạng HH:mm
+- end_time: Giờ kết thúc theo định dạng HH:mm
+- day_of_week: Thứ tương ứng với ngày đó
+
+QUY TẮC BẮT BUỘC:
+1. KHÔNG ĐƯỢC tự suy luận hoặc tự chọn ngày nếu người dùng KHÔNG nói rõ ngày (vd: "hôm nay", "ngày mai", "28/10", "thứ 3", "cuối tuần", v.v.)
+2. Nếu không có thông tin rõ ràng về ngày → để appointment_date và day_of_week là chuỗi rỗng ("").
+3. KHÔNG được tự cộng thêm ngày, KHÔNG được mặc định "ngày mai" nếu không có từ khoá chỉ thời gian.
+4. Nếu chỉ nói “sáng”, “chiều”, “tối” mà KHÔNG có ngày cụ thể → chỉ điền start_time và end_time, để appointment_date trống.
+5. Nếu nói “sáng mai” → chỉ được tính là ngày mai so với ngày hiện tại (${currentDate}), KHÔNG được tự bịa ngày khác.
+
+Mặc định thời gian khung giờ:
+- sáng → 08:00 - 12:00
+- chiều → 13:00 - 17:00
+- tối → 18:00 - 21:00
+
+Nếu không có giờ cụ thể → để chuỗi rỗng.
+Nếu không có thông tin nào hợp lệ → tất cả trường đều là chuỗi rỗng.
+
+Trả về đúng định dạng schema, không tự thêm giả định.
 `;
 
 const promptTemplate = ChatPromptTemplate.fromMessages([
@@ -71,7 +82,7 @@ export const AnalyzeTimeTool = tool(
     return result;
   },
   {
-    name: "analyze_time",
+    name: "analyze_time_tool",
     description:
       "Phân tích văn bản để xác định thời gian đặt lịch khám tương ứng.",
     schema: z.object({
@@ -83,31 +94,3 @@ export const AnalyzeTimeTool = tool(
     }),
   }
 );
-
-// async function runTests() {
-//   const testCases = [
-//     {
-//       text_input:
-//         "Tôi muốn đặt lịch khám cho con gái tôi với bác sĩ Lê Văn Minh chuyên khoa nội tổng quát vào sáng ngày mai ?",
-//       expected: "Ngày mai, 09:00 - 11:00",
-//     },
-//   ];
-
-//   console.log("=== 🧠 BẮT ĐẦU CHẠY TEST AnalyzeTimeTool ===\n");
-
-//   for (let i = 0; i < testCases.length; i++) {
-//     const { text_input, expected } = testCases[i];
-//     console.log(`🧩 Test ${i + 1}: "${text_input}"`);
-//     try {
-//       const result = await AnalyzeTimeTool.invoke({ text_input });
-//       console.log("✅ Kết quả phân tích:", result);
-//       console.log(`🎯 Mong đợi: ${expected}\n`);
-//     } catch (err) {
-//       console.error("❌ Lỗi khi xử lý:", err);
-//     }
-//   }
-
-//   console.log("=== ✅ HOÀN THÀNH TOÀN BỘ TEST CASE ===");
-// }
-
-// runTests();

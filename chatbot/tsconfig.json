@@ -1,11 +1,11 @@
 {
   "compilerOptions": {
-    "target": "es2022", // Hoặc "esnext" để sử dụng các tính năng ES mới nhất
-    "module": "NodeNext", // Hoặc "ESNext" hoặc "ES2022"
-    "moduleResolution": "NodeNext", // Quan trọng cho việc giải quyết các module
+    "target": "es2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "rootDir": "./src",
     "outDir": "./dist",
-    "esModuleInterop": true, // Vẫn nên giữ lại, giúp tương thích tốt hơn với các thư viện CommonJS
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
@@ -15,6 +15,6 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"] /* Bao gồm tất cả các file .ts trong thư mục src */,
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }

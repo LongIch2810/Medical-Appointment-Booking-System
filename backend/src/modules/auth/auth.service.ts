@@ -6,17 +6,15 @@ import {
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcryptjs';
-import User from 'src/entities/user.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { BodyRegisterDto } from './dto/bodyRegister.dto';
+import { BodyRegisterDto } from './dto/request/bodyRegister.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { EmailProducer } from 'src/bullmq/queues/email/email.producer';
-import { InjectRepository } from '@nestjs/typeorm';
 import Relative from 'src/entities/relative.entity';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import Relationship from 'src/entities/relationship.entity';
 
@@ -68,7 +66,7 @@ export class AuthService {
         expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
       });
 
-      const refreshTokenDecoded = this.jwtService.decode(refreshToken);
+      const refreshTokenDecoded = this.jwtService.decode(refreshToken) as any;
 
       const sessions = await this.redisService.lRange(
         `refresh_tokens:${userId}`,
@@ -104,6 +102,7 @@ export class AuthService {
         refreshToken,
       };
     } catch (error) {
+      console.error('Lỗi khi đăng nhập:', error);
       throw error;
     }
   }
@@ -113,27 +112,22 @@ export class AuthService {
       return await this.dataSource.transaction(async (manager) => {
         const { username, email, password, fullname } = dataRegister;
 
-        const existsUser =
-          (await this.usersService.findByUsernameOrEmail(username)) ||
-          (await this.usersService.findByUsernameOrEmail(email));
-
-        if (existsUser) throw new ConflictException('Người dùng đã tồn tại.');
-
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = manager.create(User, {
+        const newUser = await this.usersService.createUser(
+          manager,
           username,
           email,
           fullname,
-          password: hashedPassword,
-        });
-        await manager.save(User, newUser);
+          hashedPassword,
+        );
 
         const relationship = await manager.findOne(Relationship, {
           where: { relationship_code: 'ban_than' },
         });
 
-        if (!relationship)
+        if (!relationship) {
           throw new NotFoundException('Mối quan hệ mặc định không tồn tại.');
+        }
 
         const newRelative = manager.create(Relative, {
           user: newUser,
@@ -152,16 +146,15 @@ export class AuthService {
         return { message: 'Đăng ký thành công.' };
       });
     } catch (error) {
-      console.error('Lỗi khi đăng ký:', error);
-      throw error; // ✅ ném lỗi ra ngoài cho NestJS handle
+      throw error;
     }
   }
 
   async logout(req: Request) {
     const refreshToken = req.cookies.refreshToken;
-    const decoded = this.jwtService.decode(refreshToken);
+    const decoded = this.jwtService.decode(refreshToken) as any;
     if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
-      throw new UnauthorizedException('Token không hợp lệ !');
+      throw new UnauthorizedException('Token không hợp lệ!');
     }
     const now = Math.floor(Date.now() / 1000);
     const ttl = decoded.exp ? decoded.exp - now : 7 * 24 * 60 * 60;
@@ -172,10 +165,21 @@ export class AuthService {
       -1,
     );
     const match = list.find((t) => JSON.parse(t).tokenId === decoded.tokenId);
-    if (!match) throw new UnauthorizedException('Token không hợp lệ !');
+    if (!match) throw new UnauthorizedException('Token không hợp lệ!');
     await this.redisService.lRem(`refresh_tokens:${decoded.sub}`, 0, match);
+    return { message: 'Đăng xuất thành công!' };
+  }
+
+  async logoutAll(req: Request) {
+    const refreshToken = req.cookies.refreshToken;
+    const decoded = this.jwtService.decode(refreshToken) as any;
+    if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
+      throw new UnauthorizedException('Token không hợp lệ!');
+    }
+
     await this.redisService.incr(`session_version:${decoded.sub}`);
-    return { message: 'Đăng xuất thành công !' };
+    await this.redisService.delData(`refresh_tokens:${decoded.sub}`);
+    return { message: 'Đăng xuất tất cả các thiết bị thành công!' };
   }
 
   async refresh(req: Request, payload: any) {
@@ -184,7 +188,9 @@ export class AuthService {
     const isBlacklisted = await this.redisService.getData(
       `blacklist:${tokenId}`,
     );
-    if (isBlacklisted) throw new UnauthorizedException('Token đã bị thu hồi !');
+    if (isBlacklisted) {
+      throw new UnauthorizedException('Token đã bị thu hồi!');
+    }
 
     const list = await this.redisService.lRange(
       `refresh_tokens:${userId}`,
@@ -192,7 +198,7 @@ export class AuthService {
       -1,
     );
     const match = list.find((t) => JSON.parse(t).tokenId === tokenId);
-    if (!match) throw new UnauthorizedException('Token không hợp lệ !');
+    if (!match) throw new UnauthorizedException('Token không hợp lệ!');
     const newTokenId = uuidv4();
     const newPayload = {
       sub: userId,
@@ -232,7 +238,7 @@ export class AuthService {
   async setNewPassword(email: string, newPassword: string) {
     const user = await this.usersService.findByUsernameOrEmail(email);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await this.usersService.updateUserField(
@@ -240,6 +246,8 @@ export class AuthService {
       'password',
       hashedPassword,
     );
+    await this.redisService.incr(`session_version:${user.id}`);
+    await this.redisService.delData(`refresh_tokens:${user.id}`);
 
     return { message: 'Đặt lại mật khẩu thành công.' };
   }

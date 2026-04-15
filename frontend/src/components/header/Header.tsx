@@ -14,7 +14,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import type { User } from "@/types/interface/user.interface";
 import { useLogout } from "@/hooks/useLogout";
 
-const header_items = [
+const headerItems = [
   {
     name: "Bác sĩ",
     to: "/doctors",
@@ -33,22 +33,42 @@ const header_items = [
   },
 ];
 
-const header_sub_items = [
+const headerSubItems = [
   {
-    name: "Lịch khám",
-    to: "/",
+    name: "Dashboard",
+    to: "/patient",
   },
   {
     name: "Thông tin cá nhân",
-    to: "/",
+    to: "/patient/profile",
+  },
+  {
+    name: "Lịch khám",
+    to: "/patient/appointments",
+  },
+  {
+    name: "Người thân",
+    to: "/patient/relatives",
+  },
+  {
+    name: "Tư vấn trực tuyến",
+    to: "/patient/messages",
+  },
+  {
+    name: "AI Coach Health",
+    to: "/patient/ai-coach-health",
   },
   {
     name: "Hồ sơ sức khỏe",
-    to: "/",
+    to: "/patient/health-records",
   },
   {
-    name: "Tin nhắn",
-    to: "/",
+    name: "Kết quả khám",
+    to: "/patient/visit-results",
+  },
+  {
+    name: "Cài đặt",
+    to: "/patient/settings",
   },
 ];
 
@@ -62,6 +82,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
   const handleLogout = () => {
     mutate();
   };
+
   return (
     <header className="fixed flex items-center justify-between px-6 py-4 bg-white shadow w-full z-[10]">
       <div className="flex items-center gap-x-5">
@@ -71,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               <Menu className="w-6 h-6" />
             </SheetTrigger>
             <SheetContent side="left">
-              {header_items.map((item, index) => (
+              {headerItems.map((item, index) => (
                 <NavLink
                   key={index}
                   to={item.to}
@@ -89,6 +110,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
             </SheetContent>
           </Sheet>
         </div>
+
         <div
           className="flex items-center gap-x-1 lg:gap-x-3 lg:text-2xl text-xl font-bold text-primary cursor-pointer"
           onClick={() => navigate("/")}
@@ -103,7 +125,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       </div>
 
       <div className="hidden md:flex items-center space-x-6">
-        {header_items.map((item, index) => (
+        {headerItems.map((item, index) => (
           <NavLink
             key={index}
             to={item.to}
@@ -118,6 +140,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
             {item.name}
           </NavLink>
         ))}
+
         {!userInfo ? (
           <NavLink
             to="/sign-in"
@@ -138,13 +161,12 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 Tài khoản ▼
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
+            <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>
-                Chào bạn,{" "}
-                <span className="font-bold">{userInfo.username}!</span>
+                Chào bạn, <span className="font-bold">{userInfo.username}!</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {header_sub_items.map((item, index) => (
+              {headerSubItems.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   className="cursor-pointer"
@@ -158,7 +180,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 className="cursor-pointer"
                 onClick={handleLogout}
               >
-                {isPending ? "Đang xử lý ..." : "Đăng xuất"}
+                {isPending ? "Đang xử lý..." : "Đăng xuất"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -186,13 +208,12 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 Tài khoản ▼
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
+            <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>
-                Chào bạn,{" "}
-                <span className="font-bold">{userInfo.username}!</span>
+                Chào bạn, <span className="font-bold">{userInfo.username}!</span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              {header_sub_items.map((item, index) => (
+              {headerSubItems.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   className="cursor-pointer"
@@ -206,7 +227,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 className="cursor-pointer"
                 onClick={handleLogout}
               >
-                {isPending ? "Đang xử lý ..." : "Đăng xuất"}
+                {isPending ? "Đang xử lý..." : "Đăng xuất"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -217,3 +238,4 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
 };
 
 export default Header;
+

@@ -1,23 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Doctor from 'src/entities/doctor.entity';
-import { IsNull, Repository } from 'typeorm';
-import { BodyFilterDoctorsDto } from './dto/bodyFilterDoctors.dto';
-import { groupSchedulesByDay } from 'src/utils/groupSchedulesByDay';
-import { filter } from 'rxjs';
+import { Repository } from 'typeorm';
+import { BodyFilterDoctorsDto } from './dto/request/bodyFilterDoctors.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 import { FilterItem } from 'src/shared/interfaces/filterItem';
-import Appointment from 'src/entities/appointment.entity';
 import { setIsOutstandingDoctors } from 'src/utils/setIsOutstanding';
 
 @Injectable()
 export class DoctorsService {
   constructor(
-    @InjectRepository(Doctor) private doctorRepo: Repository<Doctor>,
-    @InjectRepository(Appointment)
-    private appointmentRepo: Repository<Appointment>,
-    private redisCacheService: RedisCacheService,
+    @InjectRepository(Doctor) private readonly doctorRepo: Repository<Doctor>,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   async findByDoctorId(doctorId: number): Promise<Doctor | null> {
@@ -25,6 +20,16 @@ export class DoctorsService {
       where: { id: doctorId },
     });
 
+    return doctor;
+  }
+
+  async findDoctorByUserId(userId: number) {
+    const doctor = await this.doctorRepo.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!doctor) {
+      throw new NotFoundException('Bác sĩ không tồn tại.');
+    }
     return doctor;
   }
 

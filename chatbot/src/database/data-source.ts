@@ -16,3 +16,12 @@ export const AppDatasource = new DataSource({
   entities: [DoctorsView, ArticlesView, SpecialtiesView],
   synchronize: false,
 });
+
+export const DataSourceRoot = new DataSource({
+  type: "postgres",
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || "5432"),
+  username: process.env.DB_ADMIN,
+  password: process.env.DB_ADMIN_PASSWORD,
+  database: process.env.DB_NAME,
+});

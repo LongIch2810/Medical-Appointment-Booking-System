@@ -56,3 +56,9 @@ export interface FilterItemProps {
   icon: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLElement>;
 }
+
+export type Role = {
+  id: number;
+  role_name: string;
+  role_code: number;
+};

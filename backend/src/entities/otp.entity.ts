@@ -11,18 +11,18 @@ import User from './user.entity';
 @Entity('otps')
 export default class Otp {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true })
-  otpCode: string;
+  otpCode!: string;
 
   @Column({ type: 'timestamp' })
-  expiresAt: Date;
+  expiresAt!: Date;
 
   @Column({ default: false })
-  verified: boolean;
+  verified!: boolean;
 
   @ManyToOne(() => User, (u) => u.otps)
   @JoinColumn({ name: 'user_id' })
-  user: Relation<User>;
+  user!: Relation<User>;
 }

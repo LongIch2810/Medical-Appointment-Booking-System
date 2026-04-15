@@ -14,35 +14,35 @@ import RolePermission from './rolePermission.entity';
 @Entity('roles')
 export default class Role {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({
     nullable: false,
     unique: true,
   })
-  role_name: string;
+  role_name!: string;
 
   @Column({ nullable: false })
-  description: string;
+  description!: string;
 
   @Column({
     unique: true,
     nullable: false,
   })
-  role_code: number;
+  role_code!: number;
 
   @OneToMany(() => UserRole, (ur) => ur.role)
-  users: Relation<UserRole[]>;
+  users!: Relation<UserRole[]>;
 
   @OneToMany(() => RolePermission, (rp) => rp.role)
-  permissions: Relation<RolePermission[]>;
+  permissions!: Relation<RolePermission[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

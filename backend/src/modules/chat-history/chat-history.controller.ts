@@ -10,10 +10,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ChatHistoryService } from './chat-history.service';
-import { BodyMessageDto } from './dto/bodyMessage.dto';
+import { BodyMessageDto } from './dto/request/bodyMessage.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { ConfigService } from '@nestjs/config';
-import { BodyChatDto } from './dto/bodyChat.dto';
+import { BodyChatDto } from './dto/request/bodyChat.dto';
 
 @Controller('chat-history')
 @UseGuards(JwtAuthGuard)

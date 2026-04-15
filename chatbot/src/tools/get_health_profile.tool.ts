@@ -5,43 +5,65 @@ import axios from "axios";
 
 dotenv.config();
 
-export const getHealthProfileTool = tool(
-  async (_, runManager) => {
-    try {
-      const token = runManager?.configurable?.token;
+const healthProfileSchema = z.object({
+  fullname: z.string(),
+  gender: z.string(),
+  weight: z.number(),
+  height: z.number(),
+  blood_type: z.string(),
+  medical_history: z.string(),
+  allergies: z.string(),
+  heart_rate: z.string(),
+  blood_pressure: z.string(),
+  glucose_level: z.string(),
+  cholesterol_level: z.string(),
+  medications: z.string(),
+  vaccinations: z.string(),
+  smoking: z.string(),
+  alcohol_consumption: z.string(),
+  exercise_frequency: z.string(),
+  last_checkup_date: z.string(),
+});
 
+export type HealthProfile = z.infer<typeof healthProfileSchema>;
+
+export const GetHealthProfileTool = tool(
+  async ({ relative_id, token }: { relative_id: number; token: string }) => {
+    try {
       if (!token) {
         return "Lỗi: Người dùng chưa đăng nhập. Không thể lấy hồ sơ sức khỏe của bạn.";
       }
 
       const response = await axios.get(
-        `${process.env.BACKEND_URL}/api/v1/health-profiles/info`,
+        `${process.env.BACKEND_URL}/api/v1/health-profiles/info/${relative_id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
       const healthProfile = response.data?.data;
-      return `**Hồ sơ sức khỏe cá nhân**
+      const formattedHealthProfile: HealthProfile = {
+        fullname: healthProfile.fullname,
+        gender: healthProfile.gender ? "Nam" : "Nữ",
+        weight: healthProfile.weight,
+        height: healthProfile.height,
+        blood_type: healthProfile.blood_type,
+        medical_history: healthProfile.medical_history,
+        allergies: healthProfile.allergies,
+        heart_rate: healthProfile.heart_rate,
+        blood_pressure: healthProfile.blood_pressure,
+        glucose_level: healthProfile.glucose_level,
+        cholesterol_level: healthProfile.cholesterol_level,
+        medications: healthProfile.medications,
+        vaccinations: healthProfile.vaccinations,
+        smoking: healthProfile.smoking ? "Có" : "Không",
+        alcohol_consumption: healthProfile.alcohol_consumption ? "Có" : "Không",
+        exercise_frequency: healthProfile.exercise_frequency,
+        last_checkup_date: healthProfile.last_checkup_date,
+      };
 
-Cân nặng: ${healthProfile.weight} kg  
-Chiều cao: ${healthProfile.height} cm  
-Nhóm máu: ${healthProfile.blood_type}  
-Bệnh nền: ${healthProfile.medical_history}  
-Dị ứng: ${healthProfile.allergies}  
-Nhịp tim: ${healthProfile.heart_rate} bpm  
-Huyết áp: ${healthProfile.blood_pressure}  
-Đường huyết: ${healthProfile.glucose_level} mg/dL  
-Cholesterol: ${healthProfile.cholesterol_level} mg/dL  
-Thuốc đang dùng: ${healthProfile.medications || "Không có"}  
-Vaccines: ${healthProfile.vaccinations}  
-Hút thuốc: ${healthProfile.smoking ? "Có" : "Không"}  
-Uống rượu: ${healthProfile.alcohol_consumption ? "Có" : "Không"}  
-Tần suất vận động: ${healthProfile.exercise_frequency}  
-Ngày khám gần nhất: ${healthProfile.last_checkup_date}
-`;
+      return formattedHealthProfile;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         const errMsg = error.response?.data?.message || "Không thể lấy hồ sơ.";
@@ -53,8 +75,10 @@ Ngày khám gần nhất: ${healthProfile.last_checkup_date}
   {
     name: "get_health_profile_tool",
     description: `Dùng công cụ này để lấy thông tin hồ sơ sức khỏe của người dùng đã đăng nhập.
-Không cần truyền vào tham số nào.
 Trả về thông tin chi tiết về tình trạng sức khỏe.`,
-    schema: z.object({}),
+    schema: z.object({
+      relative_id: z.number().describe("id người được lấy hồ sơ sức khỏe"),
+      token: z.string().describe("khóa để giúp xác thực trước khi gọi api"),
+    }),
   }
 );

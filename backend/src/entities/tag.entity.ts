@@ -13,23 +13,23 @@ import ArticleTag from './articleTag.entity';
 @Entity('tags')
 export default class Tag {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false, unique: true })
-  name: string;
+  name!: string;
 
   @Column({ unique: true, nullable: false })
-  slug: string;
+  slug!: string;
 
   @OneToMany(() => ArticleTag, (at) => at.tag)
-  articles: Relation<ArticleTag[]>;
+  articles!: Relation<ArticleTag[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

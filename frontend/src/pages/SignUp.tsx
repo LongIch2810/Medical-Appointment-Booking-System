@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useShow } from "@/hooks/useShow";
-import { Unlock, Lock, Mail, UserCircle } from "lucide-react";
+import { Unlock, Lock, Mail, UserCircle, User } from "lucide-react";
 import { useRegister } from "@/hooks/useRegister";
 import Loading from "@/components/loading/Loading";
 
@@ -16,6 +15,7 @@ const schema = z.object({
   username: z.string().min(6, "Username tối thiểu 6 kí tự !"),
   email: z.string().email("Email không hợp lệ !"),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 kí tự !"),
+  fullname: z.string().min(3, "Họ tên tối thiểu 3 kí tự !"),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -96,6 +96,15 @@ const SignUp = () => {
                 error={errors.email?.message}
                 {...register("email")}
               />
+
+              <Input
+                type="text"
+                icon={<User size={16} />}
+                placeholder="Họ tên"
+                error={errors.fullname?.message}
+                {...register("fullname")}
+              />
+
               <Input
                 type={isShow ? "text" : "password"}
                 placeholder="Mật khẩu"

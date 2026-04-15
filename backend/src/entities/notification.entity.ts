@@ -14,24 +14,27 @@ import User from './user.entity';
 @Entity('notifications')
 export default class Notification {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false })
-  content: string;
+  content!: string;
 
   @Column({ nullable: false })
-  title: string;
+  title!: string;
 
-  @ManyToOne(() => User, (u) => u.sentNotifications)
-  @JoinColumn({ name: 'sender_id' })
-  sender: Relation<User>;
+  @Column({ nullable: false })
+  is_notified!: boolean;
+
+  @ManyToOne(() => User, (u) => u.notifications, { nullable: false })
+  @JoinColumn({ name: 'user_id' })
+  user!: Relation<User>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

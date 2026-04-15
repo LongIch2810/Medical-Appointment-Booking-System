@@ -12,14 +12,14 @@ import { FileType } from '../shared/enums/FileType';
 @Entity('messages_attachments')
 export default class MessageAttachments {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @ManyToOne(() => Message, (m) => m.message_attachments)
   @JoinColumn({ name: 'message_id' })
-  message: Relation<Message>;
+  message!: Relation<Message>;
 
   @Column({ nullable: true })
-  url: string;
+  url!: string | null;
 
   @Column({
     type: 'enum',
@@ -27,17 +27,17 @@ export default class MessageAttachments {
     enumName: 'file_type',
     enum: FileType,
   })
-  type: FileType;
+  type!: FileType;
 
   @Column({ nullable: false })
-  file_name: string;
+  file_name!: string;
 
   @Column({ nullable: false })
-  file_size: number;
+  file_size!: number;
 
   @Column({ nullable: false })
-  file_extension: string;
+  file_extension!: string;
 
   @Column({ nullable: false, unique: true })
-  public_id: string;
+  public_id!: string;
 }

@@ -25,6 +25,12 @@ import { ChannelsModule } from './modules/channels/channels.module';
 import { CloudinaryModule } from './uploads/cloudinary.module';
 import { WsCookieAuthGuard } from './common/guards/wsCookieAuth.guard';
 import { RelativesModule } from './modules/relatives/relatives.module';
+import { ExaminationResultModule } from './modules/examination-result/examination-result.module';
+import { TagsModule } from './modules/tags/tags.module';
+import { SatisfactionRatingModule } from './modules/satisfaction-rating/satisfaction-rating.module';
+import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { RelationshipsModule } from './modules/relationships/relationships.module';
 
 @Module({
   imports: [
@@ -55,6 +61,12 @@ import { RelativesModule } from './modules/relatives/relatives.module';
     ChannelsModule,
     CloudinaryModule,
     RelativesModule,
+    ExaminationResultModule,
+    TagsModule,
+    SatisfactionRatingModule,
+    AuditLogsModule,
+    DashboardModule,
+    RelationshipsModule,
   ],
 })
 export class AppModule {}

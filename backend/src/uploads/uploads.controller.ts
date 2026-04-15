@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   forwardRef,
@@ -11,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadFileProducer } from 'src/bullmq/queues/uploadFile/uploadFile.producer';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 
@@ -20,7 +19,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 export class UploadsController {
   constructor(
     @Inject(forwardRef(() => UploadFileProducer))
-    private uploadFileProducer: UploadFileProducer,
+    private readonly uploadFileProducer: UploadFileProducer,
   ) {}
 
   @Post('/messages/files')
@@ -36,6 +35,22 @@ export class UploadsController {
   ) {
     console.log('>>> files', files);
     await this.uploadFileProducer.uploadFilesMessage({ messageId, files });
-    return { message: 'upload files' };
+    return { message: 'upload files message' };
+  }
+
+  @Post('/articles/files')
+  @UseInterceptors(
+    FilesInterceptor('files', 4, {
+      limits: { files: 4 },
+    }),
+    new FileRequiredInterceptor(),
+  )
+  async uploadFilesArticle(
+    @Body('article_id', ParseIntPipe) articleId: number,
+    @UploadedFiles() files: Express.Multer.File[],
+  ) {
+    console.log('>>> files', files);
+    await this.uploadFileProducer.uploadFilesArticle({ articleId, files });
+    return { message: 'upload files article' };
   }
 }

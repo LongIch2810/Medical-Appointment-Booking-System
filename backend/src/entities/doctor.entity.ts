@@ -20,16 +20,16 @@ import { DoctorLevel } from 'src/shared/enums/doctorLevel';
 @Entity('doctors')
 export default class Doctor {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false })
-  experience: number;
+  experience!: number;
 
   @Column({ nullable: false })
-  about_me: string;
+  about_me!: string;
 
   @Column({ nullable: false })
-  workplace: string;
+  workplace!: string;
 
   @Column({
     type: 'enum',
@@ -37,28 +37,25 @@ export default class Doctor {
     default: DoctorLevel.DK,
     name: 'doctor_level',
   })
-  doctor_level: DoctorLevel;
+  doctor_level!: DoctorLevel;
 
   @ManyToOne(() => Specialty, (s) => s.doctors)
   @JoinColumn({ name: 'specialty_id' })
-  specialty: Relation<Specialty>;
+  specialty!: Relation<Specialty>;
 
   @OneToOne(() => User, (u) => u.doctor)
   @JoinColumn({ name: 'user_id' })
-  user: Relation<User>;
-
-  @OneToMany(() => Appointment, (a) => a.doctor)
-  appointments: Relation<Appointment[]>;
+  user!: Relation<User>;
 
   @OneToMany(() => DoctorSchedule, (ds) => ds.doctor)
-  doctor_schedules: Relation<DoctorSchedule[]>;
+  doctor_schedules!: Relation<DoctorSchedule[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

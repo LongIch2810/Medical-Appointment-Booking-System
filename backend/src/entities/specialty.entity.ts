@@ -13,29 +13,29 @@ import Doctor from './doctor.entity';
 @Entity('specialties')
 export default class Specialty {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true, nullable: false })
-  name: string;
+  name!: string;
 
   @Column({ unique: true, nullable: false })
-  slug: string;
+  slug!: string;
 
   @Column({ nullable: false })
-  description: string;
+  description!: string;
 
   @Column({ nullable: false })
-  img_url: string;
+  img_url!: string;
 
   @OneToMany(() => Doctor, (d) => d.specialty)
-  doctors: Relation<Doctor[]>;
+  doctors!: Relation<Doctor[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

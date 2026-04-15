@@ -36,6 +36,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
     const isBlacklisted = await this.redisService.getData(
       `blacklist:${tokenId}`,
     );
+
     if (isBlacklisted) {
       throw new UnauthorizedException('Token đã bị thu hồi !');
     }

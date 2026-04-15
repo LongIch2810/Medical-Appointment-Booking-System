@@ -6,6 +6,9 @@ import BannerSection from "@/components/section/BannerSection";
 import SloganSection from "@/components/section/SloganSection";
 import FeelFreeFindAndBookDoctorSection from "@/components/section/FeelFreeFindAndBookDoctorSection";
 import { useUserStore } from "@/store/useUserStore";
+import FindAndBookDoctorSection from "../components/section/FindAndBookDoctorSection";
+import AiHealthcareAssistantSection from "../components/section/AiHealthcareAssistantSection";
+import DataSecuritySection from "../components/section/DataSecuritySection";
 
 const Home: React.FC = () => {
   const { userInfo } = useUserStore();
@@ -27,8 +30,17 @@ const Home: React.FC = () => {
         {/*Specialties*/}
         <SpecialtiesSection />
 
+        {/*Find and book doctor */}
+        <FindAndBookDoctorSection />
+
+        {/*AI Application in Health Care */}
+        <AiHealthcareAssistantSection />
+
         {/*Feel free to search for and book a doctor.*/}
         <FeelFreeFindAndBookDoctorSection />
+
+        {/*Data security */}
+        <DataSecuritySection />
       </div>
     </section>
   );

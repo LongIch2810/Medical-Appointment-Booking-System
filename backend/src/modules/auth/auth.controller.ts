@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { LocalAuthGuard } from 'src/common/guards/localAuth.guard';
 import { AuthService } from './auth.service';
-import { BodyRegisterDto } from './dto/bodyRegister.dto';
+import { BodyRegisterDto } from './dto/request/bodyRegister.dto';
 import { JwtRefreshAuthGuard } from 'src/common/guards/jwtRefresh.guard';
 import { GoogleAuthGuard } from 'src/common/guards/google.guard';
 import { ConfigService } from '@nestjs/config';
@@ -25,7 +25,7 @@ import {
 @Controller('auth')
 export class AuthController {
   constructor(
-    private authService: AuthService,
+    private readonly authService: AuthService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -34,7 +34,6 @@ export class AuthController {
     const { message } = await this.authService.register(registerData);
     return message;
   }
-
   @Post('login')
   @UseGuards(LocalAuthGuard)
   async login(@Request() req, @Response() res) {
@@ -104,6 +103,13 @@ export class AuthController {
       data: { message },
       error: null,
     });
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('logout-all')
+  async logoutAll(@Request() req) {
+    const { message } = await this.authService.logoutAll(req);
+    return { message };
   }
 
   @Get('google')

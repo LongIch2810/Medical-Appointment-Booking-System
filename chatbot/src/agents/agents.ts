@@ -10,11 +10,6 @@ import { ragTool } from "../tools/rag.tool.js";
 import { qaSqlTool } from "../tools/qa_sql.tool.js";
 import { medicalConsultationTool } from "../tools/medical_consultation.tool.js";
 import { bookingAppointmentTool } from "../tools/booking_appointment.tool.js";
-import { cancelAppointmentTool } from "../tools/cancel_appointment.tool.js";
-import { restoreAppointmentTool } from "../tools/restore_appointment.tool.js";
-import { getHealthProfileTool } from "../tools/get_health_profile.tool.js";
-import { updateHealthProfileTool } from "../tools/update_health_profile.tool.js";
-import { ChatOllama, Ollama } from "@langchain/ollama";
 
 dotenv.config();
 
@@ -23,17 +18,13 @@ const tools = [
   qaSqlTool,
   medicalConsultationTool,
   bookingAppointmentTool,
-  cancelAppointmentTool,
-  restoreAppointmentTool,
-  getHealthProfileTool,
-  updateHealthProfileTool,
 ];
 const toolNode = new ToolNode(tools);
 
 const llm = new ChatGoogleGenerativeAI({
   model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
   apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0,
+  temperature: 0.3,
 }).bindTools(tools);
 
 function shouldContinue({ messages }: typeof MessagesAnnotation.State) {

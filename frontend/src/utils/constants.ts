@@ -11,3 +11,8 @@ export const MessageType = {
   Regular: "regular",
   Call: "call",
 };
+export const ROLE_NAME = {
+  ADMIN: "ADMIN",
+  DOCTOR: "DOCTOR",
+  PATIENT: "PATIENT",
+};

@@ -1,5 +1,5 @@
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { z } from "zod";
+import { nullable, z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
@@ -7,19 +7,15 @@ import { tool } from "@langchain/core/tools";
 dotenv.config();
 
 const doctorSchema = z.object({
-  doctor_name: z
-    .string()
-    .min(1, "doctor_name is required")
-    .describe("Tên bác sĩ cần được xác định từ văn bản."),
+  doctor_name: z.string().describe("Tên bác sĩ cần được xác định từ văn bản."),
 });
-
-type DoctorOutput = z.infer<typeof doctorSchema>;
 
 const systemPrompt = `
 Bạn là hệ thống trích xuất thông tin tên bác sĩ từ văn bản tiếng Việt.
 
 Nhiệm vụ:
 - Xác định tên bác sĩ (doctor_name) dựa vào văn bản đầu vào.
+- Nếu KHÔNG có tên bác sĩ, hãy trả về '' (không được viết 'Không tìm thấy' hay chuỗi tương tự).
 - Chuẩn hóa:
   - Tên bác sĩ: Viết hoa chữ cái đầu tiên của mỗi từ.
 `;
@@ -45,8 +41,9 @@ export const AnalyzeDoctorTool = tool(
     return result;
   },
   {
-    name: "analyze_time",
-    description: "Phân tích văn bản để xác định tên bác sĩ tương ứng.",
+    name: "analyze_doctor_name_tool",
+    description:
+      "Phân tích văn bản tiếng Việt để xác định tên bác sĩ. Nếu không có tên, trả về '' .",
     schema: z.object({
       text_input: z
         .string()

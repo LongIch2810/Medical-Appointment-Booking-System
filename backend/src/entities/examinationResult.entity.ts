@@ -14,30 +14,37 @@ import Appointment from './appointment.entity';
 @Entity('examination_result')
 export default class ExaminationResult {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
+
+  // các triệu chứng
+  @Column({ nullable: false })
+  symptoms!: string;
 
   // chuẩn đoán
   @Column({ nullable: false })
-  diagnosis: string;
+  diagnosis!: string;
 
   // Hướng dẫn điều trị
   @Column({ nullable: false })
-  treatment: string;
+  treatment!: string;
 
   // đơn thuốc
   @Column({ nullable: false })
-  prescription: string;
+  prescription!: string;
 
-  @OneToOne(() => Appointment, (a) => a.examination_result)
+  @OneToOne(() => Appointment, (a) => a.examination_result, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'appointment_id' })
-  appointment: Relation<Appointment>;
+  appointment!: Relation<Appointment>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

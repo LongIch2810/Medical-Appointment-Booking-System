@@ -1,106 +1,85 @@
 import {
   BadRequestException,
-  ConflictException,
+  forwardRef,
+  Inject,
   Injectable,
-  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Article from 'src/entities/article.entity';
-import { In, Repository } from 'typeorm';
-import { BodyCreateArticleDto } from './dto/bodyCreateArticle.dto';
+import { DataSource, In, Repository } from 'typeorm';
+import { BodyCreateArticleDto } from './dto/request/bodyCreateArticle.dto';
 import User from 'src/entities/user.entity';
-import { BodyUpdateArticleDto } from './dto/bodyUpdateArticle.dto';
+import { BodyUpdateArticleDto } from './dto/request/bodyUpdateArticle.dto';
 import { generateSlug } from 'src/utils/generateSlug';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { removePasswordDeep } from 'src/utils/removePasswordDeep';
-import { PartialUpdateArticleDto } from './dto/partialUpdateArticle.dto';
-import { BodyFilterArticlesDto } from './dto/bodyFilterArticles.dto';
-import { CloudinaryService } from 'src/uploads/cloudinary.service';
+
+import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
 import Topic from 'src/entities/topic.entity';
 import ArticleTag from 'src/entities/articleTag.entity';
 import Tag from 'src/entities/tag.entity';
-import { UploadApiResponse } from 'cloudinary';
+import { UploadFileResponse } from 'src/shared/interfaces/uploadFileResponse';
+import { UploadFileProducer } from 'src/bullmq/queues/uploadFile/uploadFile.producer';
+import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { ArticleResponseDto } from './dto/response/articleResponse.dto';
+import { ArticleMapper } from './article.mapper';
 
 @Injectable()
 export class ArticlesService {
-  private readonly logger = new Logger(ArticlesService.name);
   constructor(
-    @InjectRepository(Article) private articleRepo: Repository<Article>,
-    @InjectRepository(User) private userRepo: Repository<User>,
-    @InjectRepository(Topic) private topicRepo: Repository<Topic>,
-    @InjectRepository(ArticleTag)
-    private articleTagRepo: Repository<ArticleTag>,
-    @InjectRepository(Tag) private tagRepo: Repository<Tag>,
-    private redisCacheService: RedisCacheService,
-    private cloudinaryService: CloudinaryService,
+    @InjectRepository(Article)
+    private readonly articleRepo: Repository<Article>,
+    private readonly redisCacheService: RedisCacheService,
+    @Inject(forwardRef(() => UploadFileProducer))
+    private readonly uploadFileProducer: UploadFileProducer,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async createArticle(
+  async create(
     userId: number,
     bodyCreateArticle: BodyCreateArticleDto,
-    fileImage: Express.Multer.File,
+    files: Express.Multer.File[],
   ) {
-    let uploadResult: UploadApiResponse | null = null;
-    try {
-      const user = await this.userRepo.findOne({ where: { id: userId } });
-
-      if (!user) {
-        throw new NotFoundException('Người dùng không tồn tại.');
-      }
-      const topicId = bodyCreateArticle.topic_id;
-      const topic = await this.topicRepo.findOne({ where: { id: topicId } });
-      if (!topic) {
-        throw new NotFoundException('Chủ đề không tồn tại.');
-      }
-
-      uploadResult = await this.cloudinaryService.uploadFile(fileImage);
+    const newArticle = await this.dataSource.transaction(async (manager) => {
+      const author = await manager.findOne(User, { where: { id: userId } });
+      if (!author) throw new NotFoundException('Người dùng không tồn tại.');
+      const topic = await manager.findOne(Topic, {
+        where: { id: bodyCreateArticle.topic_id },
+      });
+      if (!topic) throw new NotFoundException('Chủ đề không tồn tại.');
       const articleData = {
         ...bodyCreateArticle,
-        slug: generateSlug(bodyCreateArticle.title),
-        author: user,
+        slug: generateSlug(bodyCreateArticle.title + Date.now()),
+        author,
         topic,
-        img_url: uploadResult?.secure_url,
-        img_public_id: uploadResult?.public_id,
       };
-
-      const createdArticle = this.articleRepo.create(articleData);
-      const newArticle = await this.articleRepo.save(createdArticle);
-
-      this.logger.log(`Article created successfully: ${newArticle.id}`);
+      const createdArticle = manager.create(Article, articleData);
+      const newArticle = await manager.save(Article, createdArticle);
       const tag_ids = bodyCreateArticle.tag_ids;
-      const tags = await this.tagRepo.find({
-        where: { id: In(tag_ids) },
-      });
-
-      if (tags.length !== tag_ids.length) {
-        throw new NotFoundException('Một hoặc nhiều tag không tồn tại.');
+      if (tag_ids && tag_ids.length > 0) {
+        const tags = await manager.find(Tag, { where: { id: In(tag_ids) } });
+        if (tags.length !== tag_ids.length)
+          throw new NotFoundException('Một hoặc nhiều tag không tồn tại.');
+        const articleTags = tag_ids.map((tagId) =>
+          manager.create(ArticleTag, {
+            article: newArticle,
+            tag: { id: tagId },
+          }),
+        );
+        await manager.save(ArticleTag, articleTags);
       }
+      return newArticle;
+    });
 
-      const articleTags = tag_ids.map((tagId) =>
-        this.articleTagRepo.create({
-          article: { id: newArticle.id },
-          tag: { id: tagId },
-        }),
-      );
+    await this.uploadFileProducer.uploadFilesArticle({
+      articleId: newArticle.id,
+      files,
+    });
 
-      await this.articleTagRepo.save(articleTags);
-
-      return { message: 'Tạo bài viết thành công.' };
-    } catch (error) {
-      this.logger.error('Error creating article:', error);
-
-      if (uploadResult?.public_id) {
-        await this.cloudinaryService.deleteFile(uploadResult.public_id);
-      }
-
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException('Có lỗi xảy ra khi tạo bài viết.');
-    }
+    return ArticleMapper.toArticleResponseDto(newArticle);
   }
 
   async updateArticle(
@@ -162,11 +141,11 @@ export class ArticlesService {
 
     await this.redisCacheService.setData(
       cacheKey,
-      removePasswordDeep(article),
+      ArticleMapper.toArticleResponseDto(article),
       3600,
     );
 
-    return article;
+    return ArticleMapper.toArticleResponseDto(article);
   }
 
   async approveArticle(articleId: number) {
@@ -187,16 +166,13 @@ export class ArticlesService {
     return { message: 'Duyệt bài viết thành công.' };
   }
 
-  async filterAndPagination(
-    page: number,
-    limit: number,
-    objectFilter: Partial<BodyFilterArticlesDto>,
-  ) {
+  async filterAndPagination(objectFilters: BodyFilterArticlesDto) {
+    let { page, limit, arrange, search, topic_slug } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilter || {})}`;
+    const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
     const cachedData = await this.redisCacheService.getData(cacheKey);
     if (cachedData) {
       return cachedData;
@@ -210,27 +186,14 @@ export class ArticlesService {
       .leftJoinAndSelect('articleTag.tag', 'tag')
       .where('article.is_approve = :is_approve', { is_approve: true })
       .andWhere('article.deleted_at IS NULL')
-      .select([
-        'article.id',
-        'article.title',
-        'article.summary',
-        'article.img_url',
-        'article.created_at',
-        'author.id',
-        'author.fullname',
-        'topic.id',
-        'topic.name',
-        'articleTag.id',
-        'tag.id',
-        'tag.slug',
-      ])
+      .orderBy('article.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
       .take(limit)
       .skip(skip);
 
     const filters = [
       {
         condition: 'topic.slug = :topic_slug',
-        value: objectFilter.topic_slug,
+        value: topic_slug,
         key: 'topic_slug',
       },
       {
@@ -238,7 +201,7 @@ export class ArticlesService {
       OR LOWER(author.fullname) LIKE LOWER(:search) 
       OR LOWER(topic.name) LIKE LOWER(:search) 
       OR LOWER(tag.name) LIKE LOWER(:search))`,
-        value: objectFilter.search,
+        value: search,
         key: 'search',
       },
     ];
@@ -250,18 +213,46 @@ export class ArticlesService {
     });
 
     const [articles, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
 
-    const result = {
+    const result = new PaginationResultDto<ArticleResponseDto>(
+      'articles',
+      ArticleMapper.toArticleResponseDtoList(articles),
       total,
-      articles,
       page,
       limit,
-      totalPages,
-    };
+    );
 
     await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
+  }
+
+  //check xem bài viết tồn tại chưa (đã duyệt và chưa duyệt)
+  async isArticleExists(articleId: number) {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      relations: ['author'],
+    });
+
+    return !!article;
+  }
+
+  async;
+
+  async updateFilesArticle(articleId: number, files: UploadFileResponse[]) {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      relations: ['author'],
+    });
+    if (!article) {
+      throw new NotFoundException('Bài viết không tồn tại.');
+    }
+    const urls = files.map((file) => ({
+      url: file.url,
+      public_id: file.public_id,
+    }));
+    await this.articleRepo.update(article.id, { img_urls: urls });
+    article.img_urls = urls;
+    return article;
   }
 }

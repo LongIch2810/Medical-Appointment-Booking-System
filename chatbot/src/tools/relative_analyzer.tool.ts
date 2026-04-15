@@ -14,8 +14,6 @@ const relativeCodeSchema = z.object({
   name: z.string().optional().describe("name is optional"),
 });
 
-type RelativeOutput = z.infer<typeof relativeCodeSchema>;
-
 //Có 2 cách ép kiểu trả về với LLM
 //cách 1: Ép kiểu theo từng bước
 //tạo cấu trúc output parser từ zod schema
@@ -60,10 +58,8 @@ const model = new ChatGoogleGenerativeAI({
   temperature: 0,
 });
 
-// 1. Tạo model đã "ép kiểu"
 const structuredModel = model.withStructuredOutput(relativeCodeSchema);
 
-// 2. Gộp prompt SẠCH vào structuredModel
 const pipeline = promptTemplate.pipe(structuredModel);
 
 export const AnalyzeRelativeTool = tool(
@@ -98,7 +94,7 @@ export const AnalyzeRelativeTool = tool(
     return { relatives };
   },
   {
-    name: "analyze_relative",
+    name: "analyze_relative_tool",
     description:
       "Phân tích văn bản để xác định mối quan hệ và truy vấn danh sách relativeId tương ứng.",
     schema: z.object({

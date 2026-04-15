@@ -13,26 +13,26 @@ import Article from './article.entity';
 @Entity('topics')
 export default class Topic {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false, unique: true })
-  name: string;
+  name!: string;
 
   @Column({ nullable: false })
-  description: string;
+  description!: string;
 
   @Column({ unique: true, nullable: false })
-  slug: string;
+  slug!: string;
 
   @OneToMany(() => Article, (a) => a.topic)
-  articles: Relation<Article[]>;
+  articles!: Relation<Article[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

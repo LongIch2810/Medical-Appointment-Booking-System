@@ -28,7 +28,7 @@ export class OtpsService {
   async sendOtpToEmail(email: string) {
     const userExists = await this.usersService.findByUsernameOrEmail(email);
     if (!userExists) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
 
     let isOtpExits = true;
@@ -49,7 +49,7 @@ export class OtpsService {
   async verifyOtp(otpCode: string, email: string) {
     const user = await this.usersService.findByUsernameOrEmail(email);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
 
     const otp = await this.otpRepo.findOne({
@@ -57,12 +57,12 @@ export class OtpsService {
     });
 
     if (!otp) {
-      throw new NotFoundException('Mã OTP không hợp lệ !');
+      throw new NotFoundException('Mã OTP không hợp lệ!');
     }
 
     const now = new Date();
     if (otp.expiresAt < now) {
-      throw new NotFoundException('Mã OTP đã hết hạn !');
+      throw new NotFoundException('Mã OTP đã hết hạn!');
     }
 
     otp.verified = true;

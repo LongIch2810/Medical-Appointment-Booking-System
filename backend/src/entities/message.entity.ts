@@ -1,4 +1,3 @@
-import { CallStatus } from 'src/shared/enums/callStatus';
 import { MessageType } from 'src/shared/enums/messageType';
 import {
   Column,
@@ -19,7 +18,7 @@ import MessageAttachments from './messageAttachments.entity';
 @Entity('messages')
 export default class Message {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({
     type: 'enum',
@@ -27,39 +26,31 @@ export default class Message {
     enumName: 'message_type',
     enum: MessageType,
   })
-  message_type: MessageType;
+  message_type!: MessageType;
 
   @Column({ nullable: true })
-  content: string;
+  content!: string | null;
+
+  @Column({ default: false })
+  is_read!: boolean;
 
   @OneToMany(() => MessageAttachments, (ma) => ma.message)
-  message_attachments: Relation<MessageAttachments[]>;
+  message_attachments!: Relation<MessageAttachments[]>;
 
-  @Column({
-    type: 'enum',
-    nullable: true,
-    enumName: 'call_status',
-    enum: CallStatus,
-  })
-  call_status: CallStatus;
-
-  @Column({ nullable: true })
-  call_duration: number;
-
-  @ManyToOne(() => User, (u) => u.chat_messages)
+  @ManyToOne(() => User, (u) => u.chat_messages, { nullable: false })
   @JoinColumn({ name: 'sender_id' })
-  sender: Relation<User>;
+  sender!: Relation<User>;
 
   @ManyToOne(() => Channel, (c) => c.chat_messages)
   @JoinColumn({ name: 'channel_id' })
-  channel: Relation<Channel>;
+  channel!: Relation<Channel>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

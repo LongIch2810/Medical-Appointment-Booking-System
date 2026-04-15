@@ -18,43 +18,43 @@ import { ImageInfo } from 'src/shared/interfaces/imageInfo';
 @Entity('articles')
 export default class Article {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ nullable: false })
-  title: string;
+  title!: string;
 
   @Column({ nullable: false })
-  content: string;
+  content!: string;
 
   @Column({ type: 'jsonb', nullable: true })
-  img_urls: ImageInfo[];
+  img_urls!: ImageInfo[];
 
   @Column({ nullable: false })
-  summary: string;
+  summary!: string;
 
   @Column({ unique: true, nullable: false })
-  slug: string;
+  slug!: string;
 
   @Column({ default: false })
-  is_approve: boolean;
+  is_approve!: boolean;
 
-  @ManyToOne(() => Topic, (t) => t.articles)
+  @ManyToOne(() => Topic, (t) => t.articles, { nullable: false })
   @JoinColumn({ name: 'topic_id' })
-  topic: Relation<Topic>;
+  topic!: Relation<Topic>;
 
-  @OneToMany(() => ArticleTag, 'article')
-  tags: Relation<ArticleTag[]>;
+  @OneToMany(() => ArticleTag, (at) => at.article)
+  tags!: Relation<ArticleTag[]>;
 
-  @ManyToOne(() => User, 'articles')
+  @ManyToOne(() => User, (u) => u.articles, { nullable: false })
   @JoinColumn({ name: 'author_id' })
-  author: Relation<User>;
+  author!: Relation<User>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

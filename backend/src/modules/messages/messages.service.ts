@@ -1,22 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import Channel from 'src/entities/channel.entity';
 import Message from 'src/entities/message.entity';
 import MessageAttachments from 'src/entities/messageAttachments.entity';
-import { Repository } from 'typeorm';
-import { CreateMessageDto } from './dto/createMessage.dto';
+import { Not, Repository } from 'typeorm';
+import { BodyCreateMessageDto } from './dto/request/bodyCreateMessage.dto';
 import { UploadFileResponse } from 'src/shared/interfaces/uploadFileResponse';
 import { decrypt, encrypt } from 'src/utils/encryption';
+import { MessagesMapper } from './messages.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { ChannelsService } from '../channels/channels.service';
+import { UsersService } from '../users/users.service';
 
 @Injectable()
 export class MessagesService {
   constructor(
-    @InjectRepository(Message) private messageRepo: Repository<Message>,
+    @InjectRepository(Message)
+    private readonly messageRepo: Repository<Message>,
     @InjectRepository(MessageAttachments)
-    private messageAttachmentRepo: Repository<MessageAttachments>,
-    @InjectRepository(Channel) private channelRepo: Repository<Channel>,
+    private readonly messageAttachmentRepo: Repository<MessageAttachments>,
+    private readonly channelsService: ChannelsService,
+    private readonly usersService: UsersService,
   ) {}
-  async saveMessage(bodyCreateMessage: CreateMessageDto) {
+  async saveMessage(bodyCreateMessage: BodyCreateMessageDto) {
     if (bodyCreateMessage?.content) {
       bodyCreateMessage.content = encrypt(bodyCreateMessage.content);
     }
@@ -58,7 +63,7 @@ export class MessagesService {
     if (message?.content) {
       message.content = decrypt(message.content);
     }
-    return message;
+    return MessagesMapper.toMessageResponseDto(message);
   }
 
   async getMessageByChannelId(
@@ -80,17 +85,62 @@ export class MessagesService {
       .take(limit)
       .getManyAndCount();
 
-    const totalPages = Math.ceil(total / limit);
-    const result = {
+    const result = new PaginationResultDto(
+      'messages',
+      MessagesMapper.toMessageResponseDtoList(
+        messages.map((m: Message) => ({
+          ...m,
+          content: m.content ? decrypt(m.content) : null,
+        })),
+      ),
       total,
-      messages: messages
-        .map((m) => ({ ...m, content: m.content ? decrypt(m.content) : null }))
-        .reverse(),
       page,
       limit,
-      totalPages,
-    };
+    );
 
     return result;
+  }
+
+  async numberOfMessagesUnreadInChannel(userId: number, channelId: number) {
+    const isUserExists = await this.usersService.isUserExists(userId);
+    if (!isUserExists) {
+      throw new NotFoundException('Người dùng không tồn tại !');
+    }
+    const isChannelExists = await this.channelsService.isChannelExists(
+      userId,
+      channelId,
+    );
+    if (!isChannelExists) {
+      throw new NotFoundException(
+        'Kênh trò chuyện không tồn tại hoặc bạn không thuộc về kênh này !',
+      );
+    }
+    const count = await this.messageRepo.count({
+      where: {
+        channel: { id: channelId, participants: { user: { id: userId } } },
+        is_read: false,
+        sender: { id: Not(userId) },
+      },
+    });
+    return count;
+  }
+
+  async numberOfMessagesUnreadInAllChannel(userId: number) {
+    const isUserExists = await this.usersService.isUserExists(userId);
+    if (!isUserExists) {
+      throw new NotFoundException('Người dùng không tồn tại !');
+    }
+    const count = await this.messageRepo.count({
+      where: {
+        is_read: false,
+        sender: { id: Not(userId) },
+        channel: {
+          participants: {
+            user: { id: userId },
+          },
+        },
+      },
+    });
+    return count;
   }
 }

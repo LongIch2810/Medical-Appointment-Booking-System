@@ -10,4 +10,7 @@ const rulesFileName = "rules.pdf";
 const pathFileServicePdf = path.join(srcDir, dataFolder, serviceFileName);
 const pathFileRulesPdf = path.join(srcDir, dataFolder, rulesFileName);
 
+export const WIDTH_IMAGE_CHART = 1000;
+export const HEIGHT_IMAGE_CHART = 500;
+
 export const FILE_PATHS = [pathFileServicePdf, pathFileRulesPdf];

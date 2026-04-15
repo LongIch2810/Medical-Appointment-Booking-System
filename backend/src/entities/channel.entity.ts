@@ -13,20 +13,20 @@ import ChannelMembers from './channelMembers.entity';
 @Entity('channels')
 export default class Channel {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @OneToMany(() => Message, (m) => m.channel)
-  chat_messages: Relation<Message[]>;
+  chat_messages!: Relation<Message[]>;
 
   @OneToMany(() => ChannelMembers, (cm) => cm.channel)
-  participants: Relation<ChannelMembers[]>;
+  participants!: Relation<ChannelMembers[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

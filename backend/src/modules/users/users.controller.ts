@@ -14,22 +14,20 @@ import {
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { BodyChangePasswordDto } from './dto/bodyChangePassword.dto';
+import { BodyChangePasswordDto } from './dto/request/bodyChangePassword.dto';
 import * as bcrypt from 'bcryptjs';
-import { removePasswordDeep } from 'src/utils/removePasswordDeep';
-import { PartialUpdateUserDto } from './dto/partialUpdateUser.dto';
+import { PartialUpdateUserDto } from './dto/request/partialUpdateUser.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
 import { UploadApiResponse } from 'cloudinary';
-import { formatDate } from 'src/utils/formatDate';
 
 @UseGuards(JwtAuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(
-    private userService: UsersService,
-    private cloudinaryService: CloudinaryService,
-    private redisService: RedisCacheService,
+    private readonly userService: UsersService,
+    private readonly cloudinaryService: CloudinaryService,
+    private readonly redisService: RedisCacheService,
   ) {}
   @Get()
   getUsers() {
@@ -43,15 +41,13 @@ export class UsersController {
     if (cachedUserInfo) {
       return cachedUserInfo;
     }
-    const userInfo = await this.userService.findByUserId(userId);
+    const userInfo = await this.userService.getUserProfile(userId);
     if (!userInfo) {
       throw new NotFoundException('Người dùng không tồn tại!');
     }
-    const userInfoWithoutPassword = removePasswordDeep(userInfo);
-    const userInfoParsed = formatDate(userInfoWithoutPassword);
 
-    await this.redisService.setData(`user:${userId}`, userInfoParsed, 60 * 60);
-    return userInfoParsed;
+    await this.redisService.setData(`user:${userId}`, userInfo, 60 * 60);
+    return userInfo;
   }
 
   @Patch('update-info')

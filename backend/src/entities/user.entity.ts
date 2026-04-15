@@ -13,93 +13,89 @@ import {
 import UserRole from './userRole.entity';
 import Notification from './notification.entity';
 import Article from './article.entity';
-import HealthProfile from './healthProfile.entity';
 import Doctor from './doctor.entity';
 import Appointment from './appointment.entity';
 import Conversation from './conversation.entity';
 import Otp from './otp.entity';
 import Message from './message.entity';
 import ChannelMembers from './channelMembers.entity';
-import Complaint from './complaint.entity';
 import Relative from './relative.entity';
+import { AuditLog } from './auditLog.entity';
 
 @Entity('users')
 export default class User {
   @PrimaryGeneratedColumn()
-  id: number;
+  id!: number;
 
   @Column({ unique: true, nullable: false })
-  username: string;
+  username!: string;
 
   @Column({ unique: true, nullable: false })
-  email: string;
+  email!: string;
 
   @Column({ nullable: true })
-  password: string;
+  password!: string | null;
 
   @Column({ unique: true, nullable: true })
-  phone: string;
+  phone!: string | null;
 
   @Column({ nullable: true })
-  fullname: string;
+  fullname!: string | null;
 
   @Column({ default: true })
-  gender: boolean;
+  gender!: boolean;
 
   @Column({ nullable: true })
-  date_of_birth: Date;
+  date_of_birth!: Date | null;
 
   @Column({ nullable: true })
-  picture: string;
+  picture!: string | null;
 
   @Column({ nullable: true })
-  address: string;
+  address!: string | null;
 
   @Column({ default: false })
-  isAdmin: boolean;
+  isAdmin!: boolean;
 
   @OneToMany(() => UserRole, (ur) => ur.user)
-  roles: Relation<UserRole[]>;
+  roles!: Relation<UserRole[]>;
 
-  @OneToMany(() => Notification, (n) => n.sender)
-  sentNotifications: Relation<Notification[]>;
+  @OneToMany(() => Notification, (n) => n.user)
+  notifications!: Relation<Notification[]>;
 
   @OneToMany(() => Article, (a) => a.author)
-  articles: Relation<Article[]>;
-
-  @OneToOne(() => HealthProfile, (hp) => hp.patient)
-  health_profile: Relation<HealthProfile>;
+  articles!: Relation<Article[]>;
 
   @OneToOne(() => Doctor, (d) => d.user)
-  doctor: Relation<Doctor>;
-
-  @OneToMany(() => Appointment, (a) => a.patient)
-  appointments: Relation<Appointment[]>;
+  doctor!: Relation<Doctor>;
 
   @OneToMany(() => Conversation, (c) => c.user)
-  messages: Relation<Conversation[]>;
+  messages!: Relation<Conversation[]>;
 
   @OneToMany(() => Otp, (o) => o.user)
-  otps: Relation<Otp[]>;
+  otps!: Relation<Otp[]>;
 
   @OneToMany(() => Message, (m) => m.sender)
-  chat_messages: Relation<Message[]>;
+  chat_messages!: Relation<Message[]>;
 
   @OneToMany(() => ChannelMembers, (cm) => cm.user)
-  channels: Relation<ChannelMembers[]>;
-
-  @OneToMany(() => Complaint, (c) => c.user)
-  complaints: Relation<Complaint[]>;
+  channels!: Relation<ChannelMembers[]>;
 
   @OneToMany(() => Relative, (r) => r.user)
-  relatives: Relation<Relative[]>;
+  relatives!: Relation<Relative[]>;
+
+  @OneToMany(() => Appointment, (a) => a.booked_by_user)
+  appointments!: Relation<Appointment[]>;
+
+  @OneToMany(() => AuditLog, (al) => al.user)
+  auditLogs!: Relation<AuditLog[]>;
 
   @CreateDateColumn({ name: 'created_at' })
-  created_at: Date;
+  created_at!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updated_at: Date;
+  updated_at!: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deleted_at: Date;
+  deleted_at!: Date;
 }

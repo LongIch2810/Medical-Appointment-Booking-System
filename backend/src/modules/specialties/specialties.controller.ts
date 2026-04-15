@@ -16,10 +16,10 @@ import { SpecialtiesService } from './specialties.service';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { BodyCreateSpecialtyDto } from './dto/bodyCreateSpecialty.dto';
+import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
 import { diskStorage } from 'multer';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
-import { BodyFilterSpecialtiesDto } from './dto/bodyFilterSpecialties.dto';
+import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
 
 @Controller('specialties')
 export class SpecialtiesController {
@@ -61,11 +61,8 @@ export class SpecialtiesController {
   async getSpecialties(
     @Body() bodyFilterSpecialties: BodyFilterSpecialtiesDto,
   ) {
-    const { page, limit, ...objectFilter } = bodyFilterSpecialties;
     const result = await this.specialtiesService.filterAndPagination(
-      page,
-      limit,
-      objectFilter,
+      bodyFilterSpecialties,
     );
     return result;
   }

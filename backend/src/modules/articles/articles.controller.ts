@@ -1,83 +1,57 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
   Get,
   HttpCode,
   HttpStatus,
-  InternalServerErrorException,
   Logger,
-  NotFoundException,
   Param,
   ParseIntPipe,
   Patch,
   Post,
   Put,
   Request,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ArticlesService } from './articles.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
-import { BodyCreateArticleDto } from './dto/bodyCreateArticle.dto';
-import { BodyUpdateArticleDto } from './dto/bodyUpdateArticle.dto';
-import { PartialUpdateArticleDto } from './dto/partialUpdateArticle.dto';
-import { BodyFilterArticlesDto } from './dto/bodyFilterArticles.dto';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { CloudinaryService } from '../../uploads/cloudinary.service';
+import { BodyCreateArticleDto } from './dto/request/bodyCreateArticle.dto';
+
+import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
-import { UploadApiResponse } from 'cloudinary';
+import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto';
 
 @Controller('articles')
 @UseGuards(JwtAuthGuard)
 export class ArticlesController {
   private readonly logger = new Logger(ArticlesController.name);
-  constructor(
-    private articlesService: ArticlesService,
-    private cloudinaryService: CloudinaryService,
-  ) {}
+  constructor(private readonly articlesService: ArticlesService) {}
 
   @Post('create-article')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(new FileRequiredInterceptor())
+  @UseInterceptors(
+    FilesInterceptor('files', 4, {
+      limits: { files: 4 },
+    }),
+    new FileRequiredInterceptor(),
+  )
   async createArticle(
     @Request() req,
     @Body() bodyCreateArticle: BodyCreateArticleDto,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
     const { userId } = req.user;
 
-    try {
-      // Upload image to Cloudinary
-      this.logger.log(`Uploading image for user ${userId}`);
-
-      // Create article with uploaded image
-      const result = await this.articlesService.createArticle(
-        userId,
-        bodyCreateArticle,
-        file,
-      );
-
-      this.logger.log(`Article created successfully for user ${userId}`);
-
-      return {
-        message: result.message,
-      };
-    } catch (error) {
-      this.logger.error('Error in createArticle:', error);
-
-      if (
-        error instanceof BadRequestException ||
-        error instanceof NotFoundException
-      ) {
-        throw error;
-      }
-
-      throw new InternalServerErrorException('Có lỗi xảy ra khi tạo bài viết');
-    }
+    const message = await this.articlesService.create(
+      userId,
+      bodyCreateArticle,
+      files,
+    );
+    return message;
   }
 
   @Patch(':articleId')
@@ -112,9 +86,7 @@ export class ArticlesController {
   }
 
   @Post()
-  async getArticles(@Body() bodyFilterArticles: BodyFilterArticlesDto) {
-    const { page, limit, ...objectFilter } = bodyFilterArticles;
-
-    return this.articlesService.filterAndPagination(page, limit, objectFilter);
+  async getArticles(@Body() objectFilters: BodyFilterArticlesDto) {
+    return this.articlesService.filterAndPagination(objectFilters);
   }
 }

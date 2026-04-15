@@ -10,10 +10,11 @@ import {
   ConnectedSocket,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import Article from 'src/entities/article.entity';
 
 import Message from 'src/entities/message.entity';
 import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
-import { CreateMessageDto } from 'src/modules/messages/dto/createMessage.dto';
+import { BodyCreateMessageDto } from 'src/modules/messages/dto/request/bodyCreateMessage.dto';
 import { MessagesService } from 'src/modules/messages/messages.service';
 @WebSocketGateway({
   cors: {
@@ -156,9 +157,16 @@ export class WebsocketGateway
     }
   }
 
-  notifyUpdatedFiles(message: Message) {
+  notifyUpdatedFilesMessage(message: Message) {
     const channel_id = message.channel.id;
     this.server.to(`room:${channel_id}`).emit('updated:message:files', message);
+  }
+
+  notifyUpdatedFilesArticle(userId: number, article: Article) {
+    const socketId = this.clients.get(userId);
+    if (socketId) {
+      this.server.to(`user:${userId}`).emit('updated:article:files', article);
+    }
   }
 
   private _extractTokenFromCookie = (client: any): string | null => {

@@ -3,25 +3,53 @@ import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
+import adminQaSqlGraph from "../qa_sql/admin_qa_sql.js";
 
 dotenv.config();
 
 const specialtySchema = z.object({
-  specialty_name: z
-    .string()
-    .min(1, "specialty_name is required")
-    .describe("Tên chuyên khoa cần được xác định từ văn bản."),
+  keywords: z
+    .array(z.string())
+    .describe(
+      "Danh sách các từ khoá, triệu chứng, hoặc tên chuyên khoa trích xuất được."
+    ),
 });
 
-type SpecialtyOutput = z.infer<typeof specialtySchema>;
-
 const systemPrompt = `
-Bạn là hệ thống trích xuất thông tin tên chuyên khoa từ văn bản tiếng Việt.
+Bạn là hệ thống phân tích ngữ cảnh y tế thông minh.
+Nhiệm vụ của bạn là trích xuất TẤT CẢ các từ hoặc cụm từ liên quan đến **triệu chứng, bộ phận cơ thể, hoặc tên chuyên khoa y tế** trong văn bản tiếng Việt.
 
-Nhiệm vụ:
-- Xác định tên chuyên khoa (specialty_name) dựa vào văn bản đầu vào.
-- Chuẩn hóa:
-  - Tên chuyên khoa: Viết hoa chữ cái đầu tiên của mỗi từ.
+Luật hoạt động:
+1. Chỉ trích xuất khi trong câu có các yếu tố y tế thật sự — ví dụ: đau, viêm, sốt, mệt, tim, da, mắt, tai, mũi, họng, dạ dày, nội tiết, thần kinh, v.v.
+2. Nếu câu **chỉ mô tả người** (ví dụ: “con gái tôi”, “bé Lan”, “trẻ em”, “mẹ tôi”, “người lớn”, “bố tôi”) mà KHÔNG có triệu chứng hoặc bộ phận cơ thể, thì **kết quả phải là mảng rỗng []**.
+3. KHÔNG được tự suy luận chuyên khoa từ đối tượng người (ví dụ: KHÔNG được tự hiểu “trẻ em”, “bé” → “Nhi khoa”).
+4. Nếu có từ liên quan đến cơ quan hoặc bệnh, bạn có thể suy luận ra chuyên khoa tương ứng:
+   - “da” → “Da Liễu”
+   - “mắt” → “Mắt”
+   - “đau tim” → “Tim Mạch”
+   - “đau đầu” → “Thần Kinh”
+5. Kết quả trả về là **một danh sách các từ khoá (array)** liên quan đến y khoa. Không trả về object, không bao gồm từ mô tả người.
+
+Ví dụ:
+Input: "Tôi bị đau mắt và chảy nước mắt"  
+→ Output: ["Đau Mắt", "Chảy Nước Mắt", "Mắt", "Khoa Mắt"]
+
+Input: "Tôi bị ngứa da và nổi mẩn đỏ"  
+→ Output: ["Ngứa Da", "Nổi Mẩn Đỏ", "Da", "Da Liễu"]
+
+Input: "Tôi muốn khám chuyên khoa da liễu"  
+→ Output: ["Da", "Da Liễu"]
+
+Input: "Tôi muốn đặt lịch khám cho con gái tôi"  
+→ Output: []
+
+Input: "Cho bé Lan đi khám"  
+→ Output: []
+
+Input: "Đặt lịch cho mẹ tôi"  
+→ Output: []
+
+Chỉ trả về các từ liên quan đến bệnh hoặc chuyên khoa y tế, hoặc [] nếu không có.
 `;
 
 const promptTemplate = ChatPromptTemplate.fromMessages([
@@ -41,12 +69,33 @@ const pipeline = promptTemplate.pipe(structuredModel);
 
 export const AnalyzeSpecialtyTool = tool(
   async ({ text_input }: { text_input: string }) => {
-    const result = await pipeline.invoke({ text_input });
-    return result;
+    const extractedData = await pipeline.invoke({ text_input });
+    const keywords = extractedData.keywords;
+
+    if (!keywords || keywords.length === 0) {
+      console.log("[AnalyzeSpecialtyTool] Không tìm thấy từ khoá.");
+      return { specialty_names: [] };
+    }
+
+    const question = `Dựa vào CSDL, tìm tên chuyên khoa chính xác (duy nhất) 
+phù hợp nhất với các từ khoá sau: ${keywords.join(", ")}`;
+
+    console.log(`[AnalyzeSpecialtyTool] Sending to SQL Graph: ${question}`);
+
+    const result = await adminQaSqlGraph.invoke({ question });
+
+    console.log("[AnalyzeSpecialtyTool] Result from SQL Graph:", result);
+
+    const speacialty = JSON.parse(result.result);
+
+    const specialty_names = speacialty.map((s: any) => s.name);
+
+    return { specialty_names };
   },
   {
-    name: "analyze_time",
-    description: "Phân tích văn bản để xác định tên chuyên khoa tương ứng.",
+    name: "analyze_specialty_tool",
+    description:
+      "Phân tích văn bản (chỉ triệu chứng hoặc tên khoa) để tìm chuyên khoa phù hợp nhất từ CSDL.",
     schema: z.object({
       text_input: z
         .string()
@@ -56,31 +105,3 @@ export const AnalyzeSpecialtyTool = tool(
     }),
   }
 );
-
-// async function runTests() {
-//   const testCases = [
-//     "Tôi muốn khám chuyên khoa tim mạch.",
-//     "Cho tôi đặt lịch khám khoa nội tổng quát.",
-//     "Tôi cần gặp bác sĩ khoa da liễu.",
-//     "Khám tai mũi họng giúp tôi.",
-//     "Tôi muốn đặt lịch ở chuyên khoa mắt.",
-//     "Khám răng hàm mặt vào sáng mai.",
-//     "Tôi muốn kiểm tra tổng quát sức khỏe.",
-//     "Khám phụ khoa chiều nay.",
-//     "Tôi cần đặt lịch khám ở chuyên khoa cơ xương khớp.",
-//     "Tôi muốn khám tại khoa nhi cho bé Lan.",
-//     "Hẹn bác sĩ bên chuyên khoa xét nghiệm.",
-//   ];
-
-//   for (const [index, text_input] of testCases.entries()) {
-//     console.log(`🧩 Test ${index + 1}: "${text_input}"`);
-//     try {
-//       const result = await AnalyzeSpecialtyTool.invoke({ text_input });
-//       console.log("✅ Kết quả:", result, "\n");
-//     } catch (err) {
-//       console.error("❌ Lỗi khi xử lý:", err);
-//     }
-//   }
-// }
-
-// runTests();

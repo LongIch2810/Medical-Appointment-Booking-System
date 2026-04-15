@@ -6,6 +6,7 @@ import { AnalyzeSpecialtyTool } from "../tools/specialty_name_analyzer.tool.js";
 import { AnalyzeTimeTool } from "../tools/time_analyzer.tool.js";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import axios from "axios";
+import { AdminQaSqlTool } from "../tools/admin_qa_sql.tool.js";
 
 dotenv.config();
 
@@ -20,13 +21,14 @@ const BookingState = Annotation.Root({
 
   doctor: Annotation<{ doctor_name: string }>({ reducer: mergedAnnotations }),
 
-  specialty: Annotation<{ specialty_name: string }>({
+  specialty_names: Annotation<{ name: string }[]>({
     reducer: mergedAnnotations,
   }),
 
   time: Annotation<{
     appointment_date: string;
     start_time: string;
+    day_of_week: string;
     end_time: string;
   }>({ reducer: mergedAnnotations }),
 
@@ -46,11 +48,33 @@ const BookingState = Annotation.Root({
     reducer: (_o, n) => n,
   }),
 
+  selected_specialty_name: Annotation<string | null>({
+    reducer: (_o, n) => n,
+  }),
+
+  ambiguous_relatives: Annotation<boolean>({
+    reducer: (_o, n) => n,
+  }),
+
   ready: Annotation<boolean>({ reducer: (_o, n) => n }),
 
   missing: Annotation<string[]>({
     reducer: (a = [], b = []) =>
       Array.from(new Set([...(a || []), ...(b || [])])),
+  }),
+
+  result_query: Annotation<any[]>(),
+
+  result_query_doctor: Annotation<any[]>(),
+
+  hasAvailableDoctor: Annotation<boolean>(),
+
+  selected_doctor_id: Annotation<number | null>({
+    reducer: (_o, n) => n,
+  }),
+
+  selected_doctor_schedule_id: Annotation<number | null>({
+    reducer: (_o, n) => n,
   }),
 
   booking_result: Annotation<any>({ reducer: (_o, n) => n }),
@@ -101,8 +125,15 @@ async function analyzeSpecialtyNode(state: typeof BookingState.State) {
   const res = await runTool(AnalyzeSpecialtyTool as DynamicStructuredTool, {
     text_input: state.text_input,
   });
+  const specialty_names = res?.specialty_names || [];
+  let selected_specialty_name: string | null = null;
+
+  if (specialty_names.length === 1) {
+    selected_specialty_name = specialty_names[0];
+  }
+
   console.log("✅ [Node] analyze_specialty — output:", res);
-  return { specialty: res };
+  return { specialty_names, selected_specialty_name };
 }
 
 // 🧩 Node: Phân tích thời gian
@@ -123,10 +154,19 @@ function checkerNode(state: typeof BookingState.State) {
   );
 
   const missing: string[] = [];
+  let ambiguous_relatives = false;
 
-  if (!state.selected_relative_id) missing.push("selected_relative_id");
-  if (!state.specialty?.specialty_name) missing.push("specialty");
-  if (!state.doctor?.doctor_name) missing.push("doctor");
+  if (!state.selected_relative_id) {
+    if (state.relatives && state.relatives.length > 1) {
+      ambiguous_relatives = true;
+      console.log("[Node] checker — Phát hiện nhiều người thân");
+    } else {
+      missing.push("selected_relative_id");
+      console.log("[Node] checker — Thiếu người thân");
+    }
+  }
+
+  if (!state.selected_specialty_name) missing.push("selected_specialty_name");
   if (!state.time?.appointment_date) missing.push("appointment_date");
   if (!state.time?.start_time) missing.push("start_time");
   if (!state.time?.end_time) missing.push("end_time");
@@ -137,7 +177,76 @@ function checkerNode(state: typeof BookingState.State) {
     missing.length ? missing.join(", ") : "Không thiếu gì"
   );
 
-  return { missing, ready };
+  return { missing, ready, ambiguous_relatives };
+}
+
+async function bookingQueryNode(state: typeof BookingState.State) {
+  const hasDoctor = state.doctor.doctor_name !== "";
+
+  const doctorPart = hasDoctor
+    ? `bác sĩ có tên ${state.doctor?.doctor_name}`
+    : `các bác sĩ bất kỳ (không giới hạn tên)`;
+
+  const question = `
+Hãy tìm ${doctorPart}
+thuộc chuyên khoa ${state.selected_specialty_name}.
+
+Điều kiện:
+- Bỏ qua (không chọn) các ca làm việc đã bị đặt lịch trùng giờ trong ngày ${state.time?.appointment_date}.
+- Chỉ loại bỏ các ca bị trùng thời gian, KHÔNG loại bỏ toàn bộ bác sĩ nếu họ vẫn còn ca khác chưa được đặt.
+- Các ca hợp lệ là những ca có khoảng thời gian giao nhau hoặc nằm trong khung giờ từ '${state.time?.start_time}' đến '${state.time?.end_time}'.
+- Ví dụ: nếu người dùng muốn 09:00-12:00, và bác sĩ có hai ca 09:30-10:30 và 11:00-12:00 thì cả hai ca đều hợp lệ nếu chưa có lịch hẹn nào trong hai khung giờ đó.
+
+Kết quả cần trả về:
+    doctor_id,
+    fullname,
+    specialty_name,
+    doctor_schedules:{ doctor_schedule_id, start_time, end_time }[]
+`;
+
+  const res = await runTool(AdminQaSqlTool as DynamicStructuredTool, {
+    question,
+  });
+
+  const result_query = JSON.parse(res);
+
+  if (result_query.length === 0) {
+    console.log("Không tìm thấy có bác sĩ nào phù hợp với khung giờ này");
+    return {
+      hasAvailableDoctor: false,
+    };
+  }
+
+  const result_query_doctor = result_query[0];
+
+  console.log("🧩 [Node] booking_query — output:", result_query);
+
+  const selected_doctor_id = result_query_doctor.doctor_id;
+
+  const selected_doctor_schedule_id =
+    result_query_doctor.doctor_schedules[0].doctor_schedule_id;
+
+  return {
+    hasAvailableDoctor: true,
+    result_query_doctor,
+    selected_doctor_id,
+    selected_doctor_schedule_id,
+    result_query,
+  };
+}
+
+async function doctorNotFoundNode(state: typeof BookingState.State) {
+  const hasDoctorNameText = state.doctor.doctor_name
+    ? `Hiên bác sĩ ${state.doctor.doctor_name}`
+    : "Hiện không có bác sĩ nào";
+  const message = `${hasDoctorNameText} làm ở chuyên khoa ${state.selected_specialty_name}
+  rảnh trong khung giờ ${state.time.start_time}-${state.time.end_time}
+  thứ ${state.time.day_of_week} ngày ${state.time.appointment_date}). 
+  Bạn có muốn chọn khung giờ khác không?`;
+
+  console.log("[Node] doctorFound —", message);
+
+  return { booking_result: message };
 }
 
 // 🧩 Node: Gửi yêu cầu đặt lịch
@@ -149,11 +258,9 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
 
   const payload = {
     relative_id: state.selected_relative_id,
-    specialty_name: state.specialty?.specialty_name,
-    doctor_name: state.doctor?.doctor_name,
+    doctor_id: state.selected_doctor_id,
+    doctor_schedule_id: state.selected_doctor_schedule_id,
     appointment_date: state.time?.appointment_date,
-    start_time: state.time?.start_time,
-    end_time: state.time?.end_time,
     booking_mode: "ai_select",
   };
 
@@ -163,8 +270,10 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     const token = state?.token;
 
     if (!token) {
-      console.log("❌ [booking_appointment] Thiếu token, không thể đặt lịch");
-      return "Lỗi: Người dùng chưa đăng nhập. Không thể đặt lịch.";
+      console.log("Thiếu token, không thể đặt lịch");
+      return {
+        booking_result: "Lỗi: Người dùng chưa đăng nhập. Không thể đặt lịch.",
+      };
     }
 
     const response = await axios.post(
@@ -177,46 +286,50 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
       }
     );
 
-    const { jobId } = response.data?.data;
+    const appointmentInfo = response.data?.data;
 
-    console.log("✅ [booking_appointment] API thành công, jobId:", jobId);
-
-    return {
-      status: "pending",
-      jobId,
-      message: `Hệ thống đang xử lý yêu cầu đặt lịch (#${jobId})...`,
-    };
+    return { booking_result: appointmentInfo };
   } catch (error) {
-    console.error("💥 [booking_appointment] Lỗi:", error);
+    console.error("Lỗi:", error);
     if (axios.isAxiosError(error)) {
       const errMsg =
         error.response?.data?.message ||
         error.response?.data?.error?.details ||
         "Không rõ lỗi từ phía server.";
-      return `Lỗi từ API khi đặt lịch: ${errMsg}`;
+      return { booking_result: `Lỗi từ API khi đặt lịch: ${errMsg}` };
     }
-    return "Lỗi không xác định khi đặt lịch. Vui lòng thử lại sau.";
+    return {
+      booking_result: "Lỗi không xác định khi đặt lịch. Vui lòng thử lại sau.",
+    };
   }
 }
 
 const workflow = new StateGraph(BookingState)
-  .addNode("analyze_relative", analyzeRelativeNode)
-  .addNode("analyze_doctor", analyzeDoctorNode)
-  .addNode("analyze_specialty", analyzeSpecialtyNode)
-  .addNode("analyze_time", analyzeTimeNode)
-  .addNode("checker", checkerNode)
+  .addNode("analyze_relative_node", analyzeRelativeNode)
+  .addNode("analyze_doctor_node", analyzeDoctorNode)
+  .addNode("analyze_specialty_node", analyzeSpecialtyNode)
+  .addNode("analyze_time_node", analyzeTimeNode)
+  .addNode("checker_node", checkerNode)
+  .addNode("booking_query_node", bookingQueryNode)
+  .addNode("doctor_not_found_node", doctorNotFoundNode)
   .addNode("booking_appointment", bookingAppointmentNode)
-  .addEdge("__start__", "analyze_relative")
-  .addEdge("__start__", "analyze_doctor")
-  .addEdge("__start__", "analyze_specialty")
-  .addEdge("__start__", "analyze_time")
-  .addEdge("analyze_relative", "checker")
-  .addEdge("analyze_doctor", "checker")
-  .addEdge("analyze_specialty", "checker")
-  .addEdge("analyze_time", "checker")
-  .addConditionalEdges("checker", (state) => {
-    return state.ready ? "booking_appointment" : "__end__";
+  .addEdge("__start__", "analyze_relative_node")
+  .addEdge("__start__", "analyze_doctor_node")
+  .addEdge("__start__", "analyze_specialty_node")
+  .addEdge("__start__", "analyze_time_node")
+  .addEdge("analyze_relative_node", "checker_node")
+  .addEdge("analyze_doctor_node", "checker_node")
+  .addEdge("analyze_specialty_node", "checker_node")
+  .addEdge("analyze_time_node", "checker_node")
+  .addConditionalEdges("checker_node", (state) => {
+    return state.ready ? "booking_query_node" : "__end__";
   })
+  .addConditionalEdges("booking_query_node", (state) => {
+    return state.hasAvailableDoctor
+      ? "booking_appointment"
+      : "doctor_not_found_node";
+  })
+  .addEdge("doctor_not_found_node", "__end__")
   .addEdge("booking_appointment", "__end__");
 
 const bookingGraph = workflow.compile();

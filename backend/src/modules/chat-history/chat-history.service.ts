@@ -16,15 +16,15 @@ import axios from 'axios';
 export class ChatHistoryService {
   constructor(
     @InjectRepository(Conversation)
-    private conversationRepo: Repository<Conversation>,
-    private usersService: UsersService,
+    private readonly conversationRepo: Repository<Conversation>,
+    private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
 
   async saveMessage(userId: number, role: RoleMessage, content: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
     await this.conversationRepo.save({
       user,
@@ -36,7 +36,7 @@ export class ChatHistoryService {
   async getChatHistoryContext(userId: number) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
     const history = await this.conversationRepo.find({
       where: { user: { id: userId } },
@@ -50,11 +50,11 @@ export class ChatHistoryService {
   async chatbotAnswer(userId: number, question: string, token: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại !');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
 
     if (!token) {
-      throw new UnauthorizedException('Unauthorized');
+      throw new UnauthorizedException('Không có token xác thực.');
     }
 
     try {
@@ -67,21 +67,20 @@ export class ChatHistoryService {
         },
       );
       return response.data.answer;
-    } catch (error) {
+    } catch (error: any) {
       console.log('>>> error:', error);
       console.error('Chatbot error:', error?.response?.data || error.message);
       if (axios.isAxiosError(error)) {
         const status = error.response?.status;
 
         if (status === 401) {
-          // Chatbot service reject vì token không hợp lệ
           throw new UnauthorizedException(
-            'Token is invalid or expired for chatbot service',
+            'Token chatbot không hợp lệ hoặc đã hết hạn.',
           );
         }
       }
       throw new HttpException(
-        'Failed to get response from chatbot',
+        'Không thể lấy phản hồi từ chatbot.',
         error?.response?.status || 500,
       );
     }

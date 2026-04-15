@@ -7,10 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import Specialty from 'src/entities/specialty.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { Repository } from 'typeorm';
-import { BodyUpdateSpecialtyDto } from './dto/bodyUpdateSpecialty.dto';
-import { BodyFilterSpecialtiesDto } from './dto/bodyFilterSpecialties.dto';
-import { BodyCreateSpecialtyDto } from './dto/bodyCreateSpecialty.dto';
+import { QueryFailedError, Repository } from 'typeorm';
+import { BodyUpdateSpecialtyDto } from './dto/request/bodyUpdateSpecialty.dto';
+import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
+import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
 import { generateSlug } from 'src/utils/generateSlug';
 
 @Injectable()
@@ -21,29 +21,37 @@ export class SpecialtiesService {
   ) {}
 
   async createSpecialty(bodyCreateSpecialty: BodyCreateSpecialtyDto) {
-    const { description, name, img_url } = bodyCreateSpecialty;
-    if (!img_url) {
-      throw new BadRequestException('Ảnh chuyên khoa là bắt buộc.');
+    try {
+      const { description, name, img_url } = bodyCreateSpecialty;
+      const slug = generateSlug(name);
+      const isSpecialtyExistsByName = await this.isSpecialtyExistsByName(name);
+      const isSpecialtyExistsBySlug = await this.isSpecialtyExistsBySlug(slug);
+      if (isSpecialtyExistsByName || isSpecialtyExistsBySlug) {
+        throw new ConflictException('Chuyên khoa đã tồn tại.');
+      }
+
+      if (!img_url) {
+        throw new BadRequestException('Ảnh chuyên khoa là bắt buộc.');
+      }
+
+      await this.specialtyRepo.save({
+        description,
+        name,
+        slug,
+        img_url,
+      });
+
+      return { message: 'Tạo chuyên khoa thành công.' };
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        error.driverError?.code === '23505'
+      ) {
+        throw new ConflictException('Chuyên khoa đã tồn tại');
+      }
+
+      throw error;
     }
-
-    const slug = generateSlug(name);
-
-    const specialty = await this.specialtyRepo.findOne({
-      where: { slug },
-    });
-
-    if (specialty) {
-      throw new ConflictException('Chuyên khoa đã tồn tại.');
-    }
-
-    await this.specialtyRepo.save({
-      description,
-      name,
-      slug,
-      img_url,
-    });
-
-    return { message: 'Tạo chuyên khoa thành công.' };
   }
 
   async updateSpecialty(
@@ -77,11 +85,8 @@ export class SpecialtiesService {
     return specialty;
   }
 
-  async filterAndPagination(
-    page: number,
-    limit: number,
-    objectFilter: Partial<BodyFilterSpecialtiesDto>,
-  ) {
+  async filterAndPagination(objectFilter: BodyFilterSpecialtiesDto) {
+    let { page, limit, search, arrange } = objectFilter;
     const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${objectFilter || {}}`;
     const cachedData = await this.redisCacheService.getData(cacheKey);
     if (cachedData) {
@@ -95,13 +100,14 @@ export class SpecialtiesService {
     const query = this.specialtyRepo
       .createQueryBuilder('specialty')
       .where('specialty.deleted_at is NULL')
+      .orderBy('specialty.name', arrange.toUpperCase() as 'ASC' | 'DESC')
       .take(limit)
       .skip(skip);
 
-    if (objectFilter?.search) {
+    if (search) {
       query.where(
         'UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:search))',
-        { search: objectFilter.search },
+        { search: search },
       );
     }
 
@@ -119,5 +125,19 @@ export class SpecialtiesService {
     await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
+  }
+
+  async isSpecialtyExistsByName(name: string) {
+    const specialty = await this.specialtyRepo.findOne({
+      where: { name },
+    });
+    return !!specialty;
+  }
+
+  async isSpecialtyExistsBySlug(slug: string) {
+    const specialty = await this.specialtyRepo.findOne({
+      where: { slug },
+    });
+    return !!specialty;
   }
 }

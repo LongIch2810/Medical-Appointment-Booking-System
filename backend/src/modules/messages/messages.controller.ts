@@ -10,7 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { MessagesService } from './messages.service';
-import { CreateMessageDto } from './dto/createMessage.dto';
+import { BodyCreateMessageDto } from './dto/request/bodyCreateMessage.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 
 @Controller('messages')
@@ -19,7 +19,7 @@ export class MessagesController {
   constructor(private messagesService: MessagesService) {}
 
   @Post()
-  handleSaveMessage(@Body() bodyCreateMessage: CreateMessageDto) {
+  handleSaveMessage(@Body() bodyCreateMessage: BodyCreateMessageDto) {
     return this.messagesService.saveMessage(bodyCreateMessage);
   }
 

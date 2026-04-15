@@ -1,3 +1,5 @@
+import type { Role } from "../global";
+
 export interface User {
   id: number;
   username: string;
@@ -9,5 +11,6 @@ export interface User {
   picture: string | null;
   address: string | null;
   isAdmin: boolean;
-  roles: string[];
+  roles: Role[];
+  permissions: string[];
 }

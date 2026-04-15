@@ -7,7 +7,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
-import { BodyFilterDoctorsDto } from './dto/bodyFilterDoctors.dto';
+import { BodyFilterDoctorsDto } from './dto/request/bodyFilterDoctors.dto';
 import { DoctorsService } from './doctors.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 

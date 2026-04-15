@@ -5,9 +5,15 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import Message from 'src/entities/message.entity';
 import Channel from 'src/entities/channel.entity';
 import MessageAttachments from 'src/entities/messageAttachments.entity';
+import { ChannelsModule } from '../channels/channels.module';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Message, Channel, MessageAttachments])],
+  imports: [
+    TypeOrmModule.forFeature([Message, Channel, MessageAttachments]),
+    ChannelsModule,
+    UsersModule,
+  ],
   controllers: [MessagesController],
   providers: [MessagesService],
   exports: [MessagesService],

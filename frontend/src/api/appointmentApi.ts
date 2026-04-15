@@ -11,7 +11,7 @@ export const bookingAppointment = async ({
   doctor_id,
   doctor_schedule_id,
 }: createAppointmentData) => {
-  const res = await axiosInstance.post("/appointments/booking-appointment", {
+  const res = await axiosInstance.post("/appointments/booking", {
     appointment_date,
     doctor_id,
     doctor_schedule_id,
