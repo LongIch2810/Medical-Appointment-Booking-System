@@ -28,7 +28,7 @@ export class UsersController {
     private readonly userService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly redisService: RedisCacheService,
-  ) { }
+  ) {}
   @Get()
   getUsers() {
     return this.userService.findAll();
@@ -37,16 +37,18 @@ export class UsersController {
   @Get('info')
   async getUserInfo(@Request() req: any) {
     const { userId } = req.user;
-    const cachedUserInfo = await this.redisService.getData(`user:${userId}`);
-    if (cachedUserInfo) {
-      return cachedUserInfo;
-    }
+    // const cachedUserInfo = await this.redisService.getData(`user:${userId}`);
+    // if (cachedUserInfo) {
+    //   return cachedUserInfo;
+    // }
     const userInfo = await this.userService.getUserProfile(userId);
     if (!userInfo) {
       throw new NotFoundException('Người dùng không tồn tại!');
     }
 
-    await this.redisService.setData(`user:${userId}`, userInfo, 60 * 60);
+    console.log('User info:', userInfo);
+
+    // await this.redisService.setData(`user:${userId}`, userInfo, 60 * 60);
     return userInfo;
   }
 

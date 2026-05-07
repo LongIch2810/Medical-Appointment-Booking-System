@@ -6,24 +6,58 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PatientRelatives } from "@/pages/patient/patientTypes";
-import { usePatientPortal } from "@/pages/patient/usePatientPortal";
+import {
+  useCreatePatientRelative,
+  useDeletePatientRelative,
+  usePatientRelatives,
+  useRelationships,
+  useUpdatePatientRelative,
+} from "@/hooks/usePatientPortalApi";
+import type { Relative } from "@/types/interface/patient.interface";
 
-type RelativesFormState = Omit<PatientRelatives, "id"> & { id?: number };
+interface RelativesFormState {
+  id?: number;
+  fullname: string;
+  relationship_code: string;
+  dob: string;
+  gender: "true" | "false";
+  phone: string;
+}
 
 const defaultFormState: RelativesFormState = {
-  fullName: "",
-  relationship: "",
-  dateOfBirth: "",
-  gender: "",
+  fullname: "",
+  relationship_code: "",
+  dob: "",
+  gender: "true",
   phone: "",
-  insuranceNumber: "",
+};
+
+const toDateInputValue = (value: string | null | undefined) => {
+  if (!value) return "";
+  const parts = value.split("/");
+  if (parts.length === 3) {
+    const [day, month, year] = parts;
+    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+  }
+  return value.slice(0, 10);
 };
 
 const Relatives: React.FC = () => {
-  const { dependents, removeDependent, saveDependent } = usePatientPortal();
+  const { data: relativesResponse, isLoading, isError } = usePatientRelatives({
+    page: 1,
+    limit: 50,
+  });
+  const { data: relationshipsResponse } = useRelationships({
+    page: 1,
+    limit: 50,
+  });
+  const createMutation = useCreatePatientRelative();
+  const updateMutation = useUpdatePatientRelative();
+  const deleteMutation = useDeletePatientRelative();
   const [form, setForm] = useState<RelativesFormState>(defaultFormState);
 
+  const relatives = relativesResponse?.data.relatives ?? [];
+  const relationships = relationshipsResponse?.data.relationships ?? [];
   const isEditing = useMemo(() => Boolean(form.id), [form.id]);
 
   const handleChange = (key: keyof RelativesFormState, value: string) => {
@@ -39,61 +73,102 @@ const Relatives: React.FC = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!form.fullName || !form.relationship || !form.phone) {
-      toast.error("Vui lòng nhập đầy đủ họ tên, mối quan hệ và số điện thoại.");
+    if (!form.fullname || !form.relationship_code || !form.phone || !form.dob) {
+      toast.error("Vui lòng nhập đầy đủ họ tên, quan hệ, ngày sinh và số điện thoại.");
       return;
     }
-    saveDependent(form);
-    toast.success(
-      isEditing
-        ? "Đã cập nhật thông tin người phụ thuộc."
-        : "Đã thêm người phụ thuộc.",
-    );
-    resetForm();
-  };
 
-  const handleEdit = (dependent: PatientRelatives) => {
-    setForm(dependent);
-  };
+    const payload = {
+      fullname: form.fullname,
+      relationship_code: form.relationship_code,
+      phone: form.phone,
+      dob: form.dob,
+      gender: form.gender === "true",
+    };
 
-  const handleDelete = (dependentId: number) => {
-    removeDependent(dependentId);
-    toast.info("Đã xóa người phụ thuộc khỏi danh sách.");
-    if (form.id === dependentId) {
-      resetForm();
+    if (form.id) {
+      updateMutation.mutate(
+        { relativeId: form.id, data: payload },
+        {
+          onSuccess: () => {
+            toast.success("Đã cập nhật thông tin người thân.");
+            resetForm();
+          },
+          onError: () => toast.error("Không thể cập nhật người thân."),
+        },
+      );
+      return;
     }
+
+    createMutation.mutate(payload, {
+      onSuccess: () => {
+        toast.success("Đã thêm người thân.");
+        resetForm();
+      },
+      onError: () => toast.error("Không thể thêm người thân."),
+    });
+  };
+
+  const handleEdit = (relative: Relative) => {
+    setForm({
+      id: relative.id,
+      fullname: relative.fullname ?? "",
+      relationship_code: relative.relationship.relationship_code,
+      dob: toDateInputValue(relative.dob),
+      gender: relative.gender ? "true" : "false",
+      phone: relative.phone ?? "",
+    });
+  };
+
+  const handleDelete = (relativeId: number) => {
+    deleteMutation.mutate(relativeId, {
+      onSuccess: () => {
+        toast.info("Đã xóa người thân khỏi danh sách.");
+        if (form.id === relativeId) resetForm();
+      },
+      onError: () => toast.error("Không thể xóa người thân."),
+    });
   };
 
   return (
     <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr]">
       <Card className="border-primary/15 py-5">
         <CardHeader className="px-5">
-          <CardTitle className="text-lg">Danh sách người phụ thuộc</CardTitle>
+          <CardTitle className="text-lg">Danh sách người thân</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 px-5">
-          {dependents.length === 0 ? (
+          {isLoading ? (
+            <div className="rounded-xl border border-slate-200 p-5 text-sm text-slate-600">
+              Đang tải danh sách người thân...
+            </div>
+          ) : isError ? (
+            <div className="rounded-xl border border-red-200 p-5 text-sm text-red-600">
+              Không thể tải danh sách người thân.
+            </div>
+          ) : relatives.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500">
-              Chưa có người phụ thuộc nào.
+              Chưa có người thân nào.
             </div>
           ) : (
-            dependents.map((dependent) => (
+            relatives.map((relative) => (
               <div
-                key={dependent.id}
+                key={relative.id}
                 className="rounded-xl border border-slate-200 bg-white p-4"
               >
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="space-y-1">
                     <p className="font-semibold text-slate-900">
-                      {dependent.fullName}
+                      {relative.fullname}
                     </p>
                     <p className="text-sm text-slate-600">
-                      {dependent.relationship} | {dependent.gender}
+                      {relative.relationship.relationship_name} |{" "}
+                      {relative.gender ? "Nam" : "Nữ"}
                     </p>
                     <p className="text-sm text-slate-600">
-                      Ngày sinh: {dependent.dateOfBirth}
+                      Ngày sinh: {relative.dob}
                     </p>
                     <p className="text-sm text-slate-600">
-                      SDT: {dependent.phone} | BHYT: {dependent.insuranceNumber}
+                      SĐT: {relative.phone}
                     </p>
                   </div>
 
@@ -102,7 +177,7 @@ const Relatives: React.FC = () => {
                       variant="outline"
                       size="sm"
                       className="gap-2"
-                      onClick={() => handleEdit(dependent)}
+                      onClick={() => handleEdit(relative)}
                     >
                       <Pencil className="h-4 w-4" />
                       Sửa
@@ -111,7 +186,8 @@ const Relatives: React.FC = () => {
                       variant="destructive"
                       size="sm"
                       className="gap-2"
-                      onClick={() => handleDelete(dependent.id)}
+                      disabled={deleteMutation.isPending}
+                      onClick={() => handleDelete(relative.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                       Xóa
@@ -127,7 +203,7 @@ const Relatives: React.FC = () => {
       <Card className="border-primary/15 py-5">
         <CardHeader className="px-5">
           <CardTitle className="text-lg">
-            {isEditing ? "Cập nhật nhân thân" : "Thêm người phụ thuộc"}
+            {isEditing ? "Cập nhật người thân" : "Thêm người thân"}
           </CardTitle>
         </CardHeader>
         <CardContent className="px-5">
@@ -136,22 +212,33 @@ const Relatives: React.FC = () => {
               <Label htmlFor="dependentName">Họ và tên</Label>
               <Input
                 id="dependentName"
-                value={form.fullName}
+                value={form.fullname}
                 onChange={(event) =>
-                  handleChange("fullName", event.target.value)
+                  handleChange("fullname", event.target.value)
                 }
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="dependentRelationship">Mối quan hệ</Label>
-              <Input
+              <select
                 id="dependentRelationship"
-                value={form.relationship}
+                value={form.relationship_code}
                 onChange={(event) =>
-                  handleChange("relationship", event.target.value)
+                  handleChange("relationship_code", event.target.value)
                 }
-              />
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              >
+                <option value="">Chọn mối quan hệ</option>
+                {relationships.map((relationship) => (
+                  <option
+                    key={relationship.relationship_code}
+                    value={relationship.relationship_code}
+                  >
+                    {relationship.relationship_name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -159,20 +246,22 @@ const Relatives: React.FC = () => {
               <Input
                 id="dependentDateOfBirth"
                 type="date"
-                value={form.dateOfBirth}
-                onChange={(event) =>
-                  handleChange("dateOfBirth", event.target.value)
-                }
+                value={form.dob}
+                onChange={(event) => handleChange("dob", event.target.value)}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="dependentGender">Giới tính</Label>
-              <Input
+              <select
                 id="dependentGender"
                 value={form.gender}
                 onChange={(event) => handleChange("gender", event.target.value)}
-              />
+                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
+              >
+                <option value="true">Nam</option>
+                <option value="false">Nữ</option>
+              </select>
             </div>
 
             <div className="space-y-2">
@@ -184,19 +273,12 @@ const Relatives: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="dependentInsurance">Số BHYT</Label>
-              <Input
-                id="dependentInsurance"
-                value={form.insuranceNumber}
-                onChange={(event) =>
-                  handleChange("insuranceNumber", event.target.value)
-                }
-              />
-            </div>
-
             <div className="flex gap-2">
-              <Button type="submit" className="gap-2">
+              <Button
+                type="submit"
+                className="gap-2"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
                 <UserPlus className="h-4 w-4" />
                 {isEditing ? "Lưu cập nhật" : "Thêm mới"}
               </Button>

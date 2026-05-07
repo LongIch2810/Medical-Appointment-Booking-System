@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +20,7 @@ const schema = z.object({
         val.includes("@") ? /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(val) : true,
       {
         message: "Email không hợp lệ !",
-      }
+      },
     ),
   password: z.string().min(6, "Mật khẩu tối thiểu 6 kí tự !"),
 });
@@ -36,7 +35,7 @@ const SignIn = () => {
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(schema) });
 
-  const { mutate, isPending, error, isError } = useLogin();
+  const { mutate, isPending } = useLogin();
 
   const onSubmit = async (data: FormData) => {
     mutate(data);

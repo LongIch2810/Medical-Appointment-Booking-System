@@ -1,12 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { ShieldCheck } from "lucide-react";
 import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { MOCK_SETTINGS } from "@/pages/patient/patientMockData";
 import type { PatientSettings } from "@/pages/patient/patientTypes";
-import { usePatientPortal } from "@/pages/patient/usePatientPortal";
 
 const settingGroups: Array<{
   key: keyof PatientSettings;
@@ -41,10 +41,13 @@ const settingGroups: Array<{
 ];
 
 const Settings: React.FC = () => {
-  const { settings, updateSetting } = usePatientPortal();
+  const [settings, setSettings] = useState<PatientSettings>(MOCK_SETTINGS);
 
   const handleToggle = (key: keyof PatientSettings, value: boolean) => {
-    updateSetting(key, value);
+    setSettings((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
   };
 
   return (

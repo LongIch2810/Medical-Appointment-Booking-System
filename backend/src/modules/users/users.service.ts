@@ -24,7 +24,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
-  ) { }
+  ) {}
 
   findAll(): Promise<User[]> {
     return this.userRepo.find();
@@ -80,11 +80,11 @@ export class UsersService {
       }
       const createdData = password
         ? {
-          username,
-          email,
-          fullname,
-          password,
-        }
+            username,
+            email,
+            fullname,
+            password,
+          }
         : { username, email, fullname };
       const createdUser = manager.create(User, createdData);
       const newUser = await manager.save(User, createdUser);

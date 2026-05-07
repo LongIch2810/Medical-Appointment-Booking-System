@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ExaminationResultController } from './examination-result.controller';
 import { ExaminationResultService } from './examination-result.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -12,7 +12,7 @@ import { UsersModule } from '../users/users.module';
   imports: [
     TypeOrmModule.forFeature([ExaminationResult]),
     RedisCacheModule,
-    AppointmentsModule,
+    forwardRef(() => AppointmentsModule),
     RelativesModule,
     UsersModule,
   ],

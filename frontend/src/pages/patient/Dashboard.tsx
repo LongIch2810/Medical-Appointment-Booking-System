@@ -4,58 +4,79 @@ import {
   FileSearch,
   HeartPulse,
   MessageSquareMore,
+  UsersRound,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { usePatientPortal } from "@/pages/patient/usePatientPortal";
+import { usePatientDashboard } from "@/hooks/usePatientPortalApi";
+import { useProfile } from "@/hooks/useProfile";
+
+const formatBoolean = (value: boolean | null | undefined) => {
+  if (value === null || value === undefined) return "Chưa cập nhật";
+  return value ? "Có" : "Không";
+};
+
+const formatValue = (
+  value: string | number | null | undefined,
+  suffix: string = "",
+) => {
+  if (value === null || value === undefined || value === "") {
+    return "Chưa cập nhật";
+  }
+  return `${value}${suffix}`;
+};
 
 const Dashboard: React.FC = () => {
-  const { appointments, conversations, visitResults, healthRecord, profile } =
-    usePatientPortal();
+  const { data: dashboardResponse, isLoading, isError } = usePatientDashboard();
+  const { data: profileResponse } = useProfile();
 
-  const upcomingCount = appointments.filter(
-    (appointment) =>
-      appointment.status === "confirmed" || appointment.status === "pending",
-  ).length;
-  const unreadCount = conversations.reduce(
-    (total, conversation) => total + conversation.unread,
-    0,
-  );
+  const dashboard = dashboardResponse?.data;
+  const profile = profileResponse?.data;
+  const healthProfile = dashboard?.personalHealthProfile;
 
   const stats = [
     {
       label: "Lịch khám sắp tới",
-      value: upcomingCount,
-      detail: "Cần theo dõi",
+      value: dashboard?.upcomingAppointmentsCount ?? 0,
+      detail: "Đang chờ hoặc đã xác nhận",
       icon: CalendarCheck2,
     },
     {
-      label: "Chỉ số sức khỏe",
-      value: healthRecord.metrics.length,
-      detail: "Đang được lưu",
+      label: "Hồ sơ sức khỏe",
+      value: dashboard?.healthProfilesCount ?? 0,
+      detail: "Hồ sơ trong tài khoản",
       icon: HeartPulse,
     },
     {
       label: "Kết quả khám",
-      value: visitResults.length,
-      detail: "Lần khám gần đây",
+      value: dashboard?.examinationResultsCount ?? 0,
+      detail: "Kết quả đã lưu",
       icon: FileSearch,
     },
     {
-      label: "Tin nhắn chưa đọc",
-      value: unreadCount,
-      detail: "Từ bác sĩ",
-      icon: MessageSquareMore,
+      label: "Người thân",
+      value: dashboard?.relativesCount ?? 0,
+      detail: "Bệnh nhân quản lý",
+      icon: UsersRound,
     },
   ];
 
-  const todoItems = [
-    "Sau khi đăng ký tài khoản và đăng nhập lần đầu, hãy cập nhật hồ sơ sức khỏe cá nhân.",
-    "Cập nhật thông tin cá nhân nếu có thay đổi số điện thoại hoặc địa chỉ.",
-    "Tải lên kết quả xét nghiệm mới nhất vào hồ sơ sức khỏe.",
-    "Xác nhận lịch khám đã đặt trong tuần này.",
-  ];
+  if (isLoading) {
+    return (
+      <Card className="border-primary/15 p-5 text-sm text-slate-600">
+        Đang tải dashboard...
+      </Card>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Card className="border-primary/15 p-5 text-sm text-red-600">
+        Không thể tải dữ liệu dashboard.
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -87,37 +108,41 @@ const Dashboard: React.FC = () => {
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Họ và tên</p>
               <p className="text-sm font-semibold text-slate-900">
-                {profile.fullName}
+                {formatValue(profile?.fullname)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Ngày sinh</p>
               <p className="text-sm font-semibold text-slate-900">
-                {profile.dateOfBirth}
+                {formatValue(profile?.date_of_birth)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Giới tính</p>
               <p className="text-sm font-semibold text-slate-900">
-                {profile.gender}
+                {profile?.gender === undefined
+                  ? "Chưa cập nhật"
+                  : profile.gender
+                    ? "Nam"
+                    : "Nữ"}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Nhóm máu</p>
               <p className="text-sm font-semibold text-slate-900">
-                {healthRecord.bloodType}
+                {formatValue(healthProfile?.blood_type)}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Chiều cao</p>
               <p className="text-sm font-semibold text-slate-900">
-                {healthRecord.height}
+                {formatValue(healthProfile?.height, " cm")}
               </p>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="text-xs text-slate-500">Cân nặng</p>
               <p className="text-sm font-semibold text-slate-900">
-                {healthRecord.weight}
+                {formatValue(healthProfile?.weight, " kg")}
               </p>
             </div>
           </div>
@@ -127,23 +152,15 @@ const Dashboard: React.FC = () => {
               <p className="mb-2 text-sm font-semibold text-slate-900">
                 Dị ứng
               </p>
-              <div className="flex flex-wrap gap-2">
-                {healthRecord.allergies.map((allergy) => (
-                  <Badge key={allergy} variant="outline">
-                    {allergy}
-                  </Badge>
-                ))}
-              </div>
+              <Badge variant="outline">
+                {formatValue(healthProfile?.allergies)}
+              </Badge>
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-3">
               <p className="mb-2 text-sm font-semibold text-slate-900">
-                Bệnh nền/mạn tính
+                Bệnh nền
               </p>
-              <div className="flex flex-wrap gap-2">
-                {healthRecord.chronicConditions.map((condition) => (
-                  <Badge key={condition}>{condition}</Badge>
-                ))}
-              </div>
+              <Badge>{formatValue(healthProfile?.medical_history)}</Badge>
             </div>
           </div>
         </CardContent>
@@ -151,20 +168,30 @@ const Dashboard: React.FC = () => {
 
       <Card className="gap-4 border-primary/15 py-5">
         <CardHeader className="px-5">
-          <CardTitle className="text-lg">Việc cần làm</CardTitle>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageSquareMore className="h-5 w-5 text-primary" />
+            Thông tin theo dõi
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3 px-5">
-          {todoItems.map((todo, index) => (
-            <div
-              key={todo}
-              className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 bg-white p-3"
-            >
-              <p className="text-sm text-slate-700">{todo}</p>
-              <Badge variant={index === 0 ? "default" : "secondary"}>
-                {index === 0 ? "Bắt buộc" : "Ưu tiên"}
-              </Badge>
-            </div>
-          ))}
+        <CardContent className="grid gap-3 px-5 md:grid-cols-3">
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs text-slate-500">Hút thuốc</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {formatBoolean(healthProfile?.smoking)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs text-slate-500">Rượu bia</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {formatBoolean(healthProfile?.alcohol_consumption)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-xs text-slate-500">Vận động</p>
+            <p className="text-sm font-semibold text-slate-900">
+              {formatValue(healthProfile?.exercise_frequency)}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

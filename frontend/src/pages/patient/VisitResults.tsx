@@ -2,10 +2,16 @@ import React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { usePatientPortal } from "@/pages/patient/usePatientPortal";
+import { usePatientExaminationResults } from "@/hooks/usePatientPortalApi";
 
 const VisitResults: React.FC = () => {
-  const { visitResults } = usePatientPortal();
+  const { data, isLoading, isError } = usePatientExaminationResults({
+    page: 1,
+    limit: 50,
+    arrange: "desc",
+  });
+
+  const visitResults = data?.data.examination_results ?? [];
 
   return (
     <Card className="border-primary/15 py-5">
@@ -13,7 +19,15 @@ const VisitResults: React.FC = () => {
         <CardTitle className="text-lg">Kết quả khám sau mỗi lần khám</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 px-5">
-        {visitResults.length === 0 ? (
+        {isLoading ? (
+          <div className="rounded-xl border border-slate-200 p-5 text-sm text-slate-600">
+            Đang tải kết quả khám...
+          </div>
+        ) : isError ? (
+          <div className="rounded-xl border border-red-200 p-5 text-sm text-red-600">
+            Không thể tải kết quả khám.
+          </div>
+        ) : visitResults.length === 0 ? (
           <div className="rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500">
             Chưa có kết quả khám nào.
           </div>
@@ -25,40 +39,49 @@ const VisitResults: React.FC = () => {
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-sm font-semibold text-slate-900">
-                  {result.visitDate} - {result.doctorName}
+                  {result.created_at} -{" "}
+                  {result.appointment.doctor.user.fullname ??
+                    "Bác sĩ chưa cập nhật"}
                 </p>
-                <Badge variant="secondary">{result.specialty}</Badge>
+                <Badge variant="secondary">
+                  {result.appointment.doctor.specialty.specialty_name ??
+                    result.appointment.doctor.specialty.name ??
+                    "Chuyên khoa"}
+                </Badge>
               </div>
 
               <div className="mt-3 space-y-2">
                 <p className="text-sm">
-                  <span className="font-semibold text-slate-900">Chẩn đoán:</span>{" "}
+                  <span className="font-semibold text-slate-900">
+                    Bệnh nhân:
+                  </span>{" "}
+                  <span className="text-slate-700">
+                    {result.appointment.patient.fullname}
+                  </span>
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold text-slate-900">
+                    Triệu chứng:
+                  </span>{" "}
+                  <span className="text-slate-700">{result.symptoms}</span>
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold text-slate-900">
+                    Chẩn đoán:
+                  </span>{" "}
                   <span className="text-slate-700">{result.diagnosis}</span>
                 </p>
-
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Chỉ định/khuyến nghị:
-                  </p>
-                  <ul className="mt-1 list-inside list-disc space-y-1 text-sm text-slate-700">
-                    {result.recommendations.map((recommendation) => (
-                      <li key={recommendation}>{recommendation}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">Đơn thuốc:</p>
-                  <ul className="mt-1 list-inside list-disc space-y-1 text-sm text-slate-700">
-                    {result.prescriptions.map((prescription) => (
-                      <li key={prescription}>{prescription}</li>
-                    ))}
-                  </ul>
-                </div>
-
                 <p className="text-sm">
-                  <span className="font-semibold text-slate-900">Ghi chú:</span>{" "}
-                  <span className="text-slate-700">{result.note}</span>
+                  <span className="font-semibold text-slate-900">
+                    Hướng điều trị:
+                  </span>{" "}
+                  <span className="text-slate-700">{result.treatment}</span>
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold text-slate-900">
+                    Đơn thuốc:
+                  </span>{" "}
+                  <span className="text-slate-700">{result.prescription}</span>
                 </p>
               </div>
             </div>

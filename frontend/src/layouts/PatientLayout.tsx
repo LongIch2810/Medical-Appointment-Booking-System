@@ -13,9 +13,8 @@ import {
 import { NavLink, Outlet } from "react-router-dom";
 
 import { Card } from "@/components/ui/card";
+import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
-import { PatientPortalProvider } from "@/pages/patient/PatientPortalContext";
-import { usePatientPortal } from "@/pages/patient/usePatientPortal";
 
 const navItems = [
   { label: "Dashboard", to: "/patient", icon: LayoutDashboard, end: true },
@@ -86,14 +85,15 @@ const PatientNavigation: React.FC = () => {
 };
 
 const PatientPortalShell: React.FC = () => {
-  const { profile } = usePatientPortal();
+  const { data: profileResponse } = useProfile();
+  const profile = profileResponse?.data;
 
   return (
     <section className="mt-16 md:mt-24">
       <div className="mb-5 rounded-2xl bg-primary p-5 text-white shadow-sm md:p-6">
         <p className="text-sm text-white/80">Xin chào,</p>
         <h1 className="text-2xl font-extrabold md:text-3xl">
-          {profile.fullName}
+          {profile?.fullname ?? "Báº¡n"}
         </h1>
         <p className="mt-1 text-sm text-white/85">
           Quản lý thông tin cá nhân, lịch khám và hồ sơ sức khỏe của bạn tại đây.
@@ -111,12 +111,7 @@ const PatientPortalShell: React.FC = () => {
 };
 
 const PatientLayout: React.FC = () => {
-  return (
-    <PatientPortalProvider>
-      <PatientPortalShell />
-    </PatientPortalProvider>
-  );
+  return <PatientPortalShell />;
 };
 
 export default PatientLayout;
-

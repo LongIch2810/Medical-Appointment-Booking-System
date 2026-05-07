@@ -9,23 +9,24 @@ import ChatBubbleAvatar from "@/components/avatar/ChatBubbleAvatar";
 import ChatBoxList from "@/components/list/ChatBoxList";
 
 const MainLayout: React.FC = () => {
-  const { data } = useProfile();
   const location = useLocation();
   const { channels } = useChannelStore();
   const { userInfo } = useUserStore();
+  const { data } = useProfile(!!userInfo);
+  const currentUser = data?.data ?? userInfo;
   const doctorChannels = useMemo(
     () =>
       channels.map((ch) => ({
         channel: ch,
-        picture: ch.participants.find((p) => p.id !== userInfo?.id)!.picture,
+        picture: ch.participants.find((p) => p.id !== currentUser?.id)!.picture,
       })),
-    [channels, userInfo?.id]
+    [channels, currentUser?.id]
   );
   const shouldHideFloatingChat = location.pathname.startsWith("/patient");
 
   return (
     <div className="relative min-h-screen">
-      <Header userInfo={data?.data} />
+      <Header userInfo={currentUser} />
       <main className="p-6">{<Outlet />}</main>
       <Footer />
       {!shouldHideFloatingChat && (

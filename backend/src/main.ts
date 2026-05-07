@@ -8,14 +8,17 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RemoveFieldPasswordInterceptor } from './common/interceptors/removeFieldPassword.interceptor';
 import { DateFormatInterceptor } from './common/interceptors/dateFormatInterceptor.interceptor';
-import { PermissionsGuard } from './common/guards/permissions.guard';
-import { LoggingInterceptor } from './common/interceptors/loggingInterceptor.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:5000'],
+    origin: [
+      'http://localhost:5173',
+      'http://127.0.0.1:5173',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+    ],
     credentials: true,
   });
   app.use(cookieParser());

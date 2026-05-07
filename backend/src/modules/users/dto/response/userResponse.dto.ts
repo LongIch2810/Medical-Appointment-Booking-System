@@ -14,20 +14,20 @@ export class UserResponseDto {
   email!: string;
 
   @Expose()
-  picture!: string;
+  picture!: string | null;
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  date_of_birth!: string;
+  date_of_birth!: string | null;
 
   @Expose()
   gender!: boolean;
 
   @Expose()
-  address!: string;
+  address!: string | null;
 
   @Expose()
-  phone!: string;
+  phone!: string | null;
 
   @Expose()
   username!: string;
@@ -41,9 +41,9 @@ export class UserResponseDto {
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  created_at!: string;
+  created_at!: string | null;
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  updated_at!: string;
+  updated_at!: string | null;
 }

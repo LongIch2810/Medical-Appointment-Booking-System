@@ -22,7 +22,7 @@ import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
     forwardRef(() => CloudinaryModule),
     AuditLogsModule,
     WebsocketModule,
-    MessagesModule,
+    forwardRef(() => MessagesModule),
     ArticlesModule,
     BullModule.forRootAsync({
       imports: [ConfigModule],

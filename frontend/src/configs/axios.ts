@@ -1,16 +1,35 @@
 import { useUserStore } from "@/store/useUserStore";
 import axios from "axios";
+
+function getBackendBaseURL() {
+  const configuredURL =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+
+  if (typeof window === "undefined") {
+    return configuredURL;
+  }
+
+  const backendURL = new URL(configuredURL);
+  const localHosts = new Set(["localhost", "127.0.0.1"]);
+  if (
+    localHosts.has(backendURL.hostname) &&
+    localHosts.has(window.location.hostname)
+  ) {
+    backendURL.hostname = window.location.hostname;
+  }
+
+  return backendURL.toString().replace(/\/$/, "");
+}
+
+const backendBaseURL = `${getBackendBaseURL()}/api/v1`;
+
 const axiosInstance = axios.create({
-  baseURL: `${
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
-  }/api/v1`,
+  baseURL: backendBaseURL,
   withCredentials: true,
 });
 
 const refreshInstance = axios.create({
-  baseURL: `${
-    import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"
-  }/api/v1`,
+  baseURL: backendBaseURL,
   withCredentials: true,
 });
 
@@ -45,6 +64,14 @@ axiosInstance.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    const requestUrl = originalRequest.url ?? "";
+    if (
+      requestUrl.includes("/auth/login") ||
+      requestUrl.includes("/auth/register")
+    ) {
+      return Promise.reject(error);
+    }
+
     if (originalRequest._retry) {
       return Promise.reject(error);
     }
@@ -67,7 +94,11 @@ axiosInstance.interceptors.response.use(
       return axiosInstance(originalRequest);
     } catch (refreshErr) {
       processorQueue(refreshErr);
-      await refreshInstance.post("/auth/logout");
+      try {
+        await refreshInstance.post("/auth/logout");
+      } catch {
+        // Ignore logout failures here; refresh failure is the auth source of truth.
+      }
       useUserStore.getState().resetState();
       window.location.href = "/sign-in";
       return Promise.reject(refreshErr);

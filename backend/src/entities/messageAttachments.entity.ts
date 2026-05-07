@@ -18,7 +18,7 @@ export default class MessageAttachments {
   @JoinColumn({ name: 'message_id' })
   message!: Relation<Message>;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   url!: string | null;
 
   @Column({

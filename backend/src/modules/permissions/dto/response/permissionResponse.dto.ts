@@ -7,7 +7,4 @@ export class PermissionResponseDto {
 
   @Expose()
   name!: string;
-
-  @Expose()
-  description!: string;
 }

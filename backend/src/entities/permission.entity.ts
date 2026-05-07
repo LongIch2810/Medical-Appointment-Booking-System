@@ -18,9 +18,6 @@ export default class Permission {
   @Column({ type: 'text', unique: true })
   name!: string;
 
-  @Column({ type: 'text', nullable: true })
-  description!: string;
-
   @OneToMany(() => RolePermission, (rp) => rp.permission)
   roles!: Relation<RolePermission[]>;
 
