@@ -2,9 +2,13 @@ import DoctorSchedule from 'src/entities/doctorSchedule.entity';
 import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 import { toHHMM } from './toMinutes';
 
-export const groupSchedulesByDay = (schedules: DoctorSchedule[]) => {
+export const groupSchedulesByDay = (schedules: DoctorSchedule[] = []) => {
   return schedules.reduce(
     (acc, schedule): any => {
+      if (!schedule?.start_time || !schedule?.end_time) {
+        return acc;
+      }
+
       const day = schedule.day_of_week;
       if (!acc[day]) {
         acc[day] = [];

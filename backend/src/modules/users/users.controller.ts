@@ -46,8 +46,6 @@ export class UsersController {
       throw new NotFoundException('Người dùng không tồn tại!');
     }
 
-    console.log('User info:', userInfo);
-
     // await this.redisService.setData(`user:${userId}`, userInfo, 60 * 60);
     return userInfo;
   }

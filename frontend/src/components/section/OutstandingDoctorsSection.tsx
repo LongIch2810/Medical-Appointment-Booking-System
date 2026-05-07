@@ -1,5 +1,4 @@
 import { useOutstandingDoctors } from "@/hooks/useOutstandingDoctors";
-import { Skeleton } from "../ui/skeleton";
 import DoctorCard from "../card/DoctorCard";
 import Title from "../title/Title";
 import { ArrowRight } from "lucide-react";
@@ -26,7 +25,7 @@ const OutstandingDoctorsSection = () => {
                 <DoctorCardSkeleton key={i} />
               ))}
 
-            {data?.data.map((item: any) => (
+            {data?.data.map((item) => (
               <DoctorCard key={item.id} item={item} />
             ))}
           </div>

@@ -13,18 +13,18 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 
 @Controller('doctors')
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService) { }
+  constructor(private readonly doctorsService: DoctorsService) {}
 
   @Post()
   async getFilterDoctors(@Body() bodyFilterDoctor: BodyFilterDoctorsDto) {
-    const result = await this.doctorsService.filterAndPagination(
-      bodyFilterDoctor,
-    );
+    const result =
+      await this.doctorsService.filterAndPagination(bodyFilterDoctor);
     return result;
   }
 
   @Get('outstanding-doctors')
   async getOutstandingDoctors() {
+    console.log('Fetching outstanding doctors...');
     const outstandingDoctors =
       await this.doctorsService.getOutstandingDoctors();
     return outstandingDoctors;
