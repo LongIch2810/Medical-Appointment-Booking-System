@@ -3,6 +3,7 @@ import { MemberResponseDto } from 'src/modules/users/dto/response/memberResonse.
 import { MessageType } from 'src/shared/enums/messageType';
 import { formatDateDDMMYYYY } from 'src/utils/formatDate';
 import { MessageAttachmentResponseDto } from './messageAttachmentResponse.dto';
+import { ChannelResponseDto } from 'src/modules/channels/dto/response/channelResponse.dto';
 
 @Exclude()
 export class MessageResponseDto {
@@ -27,7 +28,8 @@ export class MessageResponseDto {
   sender!: MemberResponseDto;
 
   @Expose()
-  channel!: number;
+  @Type(() => ChannelResponseDto)
+  channel!: ChannelResponseDto;
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))

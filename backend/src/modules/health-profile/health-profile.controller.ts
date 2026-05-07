@@ -17,7 +17,7 @@ import { BodyUpdateHealthProfileDto } from './dto/request/bodyUpdateHealthProfil
 @Controller('health-profiles')
 @UseGuards(JwtAuthGuard)
 export class HealthProfileController {
-  constructor(private readonly healthProfileService: HealthProfileService) {}
+  constructor(private readonly healthProfileService: HealthProfileService) { }
 
   @Post('patient/list')
   async getListHealthProfilesByPersonal(
@@ -38,12 +38,12 @@ export class HealthProfileController {
     @Body() bodyUpdateHealProfile: Partial<BodyUpdateHealthProfileDto>,
   ) {
     const { userId } = req.user;
-    const { message } = await this.healthProfileService.update(
+    const updatedHealProfile = await this.healthProfileService.update(
       userId,
       relativeId,
       bodyUpdateHealProfile,
     );
-    return message;
+    return updatedHealProfile;
   }
 
   @Get(':relativeId')

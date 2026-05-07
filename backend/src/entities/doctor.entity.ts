@@ -22,13 +22,13 @@ export default class Doctor {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'int', nullable: false })
   experience!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   about_me!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   workplace!: string;
 
   @Column({

@@ -22,62 +22,62 @@ export default class HealthProfile {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   weight!: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   height!: number | null;
 
   // Nhóm máu
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   blood_type!: string | null;
 
   // Bệnh nền
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   medical_history!: string | null;
 
   // Dị ứng
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   allergies!: string | null;
 
   // Nhịp tim
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   heart_rate!: number | null;
 
   // Huyết áp
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   blood_pressure!: string | null;
 
   // Lượng đường huyết (mg/dL)
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   glucose_level!: number | null;
 
   // Mức cholesterol (mg/dL)
-  @Column({ nullable: true })
+  @Column({ type: 'int', nullable: true })
   cholesterol_level!: number | null;
 
   // Thuốc đang sử dụng
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   medications!: string | null;
 
   // Các mũi vac xin đã tiêm
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   vaccinations!: string | null;
 
   // Có hút thuốc không ?
-  @Column({ nullable: true })
+  @Column({ type: 'boolean', nullable: true })
   smoking!: boolean | null;
 
   // Có uống rượu hoặc bia không
-  @Column({ nullable: true })
+  @Column({ type: 'boolean', nullable: true })
   alcohol_consumption!: boolean | null;
 
   // Tần suất vận động
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   exercise_frequency!: string | null;
 
   // Ngày khám gần nhất
-  @Column({ nullable: true })
+  @Column({ type: 'date', nullable: true })
   last_checkup_date!: Date | null;
 
   @OneToOne(() => Relative, (r) => r.health_profile, {

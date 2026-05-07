@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import ExaminationResult from 'src/entities/examinationResult.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { AppointmentsService } from '../appointments/appointments.service';
@@ -13,6 +13,8 @@ import { RelativesService } from '../relatives/relatives.service';
 import { BodyFilterExaminationResultsDto } from './dto/request/bodyFilterExaminationResult.dto';
 import { UsersService } from '../users/users.service';
 import { BodyUpdateExaminationResultDto } from './dto/request/bodyUpdateExaminationResult.dto';
+import { ExaminationResultMapper } from './examination-result.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 @Injectable()
 export class ExaminationResultService {
@@ -23,32 +25,41 @@ export class ExaminationResultService {
     private readonly relativesService: RelativesService,
     private readonly usersService: UsersService,
     private readonly redisCacheService: RedisCacheService,
-  ) {}
+  ) { }
 
   async create(body: BodyCreateExaminationResultDto) {
-    const isAppointmentExistsAndCompleted =
-      await this.appointmentsService.isAppointmentCompletedById(
+    try {
+      const isAppointmentExistsAndCompleted =
+        await this.appointmentsService.isAppointmentCompletedById(
+          body.appointment_id,
+        );
+
+      if (!isAppointmentExistsAndCompleted) {
+        throw new BadRequestException(
+          'Lịch khám không tồn tại hoặc chưa hoàn thành.',
+        );
+      }
+
+      const isExaminationResultExists = await this.isExaminationResultExists(
         body.appointment_id,
       );
 
-    if (!isAppointmentExistsAndCompleted) {
-      throw new BadRequestException(
-        'Lịch khám không tồn tại hoặc chưa hoàn thành.',
-      );
+      if (isExaminationResultExists) {
+        throw new BadRequestException(
+          'Kết quả khám bệnh đã tồn tại cho lịch khám này.',
+        );
+      }
+
+      const createdExaminationResult = this.examinationResultRepo.create(body);
+      const newExaminationResult = await this.examinationResultRepo.save(createdExaminationResult)
+      return ExaminationResultMapper.toExaminationResultResponseDto(newExaminationResult);
+    } catch (error) {
+      if (error instanceof QueryFailedError && error.driverError?.code === "23505") {
+        throw new BadRequestException("Kết quả khám bệnh đã tồn tại cho lịch khám này.");
+      }
+      throw error;
     }
 
-    const isExaminationResultExists = await this.isExaminationResultExists(
-      body.appointment_id,
-    );
-
-    if (isExaminationResultExists) {
-      throw new BadRequestException(
-        'Kết quả khám bệnh đã tồn tại cho lịch khám này.',
-      );
-    }
-
-    const createdExaminationResult = this.examinationResultRepo.create(body);
-    return this.examinationResultRepo.save(createdExaminationResult);
   }
 
   async update(
@@ -64,7 +75,20 @@ export class ExaminationResultService {
     }
 
     Object.assign(examinationResult, bodyUpdateExaminationResult);
-    return this.examinationResultRepo.save(examinationResult);
+    const updatedExaminationResult = await this.examinationResultRepo.save(examinationResult);
+    return ExaminationResultMapper.toExaminationResultResponseDto(updatedExaminationResult);
+  }
+
+  async remove(id: number) {
+    const examinationResult = await this.findExaminationResultById(id)
+    await this.examinationResultRepo.softDelete(examinationResult);
+    const deletedExaminationResult = await this.getExaminationResultDetail(id)
+    return deletedExaminationResult
+  }
+
+  async getExaminationResultDetail(id: number) {
+    const examinationResult = await this.findExaminationResultById(id)
+    return ExaminationResultMapper.toExaminationResultResponseDto(examinationResult);
   }
 
   async findExaminationResultById(id: number) {
@@ -94,17 +118,20 @@ export class ExaminationResultService {
   }
 
   async findExaminationResultsByRelativeId(
+    userId: number,
     relativeId: number,
-    body: BodyFilterExaminationResultsDto,
+    objectFilters: BodyFilterExaminationResultsDto,
   ) {
     const isRelativeExists =
-      await this.relativesService.isRelativeExistsByRelativeId(relativeId);
+      await this.relativesService.isRelativeExistsByRelativeId(userId, relativeId);
 
     if (!isRelativeExists) {
       throw new NotFoundException('Bệnh nhân không tồn tại');
     }
 
-    const { limit, page, arrange, date } = body;
+    let { limit, page, arrange, date } = objectFilters;
+    page = Math.max(1, page)
+    limit = Math.max(1, limit)
     const skip = (page - 1) * limit;
 
     const query = this.baseExaminationResultQuery()
@@ -121,26 +148,27 @@ export class ExaminationResultService {
     }
 
     const [examinationResults, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-    return {
-      examinationResults,
+    const result = new PaginationResultDto(
+      "examination_results",
+      ExaminationResultMapper.toExaminationResultResponseDtoList(examinationResults),
       total,
       page,
-      limit,
-      totalPages,
-    };
+      limit)
+    return result
   }
 
   async findExaminationResultsByUserId(
     userId: number,
-    body: BodyFilterExaminationResultsDto,
+    objectFilters: BodyFilterExaminationResultsDto,
   ) {
     const isUserExists = await this.usersService.isUserExists(userId);
     if (!isUserExists) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
 
-    const { limit, page, arrange, date, relativeId } = body;
+    let { limit, page, arrange, date, relativeId } = objectFilters;
+    page = Math.max(1, page)
+    limit = Math.max(1, limit)
     const skip = (page - 1) * limit;
 
     const query = this.baseExaminationResultQuery()
@@ -161,18 +189,19 @@ export class ExaminationResultService {
     }
 
     const [examinationResults, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-    return {
-      examinationResults,
+    const result = new PaginationResultDto(
+      "examination_results",
+      ExaminationResultMapper.toExaminationResultResponseDtoList(examinationResults),
       total,
       page,
-      limit,
-      totalPages,
-    };
+      limit)
+    return result
   }
 
-  async filterAndPagination(body: BodyFilterExaminationResultsDto) {
-    const { limit, page, arrange, date, relativeId } = body;
+  async filterAndPagination(objectFilters: BodyFilterExaminationResultsDto) {
+    let { limit, page, arrange, date, relativeId } = objectFilters;
+    page = Math.max(1, page)
+    limit = Math.max(1, limit)
     const skip = (page - 1) * limit;
     const query = this.baseExaminationResultQuery()
       .orderBy(
@@ -191,14 +220,13 @@ export class ExaminationResultService {
     }
 
     const [examinationResults, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-    return {
-      examinationResults,
+    const result = new PaginationResultDto(
+      "examination_results",
+      ExaminationResultMapper.toExaminationResultResponseDtoList(examinationResults),
       total,
       page,
-      limit,
-      totalPages,
-    };
+      limit)
+    return result
   }
 
   async isExaminationResultExists(appointmentId: number) {
@@ -234,32 +262,5 @@ export class ExaminationResultService {
       .leftJoinAndSelect('doctor_schedule.doctor', 'doctor')
       .leftJoinAndSelect('doctor.user', 'doctor_user')
       .leftJoinAndSelect('doctor.specialty', 'specialty')
-      .select([
-        'examination_result.id',
-        'examination_result.symptoms',
-        'examination_result.diagnosis',
-        'examination_result.treatment',
-        'examination_result.prescription',
-        'examination_result.created_at',
-        'appointment.id',
-        'appointment.status',
-        'appointment.appointment_date',
-        'patient.id',
-        'patient.fullname',
-        'patient.phone',
-        'user.id',
-        'user.fullname',
-        'relationship.relationship_code',
-        'relationship.relationship_name',
-        'doctor.id',
-        'doctor_user.id',
-        'doctor_user.fullname',
-        'specialty.id',
-        'specialty.name',
-        'doctor_schedule.id',
-        'doctor_schedule.day_of_week',
-        'doctor_schedule.start_time',
-        'doctor_schedule.end_time',
-      ]);
   }
 }

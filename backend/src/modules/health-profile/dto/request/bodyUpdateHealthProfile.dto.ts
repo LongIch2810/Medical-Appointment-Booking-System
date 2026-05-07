@@ -2,83 +2,89 @@ import { Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsDateString,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
-  Min,
 } from 'class-validator';
 
 export class BodyUpdateHealthProfileDto {
   @IsNumber()
-  weight!: number;
+  @IsOptional()
+  weight?: number;
 
   @IsNumber()
-  height!: number;
+  @IsOptional()
+  height?: number;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Nhóm máu
-  blood_type!: string;
+  blood_type?: string;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Bệnh nền
-  medical_history!: string;
+  medical_history?: string;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Dị ứng
-  allergies!: string;
+  allergies?: string;
 
   @IsNumber()
+  @IsOptional()
   //Nhịp tim
-  heart_rate!: number;
+  heart_rate?: number;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Huyết áp
-  blood_pressure!: string;
+  blood_pressure?: string;
 
   @IsNumber()
+  @IsOptional()
   //Lượng đường huyết (mg/dL)
-  glucose_level!: number;
+  glucose_level?: number;
 
   @IsNumber()
+  @IsOptional()
   //Mức cholesterol (mg/dL)
-  cholesterol_level!: number;
+  cholesterol_level?: number;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Thuốc đang sử dụng
   medications?: string;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Các mũi vac xin đã tiêm
-  vaccinations!: string;
+  vaccinations?: string;
 
   @IsBoolean()
+  @IsOptional()
   //Có hút thuốc không ?
-  smoking!: boolean;
+  smoking?: boolean;
 
   @IsBoolean()
+  @IsOptional()
   //Có uống rượu hoặc bia không
-  alcohol_consumption!: boolean;
+  alcohol_consumption?: boolean;
 
-  @IsString()
-  @IsNotEmpty()
   @Transform(({ value }) => value.trim())
+  @IsString()
+  @IsOptional()
   //Tần suất vận động
-  exercise_frequency!: string;
+  exercise_frequency?: string;
 
   @IsDateString()
+  @IsOptional()
   //Ngày khám gần nhất
-  last_checkup_date!: Date;
+  last_checkup_date?: Date;
 }

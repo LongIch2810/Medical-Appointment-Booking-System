@@ -27,13 +27,14 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   @Post('register')
   async register(@Body() registerData: BodyRegisterDto) {
-    const { message } = await this.authService.register(registerData);
-    return message;
+    const newUser = await this.authService.register(registerData);
+    return newUser;
   }
+
   @Post('login')
   @UseGuards(LocalAuthGuard)
   async login(@Request() req, @Response() res) {
@@ -114,7 +115,7 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuth() {}
+  async googleAuth() { }
 
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)

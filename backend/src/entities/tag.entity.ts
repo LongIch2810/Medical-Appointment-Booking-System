@@ -15,10 +15,10 @@ export default class Tag {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false, unique: true })
+  @Column({ type: 'text', nullable: false, unique: true })
   name!: string;
 
-  @Column({ unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: false })
   slug!: string;
 
   @OneToMany(() => ArticleTag, (at) => at.tag)

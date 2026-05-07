@@ -20,22 +20,22 @@ export default class Article {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   title!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   content!: string;
 
   @Column({ type: 'jsonb', nullable: true })
   img_urls!: ImageInfo[];
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   summary!: string;
 
-  @Column({ unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: false })
   slug!: string;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   is_approve!: boolean;
 
   @ManyToOne(() => Topic, (t) => t.articles, { nullable: false })

@@ -25,7 +25,7 @@ export default class Conversation {
   })
   role!: RoleMessage;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   content!: string;
 
   @ManyToOne(() => User, (u) => u.messages)

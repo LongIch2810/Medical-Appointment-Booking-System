@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -20,7 +21,7 @@ import { ExaminationResultService } from './examination-result.service';
 export class ExaminationResultController {
   constructor(
     private readonly examinationResultService: ExaminationResultService,
-  ) {}
+  ) { }
 
   @Post()
   async getExaminationResults(
@@ -38,7 +39,7 @@ export class ExaminationResultController {
     return this.examinationResultService.create(bodyCreateExaminationResult);
   }
 
-  @Post('personal-results')
+  @Post('personal/list')
   async getPersonalExaminationResults(
     @Request() req,
     @Body() bodyFilterExaminationResults: BodyFilterExaminationResultsDto,
@@ -54,7 +55,7 @@ export class ExaminationResultController {
   async getExaminationResultDetail(
     @Param('resultId', ParseIntPipe) resultId: number,
   ) {
-    return this.examinationResultService.findExaminationResultById(resultId);
+    return this.examinationResultService.getExaminationResultDetail(resultId);
   }
 
   @Patch(':resultId')
@@ -66,5 +67,12 @@ export class ExaminationResultController {
       resultId,
       bodyUpdateExaminationResult,
     );
+  }
+
+  @Delete(':resultId')
+  async deleteExaminationResult(
+    @Param('resultId', ParseIntPipe) resultId: number,
+  ) {
+    return this.examinationResultService.remove(resultId);
   }
 }

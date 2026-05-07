@@ -37,7 +37,7 @@ export default class DoctorSchedule {
   @Column({ type: 'time', nullable: false })
   end_time!: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   is_active!: boolean;
 
   @OneToMany(() => Appointment, (a) => a.doctor_schedule)

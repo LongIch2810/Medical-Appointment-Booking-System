@@ -28,7 +28,7 @@ export class UsersController {
     private readonly userService: UsersService,
     private readonly cloudinaryService: CloudinaryService,
     private readonly redisService: RedisCacheService,
-  ) {}
+  ) { }
   @Get()
   getUsers() {
     return this.userService.findAll();
@@ -108,7 +108,7 @@ export class UsersController {
     }
     const { old_password, new_password } = bodyChangePassword;
 
-    const isMatchPassword = await bcrypt.compare(old_password, user.password);
+    const isMatchPassword = await bcrypt.compare(old_password, user.password!);
     if (!isMatchPassword) {
       throw new BadRequestException('Mật khẩu cũ không trùng khớp.');
     }

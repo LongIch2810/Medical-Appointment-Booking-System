@@ -15,13 +15,13 @@ export default class Topic {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false, unique: true })
+  @Column({ type: 'text', nullable: false, unique: true })
   name!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   description!: string;
 
-  @Column({ unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: false })
   slug!: string;
 
   @OneToMany(() => Article, (a) => a.topic)

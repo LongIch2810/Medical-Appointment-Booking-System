@@ -1,4 +1,4 @@
-import { UnauthorizedException, UseGuards } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   WebSocketServer,
@@ -11,10 +11,8 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import Article from 'src/entities/article.entity';
-
-import Message from 'src/entities/message.entity';
 import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
-import { BodyCreateMessageDto } from 'src/modules/messages/dto/request/bodyCreateMessage.dto';
+import { MessageResponseDto } from 'src/modules/messages/dto/response/messageResponse.dto';
 import { MessagesService } from 'src/modules/messages/messages.service';
 @WebSocketGateway({
   cors: {
@@ -23,13 +21,12 @@ import { MessagesService } from 'src/modules/messages/messages.service';
   },
 })
 export class WebsocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
-{
+  implements OnGatewayConnection, OnGatewayDisconnect {
   constructor(
     private messagesService: MessagesService,
     private chatHistoryService: ChatHistoryService,
     private jwtService: JwtService,
-  ) {}
+  ) { }
 
   @WebSocketServer()
   server: Server;
@@ -157,7 +154,7 @@ export class WebsocketGateway
     }
   }
 
-  notifyUpdatedFilesMessage(message: Message) {
+  notifyUpdatedFilesMessage(message: MessageResponseDto) {
     const channel_id = message.channel.id;
     this.server.to(`room:${channel_id}`).emit('updated:message:files', message);
   }

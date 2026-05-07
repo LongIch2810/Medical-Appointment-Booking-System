@@ -17,19 +17,19 @@ export default class ExaminationResult {
   id!: number;
 
   // các triệu chứng
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   symptoms!: string;
 
   // chuẩn đoán
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   diagnosis!: string;
 
   // Hướng dẫn điều trị
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   treatment!: string;
 
   // đơn thuốc
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   prescription!: string;
 
   @OneToOne(() => Appointment, (a) => a.examination_result, {

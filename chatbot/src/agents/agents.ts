@@ -1,8 +1,6 @@
 import * as dotenv from "dotenv";
 
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatZhipuAI } from "@langchain/community/chat_models/zhipuai";
 import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { AIMessage } from "@langchain/core/messages";
 import { ToolNode } from "@langchain/langgraph/prebuilt";

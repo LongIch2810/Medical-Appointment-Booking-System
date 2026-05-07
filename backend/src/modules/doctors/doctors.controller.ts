@@ -13,15 +13,12 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 
 @Controller('doctors')
 export class DoctorsController {
-  constructor(private doctorsService: DoctorsService) {}
+  constructor(private doctorsService: DoctorsService) { }
 
   @Post()
   async getFilterDoctors(@Body() bodyFilterDoctor: BodyFilterDoctorsDto) {
-    const { page, limit, ...objectFilter } = bodyFilterDoctor;
     const result = await this.doctorsService.filterAndPagination(
-      page,
-      limit,
-      objectFilter,
+      bodyFilterDoctor,
     );
     return result;
   }
@@ -36,7 +33,7 @@ export class DoctorsController {
   @UseGuards(JwtAuthGuard)
   @Get(':doctorId')
   async getDoctorDetail(@Param('doctorId', ParseIntPipe) doctorId: number) {
-    const doctorDetail = await this.doctorsService.getDoctor(doctorId);
+    const doctorDetail = await this.doctorsService.getDoctorDetail(doctorId);
     return doctorDetail;
   }
 }

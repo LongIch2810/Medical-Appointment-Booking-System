@@ -20,15 +20,15 @@ import Relative from './relative.entity';
 import User from './user.entity';
 
 @Entity('appointments')
-@Unique('UQ_appointment_doctor_schedule', [
-  'doctor_schedule_id',
-  'appointment_date',
-])
+// @Unique('UQ_appointment_doctor_schedule', [
+//   'doctor_schedule_id',
+//   'appointment_date',
+// ])
 export default class Appointment {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'date', nullable: false })
   appointment_date!: Date;
 
   @Column({

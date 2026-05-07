@@ -5,31 +5,49 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Role from 'src/entities/role.entity';
-import { QueryFailedError, Repository } from 'typeorm';
+import { DataSource, Like, QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateRoleDto } from './dto/request/bodyCreateRole.dto';
 import { BodyFilterRolesDto } from './dto/request/bodyFilterRoles.dto';
+import { RolesMapper } from './roles.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { PermissionsService } from '../permissions/permissions.service';
+import RolePermission from 'src/entities/rolePermission.entity';
 
 @Injectable()
 export class RolesService {
-  constructor(@InjectRepository(Role) private roleRepo: Repository<Role>) {}
+  constructor(
+    @InjectRepository(Role) private roleRepo: Repository<Role>,
+    private readonly permissionsService: PermissionsService,
+    private datasource: DataSource
+  ) { }
 
   async create(body: BodyCreateRoleDto) {
     try {
-      const { role_name, role_code, description } = body;
-      const isExistsRoleByName = await this.isRoleNameExist(role_name);
-      const isExistsRoleByCode = await this.isRoleCodeExist(role_code);
-      if (isExistsRoleByName || isExistsRoleByCode) {
-        throw new ConflictException('Vai trò đã tồn tại');
-      }
-      const role = this.roleRepo.create({
-        role_name,
-        role_code,
-        description,
-      });
-      await this.roleRepo.save(role);
-      return {
-        message: 'Tạo vai trò thành công',
-      };
+      return await this.datasource.transaction(async (manager) => {
+        const { role_name, role_code, description, permission_ids } = body;
+        const isExistsRoleByName = await this.isRoleNameExist(role_name);
+        const isExistsRoleByCode = await this.isRoleCodeExist(role_code);
+        if (isExistsRoleByName || isExistsRoleByCode) {
+          throw new ConflictException('Vai trò đã tồn tại');
+        }
+        const uniquePermissionIds = [...new Set(permission_ids)];
+        const isPermissionListExist = await this.permissionsService.isPermissionListExist(uniquePermissionIds);
+        if (!isPermissionListExist) {
+          throw new NotFoundException('Danh sách quyền có quyền không tồn tại trong hệ thống');
+        }
+        const createdRole = manager.create(Role, {
+          role_name,
+          role_code,
+          description,
+        });
+        const newRole = await manager.save(Role, createdRole);
+        await manager.save(RolePermission, uniquePermissionIds.map((permission_id) => ({
+          role: { id: newRole.id },
+          permission: { id: permission_id }
+        })))
+        const roleDetail = await this.getRoleDetail(newRole.id);
+        return roleDetail;
+      })
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
@@ -94,27 +112,27 @@ export class RolesService {
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
-    const query = this.roleRepo
-      .createQueryBuilder('role')
-      .orderBy('role.role_name', arrange.toUpperCase() as 'ASC' | 'DESC')
-      .skip(skip)
-      .take(limit);
-    if (search) {
-      query.where('role.role_name ILIKE :search', { search: `%${search}%` });
-      query.orWhere('role.role_code ILIKE :search', { search: `%${search}%` });
-      query.orWhere('role.description ILIKE :search', {
-        search: `%${search}%`,
-      });
-    }
-    const [roles, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-    return {
-      roles,
-      total,
-      page,
-      totalPages,
-      limit,
-    };
+    const [roles, total] = await this.roleRepo.findAndCount({
+      relations: ['permissions', 'permissions.permission'],
+      skip,
+      take: limit,
+      order: {
+        role_name: arrange.toUpperCase() as 'ASC' | 'DESC',
+      },
+      where: {
+        role_name: Like(`%${search}%`),
+        description: Like(`%${search}%`),
+      },
+    });
+    const result = new PaginationResultDto("roles",
+      RolesMapper.toRoleResponseDtoList(roles),
+      total, page, limit)
+    return result;
+  }
+
+  async getRoleDetail(id: number) {
+    const role = await this.findById(id);
+    return RolesMapper.toRoleResponseDto(role);
   }
 
   async isRoleNameExist(role_name: string) {

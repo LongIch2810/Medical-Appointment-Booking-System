@@ -24,6 +24,8 @@ import { WebsocketGateway } from 'src/websockets/websocket.gateway';
 import { UsersService } from '../users/users.service';
 import { DoctorSchedulesService } from '../doctor-schedules/doctor-schedules.service';
 import { RelativesService } from '../relatives/relatives.service';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { AppointmentsMapper } from './appointments.mapper';
 
 @Injectable()
 export class AppointmentsService {
@@ -35,7 +37,7 @@ export class AppointmentsService {
     private readonly relativesService: RelativesService,
     private readonly redisCacheService: RedisCacheService,
     private readonly gateway: WebsocketGateway,
-  ) {}
+  ) { }
 
   async createWithRetry(
     userId: number,
@@ -125,7 +127,7 @@ export class AppointmentsService {
 
     const saved = await this.appointmentRepo.save(appointment);
 
-    const appointmentDetail = await this.getAppointment(userId, saved.id);
+    const appointmentDetail = await this.getAppointmentDetail(userId, saved.id);
 
     return appointmentDetail;
   }
@@ -144,14 +146,16 @@ export class AppointmentsService {
     await this.appointmentRepo.update(appointmentId, {
       status: AppointmentStatus.CANCELLED,
     });
-    return { message: 'Hủy lịch hẹn thành công.' };
+
+    const deletedAppointment = await this.getAppointmentDetail(userId, appointmentId);
+    return deletedAppointment;
   }
 
   async findPersonalAppointments(
     userId: number,
     objectFilters: BodyPersonalAppointmentsDto,
   ) {
-    let { page, limit } = objectFilters;
+    let { page, limit, appointmentStatus, relativeId } = objectFilters;
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng.');
@@ -160,49 +164,51 @@ export class AppointmentsService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    const cacheKey = `appointments:${userId}:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
-    const cachedData = await this.redisCacheService.getData(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
+    // const cacheKey = `appointments:${userId}:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) {
+    //   return cachedData;
+    // }
     const query = this.baseAppointmentQuery()
-      .where('appointment.patient.id = :userId', { userId })
+      .where('appointment.booked_by_user.id = :userId', { userId })
       .orderBy('appointment.appointment_date', 'DESC')
       .take(limit)
       .skip(skip);
 
-    if (objectFilters?.appointmentStatus) {
+    if (appointmentStatus) {
       query.andWhere('appointment.status = :status', {
-        status: objectFilters.appointmentStatus,
+        status: appointmentStatus,
+      });
+    }
+
+    if (relativeId) {
+      query.andWhere('appointment.patient.id = :relativeId', {
+        relativeId,
       });
     }
 
     const [appointments, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
 
-    const result = {
-      appointments,
-      total,
-      totalPages,
-      page,
-      limit,
-    };
 
-    await this.redisCacheService.setData(cacheKey, result, 3600);
+    const result = new PaginationResultDto('appointments',
+      AppointmentsMapper.toAppointmentResponseDtoList(appointments),
+      total, page, limit);
+
+    // await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
 
-  async getAppointment(userId: number, appointmentId: number) {
+  async getAppointmentDetail(userId: number, appointmentId: number) {
     const isUserExist = await this.usersService.isUserExists(userId);
     if (!isUserExist) {
       throw new NotFoundException('Không tìm thấy người dùng.');
     }
-    const cacheKey = `user:${userId}:appointment:${appointmentId}`;
-    const cachedData = await this.redisCacheService.getData(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
+    // const cacheKey = `user:${userId}:appointment:${appointmentId}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) {
+    //   return cachedData;
+    // }
 
     const appointment = await this.baseAppointmentQuery()
       .where('appointment.id = :appointmentId', { appointmentId })
@@ -213,9 +219,9 @@ export class AppointmentsService {
       throw new NotFoundException('Lịch hẹn không tồn tại.');
     }
 
-    await this.redisCacheService.setData(cacheKey, appointment, 3600);
+    // await this.redisCacheService.setData(cacheKey, appointment, 3600);
 
-    return appointment;
+    return AppointmentsMapper.toAppointmentResponseDto(appointment);
   }
 
   async isAppointmentExists(
@@ -317,32 +323,11 @@ export class AppointmentsService {
   private baseAppointmentQuery() {
     return this.appointmentRepo
       .createQueryBuilder('appointment')
-      .leftJoinAndSelect('appointment.doctor', 'doctor')
       .leftJoinAndSelect('appointment.doctor_schedule', 'doctorSchedule')
       .leftJoinAndSelect('appointment.patient', 'patient')
+      .leftJoinAndSelect('doctorSchedule.doctor', 'doctor')
       .leftJoinAndSelect('doctor.user', 'doctorUser')
       .leftJoinAndSelect('appointment.booked_by_user', 'bookedByUser')
       .leftJoinAndSelect('doctor.specialty', 'specialty')
-      .select([
-        'appointment.id',
-        'appointment.appointment_date',
-        'doctorSchedule.day_of_week',
-        'doctorSchedule.start_time',
-        'doctorSchedule.end_time',
-        'appointment.status',
-        'doctor.id',
-        'doctorUser.fullname',
-        'doctorUser.address',
-        'doctorUser.email',
-        'doctorUser.phone',
-        'doctorUser.picture',
-        'specialty.id',
-        'specialty.name',
-        'patient.id',
-        'patient.fullname',
-        'patient.username',
-        'bookedByUser.id',
-        'bookedByUser.fullname',
-      ]);
   }
 }

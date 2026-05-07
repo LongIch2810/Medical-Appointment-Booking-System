@@ -6,14 +6,16 @@ import { BodyFilterDoctorsDto } from './dto/request/bodyFilterDoctors.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 import { FilterItem } from 'src/shared/interfaces/filterItem';
-import { setIsOutstandingDoctors } from 'src/utils/setIsOutstanding';
+import { setIsOutstandingDoctor, setIsOutstandingDoctors } from 'src/utils/setIsOutstanding';
+import { DoctorsMapper } from './doctors.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 @Injectable()
 export class DoctorsService {
   constructor(
     @InjectRepository(Doctor) private readonly doctorRepo: Repository<Doctor>,
     private readonly redisCacheService: RedisCacheService,
-  ) {}
+  ) { }
 
   async findByDoctorId(doctorId: number): Promise<Doctor | null> {
     const doctor = await this.doctorRepo.findOne({
@@ -34,10 +36,9 @@ export class DoctorsService {
   }
 
   async filterAndPagination(
-    page: number,
-    limit: number,
-    objectFilter: Partial<BodyFilterDoctorsDto>,
+    objectFilter: BodyFilterDoctorsDto,
   ) {
+    let { page, limit, specialty_id, min_experience, max_experience, workplace, area, search } = objectFilter
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -48,172 +49,147 @@ export class DoctorsService {
     //   return cachedData;
     // }
 
-    const doctorsQuery = this.doctorRepo
-      .createQueryBuilder('doctor')
-      .leftJoin('doctor.user', 'user')
-      .leftJoin('doctor.appointments', 'ap', 'ap.status = :status', {
-        status: AppointmentStatus.COMPLETED,
-      })
-      .leftJoin('ap.satisfaction_rating', 'rating')
-      .leftJoin('doctor.specialty', 'specialty')
-      .select([
-        'doctor.id AS id',
-        'user.id AS user_id',
-        'user.fullname AS fullname',
-        'user.picture AS picture',
-        'user.address AS address',
-        'user.phone AS phone',
-        'specialty.name AS specialty',
-        'doctor.workplace AS workplace',
-        'doctor.experience AS experience',
-        'doctor.doctor_level AS doctor_level',
-      ])
-      .addSelect('COALESCE(AVG(rating.rating_score), 0)', 'avg_rating')
-      .addSelect('COUNT(ap.id)', 'appointments_completed')
-      .groupBy('doctor.id')
-      .addGroupBy('user.id')
-      .addGroupBy('user.fullname')
-      .addGroupBy('user.picture')
-      .addGroupBy('user.address')
-      .addGroupBy('user.phone')
-      .addGroupBy('specialty.name')
-      .addGroupBy('doctor.workplace')
-      .addGroupBy('doctor.experience')
-      .addGroupBy('doctor.doctor_level')
-      .where('doctor.deleted_at IS NULL')
+    const doctorsQuery = this.baseDoctorQuery()
       .limit(limit)
       .offset(skip);
 
+    const totalQuery = this.baseTotalDoctorQuery()
+
+
+
     const filters: FilterItem[] = [
-      objectFilter.specialty_id && {
+      specialty_id && {
         condition: 'specialty.id = :specialty_id',
-        value: objectFilter.specialty_id,
+        value: specialty_id,
         key: 'specialty_id',
       },
-      objectFilter.min_experience && {
+      min_experience && {
         condition: 'doctor.experience >= :min_experience',
-        value: objectFilter.min_experience,
+        value: min_experience,
         key: 'min_experience',
       },
-      objectFilter.max_experience && {
+      max_experience && {
         condition: 'doctor.experience <= :max_experience',
-        value: objectFilter.max_experience,
+        value: max_experience,
         key: 'max_experience',
       },
-      objectFilter.workplace && {
+      workplace && {
         condition: 'LOWER(doctor.workplace) LIKE LOWER(:workplace)',
-        value: `%${objectFilter.workplace}%`,
+        value: `%${workplace}%`,
         key: 'workplace',
       },
-      objectFilter.area && {
+      area && {
         condition: 'LOWER(user.address) LIKE LOWER(:area)',
-        value: `%${objectFilter.area}%`,
+        value: `%${area}%`,
         key: 'area',
       },
-      objectFilter.search && {
+      search && {
         condition: 'LOWER(user.fullname) LIKE LOWER(:search)',
-        value: `%${objectFilter.search}%`,
+        value: `%${search}%`,
         key: 'search',
       },
     ].filter(Boolean) as FilterItem[];
 
     filters.forEach(({ condition, value, key }: FilterItem) => {
       doctorsQuery.andWhere(condition, { [key]: value });
+      totalQuery.andWhere(condition, { [key]: value });
     });
 
-    const [doctors, total] = await Promise.all([
-      doctorsQuery.getRawMany(),
-      doctorsQuery.getCount(),
-    ]);
+    const { entities, raw } = await doctorsQuery.getRawAndEntities()
+    const total = await totalQuery.getCount()
 
-    const totalPages = Math.ceil(total / limit);
-    const result = {
-      total,
-      doctors: setIsOutstandingDoctors(doctors),
-      page,
-      limit,
-      totalPages,
-    };
+    const doctors = entities.map((doctor) => {
+      const row = raw.find((i) => Number(i.doctor_id) === doctor.id);
+
+      return {
+        ...doctor,
+        avg_rating: Number(row?.avg_rating ?? 0),
+        appointments_completed: Number(row?.appointments_completed ?? 0),
+      };
+    })
+
+
+    const result = new PaginationResultDto(
+      "doctors",
+      DoctorsMapper.toDoctorResponseDtoList(setIsOutstandingDoctors(doctors)),
+      total, page, limit)
+
 
     // await this.redisCacheService.setData(cacheKey, result);
 
     return result;
   }
 
-  async getDoctor(doctorId: number) {
-    const cacheKey = `doctor:${doctorId}`;
-    const cachedData = await this.redisCacheService.getData(cacheKey);
-    if (cachedData) return cachedData;
-    const doctor = await this.doctorRepo
-      .createQueryBuilder('doctor')
-      .leftJoinAndSelect('doctor.user', 'user')
-      .leftJoinAndSelect('doctor.specialty', 'specialty')
-      .where('doctor.id = :doctorId', { doctorId })
-      .select([
-        'doctor.id',
-        'doctor.experience',
-        'doctor.about_me',
-        'doctor.workplace',
-        'doctor.doctor_level',
-        'specialty.name',
-        'user.fullname',
-        'user.address',
-        'user.phone',
-        'user.email',
-        'user.picture',
-      ])
-      .getOne();
+  async getDoctorDetail(doctorId: number) {
+    // const cacheKey = `doctor:${doctorId}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) return cachedData;
+    const { entities, raw } = await this.baseDoctorQuery().where("doctor.id = :doctorId", { doctorId }).getRawAndEntities();
 
-    if (!doctor) {
+    if (entities.length === 0) {
       throw new NotFoundException('Bác sĩ không tồn tại.');
     }
-    await this.redisCacheService.setData(cacheKey, doctor);
-    return doctor;
+    const row = raw.find((i) => Number(i.doctor_id) === doctorId);
+    // await this.redisCacheService.setData(cacheKey, doctor, 3600);
+    const doctor = {
+      ...entities[0], avg_rating: Number(row?.avg_rating ?? 0),
+      appointments_completed: Number(row?.appointments_completed ?? 0),
+    }
+    return DoctorsMapper.toDoctorResponseDto(setIsOutstandingDoctor(doctor));
   }
 
   async getOutstandingDoctors() {
-    const outstandingDoctorsCached = await this.redisCacheService.getData(
-      `doctors:outstandingDoctors`,
+    // const outstandingDoctorsCached = await this.redisCacheService.getData(
+    //   `doctors:outstandingDoctors`,
+    // );
+    // if (outstandingDoctorsCached) return outstandingDoctorsCached;
+    const query = this.baseDoctorQuery().orderBy('avg_rating', 'DESC').addOrderBy('appointments_completed', 'DESC')
+    const { entities, raw } = await query.getRawAndEntities()
+    const outstandingDoctors = entities.map((doctor) => {
+      const row = raw.find((i) => Number(i.doctor_id) === doctor.id);
+
+      return {
+        ...doctor,
+        avg_rating: Number(row?.avg_rating ?? 0),
+        appointments_completed: Number(row?.appointments_completed ?? 0),
+      };
+    })
+    // await this.redisCacheService.setData(
+    //   `doctors:outstandingDoctors`,
+    //   outstandingDoctors,
+    // );
+    return DoctorsMapper.toDoctorResponseDtoList(
+      setIsOutstandingDoctors(outstandingDoctors).filter((doctor) => doctor.isOutstanding).slice(0, 4)
     );
-    if (outstandingDoctorsCached) return outstandingDoctorsCached;
-    const outstandingDoctors = await this.doctorRepo
+  }
+
+  private baseDoctorQuery() {
+    const subquery = this.doctorRepo.createQueryBuilder('d')
+      .subQuery()
+      .select("ds.doctor_id", "doctor_id")
+      .addSelect('COUNT(ap.id)', 'appointments_completed')
+      .addSelect('COALESCE(AVG(rating.rating_score), 0)', 'avg_rating')
+      .from("doctor_schedules", "ds")
+      .leftJoin("ds.appointments", "ap", "ap.status = :status", { status: AppointmentStatus.COMPLETED })
+      .leftJoin("ap.satisfaction_rating", "rating")
+      .groupBy("ds.doctor_id")
+      .getQuery()
+    return this.doctorRepo.createQueryBuilder("doctor")
+      .leftJoinAndSelect("doctor.user", "user")
+      .leftJoinAndSelect("doctor.doctor_schedules", "doctor_schedules")
+      .leftJoinAndSelect("doctor.specialty", "specialty")
+      .leftJoin(`(${subquery})`, "doctor_stats", "doctor_stats.doctor_id = doctor.id")
+      .addSelect('COALESCE(doctor_stats.avg_rating, 0)', 'avg_rating')
+      .addSelect(
+        'COALESCE(doctor_stats.appointments_completed, 0)',
+        'appointments_completed',
+      );
+  }
+
+  private baseTotalDoctorQuery() {
+    return this.doctorRepo
       .createQueryBuilder('doctor')
       .leftJoin('doctor.user', 'user')
-      .leftJoin('doctor.appointments', 'ap', 'ap.status = :status', {
-        status: AppointmentStatus.COMPLETED,
-      })
-      .leftJoin('ap.satisfaction_rating', 'rating')
-      .leftJoin('doctor.specialty', 'specialty')
-      .select([
-        'doctor.id as id',
-        'user.fullname AS fullname',
-        'user.picture AS picture',
-        'user.address AS address',
-        'user.phone AS phone',
-        'specialty.name AS specialty',
-        'doctor.workplace AS workplace',
-        'doctor.experience AS experience',
-        'doctor.doctor_level AS doctor_level',
-      ])
-      .addSelect('COALESCE(AVG(rating.rating_score), 0)', 'avg_rating')
-      .addSelect('COUNT(ap.id)', 'appointments_completed')
-      .groupBy('doctor.id')
-      .addGroupBy('user.fullname')
-      .addGroupBy('user.picture')
-      .addGroupBy('user.address')
-      .addGroupBy('user.phone')
-      .addGroupBy('specialty.name')
-      .addGroupBy('doctor.workplace')
-      .addGroupBy('doctor.experience')
-      .addGroupBy('doctor.doctor_level')
-      .orderBy('avg_rating', 'DESC')
-      .addOrderBy('appointments_completed', 'DESC')
-      .limit(4)
-      .getRawMany();
-    await this.redisCacheService.setData(
-      `doctors:outstandingDoctors`,
-      outstandingDoctors,
-    );
-    return outstandingDoctors;
+      .leftJoin('doctor.specialty', 'specialty');
   }
 }

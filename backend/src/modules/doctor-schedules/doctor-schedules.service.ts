@@ -10,7 +10,6 @@ import DoctorSchedule from 'src/entities/doctorSchedule.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { BodyCreateScheduleDto } from './dto/request/bodyCreateSchedule.dto';
 import { toMinutes } from 'src/utils/toMinutes';
-import { groupSchedulesByDay } from 'src/utils/groupSchedulesByDay';
 import { DoctorScheduleMapper } from './doctor-schedules.mapper';
 import { DoctorsService } from '../doctors/doctors.service';
 
@@ -21,7 +20,7 @@ export class DoctorSchedulesService {
     private readonly doctorScheduleRepo: Repository<DoctorSchedule>,
     private readonly doctorsService: DoctorsService,
     private readonly redisCacheService: RedisCacheService,
-  ) {}
+  ) { }
 
   async create(userId: number, bodyCreateSchedule: BodyCreateScheduleDto) {
     try {
@@ -109,6 +108,11 @@ export class DoctorSchedulesService {
     return this.doctorScheduleRepo.save(schedule);
   }
 
+  async getDoctorScheduleDetail(scheduleId: number) {
+    const schedule = await this.findScheduleByDoctorScheduleId(scheduleId)
+    return DoctorScheduleMapper.toDoctorScheduleResponseDto(schedule)
+  }
+
   async updateActive(
     userId: number,
     doctorScheduleId: number,
@@ -161,7 +165,7 @@ export class DoctorSchedulesService {
       .addOrderBy('schedule.start_time', 'ASC')
       .getMany();
 
-    return groupSchedulesByDay(schedules);
+    return DoctorScheduleMapper.toDoctorScheduleResponseDtoList(schedules);
   }
 
   async getPersonalSchedules(userId: number) {

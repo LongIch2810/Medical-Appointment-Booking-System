@@ -15,10 +15,10 @@ export class AuditLog {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   action!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   entity_type!: string;
 
   @Column({ type: 'jsonb', nullable: true })
@@ -27,20 +27,29 @@ export class AuditLog {
   @Column({ type: 'jsonb', nullable: true })
   new_data!: Record<string, any>;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   endpoint!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   method!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'int', nullable: false })
   status_code!: number;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   is_success!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   error_message!: string;
+
+  @Column({ type: 'text', nullable: true })
+  ip_address!: string;
+
+  @Column({ type: 'text', nullable: true })
+  user_agent!: string;
+
+  @Column({ type: 'int', nullable: true })
+  duration_ms!: number;
 
   @ManyToOne(() => User, (u) => u.auditLogs, { nullable: false })
   @JoinColumn({ name: 'user_id' })

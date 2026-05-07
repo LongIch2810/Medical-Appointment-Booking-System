@@ -18,10 +18,10 @@ export default class SatisfactionRating {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'int', nullable: false })
   rating_score!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   feedback!: string;
 
   @OneToOne(() => Appointment, (a) => a.satisfaction_rating, {

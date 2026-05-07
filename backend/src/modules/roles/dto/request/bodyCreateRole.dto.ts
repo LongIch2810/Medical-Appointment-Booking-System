@@ -1,5 +1,5 @@
 import { Transform } from "class-transformer";
-import { IsNotEmpty, IsNumber, IsString, Matches, MinLength } from "class-validator";
+import { IsArray, IsNotEmpty, IsNumber, IsString, Matches, MinLength } from "class-validator";
 
 export class BodyCreateRoleDto {
     @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
@@ -20,4 +20,9 @@ export class BodyCreateRoleDto {
     @IsNotEmpty()
     @MinLength(20)
     description!: string
+
+    @IsArray()
+    @IsNotEmpty()
+    @IsNumber({}, { each: true })
+    permission_ids!: number[]
 }

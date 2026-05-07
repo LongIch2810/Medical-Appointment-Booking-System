@@ -6,6 +6,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
   Patch,
   Post,
   UploadedFile,
@@ -26,7 +27,7 @@ export class SpecialtiesController {
   constructor(
     private specialtiesService: SpecialtiesService,
     private cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   @Post('create-specialty')
   @UseGuards(JwtAuthGuard)
@@ -36,25 +37,34 @@ export class SpecialtiesController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     const uploadedResult = await this.cloudinaryService.uploadFile(file);
-    const { message: messageResult } =
-      await this.specialtiesService.createSpecialty({
-        ...bodyCreateSpecialty,
-        img_url: uploadedResult.secure_url,
-      });
-    return messageResult;
+    const createdSpecialty = await this.specialtiesService.create({
+      ...bodyCreateSpecialty,
+      img_url: uploadedResult.secure_url,
+    });
+    return createdSpecialty;
   }
 
   @Patch(':specialtyId')
   @UseGuards(JwtAuthGuard)
-  async updateSpecialty() {}
+  async updateSpecialty() { }
 
   @Delete(':specialtyId')
   @UseGuards(JwtAuthGuard)
-  async deleteSpecialty() {}
+  async deleteSpecialty(
+    @Param('specialtyId') specialtyId: number,
+  ) {
+    const deletedSpecialty = await this.specialtiesService.delete(specialtyId);
+    return deletedSpecialty;
+  }
 
   @Get(':specialtyId')
   @UseGuards(JwtAuthGuard)
-  async getSpecialty() {}
+  async getSpecialty(
+    @Param('specialtyId') specialtyId: number,
+  ) {
+    const specialtyDetail = await this.specialtiesService.getSpecialtyDetail(specialtyId);
+    return specialtyDetail;
+  }
 
   @Post()
   @HttpCode(HttpStatus.OK)

@@ -1,6 +1,8 @@
 import DoctorSchedule from 'src/entities/doctorSchedule.entity';
 import { DoctorScheduleResponseDto } from './dto/response/doctorScheduleResponse.dto';
 import { plainToInstance } from 'class-transformer';
+import { groupSchedulesByDay } from 'src/utils/groupSchedulesByDay';
+import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 
 export class DoctorScheduleMapper {
   static toDoctorScheduleResponseDto(
@@ -13,9 +15,7 @@ export class DoctorScheduleMapper {
 
   static toDoctorScheduleResponseDtoList(
     doctorSchedules: DoctorSchedule[],
-  ): DoctorScheduleResponseDto[] {
-    return plainToInstance(DoctorScheduleResponseDto, doctorSchedules, {
-      excludeExtraneousValues: true,
-    });
+  ): Record<DayOfWeek, { start_time: string, end_time: string, is_active: boolean }[]> {
+    return groupSchedulesByDay(doctorSchedules)
   }
 }

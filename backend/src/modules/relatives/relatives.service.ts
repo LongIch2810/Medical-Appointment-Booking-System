@@ -14,6 +14,7 @@ import { UsersService } from '../users/users.service';
 import { BodyUpdateRelativeDto } from './dto/request/bodyUpdateRelative.dto';
 import { RelativesMapper } from './relatives.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { RelationshipsService } from '../relationships/relationships.service';
 
 @Injectable()
 export class RelativesService {
@@ -21,13 +22,14 @@ export class RelativesService {
     @InjectRepository(Relative)
     private readonly relativeRepo: Repository<Relative>,
     private readonly usersService: UsersService,
+    private readonly relationshipsService: RelationshipsService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async create(userId: number, createRelativeDto: BodyCreateRelativeDto) {
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const { relationship_code, ...rest } = createRelativeDto;
+        const { relationship_code, phone, fullname, ...rest } = createRelativeDto;
         const relationship = await manager.findOne(Relationship, {
           where: { relationship_code: relationship_code },
         });
@@ -38,8 +40,9 @@ export class RelativesService {
 
         const isExists = await this.isRelativeExists(
           userId,
-          rest.fullname,
+          fullname,
           relationship_code,
+          phone
         );
 
         if (isExists) {
@@ -197,46 +200,32 @@ export class RelativesService {
     relativeId: number,
     bodyUpdateRelative: BodyUpdateRelativeDto,
   ) {
-    const relative = await this.findOwnedByUserId(userId, relativeId);
+    try {
+      const relative = await this.findOwnedByUserId(userId, relativeId);
 
-    if (bodyUpdateRelative.relationship_code) {
-      const relationship = await this.dataSource.manager.findOne(Relationship, {
-        where: {
-          relationship_code: bodyUpdateRelative.relationship_code,
-        },
-      });
+      if (bodyUpdateRelative.relationship_code) {
+        const relationship = await this.relationshipsService.findByRelationshipCode(bodyUpdateRelative.relationship_code);
 
-      if (!relationship) {
-        throw new NotFoundException('Mã mối quan hệ không tồn tại');
+        relative.relationship = relationship;
       }
 
-      relative.relationship = relationship;
+      Object.assign(relative, bodyUpdateRelative);
+
+      const savedRelative = await this.relativeRepo.save(relative);
+      return RelativesMapper.toRelativeResponseDto(savedRelative);
+    } catch (error) {
+      if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+        throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống!');
+      }
+      throw error;
     }
 
-    if (bodyUpdateRelative.fullname) {
-      relative.fullname = bodyUpdateRelative.fullname;
-    }
-
-    if (bodyUpdateRelative.phone) {
-      relative.phone = bodyUpdateRelative.phone;
-    }
-
-    if (bodyUpdateRelative.dob) {
-      relative.dob = new Date(bodyUpdateRelative.dob);
-    }
-
-    if (bodyUpdateRelative.gender) {
-      relative.gender = bodyUpdateRelative.gender;
-    }
-
-    return this.relativeRepo.save(relative);
   }
 
   async remove(userId: number, relativeId: number) {
-    const relative = await this.findOwnedByUserId(userId, relativeId);
-
-    await this.relativeRepo.softDelete(relative.id);
-    return { message: 'Xóa người thân thành công' };
+    await this.findOwnedByUserId(userId, relativeId);
+    await this.relativeRepo.softDelete(relativeId);
+    return this.getRelativeDetail(userId, relativeId);
   }
 
   async getRelativeDetail(userId: number, relativeId: number) {
@@ -248,12 +237,14 @@ export class RelativesService {
     userId: number,
     fullname: string,
     relationship_code: string,
+    phone: string,
   ): Promise<boolean> {
     const relative = await this.relativeRepo.findOne({
       where: {
         user: { id: userId },
         fullname: ILike(fullname),
         relationship: { relationship_code: relationship_code },
+        phone: phone,
       },
     });
     return !!relative;

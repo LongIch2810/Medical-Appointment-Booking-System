@@ -28,10 +28,10 @@ export default class Message {
   })
   message_type!: MessageType;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   content!: string | null;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   is_read!: boolean;
 
   @OneToMany(() => MessageAttachments, (ma) => ma.message)

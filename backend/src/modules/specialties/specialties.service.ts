@@ -12,15 +12,17 @@ import { BodyUpdateSpecialtyDto } from './dto/request/bodyUpdateSpecialty.dto';
 import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
 import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
 import { generateSlug } from 'src/utils/generateSlug';
+import { SpecialtiesMapper } from './specialties.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 @Injectable()
 export class SpecialtiesService {
   constructor(
     @InjectRepository(Specialty) private specialtyRepo: Repository<Specialty>,
     private redisCacheService: RedisCacheService,
-  ) {}
+  ) { }
 
-  async createSpecialty(bodyCreateSpecialty: BodyCreateSpecialtyDto) {
+  async create(bodyCreateSpecialty: BodyCreateSpecialtyDto) {
     try {
       const { description, name, img_url } = bodyCreateSpecialty;
       const slug = generateSlug(name);
@@ -34,14 +36,14 @@ export class SpecialtiesService {
         throw new BadRequestException('Ảnh chuyên khoa là bắt buộc.');
       }
 
-      await this.specialtyRepo.save({
+      const newSpecialty = await this.specialtyRepo.save({
         description,
         name,
         slug,
         img_url,
       });
-
-      return { message: 'Tạo chuyên khoa thành công.' };
+      const specialtyDetail = await this.getSpecialtyDetail(newSpecialty.id);
+      return specialtyDetail;
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
@@ -54,12 +56,12 @@ export class SpecialtiesService {
     }
   }
 
-  async updateSpecialty(
+  async update(
     specialtyId: number,
-    bodyUpdateSpecialty: Partial<BodyUpdateSpecialtyDto>,
-  ) {}
+    bodyUpdateSpecialty: BodyUpdateSpecialtyDto,
+  ) { }
 
-  async deleteSpecialty(specialtyId: number) {
+  async delete(specialtyId: number) {
     const specialty = await this.specialtyRepo.findOne({
       where: { id: specialtyId },
     });
@@ -70,28 +72,23 @@ export class SpecialtiesService {
 
     await this.specialtyRepo.softDelete(specialtyId);
 
-    return { message: 'Xóa chuyên khoa thành công.' };
+    const deletedSpecialty = await this.getSpecialtyDetail(specialtyId);
+
+    return deletedSpecialty;
   }
 
-  async getSpecialty(specialtyId: number) {
-    const specialty = await this.specialtyRepo.findOne({
-      where: { id: specialtyId },
-    });
-
-    if (!specialty) {
-      throw new NotFoundException('Chuyên khoa không tồn tại.');
-    }
-
-    return specialty;
+  async getSpecialtyDetail(specialtyId: number) {
+    const specialty = await this.findSpecialtyById(specialtyId);
+    return SpecialtiesMapper.toSpecialtyResponseDto(specialty);
   }
 
   async filterAndPagination(objectFilter: BodyFilterSpecialtiesDto) {
     let { page, limit, search, arrange } = objectFilter;
-    const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${objectFilter || {}}`;
-    const cachedData = await this.redisCacheService.getData(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
+    // const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${objectFilter || {}}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) {
+    //   return cachedData;
+    // }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
 
@@ -112,19 +109,24 @@ export class SpecialtiesService {
     }
 
     const [specialties, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
 
-    const result = {
-      specialties,
-      total,
-      totalPages,
-      limit,
-      page,
-    };
+    const result = new PaginationResultDto('specialties', specialties, total, page, limit);
 
-    await this.redisCacheService.setData(cacheKey, result, 3600);
+    // await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
+  }
+
+  async findSpecialtyById(specialtyId: number) {
+    const specialty = await this.specialtyRepo.findOne({
+      where: { id: specialtyId },
+    });
+
+    if (!specialty) {
+      throw new NotFoundException('Chuyên khoa không tồn tại.');
+    }
+
+    return specialty;
   }
 
   async isSpecialtyExistsByName(name: string) {

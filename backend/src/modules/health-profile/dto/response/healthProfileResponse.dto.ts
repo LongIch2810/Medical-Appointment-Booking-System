@@ -69,11 +69,11 @@ export class HealthProfileResponseDto {
   @Type(() => RelativeResponseDto)
   patient!: RelativeResponseDto;
 
-  @Expose({ name: 'created_at' })
+  @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  created_at!: Date;
+  created_at!: string;
 
-  @Expose({ name: 'updated_at' })
+  @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  updated_at!: Date;
+  updated_at!: string;
 }

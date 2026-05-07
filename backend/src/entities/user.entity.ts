@@ -21,40 +21,41 @@ import Message from './message.entity';
 import ChannelMembers from './channelMembers.entity';
 import Relative from './relative.entity';
 import { AuditLog } from './auditLog.entity';
+import { UserSetting } from './userSetting.entity';
 
 @Entity('users')
 export default class User {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: false })
   username!: string;
 
-  @Column({ unique: true, nullable: false })
+  @Column({ type: 'text', unique: true, nullable: false })
   email!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   password!: string | null;
 
-  @Column({ unique: true, nullable: true })
+  @Column({ type: 'text', unique: true, nullable: true })
   phone!: string | null;
 
-  @Column({ nullable: true })
-  fullname!: string | null;
+  @Column({ type: 'text', nullable: false })
+  fullname!: string;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   gender!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'date', nullable: true })
   date_of_birth!: Date | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   picture!: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   address!: string | null;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   isAdmin!: boolean;
 
   @OneToMany(() => UserRole, (ur) => ur.user)
@@ -89,6 +90,9 @@ export default class User {
 
   @OneToMany(() => AuditLog, (al) => al.user)
   auditLogs!: Relation<AuditLog[]>;
+
+  @OneToOne(() => UserSetting, us => us.user)
+  user_setting!: Relation<UserSetting>;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;

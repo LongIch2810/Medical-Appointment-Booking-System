@@ -22,10 +22,11 @@ export default class Role {
   })
   role_name!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   description!: string;
 
   @Column({
+    type: 'int',
     unique: true,
     nullable: false,
   })

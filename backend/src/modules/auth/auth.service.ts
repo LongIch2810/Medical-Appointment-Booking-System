@@ -17,6 +17,7 @@ import Relative from 'src/entities/relative.entity';
 import { DataSource } from 'typeorm';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import Relationship from 'src/entities/relationship.entity';
+import { UsersMapper } from '../users/users.mapper';
 
 @Injectable()
 export class AuthService {
@@ -27,11 +28,11 @@ export class AuthService {
     private emailProducer: EmailProducer,
     private readonly configService: ConfigService,
     private dataSource: DataSource,
-  ) {}
+  ) { }
 
   async validateUser(usernameOrEmail: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsernameOrEmail(usernameOrEmail);
-    if (user && (await bcrypt.compare(password, user.password))) {
+    if (user && (await bcrypt.compare(password, user.password!))) {
       const roles = user.roles.map((r) => r.role.role_name);
       return { userId: user.id, roles };
     }
@@ -143,7 +144,7 @@ export class AuthService {
 
         await this.emailProducer.sendWelcome(email, username);
 
-        return { message: 'Đăng ký thành công.' };
+        return UsersMapper.toUserProfileResponse(newUser);
       });
     } catch (error) {
       throw error;

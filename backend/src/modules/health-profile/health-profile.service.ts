@@ -22,7 +22,7 @@ export class HealthProfileService {
     private readonly relativesService: RelativesService,
     private readonly redisCacheService: RedisCacheService,
     private readonly usersService: UsersService,
-  ) {}
+  ) { }
 
   async create(userId: number, relativeId: number) {
     const isUserExists = await this.usersService.isUserExists(userId);
@@ -54,7 +54,7 @@ export class HealthProfileService {
   async update(
     userId: number,
     relativeId: number,
-    bodyUpdateHealthProfile: Partial<BodyUpdateHealthProfileDto>,
+    bodyUpdateHealthProfile: BodyUpdateHealthProfileDto,
   ) {
     const isUserExists = await this.usersService.isUserExists(userId);
     if (!isUserExists) {
@@ -68,16 +68,15 @@ export class HealthProfileService {
 
     if (!relative.health_profile) {
       throw new ConflictException(
-        'Bệnh nhân này đang bị lỗi rỗng hồ sơ sức khỏe. Vui lòng liên hệ Admin.',
+        'Bệnh nhân này đang không có hồ sơ sức khỏe. Vui lòng liên hệ Admin.',
       );
     }
 
-    await this.healthProfileRepo.update(
-      relative.health_profile.id,
-      bodyUpdateHealthProfile,
-    );
+    Object.assign(relative.health_profile, bodyUpdateHealthProfile)
 
-    return { message: 'Cập nhật hồ sơ sức khỏe thành công.' };
+    const updatedHealthProfile = await this.healthProfileRepo.save(relative.health_profile);
+
+    return HealthProfileMapper.toHealthProfileResponseDto(updatedHealthProfile);
   }
 
   async getHealthProfile(userId: number, relativeId: number) {
@@ -234,32 +233,5 @@ export class HealthProfileService {
       .leftJoinAndSelect('health_profile.patient', 'relative')
       .leftJoinAndSelect('relative.user', 'user')
       .leftJoinAndSelect('relative.relationship', 'relationship')
-      .select([
-        'health_profile.id',
-        'health_profile.weight',
-        'health_profile.height',
-        'health_profile.blood_type',
-        'health_profile.medical_history',
-        'health_profile.allergies',
-        'health_profile.heart_rate',
-        'health_profile.blood_pressure',
-        'health_profile.glucose_level',
-        'health_profile.cholesterol_level',
-        'health_profile.medications',
-        'health_profile.vaccinations',
-        'health_profile.smoking',
-        'health_profile.alcohol_consumption',
-        'health_profile.exercise_frequency',
-        'health_profile.last_checkup_date',
-        'relative.id',
-        'relative.fullname',
-        'relative.gender',
-        'relative.dob',
-        'relative.phone',
-        'relationship.relationship_code',
-        'relationship.relationship_name',
-        'user.id',
-        'user.fullname',
-      ]);
   }
 }

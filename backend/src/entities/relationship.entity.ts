@@ -15,13 +15,13 @@ export default class Relationship {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column({ type: 'text', unique: true })
   relationship_code!: string;
 
-  @Column({ unique: true })
+  @Column({ type: 'text', unique: true })
   relationship_name!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   description!: string | null;
 
   @OneToMany(() => Relative, (r) => r.relationship)

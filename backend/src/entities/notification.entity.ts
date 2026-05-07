@@ -16,13 +16,13 @@ export default class Notification {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   content!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'text', nullable: false })
   title!: string;
 
-  @Column({ nullable: false })
+  @Column({ type: 'boolean', nullable: false })
   is_notified!: boolean;
 
   @ManyToOne(() => User, (u) => u.notifications, { nullable: false })

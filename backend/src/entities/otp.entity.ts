@@ -13,13 +13,13 @@ export default class Otp {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ unique: true })
+  @Column({ type: 'text', unique: true })
   otpCode!: string;
 
   @Column({ type: 'timestamp' })
   expiresAt!: Date;
 
-  @Column({ default: false })
+  @Column({ type: 'boolean', default: false })
   verified!: boolean;
 
   @ManyToOne(() => User, (u) => u.otps)

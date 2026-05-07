@@ -1,16 +1,18 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Relationship from 'src/entities/relationship.entity';
 import { QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateRelationshipDto } from './dto/request/bodyCreateRelationship.dto';
 import { BodyFilterRelationshipsDto } from './dto/request/bodyFilterRelationships.dto';
+import { RelationshipsMapper } from './relationships.mapper';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 @Injectable()
 export class RelationshipsService {
   constructor(
     @InjectRepository(Relationship)
     private readonly relationshipRepo: Repository<Relationship>,
-  ) {}
+  ) { }
 
   async create(body: BodyCreateRelationshipDto) {
     try {
@@ -25,8 +27,8 @@ export class RelationshipsService {
       }
 
       const createdRelationship = this.relationshipRepo.create(body);
-      await this.relationshipRepo.save(createdRelationship);
-      return { message: 'Tạo mối quan hệ thành công' };
+      const newRelationship = await this.relationshipRepo.save(createdRelationship);
+      return RelationshipsMapper.toRelationshipResponseDto(newRelationship);
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
@@ -38,7 +40,17 @@ export class RelationshipsService {
     }
   }
 
-  async update() {}
+  async update() { }
+
+  async getRelationshipDetail(relationshipCode: string) {
+    const relationship = await this.relationshipRepo.findOne({
+      where: { relationship_code: relationshipCode },
+    });
+    if (!relationship) {
+      throw new NotFoundException('Không tìm thấy mối quan hệ');
+    }
+    return RelationshipsMapper.toRelationshipResponseDto(relationship);
+  }
 
   async filterAndPagination(objectFilters: BodyFilterRelationshipsDto) {
     let { search, arrange, page, limit } = objectFilters;
@@ -64,14 +76,18 @@ export class RelationshipsService {
     }
 
     const [relationships, total] = await query.getManyAndCount();
-    const totalPages = Math.ceil(total / limit);
-    return {
-      relationships,
-      total,
-      page,
-      totalPages,
-      limit,
-    };
+    const result = new PaginationResultDto("relationships", RelationshipsMapper.toRelationshipResponseDtoList(relationships), total, page, limit);
+    return result;
+  }
+
+  async findByRelationshipCode(relationshipCode: string) {
+    const relationship = await this.relationshipRepo.findOne({
+      where: { relationship_code: relationshipCode },
+    });
+    if (!relationship) {
+      throw new NotFoundException('Không tìm thấy mối quan hệ');
+    }
+    return relationship;
   }
 
   async isRelationshipExistsByName(relationship_name: string) {

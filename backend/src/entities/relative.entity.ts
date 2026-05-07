@@ -10,6 +10,7 @@ import {
   JoinColumn,
   OneToOne,
   OneToMany,
+  Unique,
 } from 'typeorm';
 import User from './user.entity';
 import HealthProfile from './healthProfile.entity';
@@ -25,7 +26,7 @@ export default class Relative {
   @JoinColumn({ name: 'user_id' })
   user!: Relation<User>;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   fullname!: string | null;
 
   @ManyToOne(() => Relationship, (rel) => rel.relatives, { nullable: false })
@@ -35,13 +36,13 @@ export default class Relative {
   })
   relationship!: Relation<Relationship>;
 
-  @Column({ nullable: true })
+  @Column({ unique: true, type: 'text', nullable: true })
   phone!: string | null;
 
   @Column({ type: 'date', nullable: true })
   dob!: Date | null;
 
-  @Column({ default: true })
+  @Column({ type: 'boolean', default: true })
   gender!: boolean;
 
   @OneToOne(() => HealthProfile, (hp) => hp.patient)

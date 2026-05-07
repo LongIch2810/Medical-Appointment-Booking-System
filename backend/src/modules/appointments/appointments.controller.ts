@@ -18,7 +18,7 @@ import { BodyPersonalAppointmentsDto } from './dto/request/bodyPersonalAppointme
 @Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) {}
+  constructor(private readonly appointmentsService: AppointmentsService) { }
 
   @Post('booking')
   async createAppointment(
@@ -65,7 +65,7 @@ export class AppointmentsController {
     @Param('appointmentId', ParseIntPipe) appointmentId: number,
   ) {
     const { userId } = req.user;
-    const appointment = await this.appointmentsService.getAppointment(
+    const appointment = await this.appointmentsService.getAppointmentDetail(
       userId,
       appointmentId,
     );
