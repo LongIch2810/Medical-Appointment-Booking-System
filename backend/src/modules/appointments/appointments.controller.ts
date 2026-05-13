@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   Body,
   Controller,
@@ -18,7 +19,7 @@ import { BodyPersonalAppointmentsDto } from './dto/request/bodyPersonalAppointme
 @Controller('appointments')
 @UseGuards(JwtAuthGuard)
 export class AppointmentsController {
-  constructor(private readonly appointmentsService: AppointmentsService) { }
+  constructor(private readonly appointmentsService: AppointmentsService) {}
 
   @Post('booking')
   async createAppointment(

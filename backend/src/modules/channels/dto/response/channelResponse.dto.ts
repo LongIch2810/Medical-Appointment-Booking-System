@@ -9,6 +9,10 @@ export class ChannelResponseDto {
   id!: number;
 
   @Expose()
+  @Transform(({ obj }) => obj.id)
+  channel_id!: number;
+
+  @Expose()
   @Type(() => MessageResponseDto)
   chat_messages!: MessageResponseDto[];
 

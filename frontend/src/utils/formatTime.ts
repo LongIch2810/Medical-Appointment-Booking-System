@@ -1,3 +1,4 @@
+import type { PatientAppointment } from "../types/interface/patient.interface";
 import { formatDate } from "./formatDate";
 
 export const formatTime = (date: Date): string => {
@@ -19,18 +20,18 @@ export const checkExpireTime = (
   selectedDate: Date,
   start_time: string,
   end_time: string,
-  time: string
+  time: string,
 ): boolean => {
   const today = new Date();
   const todayDateOnly = new Date(
     today.getFullYear(),
     today.getMonth(),
-    today.getDate()
+    today.getDate(),
   );
   const selectedDateOnly = new Date(
     selectedDate.getFullYear(),
     selectedDate.getMonth(),
-    selectedDate.getDate()
+    selectedDate.getDate(),
   );
 
   // Nếu ngày đã qua -> hết hạn
@@ -47,16 +48,19 @@ export const checkExpireTime = (
 
 export const checkTimeBooked = (
   selectedDate: Date,
-  appointments: any
+  appointments: PatientAppointment[],
 ): boolean => {
   let isBooked = false;
-  appointments.forEach((appointment: any) => {
-    if (
-      formatDate(selectedDate, "vi-VN", false) === appointment.appointment_date
-    ) {
-      isBooked = true;
-    }
-  });
+  (Array.isArray(appointments) ? appointments : []).forEach(
+    (appointment: PatientAppointment) => {
+      if (
+        formatDate(selectedDate, "vi-VN", false) ===
+        appointment.appointment_date
+      ) {
+        isBooked = true;
+      }
+    },
+  );
 
   return isBooked;
 };

@@ -24,6 +24,8 @@ import { useProfile } from "@/hooks/useProfile";
 import { useNotifyAppointmentSocket } from "@/hooks/useNotifyAppointmentSocket";
 import { useSocket } from "@/hooks/useSocket";
 import { X } from "lucide-react";
+import type { AxiosError } from "axios";
+import type { ApiError } from "@/types/interface/apiError.interface";
 
 interface DialogDisplaySchedulesProps {
   open: boolean;
@@ -60,7 +62,23 @@ const DialogDisplaySchedules = ({
       toast.error("Vui lòng chọn khung giờ khám !");
     } else {
       setIsPending(true);
-      mutate(data);
+      mutate(data, {
+        onSuccess: () => {
+          setIsPending(false);
+          setOpenConfirm(false);
+        },
+        onError: (error) => {
+          const axiosError = error as AxiosError<ApiError>;
+          const details = axiosError.response?.data.error.details;
+          const message =
+            typeof details === "string"
+              ? details
+              : (details?.[0] ?? "Äáº·t lá»‹ch khÃ¡m tháº¥t báº¡i!");
+
+          setIsPending(false);
+          toast.error(message);
+        },
+      });
     }
   };
   return (

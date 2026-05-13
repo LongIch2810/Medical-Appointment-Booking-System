@@ -26,7 +26,6 @@ import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useShow } from "@/hooks/useShow";
 import DialogDisplaySchedules from "../dialog/DialogDisplaySchedules";
-import { useFindChannelParticipants } from "@/hooks/useFindChannelParticipants";
 import { useUserStore } from "@/store/useUserStore";
 
 export default function DoctorCard(doctorCardProps: DoctorCardProps) {
@@ -48,9 +47,13 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
   const navigate = useNavigate();
   const { isShow, setIsShow } = useShow();
   const { userInfo } = useUserStore();
-  const { mutate } = useFindChannelParticipants();
   const handleOnlineAdvising = (user_id: number) => {
-    mutate({ senderId: userInfo!.id, receiverId: user_id });
+    if (!userInfo) {
+      navigate("/sign-in");
+      return;
+    }
+
+    navigate(`/patient/messages?doctorUserId=${user_id}`);
   };
 
   return (

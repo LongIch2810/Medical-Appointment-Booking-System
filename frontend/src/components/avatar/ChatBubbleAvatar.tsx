@@ -4,7 +4,7 @@ import { useChannelStore, type Channel } from "@/store/useChannelStore";
 
 interface ChatBubbleAvatarProps {
   channel: Channel;
-  picture: string;
+  picture?: string | null;
 }
 const ChatBubbleAvatar = ({ channel, picture }: ChatBubbleAvatarProps) => {
   const { setChatBoxChannels, setChannels } = useChannelStore();

@@ -139,6 +139,7 @@ export interface PatientDashboard {
 export interface ChannelParticipant {
   id: number;
   fullname: string | null;
+  username?: string | null;
   picture: string | null;
 }
 
@@ -161,6 +162,7 @@ export interface Message {
 
 export interface Channel {
   id: number;
+  channel_id?: number;
   chat_messages: Message[];
   participants: ChannelParticipant[];
   created_at: string;
@@ -183,9 +185,10 @@ export type AppointmentListResponse = PaginationResponse<PatientAppointment> & {
   appointments: PatientAppointment[];
 };
 
-export type ExaminationResultListResponse = PaginationResponse<ExaminationResult> & {
-  examination_results: ExaminationResult[];
-};
+export type ExaminationResultListResponse =
+  PaginationResponse<ExaminationResult> & {
+    examination_results: ExaminationResult[];
+  };
 
 export type ChannelListResponse = PaginationResponse<Channel> & {
   channels: Channel[];

@@ -9,5 +9,8 @@ export class MemberResponseDto {
   fullname!: string;
 
   @Expose()
+  username!: string;
+
+  @Expose()
   picture!: string;
 }

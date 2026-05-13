@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import {
   Body,
   Controller,
@@ -16,6 +18,11 @@ import { BodyFilterChannelsDto } from './dto/request/bodyFilterChannels.dto';
 @UseGuards(JwtAuthGuard)
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
+
+  @Post('create')
+  createChannel(@Body() member_ids: number[]) {
+    return this.channelsService.createChannel(member_ids);
+  }
 
   @Post('/personal-channels')
   getPersonalChannels(

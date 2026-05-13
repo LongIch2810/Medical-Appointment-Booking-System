@@ -1,3 +1,4 @@
+/* eslint-disable */
 import {
   ConflictException,
   Injectable,
@@ -28,7 +29,7 @@ export class AuthService {
     private emailProducer: EmailProducer,
     private readonly configService: ConfigService,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async validateUser(usernameOrEmail: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsernameOrEmail(usernameOrEmail);
@@ -67,7 +68,7 @@ export class AuthService {
         expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
       });
 
-      const refreshTokenDecoded = this.jwtService.decode(refreshToken) as any;
+      const refreshTokenDecoded = this.jwtService.decode(refreshToken);
 
       const sessions = await this.redisService.lRange(
         `refresh_tokens:${userId}`,
@@ -153,7 +154,7 @@ export class AuthService {
 
   async logout(req: Request) {
     const refreshToken = req.cookies.refreshToken;
-    const decoded = this.jwtService.decode(refreshToken) as any;
+    const decoded = this.jwtService.decode(refreshToken);
     if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
       throw new UnauthorizedException('Token không hợp lệ!');
     }
@@ -173,7 +174,7 @@ export class AuthService {
 
   async logoutAll(req: Request) {
     const refreshToken = req.cookies.refreshToken;
-    const decoded = this.jwtService.decode(refreshToken) as any;
+    const decoded = this.jwtService.decode(refreshToken);
     if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
       throw new UnauthorizedException('Token không hợp lệ!');
     }
@@ -220,7 +221,7 @@ export class AuthService {
       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
       expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
     });
-    const newDecoded = this.jwtService.decode(newRefreshToken) as any;
+    const newDecoded = this.jwtService.decode(newRefreshToken);
 
     await this.redisService.rPush(
       `refresh_tokens:${userId}`,

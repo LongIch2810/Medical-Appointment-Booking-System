@@ -4,6 +4,7 @@ import {
   createPatientRelative,
   deletePatientRelative,
   fetchPatientAppointments,
+  fetchPatientAppointmentDetail,
   fetchPatientChannels,
   fetchPatientDashboard,
   fetchPatientExaminationResults,
@@ -31,6 +32,8 @@ export const patientQueryKeys = {
   dashboard: ["patient-dashboard"] as const,
   appointments: (filters: PersonalAppointmentsPayload) =>
     ["patient-appointments", filters] as const,
+  appointmentDetail: (appointmentId: number) =>
+    ["patient-appointment-detail", appointmentId] as const,
   relatives: (filters: PatientListPayload) =>
     ["patient-relatives", filters] as const,
   relationships: (filters: PatientListPayload) =>
@@ -58,6 +61,17 @@ export function usePatientAppointments(filters: PersonalAppointmentsPayload) {
   return useQuery({
     queryKey: patientQueryKeys.appointments(filters),
     queryFn: () => fetchPatientAppointments(filters),
+  });
+}
+
+export function usePatientAppointmentDetail(
+  appointmentId: number,
+  enabled = true,
+) {
+  return useQuery({
+    queryKey: patientQueryKeys.appointmentDetail(appointmentId),
+    queryFn: () => fetchPatientAppointmentDetail(appointmentId),
+    enabled: enabled && appointmentId > 0,
   });
 }
 

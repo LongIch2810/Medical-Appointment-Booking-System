@@ -12,14 +12,20 @@ const ChatBoxList = () => {
       }`}
     >
       {chatBoxChannels?.length > 0 &&
-        chatBoxChannels.map((cb) => (
-          <ChatBox
-            channel={cb}
-            key={cb.channel_id}
-            title={cb.participants.find((p) => p.id !== userInfo?.id)!.username}
-            avatar={cb.participants.find((p) => p.id !== userInfo?.id)!.picture}
-          />
-        ))}
+        chatBoxChannels.map((cb) => {
+          const participant = cb.participants.find(
+            (p) => p.id !== userInfo?.id
+          );
+
+          return (
+            <ChatBox
+              channel={cb}
+              key={cb.channel_id}
+              title={participant?.username ?? participant?.fullname ?? "Bác sĩ"}
+              avatar={participant?.picture ?? undefined}
+            />
+          );
+        })}
     </div>
   );
 };

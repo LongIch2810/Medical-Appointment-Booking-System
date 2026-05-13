@@ -1,32 +1,28 @@
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useGetDoctorDetail } from "@/hooks/useGetDoctorDetail";
-import { useProfile } from "@/hooks/useProfile";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import type { AxiosError } from "axios";
+import { GraduationCap, Mail, MapPin, Phone, Stethoscope } from "lucide-react";
+import { toast } from "react-toastify";
+import AlertDialogConfirmBook from "@/components/dialog/AlertDialogConfirmBook";
+import CalendarComponent from "@/components/calendar/CalendarComponent";
+import DoctorScheduleList from "@/components/list/DoctorScheduleList";
+import Loading from "@/components/loading/Loading";
+import DoctorInfoSkeleton from "@/components/skeleton/DoctorInfoSkeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
-import { Phone, Mail, MapPin, GraduationCap, Stethoscope } from "lucide-react";
-import CalendarComponent from "../components/calendar/CalendarComponent";
-import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
-import { getWeekday } from "@/utils/formatDate";
-import DoctorScheduleList from "@/components/list/DoctorScheduleList";
-import { formatDate, formatDateYYYYMMDD } from "../utils/formatDate";
 import { Button } from "@/components/ui/button";
-import { checkSchedulesExpireOrBooked } from "@/utils/checkSchedulesExpire";
-import { useBookingAppointment } from "@/hooks/useBookingAppointment";
+import { Separator } from "@/components/ui/separator";
 import type { createAppointmentData } from "@/api/appointmentApi";
-import { toast } from "react-toastify";
-import type { AxiosError } from "axios";
-import type { ApiError } from "@/types/interface/apiError.interface";
-import Loading from "@/components/loading/Loading";
-import { useGetDoctorSchedules } from "@/hooks/useGetDoctorSchedules";
-import DoctorInfoSkeleton from "@/components/skeleton/DoctorInfoSkeleton";
-import DoctorScheduleListSkeleton from "@/components/skeleton/DoctorScheduleListSkeleton";
+import { useBookingAppointment } from "@/hooks/useBookingAppointment";
+import { useGetDoctorDetail } from "@/hooks/useGetDoctorDetail";
 import { useNotifyAppointmentSocket } from "@/hooks/useNotifyAppointmentSocket";
 import { useSocket } from "@/hooks/useSocket";
-import AlertDialogConfirmBook from "@/components/dialog/AlertDialogConfirmBook";
+import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
 import { useUserStore } from "@/store/useUserStore";
+import type { ApiError } from "@/types/interface/apiError.interface";
+import type { DoctorSchedule } from "@/types/interface/doctorSchedule.interface";
+import { checkSchedulesExpireOrBooked } from "@/utils/checkSchedulesExpire";
+import { formatDate, formatDateYYYYMMDD, getWeekday } from "@/utils/formatDate";
 
 const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,6 +41,7 @@ const DoctorDetail = () => {
     tempTime,
     setTempTime,
   } = useBookingAppointmentStore();
+
   const socket = useSocket(userInfo?.id);
   useNotifyAppointmentSocket(socket, doctor_id, setIsPending);
 
@@ -68,8 +65,9 @@ const DoctorDetail = () => {
   useEffect(() => {
     const params: Record<string, string> = {};
     if (selectedDate) params.selectedDate = formatDateYYYYMMDD(selectedDate);
-    if (doctor_schedule_id)
+    if (doctor_schedule_id) {
       params.doctorScheduleId = doctor_schedule_id.toString();
+    }
     if (id) setDoctorId(Number(id));
     if (tempTime?.start_time) params.startTime = tempTime.start_time;
     if (tempTime?.end_time) params.endTime = tempTime.end_time;
@@ -86,13 +84,14 @@ const DoctorDetail = () => {
   useEffect(() => {
     if (isErrorBooking) {
       const axiosError = error as AxiosError<ApiError>;
+      const details = axiosError.response?.data.error.details;
       const message =
-        typeof axiosError.response?.data.error.details === "string"
-          ? axiosError.response?.data.error.details
-          : axiosError.response?.data.error.details[0];
+        typeof details === "string"
+          ? details
+          : (details?.[0] ?? "Đặt lịch khám thất bại!");
       toast.error(message);
     }
-  }, [isErrorBooking]);
+  }, [error, isErrorBooking]);
 
   const {
     data: doctorRes,
@@ -100,10 +99,7 @@ const DoctorDetail = () => {
     isError,
   } = useGetDoctorDetail(Number(id));
 
-  const { data: doctorSchedulesRes, isLoading: isLoadingSchedules } =
-    useGetDoctorSchedules(Number(id));
-
-  if (isLoading || isLoadingSchedules) {
+  if (isLoading) {
     return <DoctorInfoSkeleton />;
   }
 
@@ -116,40 +112,51 @@ const DoctorDetail = () => {
   }
 
   const doctor = doctorRes.data;
-  const schedules = doctorSchedulesRes?.data || [];
+  const schedules =
+    (doctor.doctor_schedules as Record<string, DoctorSchedule[]> | undefined) ??
+    {};
+  const selectedDaySchedules = schedules[getWeekday(selectedDate)] || [];
 
   const handleBookingAppointment = (data: createAppointmentData) => {
     if (!data.appointment_date) {
-      toast.error("Vui lòng chọn ngày khám !");
+      toast.error("Vui lòng chọn ngày khám!");
     } else if (!data.doctor_id) {
-      toast.error("Vui lòng chọn bác sĩ !");
+      toast.error("Vui lòng chọn bác sĩ!");
     } else if (!data.doctor_schedule_id) {
-      toast.error("Vui lòng chọn khung giờ khám !");
+      toast.error("Vui lòng chọn khung giờ khám!");
+    } else if (!data.relative_id) {
+      toast.error("Vui lòng chọn người thân cần đặt lịch khám!");
     } else {
       setIsPending(true);
-      mutate(data);
+      mutate(data, {
+        onSuccess: () => {
+          setIsPending(false);
+          setOpenConfirm(false);
+        },
+        onError: () => {
+          setIsPending(false);
+        },
+      });
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl mt-16 md:mt-28 space-y-8">
-      {/* Profile bác sĩ */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow p-6 space-y-8">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <Avatar className="w-28 h-28 ring-2 ring-primary/40">
-            <AvatarImage src={doctor.user.picture} />
-            <AvatarFallback>{doctor.user.fullname[0]}</AvatarFallback>
+            <AvatarImage src={doctor.picture} />
+            <AvatarFallback>{doctor.fullname}</AvatarFallback>
           </Avatar>
 
           <div className="flex-1 text-center sm:text-left space-y-3">
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold">
-              {doctor.user.fullname}
+              {doctor.fullname}
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-muted-foreground flex items-center justify-center sm:justify-start gap-2">
               <Stethoscope size={20} />
               <span>
-                {doctor.doctor_level} – {doctor.specialty.name}
+                {doctor.doctor_level} - {doctor.specialty.name}
               </span>
             </p>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 flex items-center justify-center sm:justify-start gap-2">
@@ -168,9 +175,7 @@ const DoctorDetail = () => {
 
         <Separator />
 
-        {/* Body Info */}
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Giới thiệu */}
           <section className="space-y-3">
             <h3 className="font-semibold text-base sm:text-lg md:text-xl border-b pb-2">
               Giới thiệu
@@ -180,7 +185,6 @@ const DoctorDetail = () => {
             </p>
           </section>
 
-          {/* Thông tin liên hệ */}
           <section className="space-y-3">
             <h3 className="font-semibold text-base sm:text-lg md:text-xl border-b pb-2">
               Thông tin liên hệ
@@ -190,21 +194,21 @@ const DoctorDetail = () => {
                 <Phone size={20} className="text-primary mt-1" />
                 <div>
                   <p className="font-medium">Điện thoại</p>
-                  <p>{doctor.user.phone}</p>
+                  <p>{doctor.phone}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <Mail size={20} className="text-primary mt-1" />
                 <div>
                   <p className="font-medium">Email</p>
-                  <p>{doctor.user.email}</p>
+                  <p>{doctor.email}</p>
                 </div>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin size={20} className="text-primary mt-1" />
                 <div>
                   <p className="font-medium">Địa chỉ</p>
-                  <p>{doctor.user.address}</p>
+                  <p>{doctor.address}</p>
                 </div>
               </li>
             </ul>
@@ -212,60 +216,35 @@ const DoctorDetail = () => {
         </div>
       </div>
 
-      {/* Lịch làm việc */}
       <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow p-6 space-y-6">
         <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">
           Lịch làm việc
         </h3>
         <div className="flex flex-col md:flex-row gap-6">
           <div className="flex-1">
-            {/* Lịch ngày - luôn render */}
             <CalendarComponent />
           </div>
 
           <Separator className="md:hidden block" />
 
           <div className="flex-1 space-y-4">
-            {/* Ca khám ngày */}
-            {!doctorSchedulesRes ? (
-              <Skeleton className="h-6 w-1/2" />
-            ) : (
-              <h4 className="text-sm sm:text-base md:text-lg font-medium">
-                Ca khám ngày {formatDate(selectedDate, "vi-VN")}
-              </h4>
-            )}
+            <h4 className="text-sm sm:text-base md:text-lg font-medium">
+              Ca khám ngày {formatDate(selectedDate, "vi-VN")}
+            </h4>
 
-            {/* Có bao nhiêu khung giờ */}
-            {!doctorSchedulesRes ? (
-              <Skeleton className="h-6 w-1/3" />
-            ) : (
-              <h4 className="text-sm sm:text-base md:text-lg font-medium">
-                Có {schedules[getWeekday(selectedDate)]?.length || 0} khung giờ
-                khám
-              </h4>
-            )}
+            <h4 className="text-sm sm:text-base md:text-lg font-medium">
+              Có {selectedDaySchedules.length} khung giờ khám
+            </h4>
 
-            {/* Danh sách ca khám */}
-            {isLoadingSchedules && !doctorSchedulesRes ? (
-              <DoctorScheduleListSkeleton />
-            ) : (
-              <DoctorScheduleList
-                list={schedules[getWeekday(selectedDate)] || []}
-                selectedDate={selectedDate}
-              />
-            )}
+            <DoctorScheduleList
+              list={selectedDaySchedules}
+              selectedDate={selectedDate}
+            />
 
-            {/* Nút đặt lịch */}
-            {isLoadingSchedules && !doctorSchedulesRes ? (
-              <div className="flex justify-center">
-                <Skeleton className="h-10 w-40 rounded-xl" />
-              </div>
-            ) : (
-              schedules &&
-              schedules[getWeekday(selectedDate)]?.length > 0 &&
+            {selectedDaySchedules.length > 0 &&
               !checkSchedulesExpireOrBooked(
-                schedules[getWeekday(selectedDate)],
-                selectedDate
+                selectedDaySchedules,
+                selectedDate,
               ) && (
                 <div className="flex justify-center">
                   <Button
@@ -276,8 +255,7 @@ const DoctorDetail = () => {
                     {isPending ? <Loading /> : "Đặt lịch khám"}
                   </Button>
                 </div>
-              )
-            )}
+              )}
           </div>
         </div>
       </div>
@@ -285,14 +263,14 @@ const DoctorDetail = () => {
       {openConfirm && (
         <AlertDialogConfirmBook
           doctorId={doctor_id}
-          doctorName={doctor?.user?.fullname}
+          doctorName={doctor.fullname}
           doctorScheduleId={doctor_schedule_id}
           handleConfirm={handleBookingAppointment}
           isPending={isPending}
           openConfirm={openConfirm}
           setOpenConfirm={setOpenConfirm}
           selectedDate={selectedDate}
-          specialtyName={doctor?.specialty?.name}
+          specialtyName={doctor.specialty?.name}
           tempTime={tempTime}
         />
       )}

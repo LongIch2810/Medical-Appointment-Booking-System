@@ -5,9 +5,9 @@ export interface Channel {
   created_at: string;
   participants: {
     id: number;
-    fullname: string;
-    username: string;
-    picture: string;
+    fullname: string | null;
+    username?: string | null;
+    picture: string | null;
   }[];
   updated_at: string;
 }

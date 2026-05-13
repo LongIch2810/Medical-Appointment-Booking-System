@@ -1,4 +1,6 @@
 import { CalendarDays, Stethoscope, User } from "lucide-react";
+import { useState } from "react";
+import { toast } from "react-toastify";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,6 +13,7 @@ import {
 } from "../ui/alert-dialog";
 import { formatDate, formatDateYYYYMMDD } from "@/utils/formatDate";
 import Loading from "../loading/Loading";
+import { usePatientRelatives } from "@/hooks/usePatientPortalApi";
 
 interface AlertDialogConfirmBookProps {
   doctorId: number;
@@ -27,6 +30,7 @@ interface AlertDialogConfirmBookProps {
     appointment_date: string;
     doctor_id: number;
     doctor_schedule_id: number;
+    relative_id: number;
   }) => void;
 }
 
@@ -42,6 +46,29 @@ const AlertDialogConfirmBook = ({
   isPending,
   handleConfirm,
 }: AlertDialogConfirmBookProps) => {
+  const [selectedRelativeId, setSelectedRelativeId] = useState(0);
+  const { data: relativesResponse, isLoading: isLoadingRelatives } =
+    usePatientRelatives({
+      page: 1,
+      limit: 100,
+      arrange: "asc",
+    });
+  const relatives = relativesResponse?.data.relatives ?? [];
+
+  const handleBook = () => {
+    if (!selectedRelativeId) {
+      toast.error("Vui lòng chọn người thân cần đặt lịch khám!");
+      return;
+    }
+
+    handleConfirm({
+      appointment_date: formatDateYYYYMMDD(selectedDate),
+      doctor_id: doctorId,
+      doctor_schedule_id: doctorScheduleId,
+      relative_id: selectedRelativeId,
+    });
+  };
+
   return (
     <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
       <AlertDialogContent className="max-w-md rounded-2xl shadow-lg bg-white dark:bg-neutral-900">
@@ -76,6 +103,29 @@ const AlertDialogConfirmBook = ({
                   <User size={18} className="text-primary" />
                   Chuyên khoa: <strong>{specialtyName}</strong>
                 </div>
+                <label className="w-full max-w-xs text-left font-medium text-gray-700 dark:text-gray-200">
+                  Đặt lịch khám cho
+                  <select
+                    value={selectedRelativeId}
+                    disabled={isLoadingRelatives || isPending}
+                    onChange={(event) =>
+                      setSelectedRelativeId(Number(event.target.value))
+                    }
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                  >
+                    <option value={0}>
+                      {isLoadingRelatives
+                        ? "Đang tải người thân..."
+                        : "Chọn người thân"}
+                    </option>
+                    {relatives.map((relative) => (
+                      <option key={relative.id} value={relative.id}>
+                        {relative.fullname || "Chưa có tên"} -{" "}
+                        {relative.relationship?.relationship_name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
             </div>
           </AlertDialogDescription>
@@ -86,14 +136,13 @@ const AlertDialogConfirmBook = ({
             Hủy
           </AlertDialogCancel>
           <AlertDialogAction
-            disabled={isPending}
-            onClick={() =>
-              handleConfirm({
-                appointment_date: formatDateYYYYMMDD(selectedDate),
-                doctor_id: doctorId,
-                doctor_schedule_id: doctorScheduleId,
-              })
+            disabled={
+              isPending ||
+              isLoadingRelatives ||
+              relatives.length === 0 ||
+              !selectedRelativeId
             }
+            onClick={handleBook}
             className="py-2 rounded-xl bg-primary text-white hover:bg-white hover:text-primary"
           >
             {isPending ? <Loading /> : "Xác nhận"}

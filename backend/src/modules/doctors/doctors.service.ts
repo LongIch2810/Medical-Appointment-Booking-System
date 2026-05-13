@@ -12,7 +12,6 @@ import {
 } from 'src/utils/setIsOutstanding';
 import { DoctorsMapper } from './doctors.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
-import { groupSchedulesByDay } from 'src/utils/groupSchedulesByDay';
 
 @Injectable()
 export class DoctorsService {
@@ -40,9 +39,7 @@ export class DoctorsService {
   }
 
   async filterAndPagination(objectFilter: BodyFilterDoctorsDto) {
-    let {
-      page,
-      limit,
+    const {
       specialty_id,
       min_experience,
       max_experience,
@@ -50,6 +47,7 @@ export class DoctorsService {
       area,
       search,
     } = objectFilter;
+    let { page, limit } = objectFilter;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;

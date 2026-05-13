@@ -19,13 +19,14 @@ import DoctorSchedule from 'src/entities/doctorSchedule.entity';
 import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 import { BodyPersonalAppointmentsDto } from './dto/request/bodyPersonalAppointments.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { BookingMode } from 'src/shared/enums/bookingMode';
 import { WebsocketGateway } from 'src/websockets/websocket.gateway';
 import { UsersService } from '../users/users.service';
 import { DoctorSchedulesService } from '../doctor-schedules/doctor-schedules.service';
 import { RelativesService } from '../relatives/relatives.service';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { AppointmentsMapper } from './appointments.mapper';
+import { isPgDriverError } from '../../utils/isPgDriverError';
+import { BookingMode } from '../../shared/enums/bookingMode';
 
 @Injectable()
 export class AppointmentsService {
@@ -37,26 +38,41 @@ export class AppointmentsService {
     private readonly relativesService: RelativesService,
     private readonly redisCacheService: RedisCacheService,
     private readonly gateway: WebsocketGateway,
-  ) { }
+  ) {}
 
   async createWithRetry(
     userId: number,
     body: BodyCreateAppointmentDto,
     maxRetries: number = 3,
   ) {
-    if (body.booking_mode === BookingMode.USER_SELECT)
-      return this.create(userId, body);
+    if (body.booking_mode === BookingMode.USER_SELECT) {
+      try {
+        const newAppointment = await this.create(userId, body);
+        this.gateway.notifyBookAppointmentSuccess(userId, newAppointment);
+        return newAppointment;
+      } catch (error: unknown) {
+        this.gateway.notifyBookAppointmentFail(
+          userId,
+          'Đặt lịch khám đã có lỗi xảy ra !',
+        );
+        throw error;
+      }
+    }
     for (let i = 1; i <= maxRetries; i++) {
       try {
         const newAppointment = await this.create(userId, body);
         this.gateway.notifyBookAppointmentSuccess(userId, newAppointment);
         return newAppointment;
-      } catch (error: any) {
-        const isPgUnique =
-          error instanceof QueryFailedError &&
-          error.driverError?.code === '23505' &&
-          error.driverError?.constraint === 'unique_doctor_schedule_date';
-
+      } catch (error: unknown) {
+        let isPgUnique = false;
+        if (error instanceof QueryFailedError) {
+          const driverError: unknown = error.driverError;
+          if (isPgDriverError(driverError)) {
+            isPgUnique =
+              driverError.code === '23505' &&
+              driverError.constraint === 'unique_doctor_schedule_date';
+          }
+        }
         if (!isPgUnique) {
           this.gateway.notifyBookAppointmentFail(
             userId,
@@ -147,7 +163,10 @@ export class AppointmentsService {
       status: AppointmentStatus.CANCELLED,
     });
 
-    const deletedAppointment = await this.getAppointmentDetail(userId, appointmentId);
+    const deletedAppointment = await this.getAppointmentDetail(
+      userId,
+      appointmentId,
+    );
     return deletedAppointment;
   }
 
@@ -155,7 +174,8 @@ export class AppointmentsService {
     userId: number,
     objectFilters: BodyPersonalAppointmentsDto,
   ) {
-    let { page, limit, appointmentStatus, relativeId } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { appointmentStatus, relativeId } = objectFilters;
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
       throw new NotFoundException('Không tìm thấy người dùng.');
@@ -189,10 +209,13 @@ export class AppointmentsService {
 
     const [appointments, total] = await query.getManyAndCount();
 
-
-    const result = new PaginationResultDto('appointments',
+    const result = new PaginationResultDto(
+      'appointments',
       AppointmentsMapper.toAppointmentResponseDtoList(appointments),
-      total, page, limit);
+      total,
+      page,
+      limit,
+    );
 
     // await this.redisCacheService.setData(cacheKey, result, 3600);
 
@@ -328,6 +351,6 @@ export class AppointmentsService {
       .leftJoinAndSelect('doctorSchedule.doctor', 'doctor')
       .leftJoinAndSelect('doctor.user', 'doctorUser')
       .leftJoinAndSelect('appointment.booked_by_user', 'bookedByUser')
-      .leftJoinAndSelect('doctor.specialty', 'specialty')
+      .leftJoinAndSelect('doctor.specialty', 'specialty');
   }
 }

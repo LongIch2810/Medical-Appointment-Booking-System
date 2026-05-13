@@ -3,7 +3,11 @@ import { SpecialtyResponseDto } from 'src/modules/specialties/dto/response/speci
 import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 import { DoctorLevel } from 'src/shared/enums/doctorLevel';
 import { formatDateDDMMYYYY } from 'src/utils/formatDate';
-import { groupSchedulesByDay } from 'src/utils/groupSchedulesByDay';
+import {
+  GroupedSchedule,
+  groupSchedulesByDay,
+} from 'src/utils/groupSchedulesByDay';
+import DoctorSchedule from '../../../../entities/doctorSchedule.entity';
 
 @Exclude()
 export class DoctorResponseDto {
@@ -59,11 +63,11 @@ export class DoctorResponseDto {
   specialty!: SpecialtyResponseDto;
 
   @Expose()
-  @Transform(({ obj }) => groupSchedulesByDay(obj.doctor_schedules ?? []))
-  doctor_schedules!: Record<
-    DayOfWeek,
-    { id: number; start_time: string; end_time: string; is_active: boolean }[]
-  >;
+  @Transform(({ obj }) => {
+    const source = obj as { doctor_schedules?: DoctorSchedule[] };
+    return groupSchedulesByDay(source.doctor_schedules ?? []);
+  })
+  doctor_schedules!: Record<DayOfWeek, GroupedSchedule[]>;
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))

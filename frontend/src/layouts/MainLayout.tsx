@@ -18,7 +18,7 @@ const MainLayout: React.FC = () => {
     () =>
       channels.map((ch) => ({
         channel: ch,
-        picture: ch.participants.find((p) => p.id !== currentUser?.id)!.picture,
+        picture: ch.participants.find((p) => p.id !== currentUser?.id)?.picture,
       })),
     [channels, currentUser?.id]
   );
