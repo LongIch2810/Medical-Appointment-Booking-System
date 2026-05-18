@@ -27,9 +27,9 @@ export function MessagesPage() {
     <div className="space-y-6">
       <PageHeader
         eyebrow="Doctor messages"
-        title="Tin nhắn bệnh nhân"
-        description="Layout 3 cột mô phỏng channel list, chat timeline và panel thông tin bệnh nhân để nối với channels/messages sau này."
-        actions={["Tạo note", "Xem attachments"]}
+        title="Patient messages"
+        description="A three-panel workspace for conversation triage, clinical context, and attachment review before the real channels/messages API is connected."
+        actions={["Create note", "View attachments"]}
       />
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.3fr_0.8fr]">
@@ -42,24 +42,24 @@ export function MessagesPage() {
               <button
                 key={thread.id}
                 onClick={() => setSelectedId(thread.id)}
-                className={`w-full rounded-2xl border p-4 text-left transition ${
+                className={`w-full rounded-lg border p-4 text-left transition ${
                   activeThread.id === thread.id
-                    ? "border-primary bg-primary/5"
-                    : "border-slate-100 bg-white/70 hover:border-slate-200"
+                    ? "border-[#212121] bg-[#f7f6f2]"
+                    : "border-[#d9d9dd] bg-white hover:border-[#212121]"
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-medium text-[#212121]">
                     {thread.patientName}
                   </div>
                   {thread.unreadCount ? (
-                    <Badge variant="warning">{thread.unreadCount} mới</Badge>
+                    <Badge variant="warning">{thread.unreadCount} new</Badge>
                   ) : null}
                 </div>
-                <div className="mt-1 text-xs text-slate-500">
-                  {thread.concern} • {thread.updatedAt}
+                <div className="mt-1 text-xs text-[#75758a]">
+                  {thread.concern} / {thread.updatedAt}
                 </div>
-                <div className="mt-3 text-sm text-slate-600">
+                <div className="mt-3 text-sm text-[#75758a]">
                   {thread.lastMessage}
                 </div>
               </button>
@@ -76,10 +76,10 @@ export function MessagesPage() {
               {activeThread.messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`max-w-[92%] rounded-[1.4rem] p-4 ${
+                  className={`max-w-[92%] rounded-lg p-4 ${
                     message.sender === "doctor"
-                      ? "ml-auto bg-slate-950 text-white"
-                      : "bg-slate-100 text-slate-900"
+                      ? "ml-auto bg-[#071829] text-white"
+                      : "border border-[#d9d9dd] bg-[#f7f6f2] text-[#212121]"
                   }`}
                 >
                   <div className="text-sm leading-6">{message.content}</div>
@@ -95,19 +95,19 @@ export function MessagesPage() {
                       ))}
                     </div>
                   ) : null}
-                  <div className="mt-3 text-[11px] uppercase tracking-[0.2em] opacity-70">
+                  <div className="mono-label mt-3 text-[10px] opacity-70">
                     {message.time}
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="rounded-[1.6rem] border border-slate-100 bg-slate-50 p-4">
+            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
               <Textarea placeholder="Mock reply composer..." />
               <div className="mt-3 flex justify-end">
                 <Button>
                   <SendHorizonal className="size-4" />
-                  Gửi phản hồi
+                  Send reply
                 </Button>
               </div>
             </div>
@@ -119,12 +119,12 @@ export function MessagesPage() {
             <CardTitle>Patient context</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-[1.4rem] bg-slate-50 p-4">
-              <div className="text-sm font-semibold text-slate-900">
+            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
+              <div className="text-sm font-medium text-[#212121]">
                 {activeThread.patientName}
               </div>
-              <div className="mt-1 text-sm text-slate-500">
-                {activeThread.age} tuổi • {activeThread.concern}
+              <div className="mt-1 text-sm text-[#75758a]">
+                {activeThread.age} years old / {activeThread.concern}
               </div>
               <div className="mt-2">
                 <Badge variant="outline">Risk {activeThread.riskLevel}</Badge>
@@ -133,11 +133,11 @@ export function MessagesPage() {
 
             <div className="space-y-3">
               {activeThread.details.map((detail) => (
-                <div key={detail.label} className="rounded-2xl border border-slate-100 bg-white/70 p-4">
-                  <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+                <div key={detail.label} className="rounded-lg border border-[#d9d9dd] bg-white p-4">
+                  <div className="mono-label text-[10px] text-[#75758a]">
                     {detail.label}
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-800">
+                  <div className="mt-1 text-sm font-medium text-[#212121]">
                     {detail.value}
                   </div>
                 </div>
@@ -151,9 +151,9 @@ export function MessagesPage() {
                   href={file.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white/70 p-4"
+                  className="flex items-center gap-3 rounded-lg border border-[#d9d9dd] bg-white p-4 transition hover:border-[#212121]"
                 >
-                  <div className="rounded-2xl bg-primary/10 p-3 text-primary">
+                  <div className="rounded-full border border-[#d9d9dd] p-3 text-primary">
                     {file.type === "image" ? (
                       <FileImage className="size-4" />
                     ) : (
@@ -161,10 +161,10 @@ export function MessagesPage() {
                     )}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-slate-900">
+                    <div className="text-sm font-medium text-[#212121]">
                       {file.name}
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-[#75758a]">
                       {file.type.toUpperCase()} attachment
                     </div>
                   </div>

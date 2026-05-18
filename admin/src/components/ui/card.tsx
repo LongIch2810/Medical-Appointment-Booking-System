@@ -6,7 +6,7 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "surface-glass text-card-foreground flex flex-col gap-5 rounded-[1.5rem] border border-white/70 py-6 shadow-[0_20px_70px_-30px_rgba(15,23,42,0.35)]",
+        "surface-glass text-card-foreground flex flex-col gap-5 rounded-lg border border-border py-6",
         className
       )}
       {...props}
@@ -25,7 +25,7 @@ export function CardTitle({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  return <div className={cn("text-lg font-semibold", className)} {...props} />;
+  return <div className={cn("text-lg font-medium", className)} {...props} />;
 }
 
 export function CardDescription({

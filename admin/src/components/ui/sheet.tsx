@@ -20,7 +20,7 @@ export function SheetContent({
       <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-sm" />
       <SheetPrimitive.Content
         className={cn(
-          "fixed top-0 z-50 flex h-full w-[88%] max-w-sm flex-col border-r border-white/70 bg-white/95 shadow-2xl backdrop-blur-xl transition data-[state=open]:animate-in",
+        "fixed top-0 z-50 flex h-full w-[88%] max-w-sm flex-col border-r border-[#d9d9dd] bg-white transition data-[state=open]:animate-in",
           side === "left" ? "left-0 data-[state=open]:slide-in-from-left" : "right-0 data-[state=open]:slide-in-from-right",
           className
         )}

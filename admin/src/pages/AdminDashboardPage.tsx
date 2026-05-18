@@ -21,20 +21,20 @@ export function AdminDashboardPage() {
         eyebrow="Admin dashboard"
         title={data.heroTitle}
         description={data.heroDescription}
-        actions={["Xem audit logs", "Mở complaints", "Tạo campaign"]}
+        actions={["View audit logs", "Open complaints", "Create campaign"]}
       />
 
       <KpiGrid metrics={data.metrics} />
 
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-        <Card className="border-slate-200 bg-[linear-gradient(135deg,#082f49,#0f172a)] text-white">
+        <Card className="navy-product-field rounded-[22px] border-transparent text-white">
           <CardContent className="space-y-5">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-white/50">
+                <div className="mono-label text-[10px] text-white/50">
                   Ops pulse
                 </div>
-                <div className="mt-1 text-2xl font-semibold">
+                <div className="mt-1 text-2xl font-medium">
                   Live system posture
                 </div>
               </div>
@@ -44,10 +44,10 @@ export function AdminDashboardPage() {
               {data.focusCards.map((card, index) => {
                 const Icon = [BarChart3, Radar, ShieldAlert][index % 3];
                 return (
-                  <div key={card.label} className="rounded-[1.4rem] bg-white/10 p-4">
+                  <div key={card.label} className="rounded-lg border border-white/[0.15] bg-white/[0.1] p-4">
                     <Icon className="size-5 text-white/80" />
-                    <div className="mt-4 text-3xl font-bold">{card.value}</div>
-                    <div className="mt-1 text-sm font-semibold">{card.label}</div>
+                    <div className="mt-4 font-display text-4xl font-medium leading-none">{card.value}</div>
+                    <div className="mt-2 text-sm font-medium">{card.label}</div>
                     <div className="mt-2 text-sm text-white/60">{card.hint}</div>
                   </div>
                 );
@@ -62,13 +62,13 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.schedule.map((item) => (
-              <div key={item.id} className="flex gap-4 rounded-2xl border border-slate-100 bg-white/80 p-4">
+              <div key={item.id} className="flex gap-4 rounded-lg border border-[#d9d9dd] bg-white p-4">
                 <div className={`mt-1 size-3 rounded-full ${item.accent}`} />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-900">
+                  <div className="text-sm font-medium text-[#212121]">
                     {item.title}
                   </div>
-                  <div className="mt-1 text-sm text-slate-500">{item.time}</div>
+                  <div className="mt-1 text-sm text-[#75758a]">{item.time}</div>
                 </div>
                 <Badge variant="outline">{item.status}</Badge>
               </div>
@@ -83,12 +83,12 @@ export function AdminDashboardPage() {
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-3">
           {data.activity.map((item) => (
-            <div key={item.id} className="rounded-[1.4rem] border border-slate-100 bg-white/80 p-5">
+            <div key={item.id} className="rounded-lg border border-[#d9d9dd] bg-white p-5">
               <Badge variant={item.tone ?? "default"}>{item.time}</Badge>
-              <div className="mt-4 text-base font-semibold text-slate-900">
+              <div className="mt-4 text-base font-medium text-[#212121]">
                 {item.title}
               </div>
-              <div className="mt-2 text-sm leading-6 text-slate-500">
+              <div className="mt-2 text-sm leading-6 text-[#75758a]">
                 {item.description}
               </div>
             </div>

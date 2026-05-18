@@ -16,16 +16,16 @@ export function KpiGrid({ metrics }: { metrics: KpiMetric[] }) {
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
       {metrics.map((metric) => (
-        <Card key={metric.label} className="border-white/80">
+        <Card key={metric.label} className="rounded-lg border-[#d9d9dd]">
           <CardContent className="space-y-4">
             <div className="flex items-start justify-between">
-              <p className="text-sm text-slate-500">{metric.label}</p>
-              <span className="rounded-full bg-slate-900/5 p-2 text-slate-500">
+              <p className="text-sm text-[#75758a]">{metric.label}</p>
+              <span className="rounded-full border border-[#d9d9dd] p-2 text-[#75758a]">
                 <TrendingUp className="size-4" />
               </span>
             </div>
             <div className="space-y-1">
-              <div className="text-3xl font-extrabold tracking-tight text-slate-900">
+              <div className="font-display text-4xl font-medium leading-none text-[#212121]">
                 {metric.value}
               </div>
               <Badge variant={toneMap[metric.tone ?? "default"]}>

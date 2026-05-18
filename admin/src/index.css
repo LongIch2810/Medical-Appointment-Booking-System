@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap");
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -30,25 +30,25 @@
 }
 
 :root {
-  --radius: 1rem;
-  --background: oklch(0.986 0.008 185);
-  --foreground: oklch(0.23 0.03 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.23 0.03 240);
-  --popover: oklch(0.995 0.004 196);
-  --popover-foreground: oklch(0.23 0.03 240);
-  --primary: oklch(0.52 0.14 202);
-  --primary-foreground: oklch(0.99 0.004 106);
-  --secondary: oklch(0.95 0.012 190);
-  --secondary-foreground: oklch(0.32 0.05 228);
-  --muted: oklch(0.955 0.008 220);
-  --muted-foreground: oklch(0.52 0.03 232);
-  --accent: oklch(0.91 0.036 173);
-  --accent-foreground: oklch(0.3 0.04 225);
-  --destructive: oklch(0.62 0.21 24);
-  --border: oklch(0.89 0.012 220);
-  --input: oklch(0.92 0.01 214);
-  --ring: oklch(0.62 0.14 206);
+  --radius: 0.5rem;
+  --background: #ffffff;
+  --foreground: #212121;
+  --card: #ffffff;
+  --card-foreground: #212121;
+  --popover: #ffffff;
+  --popover-foreground: #212121;
+  --primary: #17171c;
+  --primary-foreground: #ffffff;
+  --secondary: #eeece7;
+  --secondary-foreground: #212121;
+  --muted: #f7f6f2;
+  --muted-foreground: #75758a;
+  --accent: #ff7759;
+  --accent-foreground: #212121;
+  --destructive: #b30000;
+  --border: #d9d9dd;
+  --input: #d9d9dd;
+  --ring: #4c6ee6;
 }
 
 .dark {
@@ -84,11 +84,8 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Manrope", sans-serif;
-    background-image:
-      radial-gradient(circle at top left, color-mix(in srgb, var(--primary) 18%, transparent) 0, transparent 32%),
-      radial-gradient(circle at top right, color-mix(in srgb, var(--accent) 22%, transparent) 0, transparent 28%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.96));
+    font-family: "Unica77 Cohere Web", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    background: #ffffff;
     min-height: 100vh;
   }
 
@@ -99,19 +96,35 @@
 
 @layer utilities {
   .font-display {
-    font-family: "Fraunces", serif;
+    font-family: "CohereText", "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   }
 
   .surface-glass {
-    background: color-mix(in srgb, white 86%, transparent);
-    backdrop-filter: blur(16px);
+    background: #ffffff;
   }
 
   .bg-grid {
-    background-image:
-      linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-    background-size: 32px 32px;
+    background:
+      linear-gradient(90deg, rgba(217, 217, 221, 0.52) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(217, 217, 221, 0.52) 1px, transparent 1px);
+    background-size: 64px 64px;
+  }
+
+  .dark-product-field {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 38%),
+      #003c33;
+  }
+
+  .navy-product-field {
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 40%),
+      #071829;
+  }
+
+  .mono-label {
+    font-family: "CohereMono", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    text-transform: uppercase;
   }
 
   .scrollbar-soft {
@@ -144,8 +157,8 @@
   .scrollbar-soft::-webkit-scrollbar-thumb:hover {
     background: linear-gradient(
       180deg,
-      rgba(125, 211, 252, 0.82),
-      rgba(14, 165, 233, 0.82)
+      rgba(147, 147, 159, 0.88),
+      rgba(33, 33, 33, 0.88)
     );
     background-clip: padding-box;
   }

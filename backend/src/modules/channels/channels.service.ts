@@ -4,12 +4,7 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import {
-  DataSource,
-  EntityManager,
-  QueryFailedError,
-  Repository,
-} from 'typeorm';
+import { DataSource, QueryFailedError, Repository } from 'typeorm';
 import Channel from 'src/entities/channel.entity';
 import ChannelMembers from 'src/entities/channelMembers.entity';
 import { UsersService } from '../users/users.service';
@@ -36,10 +31,8 @@ export class ChannelsService {
 
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const existingChannel = await this.findChannelByExactMemberIds(
-          memberIds,
-          manager,
-        );
+        const existingChannel =
+          await this.findChannelByExactMemberIds(memberIds);
         if (existingChannel) {
           return ChannelsMapper.toChannelResponseDto(existingChannel);
         }
@@ -53,7 +46,7 @@ export class ChannelsService {
           }),
         );
         await manager.save(ChannelMembers, members);
-        const channel = await this.findByChannelId(createdChannel.id, manager);
+        const channel = await this.findByChannelId(createdChannel.id);
         return ChannelsMapper.toChannelResponseDto(channel);
       });
     } catch (error) {
@@ -95,7 +88,7 @@ export class ChannelsService {
           return `channel.id IN ${subQuery.getQuery()}`;
         })
         .setParameter('userId', userId)
-        .orderBy('channel.updated_at', arrangeOrder)
+        .orderBy('channel.created_at', arrangeOrder)
         .skip(skip)
         .take(limit)
         .distinct(true);
@@ -143,9 +136,8 @@ export class ChannelsService {
     return ChannelsMapper.toChannelResponseDto(channel);
   }
 
-  async findByChannelId(channelId: number, manager?: EntityManager) {
-    const channelRepo = manager?.getRepository(Channel) ?? this.channelRepo;
-    const channel = await channelRepo.findOne({
+  async findByChannelId(channelId: number) {
+    const channel = await this.channelRepo.findOne({
       where: { id: channelId },
       relations: ['participants', 'participants.user', 'chat_messages'],
     });
@@ -155,12 +147,8 @@ export class ChannelsService {
     return channel;
   }
 
-  private async findChannelByExactMemberIds(
-    memberIds: number[],
-    manager?: EntityManager,
-  ) {
-    const channelRepo = manager?.getRepository(Channel) ?? this.channelRepo;
-    const existingChannel = await channelRepo
+  private async findChannelByExactMemberIds(memberIds: number[]) {
+    const existingChannel = await this.channelRepo
       .createQueryBuilder('channel')
       .innerJoin('channel.participants', 'participant')
       .innerJoin('participant.user', 'user')
@@ -178,7 +166,7 @@ export class ChannelsService {
       return null;
     }
 
-    return this.findByChannelId(existingChannel.id, manager);
+    return this.findByChannelId(existingChannel.id);
   }
 
   async isChannelExists(userId: number, channelId: number): Promise<boolean> {

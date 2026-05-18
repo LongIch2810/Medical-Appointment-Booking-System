@@ -39,24 +39,24 @@ function RowDialog({ row }: { row: ModuleRow }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="rounded-xl border border-border px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:bg-slate-50">
-          Xem chi tiết
+        <button className="rounded-full border border-[#212121] px-4 py-2 text-left text-xs font-medium text-[#212121] hover:bg-[#17171c] hover:text-white">
+          View details
         </button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{row.summary}</DialogTitle>
           <DialogDescription>
-            Metadata mock để chuẩn bị cho detail panel / modal sau khi nối API thật.
+            Mock metadata prepared for the detail panel after the real API is connected.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-3 md:grid-cols-2">
           {row.meta.map((item) => (
-            <div key={item.label} className="rounded-2xl bg-slate-50 p-4">
-              <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <div key={item.label} className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
+              <div className="mono-label text-[10px] text-[#75758a]">
                 {item.label}
               </div>
-              <div className="mt-1 text-sm font-semibold text-slate-800">
+              <div className="mt-1 text-sm font-medium text-[#212121]">
                 {item.value}
               </div>
             </div>
@@ -101,10 +101,10 @@ export function DataTable({ module }: { module: ModuleConfig }) {
   }
 
   return (
-    <Card>
+      <Card className="rounded-lg border-[#d9d9dd]">
       <CardHeader className="space-y-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <CardTitle className="text-base">Danh sách mock data</CardTitle>
+          <CardTitle className="text-base">Mock data list</CardTitle>
           <div className="relative w-full max-w-sm">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
@@ -117,25 +117,25 @@ export function DataTable({ module }: { module: ModuleConfig }) {
         </div>
       </CardHeader>
       <CardContent className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200 text-left">
+        <table className="min-w-full divide-y divide-[#d9d9dd] text-left">
           <thead>
             <tr>
               {module.columns.map((column) => (
                 <th
                   key={column.key}
-                  className="px-3 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400"
+                  className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]"
                 >
                   {column.label}
                 </th>
               ))}
-              <th className="px-3 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                Chi tiết
+              <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                Details
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-[#e5e7eb]">
             {rows.map((row) => (
-              <tr key={row.id} className="align-top">
+              <tr key={row.id} className="align-top transition-colors hover:bg-[#f7f6f2]">
                 {module.columns.map((column) => (
                   <td key={column.key} className="px-3 py-4">
                     {renderCell(row.cells[column.key])}

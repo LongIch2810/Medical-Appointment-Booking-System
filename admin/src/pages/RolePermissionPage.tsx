@@ -36,8 +36,8 @@ export function RolePermissionPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.groups.map((group) => (
-              <div key={group.id} className="rounded-[1.4rem] border border-slate-100 bg-white/80 p-5">
-                <div className="text-sm font-semibold text-slate-900">{group.label}</div>
+              <div key={group.id} className="rounded-lg border border-[#d9d9dd] bg-white p-5">
+                <div className="text-sm font-medium text-[#212121]">{group.label}</div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {group.permissions.map((permission) => (
                     <Badge key={permission.code} variant="outline">
@@ -56,9 +56,9 @@ export function RolePermissionPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {data.matrix.map((role) => (
-              <div key={role.role} className="rounded-[1.4rem] border border-slate-100 bg-white/80 p-5">
+              <div key={role.role} className="rounded-lg border border-[#d9d9dd] bg-white p-5">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-lg font-semibold text-slate-900">
+                  <div className="text-lg font-medium text-[#212121]">
                     {role.label}
                   </div>
                   <Badge variant="info">{role.grants.length} permissions</Badge>
@@ -67,7 +67,7 @@ export function RolePermissionPage() {
                   {role.grants.map((grant) => (
                     <div
                       key={grant}
-                      className="rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm text-slate-700"
+                      className="rounded-sm border border-[#d9d9dd] bg-[#f7f6f2] px-3 py-2 text-sm text-[#212121]"
                     >
                       {grant}
                     </div>

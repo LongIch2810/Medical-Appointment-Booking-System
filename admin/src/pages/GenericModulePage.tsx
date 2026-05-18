@@ -26,16 +26,16 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
 
       <KpiGrid metrics={data.metrics} />
 
-      <Card className="border-dashed">
+      <Card className="rounded-lg border-dashed border-[#d9d9dd] bg-[#f7f6f2]">
         <CardContent className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1">
-            <div className="text-xs uppercase tracking-[0.2em] text-slate-400">
+            <div className="mono-label text-[10px] text-[#75758a]">
               Backend mapping
             </div>
-            <div className="text-sm font-semibold text-slate-900">
+            <div className="text-sm font-medium text-[#212121]">
               {data.backendModule ?? "Pending module mapping"}
             </div>
-            <p className="text-sm text-slate-500">{data.integrationNote}</p>
+            <p className="text-sm text-[#75758a]">{data.integrationNote}</p>
           </div>
           <Badge variant="outline">Mock data / pending integration</Badge>
         </CardContent>
