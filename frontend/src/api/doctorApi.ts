@@ -54,7 +54,7 @@ const getSpecialtyName = (specialty: DoctorResponse["specialty"]) => {
 
 const normalizeDoctorCard = (doctor: DoctorResponse): DoctorCardData => ({
   id: Number(doctor.id ?? 0),
-  user_id: Number(doctor.user_id ?? doctor.user?.id ?? doctor.id ?? 0),
+  user_id: Number(doctor.user_id ?? doctor.user?.id ?? 0),
   fullname: doctor.fullname ?? doctor.user?.fullname ?? "",
   picture: doctor.picture ?? doctor.user?.picture ?? null,
   workplace: doctor.workplace ?? "",

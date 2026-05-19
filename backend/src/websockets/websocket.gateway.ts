@@ -1,4 +1,3 @@
-import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
   WebSocketServer,
@@ -11,7 +10,6 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import Article from 'src/entities/article.entity';
-import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
 import { MessageResponseDto } from 'src/modules/messages/dto/response/messageResponse.dto';
 import { MessagesService } from 'src/modules/messages/messages.service';
 @WebSocketGateway({
@@ -21,12 +19,12 @@ import { MessagesService } from 'src/modules/messages/messages.service';
   },
 })
 export class WebsocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect {
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   constructor(
     private messagesService: MessagesService,
-    private chatHistoryService: ChatHistoryService,
     private jwtService: JwtService,
-  ) { }
+  ) {}
 
   @WebSocketServer()
   server: Server;
@@ -91,43 +89,6 @@ export class WebsocketGateway
       id: data.id,
       isSuccess: true,
     });
-  }
-
-  @SubscribeMessage('send:message:chatbot')
-  async handleSendMessageChatbot(
-    @MessageBody() data,
-    @ConnectedSocket() client: Socket,
-  ) {
-    try {
-      console.log('>>> client.data: ', client.data);
-      console.log('>>> data : ', data);
-      const token = client.data.token;
-      const dataAnswer = await this.chatHistoryService.chatbotAnswer(
-        data.data.userId,
-        data.data.question,
-        token,
-      );
-      console.log('>>> dataAnswer : ', dataAnswer);
-      this.server
-        .to(`user:${data.data.userId}`)
-        .emit('receive:message:chatbot', dataAnswer);
-      this.server.to(`user:${data.data.userId}`).emit('notify:event', {
-        id: data.id,
-        isSuccess: true,
-      });
-    } catch (error) {
-      if (error instanceof UnauthorizedException) {
-        client.emit('ws-error', { code: 401, message: 'Unauthorized' });
-        return;
-      }
-
-      console.error('🔥 Chatbot error:', error);
-      client.emit('ws-error', {
-        code: 500,
-        message: 'Internal server error',
-        eventId: data.id,
-      });
-    }
   }
 
   notifyBookAppointmentSuccess(userId: number, data: any) {

@@ -26,10 +26,10 @@ import { RelativesModule } from '../relatives/relatives.module';
     RedisCacheModule,
     WebsocketModule,
     DoctorSchedulesModule,
-    RelativesModule
+    RelativesModule,
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],
   exports: [AppointmentsService],
 })
-export class AppointmentsModule { }
+export class AppointmentsModule {}

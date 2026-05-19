@@ -65,9 +65,27 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
 
     return { answer: reply.content };
   } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Chat service backend error:", {
+        method: error.config?.method,
+        url: error.config?.url,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    }
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       const err = new Error("Unauthorized");
       (err as any).status = 401;
+      throw err;
+    }
+    if (axios.isAxiosError(error) && error.response?.status) {
+      const err = new Error(
+        (error.response.data as any)?.message ||
+          error.message ||
+          "Backend request failed"
+      );
+      (err as any).status = error.response.status;
+      (err as any).details = error.response.data;
       throw err;
     }
     const err = error as Error;

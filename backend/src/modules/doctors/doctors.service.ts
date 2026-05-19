@@ -112,10 +112,6 @@ export class DoctorsService {
         appointments_completed: Number(row?.appointments_completed ?? 0),
       };
     });
-    console.log(
-      'Fetched doctors:',
-      DoctorsMapper.toDoctorResponseDtoList(setIsOutstandingDoctors(doctors)),
-    );
 
     const result = new PaginationResultDto(
       'doctors',

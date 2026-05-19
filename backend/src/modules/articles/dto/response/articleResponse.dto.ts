@@ -43,9 +43,9 @@ export class ArticleResponseDto {
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  created_at!: Date;
+  created_at!: string;
 
   @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
-  updated_at!: Date;
+  updated_at!: string;
 }

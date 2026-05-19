@@ -38,7 +38,7 @@ const BookingState = Annotation.Root({
     reducer: (oldArr, newArr) => {
       const merged = [...(oldArr || []), ...(newArr || [])];
       const unique = Array.from(
-        new Map(merged.map((item) => [item.id, item])).values()
+        new Map(merged.map((item) => [item.id, item])).values(),
       );
       return unique;
     },
@@ -82,7 +82,7 @@ const BookingState = Annotation.Root({
 
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
-  args: Record<string, any>
+  args: Record<string, any>,
 ) {
   const result = await tool.invoke(args);
   return result;
@@ -150,7 +150,7 @@ async function analyzeTimeNode(state: typeof BookingState.State) {
 function checkerNode(state: typeof BookingState.State) {
   console.log(
     "\n🧩 [Node] checker — state hiện tại:",
-    JSON.stringify(state, null, 2)
+    JSON.stringify(state, null, 2),
   );
 
   const missing: string[] = [];
@@ -174,7 +174,7 @@ function checkerNode(state: typeof BookingState.State) {
   const ready = missing.length === 0;
   console.log(
     "✅ [Node] checker — missing:",
-    missing.length ? missing.join(", ") : "Không thiếu gì"
+    missing.length ? missing.join(", ") : "Không thiếu gì",
   );
 
   return { missing, ready, ambiguous_relatives };
@@ -253,7 +253,7 @@ async function doctorNotFoundNode(state: typeof BookingState.State) {
 async function bookingAppointmentNode(state: typeof BookingState.State) {
   console.log(
     "\n🧩 [Node] booking_appointment — state:",
-    JSON.stringify(state, null, 2)
+    JSON.stringify(state, null, 2),
   );
 
   const payload = {
@@ -277,13 +277,13 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     }
 
     const response = await axios.post(
-      `${process.env.BACKEND_URL}/api/v1/appointments/booking-appointment`,
+      `${process.env.BACKEND_URL}/api/v1/appointments/booking`,
       payload,
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     const appointmentInfo = response.data?.data;

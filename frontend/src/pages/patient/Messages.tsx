@@ -88,7 +88,10 @@ const getConversationTitle = (channel: Channel, currentUserId?: number) => {
 };
 
 const getLastMessage = (channel: Channel) =>
-  channel.chat_messages[0]?.content ?? "Chưa có tin nhắn";
+  channel.last_message?.content ?? "Chưa có tin nhắn";
+
+const getLastMessageTime = (channel: Channel) =>
+  channel.last_message?.created_at ?? channel.updated_at;
 
 const getChannelIdFromResponse = (response: DirectChannelResponse) =>
   Number(response.data?.id ?? response.data?.channel_id ?? 0);
@@ -284,6 +287,10 @@ const Messages: React.FC = () => {
 
   const handleStartConversation = (doctor: DoctorCardData) => {
     if (!currentUser?.id) return;
+    if (!doctor.user_id) {
+      toast.error("Không xác định được tài khoản của bác sĩ.");
+      return;
+    }
 
     const existingChannel = findChannelByParticipant(channels, doctor.user_id);
     if (existingChannel) {
@@ -385,9 +392,9 @@ const Messages: React.FC = () => {
                         <p className="truncate text-sm font-semibold text-slate-900">
                           {getChatPersonName(channel, currentUser?.id)}
                         </p>
-                        {channel.chat_messages.some(
-                          (message) => !message.is_read,
-                        ) && <Badge>New</Badge>}
+                        {channel.unread_count > 0 && (
+                          <Badge>{channel.unread_count}</Badge>
+                        )}
                       </div>
                       <p className="mt-0.5 text-xs font-medium text-primary">
                         Đang nhắn với bác sĩ
@@ -396,7 +403,7 @@ const Messages: React.FC = () => {
                         {getLastMessage(channel)}
                       </p>
                       <p className="mt-1 text-xs text-slate-400">
-                        {channel.updated_at}
+                        {getLastMessageTime(channel)}
                       </p>
                     </div>
                   </div>

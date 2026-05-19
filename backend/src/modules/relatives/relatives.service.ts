@@ -4,7 +4,13 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, ILike, QueryFailedError, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  ILike,
+  QueryFailedError,
+  Repository,
+} from 'typeorm';
 import Relative from 'src/entities/relative.entity';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import Relationship from 'src/entities/relationship.entity';
@@ -24,12 +30,13 @@ export class RelativesService {
     private readonly usersService: UsersService,
     private readonly relationshipsService: RelationshipsService,
     private dataSource: DataSource,
-  ) { }
+  ) {}
 
   async create(userId: number, createRelativeDto: BodyCreateRelativeDto) {
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const { relationship_code, phone, fullname, ...rest } = createRelativeDto;
+        const { relationship_code, phone, fullname, ...rest } =
+          createRelativeDto;
         const relationship = await manager.findOne(Relationship, {
           where: { relationship_code: relationship_code },
         });
@@ -38,33 +45,40 @@ export class RelativesService {
           throw new NotFoundException('Mã mối quan hệ không tồn tại');
         }
 
-        const isExists = await this.isRelativeExists(
-          userId,
-          fullname,
-          relationship_code,
-          phone
-        );
+        if (phone) {
+          const isExists = await this.isRelativeExists(
+            userId,
+            fullname,
+            relationship_code,
+            phone,
+          );
 
-        if (isExists) {
-          throw new ConflictException('Người thân đã tồn tại trong hệ thống!');
+          if (isExists) {
+            throw new ConflictException(
+              'Người thân đã tồn tại trong hệ thống!',
+            );
+          }
         }
 
         const createdRelative = manager.create(Relative, {
           ...rest,
+          fullname,
+          phone: phone ?? null,
           user: { id: userId },
           relationship: { relationship_code: relationship_code },
         });
-        await manager.save(Relative, createdRelative);
+        const saved = await manager.save(Relative, createdRelative);
 
         const newHealthProfile = manager.create(HealthProfile, {
           patient: { id: createdRelative.id },
         });
         await manager.save(HealthProfile, newHealthProfile);
-        const newRelative = await this.getRelativeDetail(
+        const relative = await this.findOwnedByUserIdTransaction(
+          manager,
           userId,
-          createdRelative.id,
+          saved.id,
         );
-        return newRelative;
+        return RelativesMapper.toRelativeResponseDto(relative);
       });
     } catch (error) {
       if (
@@ -78,7 +92,8 @@ export class RelativesService {
   }
 
   async filterAndPagination(objectFilters: BodyFilterRelativesDto) {
-    let { page, limit, search, relationshipCode, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, relationshipCode, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -130,7 +145,8 @@ export class RelativesService {
     userId: number,
     objectFilters: BodyFilterRelativesDto,
   ) {
-    let { page, limit, search, relationshipCode, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, relationshipCode, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -204,7 +220,10 @@ export class RelativesService {
       const relative = await this.findOwnedByUserId(userId, relativeId);
 
       if (bodyUpdateRelative.relationship_code) {
-        const relationship = await this.relationshipsService.findByRelationshipCode(bodyUpdateRelative.relationship_code);
+        const relationship =
+          await this.relationshipsService.findByRelationshipCode(
+            bodyUpdateRelative.relationship_code,
+          );
 
         relative.relationship = relationship;
       }
@@ -214,12 +233,14 @@ export class RelativesService {
       const savedRelative = await this.relativeRepo.save(relative);
       return RelativesMapper.toRelativeResponseDto(savedRelative);
     } catch (error) {
-      if (error instanceof QueryFailedError && error.driverError?.code === '23505') {
+      if (
+        error instanceof QueryFailedError &&
+        error.driverError?.code === '23505'
+      ) {
         throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống!');
       }
       throw error;
     }
-
   }
 
   async remove(userId: number, relativeId: number) {
@@ -267,6 +288,28 @@ export class RelativesService {
       },
     });
     return count;
+  }
+
+  private async findOwnedByUserIdTransaction(
+    manager: EntityManager,
+    userId: number,
+    relativeId: number,
+  ) {
+    const relative = await manager.findOne(Relative, {
+      where: {
+        id: relativeId,
+        user: { id: userId },
+      },
+      relations: ['relationship', 'health_profile', 'user'],
+    });
+
+    if (!relative) {
+      throw new NotFoundException(
+        'Người thân không tồn tại hoặc không thuộc quyền quản lý của bạn.',
+      );
+    }
+
+    return relative;
   }
 
   private baseRelativesQuery() {

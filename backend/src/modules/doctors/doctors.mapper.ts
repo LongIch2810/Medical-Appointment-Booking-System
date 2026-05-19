@@ -12,7 +12,7 @@ export class DoctorsMapper {
   ): DoctorResponseDto {
     return plainToInstance(
       DoctorResponseDto,
-      { ...doctor.user, ...doctor },
+      { ...doctor.user, ...doctor, user_id: doctor.user.id },
       {
         excludeExtraneousValues: true,
       },
@@ -40,7 +40,11 @@ export class DoctorsMapper {
   ): DoctorResponseDto[] {
     return plainToInstance(
       DoctorResponseDto,
-      doctors.map((doctor) => ({ ...doctor.user, ...doctor })),
+      doctors.map((doctor) => ({
+        ...doctor.user,
+        ...doctor,
+        user_id: doctor.user.id,
+      })),
       {
         excludeExtraneousValues: true,
       },

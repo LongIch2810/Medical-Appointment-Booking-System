@@ -10,7 +10,6 @@ import {
   JoinColumn,
   OneToOne,
   OneToMany,
-  Unique,
 } from 'typeorm';
 import User from './user.entity';
 import HealthProfile from './healthProfile.entity';

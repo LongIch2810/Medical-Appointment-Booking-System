@@ -160,10 +160,17 @@ export interface Message {
   updated_at: string;
 }
 
+export interface LastMessage {
+  content: string;
+  created_at: string;
+  sender_id: number;
+}
+
 export interface Channel {
   id: number;
   channel_id?: number;
-  chat_messages: Message[];
+  last_message: LastMessage | null;
+  unread_count: number;
   participants: ChannelParticipant[];
   created_at: string;
   updated_at: string;

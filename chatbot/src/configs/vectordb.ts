@@ -7,7 +7,7 @@ import { Document } from "@langchain/core/documents";
 dotenv.config();
 
 export default async function initVectorDB(texts?: Document[]) {
-  const embeddings = new OllamaEmbeddings({ model: "nomic-embed-text:latest" });
+  const embeddings = new OllamaEmbeddings({ model: "nomic-embed-text-v2-moe" });
   const client = new QdrantClient({
     url: process.env.QDRANT_URL,
     apiKey: process.env.QDRANT_API_KEY,
@@ -15,7 +15,7 @@ export default async function initVectorDB(texts?: Document[]) {
 
   const collections = await client.getCollections();
   const exists = collections.collections.some(
-    (collection) => collection.name === process.env.QDRANT_COLLECTION_NAME
+    (collection) => collection.name === process.env.QDRANT_COLLECTION_NAME,
   );
 
   let vectorstore: QdrantVectorStore;
@@ -29,7 +29,7 @@ export default async function initVectorDB(texts?: Document[]) {
     // Đảm bảo texts KHÔNG được undefined!
     if (!texts) {
       throw new Error(
-        "texts must be provided when creating a new Qdrant collection!"
+        "texts must be provided when creating a new Qdrant collection!",
       );
     }
     vectorstore = await QdrantVectorStore.fromDocuments(texts, embeddings, {

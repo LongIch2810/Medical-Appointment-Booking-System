@@ -27,7 +27,7 @@ export class AppointmentsController {
     @Request() req,
   ) {
     const { userId } = req.user;
-    return this.appointmentsService.createWithRetry(
+    return this.appointmentsService.createWithNotifications(
       userId,
       bodyCreateAppointment,
     );

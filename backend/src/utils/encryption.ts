@@ -18,14 +18,24 @@ export const encrypt = (text: string) => {
   return iv.toString('hex') + ':' + encrypted.toString('hex');
 };
 
-export const decrypt = (hash: string) => {
+export const decrypt = (hash: string | null | undefined) => {
+  if (!hash || typeof hash !== 'string' || !hash.includes(':')) {
+    return '';
+  }
   const [ivHex, encryptedHex] = hash.split(':');
-  const iv = Buffer.from(ivHex, 'hex');
-  const encryptedText = Buffer.from(encryptedHex, 'hex');
-  const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
-  const decrypted = Buffer.concat([
-    decipher.update(encryptedText),
-    decipher.final(),
-  ]);
-  return decrypted.toString('utf8');
+  if (!ivHex || !encryptedHex) {
+    return '';
+  }
+  try {
+    const iv = Buffer.from(ivHex, 'hex');
+    const encryptedText = Buffer.from(encryptedHex, 'hex');
+    const decipher = crypto.createDecipheriv(algorithm, secretKey, iv);
+    const decrypted = Buffer.concat([
+      decipher.update(encryptedText),
+      decipher.final(),
+    ]);
+    return decrypted.toString('utf8');
+  } catch {
+    return '';
+  }
 };

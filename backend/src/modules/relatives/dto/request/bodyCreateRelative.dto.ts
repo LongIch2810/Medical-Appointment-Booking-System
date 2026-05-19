@@ -7,6 +7,7 @@ import {
   IsDateString,
   MinLength,
   Matches,
+  IsOptional,
 } from 'class-validator';
 
 export class BodyCreateRelativeDto {
@@ -14,24 +15,24 @@ export class BodyCreateRelativeDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
-  fullname: string;
+  fullname!: string;
 
   @Transform(({ value }) => value.trim())
   @IsString()
   @IsNotEmpty()
-  relationship_code: string;
+  relationship_code!: string;
 
   @Transform(({ value }) => value.trim())
   @Matches(/^\S+$/)
   @IsPhoneNumber('VN')
-  @IsNotEmpty()
-  phone: string;
+  @IsOptional()
+  phone?: string;
 
   @IsDateString()
   @IsNotEmpty()
-  dob: string;
+  dob!: string;
 
   @IsBoolean()
   @IsNotEmpty()
-  gender: boolean;
+  gender!: boolean;
 }

@@ -1,53 +1,53 @@
 # LifeHealth
 
-LifeHealth là một nền tảng chăm sóc sức khỏe và đặt lịch khám trực tuyến, gồm nhiều phần chạy tách biệt:
+LifeHealth is an online healthcare and medical appointment booking platform made up of several separate services:
 
-- `frontend`: cổng người dùng/patient portal
-- `admin`: workspace cho bác sĩ và quản trị viên
+- `frontend`: patient-facing user portal
+- `admin`: workspace for doctors and administrators
 - `backend`: API server
-- `chatbot`: dịch vụ chatbot hỗ trợ tư vấn
-- `modules`: các module dùng chung trong hệ thống
+- `chatbot`: chatbot service for consultation support
+- `modules`: shared modules used across the system
 
-## Tổng quan
+## Overview
 
-Repo này được xây theo kiến trúc đa dịch vụ. Frontend và admin là ứng dụng React + TypeScript + Vite, backend là NestJS, còn chatbot là một service Node.js/TypeScript dùng cho luồng hỏi đáp và hỗ trợ y tế.
+This repository follows a multi-service architecture. The frontend and admin apps are built with React, TypeScript, and Vite. The backend is built with NestJS, and the chatbot is a Node.js/TypeScript service for medical Q&A and user support flows.
 
-## Công nghệ chính
+## Main Technologies
 
 - Frontend/Admin: React 19, TypeScript, Vite 6, React Router 7, TanStack Query 5, Zustand, Tailwind CSS 4
 - Backend: NestJS, TypeORM, PostgreSQL, Redis, Socket.IO, Swagger
 - Chatbot: Node.js, TypeScript, LangChain, LangGraph, Qdrant, OpenAI / Google GenAI / Ollama
 
-## Tính năng nổi bật
+## Key Features
 
-- Đặt lịch khám và xem danh sách bác sĩ
-- Quản lý lịch hẹn, hồ sơ và tương tác giữa bệnh nhân - bác sĩ
-- Admin dashboard cho bác sĩ và quản trị viên
-- Chat realtime và chatbot hỗ trợ người dùng
-- Tích hợp Redis, PostgreSQL, socket, cache và hàng đợi tác vụ
+- Book medical appointments and browse doctors
+- Manage appointments, profiles, and patient-doctor interactions
+- Admin dashboard for doctors and administrators
+- Real-time chat and chatbot support
+- Redis, PostgreSQL, socket, cache, and job queue integrations
 
-## Cấu trúc thư mục
+## Project Structure
 
 ```text
 MyProject/
-├─ admin/
-├─ backend/
-├─ chatbot/
-├─ frontend/
-├─ modules/
-└─ docker-compose.dev.yml
++-- admin/
++-- backend/
++-- chatbot/
++-- frontend/
++-- modules/
+`-- docker-compose.dev.yml
 ```
 
-## Yêu cầu môi trường
+## Requirements
 
-- Node.js 20+ khuyến nghị
+- Node.js 20+ recommended
 - npm
 - PostgreSQL
 - Redis
 
-## Cài đặt
+## Installation
 
-Mỗi service có `package.json` riêng, nên cài dependency theo từng thư mục:
+Each service has its own `package.json`, so install dependencies in each directory:
 
 ```bash
 cd frontend
@@ -63,7 +63,7 @@ cd ../chatbot
 npm install
 ```
 
-## Biến môi trường
+## Environment Variables
 
 ### `frontend/.env.example`
 
@@ -108,58 +108,58 @@ CLOUDINARY_API_KEY=
 CLOUDINARY_API_SECRET=
 ```
 
-`chatbot/.env.example` hiện chưa có nội dung mẫu, bạn có thể cấu hình theo nhu cầu của service.
+`chatbot/.env.example` currently does not contain sample values. Configure it according to the chatbot service requirements.
 
-## Chạy dự án ở môi trường dev
+## Running the Project in Development
 
-### 1. Chạy hạ tầng
+### 1. Start Infrastructure Services
 
-File `docker-compose.dev.yml` hiện cung cấp các dịch vụ hạ tầng:
+The `docker-compose.dev.yml` file provides the following infrastructure services:
 
 - PostgreSQL
 - Redis
 - RedisInsight
 - pgAdmin
 
-Khởi động:
+Start them with:
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d
 ```
 
-### 2. Chạy frontend
+### 2. Start the Frontend
 
 ```bash
 cd frontend
 npm run dev
 ```
 
-Mặc định chạy tại `http://localhost:5173`
+The frontend runs at `http://localhost:5173` by default.
 
-### 3. Chạy admin
+### 3. Start the Admin App
 
 ```bash
 cd admin
 npm run dev
 ```
 
-Mặc định chạy tại `http://localhost:4173`
+The admin app runs at `http://localhost:4173` by default.
 
-### 4. Chạy backend
+### 4. Start the Backend
 
 ```bash
 cd backend
 npm run start:dev
 ```
 
-### 5. Chạy chatbot
+### 5. Start the Chatbot
 
 ```bash
 cd chatbot
 npm run dev
 ```
 
-## Script hữu ích
+## Useful Scripts
 
 ### `frontend`
 

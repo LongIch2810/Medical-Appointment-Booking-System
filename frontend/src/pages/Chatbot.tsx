@@ -2,15 +2,14 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Bot } from "lucide-react";
-import { useSocket } from "@/hooks/useSocket";
 import { useUserStore } from "@/store/useUserStore";
 import MarkdownMessage from "@/components/message/MarkdownMessage";
-import { registerHandler, safeEmit } from "@/utils/socket";
 import Loading from "@/components/loading/Loading";
 import { useGetMessagesChatbotInfinite } from "@/hooks/useGetMessagesChatbotInfinite";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
+import { sendChatbotMessage } from "@/api/conversationApi";
 
 type Role = "human" | "ai";
 
@@ -29,10 +28,11 @@ export default function Chatbot() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
   const { userInfo } = useUserStore();
-  const socket = useSocket(userInfo?.id);
+  const userId = userInfo?.id ?? 0;
   const { data, hasNextPage, fetchNextPage, isFetching } =
-    useGetMessagesChatbotInfinite(userInfo!.id);
+    useGetMessagesChatbotInfinite(userId);
   const queryClient = useQueryClient();
   const messages: Message[] = useMemo(() => {
     const merged =
@@ -40,13 +40,22 @@ export default function Chatbot() {
         .slice()
         .reverse()
         .flatMap((page) => page.data.messages) ?? [];
-    const uniqueMessages = Array.from(
+    const serverMessages = Array.from(
       new Map(merged.map((m) => [m.id, m])).values()
     );
-    return uniqueMessages.length > 0
-      ? uniqueMessages
+    const pendingMessages = optimisticMessages.filter((message) => {
+      if (message.isTyping) return true;
+      return !serverMessages.some(
+        (serverMessage) =>
+          serverMessage.role === message.role &&
+          serverMessage.content === message.content
+      );
+    });
+    const combinedMessages = [...serverMessages, ...pendingMessages];
+    return combinedMessages.length > 0
+      ? combinedMessages
       : [{ id: 1, role: "ai", content: "Chào bạn, bạn cần tư vấn gì?" }];
-  }, [data]);
+  }, [data, optimisticMessages]);
   console.log(">>> data messages with chatbot : ", data);
   useEffect(() => {
     if (!userInfo) {
@@ -92,80 +101,20 @@ export default function Chatbot() {
     requestAnimationFrame(scrollToBottom);
   }, [data]);
 
-  // 🧠 Nhận tin nhắn từ chatbot
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleReceiveMessageChatbot = (data: any) => {
-      console.log(">>> data : ", data);
-
-      // ✅ Xóa bubble typing + clear interval
-      clearTypingInterval();
-      queryClient.setQueryData(
-        ["messages-chatbot", userInfo!.id],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          const newPages = oldData.pages.map((page: any) => ({
-            ...page,
-            data: {
-              ...page.data,
-              messages: [
-                ...page.data.messages.filter((m: any) => !m.isTyping),
-                {
-                  id: Date.now(),
-                  content:
-                    typeof data === "string" ? data : JSON.stringify(data),
-                  role: "ai",
-                },
-              ],
-            },
-          }));
-
-          return {
-            ...oldData,
-            pages: newPages,
-          };
-        }
-      );
-
-      setIsPending(false);
-    };
-
-    registerHandler("receive:message:chatbot", handleReceiveMessageChatbot);
-    return () => {
-      socket.off("receive:message:chatbot", handleReceiveMessageChatbot);
-    };
-  }, [socket]);
-
   // 🕒 Hàm bắt đầu đếm thời gian typing
   const startTypingInterval = (typingId: number) => {
     typingIntervalRef.current = setInterval(() => {
-      queryClient.setQueryData(
-        ["messages-chatbot", userInfo!.id],
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          const newPages = oldData.pages.map((page: any) => ({
-            ...page,
-            data: {
-              ...page.data,
-              messages: page.data.messages.map((m: any) =>
-                m.id === typingId && m.isTyping
-                  ? {
-                      ...m,
-                      elapsed: Math.floor(
-                        (Date.now() - (m.startTypingAt ?? 0)) / 1000
-                      ),
-                    }
-                  : m
-              ),
-            },
-          }));
-
-          return {
-            ...oldData,
-            pages: newPages,
-          };
-        }
+      setOptimisticMessages((messages) =>
+        messages.map((message) =>
+          message.id === typingId && message.isTyping
+            ? {
+                ...message,
+                elapsed: Math.floor(
+                  (Date.now() - (message.startTypingAt ?? 0)) / 1000
+                ),
+              }
+            : message
+        )
       );
     }, 1000);
   };
@@ -183,12 +132,13 @@ export default function Chatbot() {
   };
 
   // 📤 Gửi tin nhắn user
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    const question = input.trim();
+    if (!question || isPending || !userId) return;
 
     const userMessage: Message = {
       id: Date.now(),
-      content: input.trim(),
+      content: question,
       role: "human",
     };
 
@@ -202,32 +152,44 @@ export default function Chatbot() {
       startTypingAt: Date.now(),
       elapsed: 0,
     };
-    queryClient.setQueryData(
-      ["messages-chatbot", userInfo!.id],
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        const newPages = oldData.pages.map((page: any) => ({
-          ...page,
-          data: {
-            ...page.data,
-            messages: [...page.data.messages, userMessage, typingMessage],
-          },
-        }));
-        return {
-          ...oldData,
-          pages: newPages,
-        };
-      }
-    );
+    setOptimisticMessages((messages) => [
+      ...messages,
+      userMessage,
+      typingMessage,
+    ]);
     startTypingInterval(typingId);
     setIsPending(true);
-
-    safeEmit("send:message:chatbot", {
-      userId: userInfo?.id,
-      question: input.trim(),
-    });
-
     setInput("");
+
+    try {
+      const answer = await sendChatbotMessage(question);
+      clearTypingInterval();
+      setOptimisticMessages((messages) => [
+        ...messages.filter((message) => message.id !== typingId),
+        {
+          id: Date.now(),
+          content: answer,
+          role: "ai",
+        },
+      ]);
+      await queryClient.invalidateQueries({
+        queryKey: ["messages-chatbot", userId],
+      });
+      setOptimisticMessages([]);
+    } catch (error) {
+      clearTypingInterval();
+      setOptimisticMessages((messages) => [
+        ...messages.filter((message) => message.id !== typingId),
+        {
+          id: Date.now(),
+          content: "Không thể lấy phản hồi từ chatbot. Vui lòng thử lại.",
+          role: "ai",
+        },
+      ]);
+      console.error("Chatbot request failed:", error);
+    } finally {
+      setIsPending(false);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {

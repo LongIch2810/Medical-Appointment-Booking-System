@@ -1,171 +1,240 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { FaSearch } from "react-icons/fa";
+import { useArticles, useTopics } from "@/hooks/useArticles";
+import { useDebounce } from "@/hooks/useDebounce";
+import type { Article } from "@/types/interface/article.interface";
 
-const categories = [
-  "Sức khỏe",
-  "Dinh dưỡng",
-  "Tập luyện",
-  "Tâm lý",
-  "Bệnh lý",
-  "Tin tức",
-];
+const ARTICLE_LIMIT = 6;
+const TOPIC_LIMIT = 20;
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&q=60";
 
-const articles = [
-  {
-    title: "Bí quyết giữ gìn sức khỏe vào mùa hè",
-    author: "BS. Nguyễn Văn A",
-    authorAvatar: "https://randomuser.me/api/portraits/men/10.jpg",
-    image: "https://source.unsplash.com/800x600/?health,summer",
-    date: "03/06/2025",
-    excerpt:
-      "Mùa hè nóng bức có thể gây ảnh hưởng nghiêm trọng đến sức khỏe. Hãy cùng tìm hiểu cách chăm sóc bản thân đúng cách...",
-    slug: "bi-quyet-giu-suc-khoe-mua-he",
-  },
-  {
-    title: "Chế độ dinh dưỡng hợp lý cho người cao tuổi",
-    author: "ThS. Trần Thị B",
-    authorAvatar: "https://randomuser.me/api/portraits/women/11.jpg",
-    image: "https://source.unsplash.com/800x600/?nutrition,elderly",
-    date: "01/06/2025",
-    excerpt:
-      "Người cao tuổi cần một chế độ ăn uống cân bằng để duy trì sức khỏe và năng lượng hàng ngày...",
-    slug: "che-do-dinh-duong-nguoi-cao-tuoi",
-  },
-  {
-    title: "Lợi ích của việc tập yoga mỗi ngày",
-    author: "HLV. Phạm Văn C",
-    authorAvatar: "https://randomuser.me/api/portraits/men/12.jpg",
-    image: "https://source.unsplash.com/800x600/?yoga,exercise",
-    date: "28/05/2025",
-    excerpt:
-      "Tập yoga không chỉ giúp cơ thể dẻo dai mà còn cải thiện tinh thần và giảm stress hiệu quả...",
-    slug: "loi-ich-tap-yoga-moi-ngay",
-  },
-  {
-    title: "Phương pháp giảm căng thẳng hiệu quả",
-    author: "Chuyên gia Tâm lý học - Lê Thị D",
-    authorAvatar: "https://randomuser.me/api/portraits/women/13.jpg",
-    image: "https://source.unsplash.com/800x600/?relaxation,mindfulness",
-    date: "25/05/2025",
-    excerpt:
-      "Căng thẳng kéo dài ảnh hưởng xấu đến sức khỏe. Hãy thử áp dụng các phương pháp đơn giản dưới đây để thư giãn...",
-    slug: "phuong-phap-giam-cang-thang",
-  },
-  {
-    title: "Những bệnh lý thường gặp trong mùa đông",
-    author: "BS. Nguyễn Văn E",
-    authorAvatar: "https://randomuser.me/api/portraits/men/14.jpg",
-    image: "https://source.unsplash.com/800x600/?winter,health",
-    date: "20/05/2025",
-    excerpt:
-      "Mùa đông với khí hậu lạnh là điều kiện thuận lợi cho nhiều bệnh phát triển. Hãy chuẩn bị kiến thức để phòng tránh...",
-    slug: "nhung-benh-ly-thuong-gap-mua-dong",
-  },
-];
+const getArticleImage = (article: Article) => {
+  if (Array.isArray(article.img_urls) && article.img_urls.length > 0) {
+    return article.img_urls[0]?.url ?? FALLBACK_IMAGE;
+  }
+  return FALLBACK_IMAGE;
+};
+
+const getAuthorInitial = (article: Article) =>
+  article.author?.fullname?.charAt(0)?.toUpperCase() ?? "?";
 
 const News = () => {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [topicSlug, setTopicSlug] = useState<string | undefined>();
+  const debouncedSearch = useDebounce(search, 400);
 
-  const filteredArticles = articles.filter(
-    (article) =>
-      article.title.toLowerCase().includes(search.toLowerCase()) ||
-      article.author.toLowerCase().includes(search.toLowerCase())
+  const filters = useMemo(
+    () => ({
+      page,
+      limit: ARTICLE_LIMIT,
+      search: debouncedSearch.trim() || undefined,
+      topic_slug: topicSlug,
+    }),
+    [page, debouncedSearch, topicSlug],
   );
+
+  const { data: articleData, isLoading, isError } = useArticles(filters);
+  const { data: topicData } = useTopics({
+    page: 1,
+    limit: TOPIC_LIMIT,
+    arrange: "asc",
+  });
+
+  const articles = articleData?.data.articles ?? [];
+  const totalPages = articleData?.data.totalPages ?? 1;
+  const topics = topicData?.data.topics ?? [];
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleSelectTopic = (slug?: string) => {
+    setTopicSlug(slug);
+    setPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       {/* Header */}
       <header className="bg-primary text-white shadow">
-        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between">
-          {/* Logo + text */}
-          <div className="flex items-center space-x-3 mb-4 md:mb-0">
-            <img
-              src="/logo.jpg"
-              alt="LifeHealth Logo"
-              className="w-12 h-12 object-contain rounded-md"
-            />
-            <h1 className="text-3xl font-bold">LifeHealth News</h1>
+        <div className="container mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/")}
+              className="h-9 gap-1.5 px-3 text-white hover:bg-white/15 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Trang chủ
+            </Button>
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.jpg"
+                alt="LifeHealth Logo"
+                className="w-10 h-10 object-contain rounded-md"
+              />
+              <h1 className="text-xl font-bold sm:text-2xl">LifeHealth News</h1>
+            </div>
           </div>
 
-          {/* Search */}
           <div className="w-full max-w-xs md:w-auto relative text-gray-700">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <Input
               type="search"
               placeholder="Tìm kiếm bài viết..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10"
             />
           </div>
         </div>
 
-        {/* Categories */}
-        <nav className="bg-primary/90 border-t border-primary/70 overflow-x-auto whitespace-nowrap px-4 py-2">
-          <div className="container mx-auto flex space-x-6 text-sm">
-            {categories.map((cat) => (
-              <Link
-                key={cat}
-                to={`/news/category/${cat.toLowerCase()}`}
-                className="hover:underline px-2 py-1 rounded-md hover:bg-white hover:text-primary transition"
+        <nav className="bg-primary/90 border-t border-primary/70 relative">
+          <div
+            className="topic-scroll container mx-auto flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 pt-2 pb-3 text-sm"
+          >
+            <button
+              type="button"
+              onClick={() => handleSelectTopic(undefined)}
+              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                !topicSlug
+                  ? "border-white bg-white text-primary shadow-sm"
+                  : "border-white/40 bg-white/10 text-white hover:border-white hover:bg-white hover:text-primary"
+              }`}
+            >
+              Tất cả
+            </button>
+            {topics.map((topic) => (
+              <button
+                key={topic.id}
+                type="button"
+                onClick={() => handleSelectTopic(topic.slug)}
+                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                  topicSlug === topic.slug
+                    ? "border-white bg-white text-primary shadow-sm"
+                    : "border-white/40 bg-white/10 text-white hover:border-white hover:bg-white hover:text-primary"
+                }`}
               >
-                {cat}
-              </Link>
+                {topic.name}
+              </button>
             ))}
           </div>
+          <span
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary/90 to-transparent"
+          />
         </nav>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-10">
-        {filteredArticles.length === 0 ? (
+        {isLoading ? (
+          <p className="text-center text-gray-500">Đang tải bài viết...</p>
+        ) : isError ? (
+          <p className="text-center text-red-500">
+            Không thể tải danh sách bài viết.
+          </p>
+        ) : articles.length === 0 ? (
           <p className="text-center text-gray-500">
             Không tìm thấy bài viết phù hợp.
           </p>
         ) : (
-          <div className="grid grid-cols-1 gap-8">
-            {filteredArticles.map((article) => (
-              <Card
-                key={article.slug}
-                className="overflow-hidden shadow-md flex flex-col"
-              >
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-48 object-cover"
-                />
-                <CardContent className="flex flex-col flex-grow">
-                  <Link
-                    to={`/news/${article.slug}`}
-                    className="text-xl font-bold hover:text-primary hover:underline mb-2"
-                  >
-                    {article.title}
-                  </Link>
-                  <p className="text-gray-600 flex-grow">{article.excerpt}</p>
+          <>
+            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {articles.map((article) => (
+                <Card
+                  key={article.id}
+                  className="overflow-hidden shadow-md flex flex-col"
+                >
+                  <img
+                    src={getArticleImage(article)}
+                    alt={article.title}
+                    className="w-full h-48 object-cover"
+                    loading="lazy"
+                  />
+                  <CardContent className="flex flex-col flex-grow">
+                    <Link
+                      to={`/news/${article.id}`}
+                      className="text-xl font-bold hover:text-primary hover:underline mb-2 line-clamp-2"
+                    >
+                      {article.title}
+                    </Link>
+                    <p className="text-gray-600 flex-grow line-clamp-3">
+                      {article.summary}
+                    </p>
 
-                  <div className="mt-4 flex items-center space-x-3 text-sm text-gray-400">
-                    <Avatar className="w-8 h-8">
-                      <AvatarImage
-                        src={article.authorAvatar}
-                        alt={article.author}
-                      />
-                      <AvatarFallback>
-                        {article.author.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p>{article.author}</p>
-                      <p>{article.date}</p>
+                    {article.tags?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {article.tags.map((tag) => (
+                          <span
+                            key={tag.name}
+                            className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5"
+                          >
+                            #{tag.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="mt-4 flex items-center space-x-3 text-sm text-gray-500">
+                      <Avatar className="w-8 h-8">
+                        <AvatarImage
+                          src={article.author?.picture ?? ""}
+                          alt={article.author?.fullname ?? ""}
+                        />
+                        <AvatarFallback>
+                          {getAuthorInitial(article)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium text-gray-700">
+                          {article.author?.fullname ?? "Tác giả"}
+                        </p>
+                        <p>{article.created_at ?? "—"}</p>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="mt-10 flex items-center justify-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                Trước
+              </Button>
+              <span className="text-sm text-gray-500">
+                Trang {page}/{totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() =>
+                  setPage((current) => Math.min(totalPages, current + 1))
+                }
+              >
+                Sau
+              </Button>
+            </div>
+          </>
         )}
       </main>
     </div>

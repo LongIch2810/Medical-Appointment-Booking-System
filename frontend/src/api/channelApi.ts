@@ -2,6 +2,7 @@ import axiosInstance from "@/configs/axios";
 import type {
   ApiResponse,
   Channel as PatientChannel,
+  LastMessage,
 } from "@/types/interface/patient.interface";
 
 type ChannelResponse = PatientChannel & {
@@ -9,6 +10,17 @@ type ChannelResponse = PatientChannel & {
   participants: Array<
     PatientChannel["participants"][number] & { username?: string | null }
   >;
+};
+
+const normalizeLastMessage = (
+  value: PatientChannel["last_message"] | undefined,
+): LastMessage | null => {
+  if (!value) return null;
+  return {
+    content: value.content ?? "",
+    created_at: value.created_at ?? "",
+    sender_id: Number(value.sender_id ?? 0),
+  };
 };
 
 const normalizeChannel = (
@@ -20,7 +32,9 @@ const normalizeChannel = (
     ...channel,
     id: channelId,
     channel_id: channelId,
-    participants: channel.participants.map((participant) => ({
+    last_message: normalizeLastMessage(channel.last_message),
+    unread_count: Number(channel.unread_count ?? 0),
+    participants: (channel.participants ?? []).map((participant) => ({
       ...participant,
       username: participant.username ?? participant.fullname ?? "",
     })),

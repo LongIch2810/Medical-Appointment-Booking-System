@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import { MessageResponseDto } from 'src/modules/messages/dto/response/messageResponse.dto';
 import { MemberResponseDto } from 'src/modules/users/dto/response/memberResonse.dto';
 import { formatDateDDMMYYYY } from 'src/utils/formatDate';
+import { LastMessageDto } from './lastMessage.dto';
 
 @Exclude()
 export class ChannelResponseDto {
@@ -13,8 +13,12 @@ export class ChannelResponseDto {
   channel_id!: number;
 
   @Expose()
-  @Type(() => MessageResponseDto)
-  chat_messages!: MessageResponseDto[];
+  @Type(() => LastMessageDto)
+  last_message!: LastMessageDto | null;
+
+  @Expose()
+  @Transform(({ value }) => Number(value ?? 0))
+  unread_count!: number;
 
   @Expose()
   @Type(() => MemberResponseDto)

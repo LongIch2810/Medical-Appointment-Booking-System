@@ -53,6 +53,10 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
       return;
     }
 
+    if (!user_id) {
+      return;
+    }
+
     navigate(`/patient/messages?doctorUserId=${user_id}`);
   };
 

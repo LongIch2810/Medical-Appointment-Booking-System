@@ -3,7 +3,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -14,7 +13,6 @@ import User from 'src/entities/user.entity';
 import { BodyUpdateArticleDto } from './dto/request/bodyUpdateArticle.dto';
 import { generateSlug } from 'src/utils/generateSlug';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { removePasswordDeep } from 'src/utils/removePasswordDeep';
 
 import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
 import Topic from 'src/entities/topic.entity';
@@ -167,16 +165,17 @@ export class ArticlesService {
   }
 
   async filterAndPagination(objectFilters: BodyFilterArticlesDto) {
-    let { page, limit, arrange, search, topic_slug } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { topic_slug, search, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
-    const cachedData = await this.redisCacheService.getData(cacheKey);
-    if (cachedData) {
-      return cachedData;
-    }
+    // const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) {
+    //   return cachedData;
+    // }
 
     const query = this.articleRepo
       .createQueryBuilder('article')
@@ -222,7 +221,7 @@ export class ArticlesService {
       limit,
     );
 
-    await this.redisCacheService.setData(cacheKey, result, 3600);
+    // await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
@@ -236,8 +235,6 @@ export class ArticlesService {
 
     return !!article;
   }
-
-  async;
 
   async updateFilesArticle(articleId: number, files: UploadFileResponse[]) {
     const article = await this.articleRepo.findOne({

@@ -19,6 +19,16 @@ const handleChatController = async (
       .status(400)
       .json({ success: false, message: "Question is required." });
   }
+  if (!Number.isFinite(Number(userId))) {
+    return res
+      .status(400)
+      .json({ success: false, message: "A valid userId is required." });
+  }
+  if (!token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Token is required." });
+  }
   const result = await handleChatService({ question, userId, token });
   return res.status(200).json({ success: true, answer: result.answer });
 };

@@ -48,6 +48,9 @@ export class DoctorResponseDto {
   doctor_level!: DoctorLevel;
 
   @Expose()
+  user_id!: number;
+
+  @Expose()
   @Transform(({ value }) => Number(value ?? 0))
   avg_rating!: number;
 

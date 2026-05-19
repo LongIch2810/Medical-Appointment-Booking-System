@@ -18,12 +18,6 @@ export class ArticleMapper {
   }
 
   static toArticleResponseDtoList(articles: Article[]): ArticleResponseDto[] {
-    return plainToInstance(
-      ArticleResponseDto,
-      articles.map((article) => this.toArticleResponseDto(article)),
-      {
-        excludeExtraneousValues: true,
-      },
-    );
+    return articles.map((article) => this.toArticleResponseDto(article));
   }
 }

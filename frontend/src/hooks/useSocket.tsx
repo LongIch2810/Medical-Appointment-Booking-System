@@ -1,4 +1,4 @@
-import { connectSocket, disconnectSocket, getSocket } from "@/utils/socket";
+import { connectSocket, disconnectSocket } from "@/utils/socket";
 import { useEffect, useState } from "react";
 import type { Socket } from "socket.io-client";
 

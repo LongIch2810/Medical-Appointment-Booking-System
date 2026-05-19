@@ -34,7 +34,11 @@ export class ChannelsController {
   }
 
   @Get(':channelId')
-  getChannelDetail(@Param('channelId', ParseIntPipe) channelId: number) {
-    return this.channelsService.getChannel(channelId);
+  getChannelDetail(
+    @Request() req,
+    @Param('channelId', ParseIntPipe) channelId: number,
+  ) {
+    const { userId } = req.user;
+    return this.channelsService.getChannel(channelId, userId);
   }
 }

@@ -4,7 +4,13 @@ import {
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, QueryFailedError, Repository } from 'typeorm';
+import {
+  DataSource,
+  EntityManager,
+  QueryFailedError,
+  Repository,
+  SelectQueryBuilder,
+} from 'typeorm';
 import Channel from 'src/entities/channel.entity';
 import ChannelMembers from 'src/entities/channelMembers.entity';
 import { UsersService } from '../users/users.service';
@@ -38,15 +44,19 @@ export class ChannelsService {
         }
 
         const createdChannel = manager.create(Channel);
-        await manager.save(Channel, createdChannel);
+        const saved = await manager.save(Channel, createdChannel);
         const members = memberIds.map((m) =>
           manager.create(ChannelMembers, {
-            channel: createdChannel,
+            channel: saved,
             user: { id: m },
           }),
         );
         await manager.save(ChannelMembers, members);
-        const channel = await this.findByChannelId(createdChannel.id);
+
+        const channel = await this.findByChannelIdTransaction(
+          manager,
+          saved.id,
+        );
         return ChannelsMapper.toChannelResponseDto(channel);
       });
     } catch (error) {
@@ -77,7 +87,8 @@ export class ChannelsService {
       limit = Math.max(limit, 1);
       const skip = (page - 1) * limit;
       const arrangeOrder = (arrange ?? 'desc').toUpperCase() as 'ASC' | 'DESC';
-      const query = this.baseChannelsQuery()
+
+      const query = this.baseChannelsQuery(userId)
         .where((qb) => {
           const subQuery = qb
             .subQuery()
@@ -88,7 +99,8 @@ export class ChannelsService {
           return `channel.id IN ${subQuery.getQuery()}`;
         })
         .setParameter('userId', userId)
-        .orderBy('channel.created_at', arrangeOrder)
+        .orderBy('last_message_created_at', arrangeOrder, 'NULLS LAST')
+        .addOrderBy('channel.created_at', arrangeOrder)
         .skip(skip)
         .take(limit)
         .distinct(true);
@@ -116,11 +128,25 @@ export class ChannelsService {
         query.setParameter('search', `%${search}%`);
       }
 
-      const [channels, total] = await query.getManyAndCount();
+      const { entities, raw } = await query.getRawAndEntities();
+      const total = await this.buildTotalChannelsQuery(userId, search).getCount();
+
+      const enriched = entities.map((channel) => {
+        const row = raw.find(
+          (r: Record<string, unknown>) =>
+            Number(r.channel_id ?? r['channel_id']) === channel.id,
+        );
+        return Object.assign(channel, {
+          last_message_content: row?.last_message_content ?? null,
+          last_message_created_at: row?.last_message_created_at ?? null,
+          last_message_sender_id: row?.last_message_sender_id ?? null,
+          unread_count: Number(row?.unread_count ?? 0),
+        });
+      });
 
       return new PaginationResultDto(
         'channels',
-        ChannelsMapper.toChannelResponseDtoList(channels),
+        ChannelsMapper.toChannelResponseDtoList(enriched),
         total,
         page,
         limit,
@@ -131,15 +157,41 @@ export class ChannelsService {
     }
   }
 
-  async getChannel(channelId: number) {
-    const channel = await this.findByChannelId(channelId);
+  async getChannel(channelId: number, currentUserId?: number) {
+    const channel = await this.findByChannelId(channelId, currentUserId);
     return ChannelsMapper.toChannelResponseDto(channel);
   }
 
-  async findByChannelId(channelId: number) {
-    const channel = await this.channelRepo.findOne({
+  async findByChannelId(channelId: number, currentUserId?: number) {
+    const query = this.baseChannelsQuery(currentUserId).where(
+      'channel.id = :channelId',
+      { channelId },
+    );
+
+    const { entities, raw } = await query.getRawAndEntities();
+    const channel = entities[0];
+    if (!channel) {
+      throw new BadRequestException('Kênh trò chuyện không tồn tại');
+    }
+    const row = raw.find(
+      (r: Record<string, unknown>) =>
+        Number(r.channel_id ?? r['channel_id']) === channel.id,
+    );
+    return Object.assign(channel, {
+      last_message_content: row?.last_message_content ?? null,
+      last_message_created_at: row?.last_message_created_at ?? null,
+      last_message_sender_id: row?.last_message_sender_id ?? null,
+      unread_count: Number(row?.unread_count ?? 0),
+    });
+  }
+
+  private async findByChannelIdTransaction(
+    manager: EntityManager,
+    channelId: number,
+  ) {
+    const channel = await manager.findOne(Channel, {
       where: { id: channelId },
-      relations: ['participants', 'participants.user', 'chat_messages'],
+      relations: ['participants', 'participants.user'],
     });
     if (!channel) {
       throw new BadRequestException('Kênh trò chuyện không tồn tại');
@@ -176,11 +228,103 @@ export class ChannelsService {
     return !!channel;
   }
 
-  private baseChannelsQuery() {
-    return this.channelRepo
+  private baseChannelsQuery(currentUserId?: number) {
+    const query: SelectQueryBuilder<Channel> = this.channelRepo
       .createQueryBuilder('channel')
-      .leftJoinAndSelect('channel.chat_messages', 'chatMessages')
       .leftJoinAndSelect('channel.participants', 'participant')
-      .leftJoinAndSelect('participant.user', 'user');
+      .leftJoinAndSelect('participant.user', 'user')
+      .addSelect(
+        (qb) =>
+          qb
+            .select('m.content')
+            .from('messages', 'm')
+            .where('m.channel_id = channel.id')
+            .andWhere('m.deleted_at IS NULL')
+            .orderBy('m.created_at', 'DESC')
+            .limit(1),
+        'last_message_content',
+      )
+      .addSelect(
+        (qb) =>
+          qb
+            .select('m.created_at')
+            .from('messages', 'm')
+            .where('m.channel_id = channel.id')
+            .andWhere('m.deleted_at IS NULL')
+            .orderBy('m.created_at', 'DESC')
+            .limit(1),
+        'last_message_created_at',
+      )
+      .addSelect(
+        (qb) =>
+          qb
+            .select('m.sender_id')
+            .from('messages', 'm')
+            .where('m.channel_id = channel.id')
+            .andWhere('m.deleted_at IS NULL')
+            .orderBy('m.created_at', 'DESC')
+            .limit(1),
+        'last_message_sender_id',
+      );
+
+    if (currentUserId) {
+      query
+        .addSelect(
+          (qb) =>
+            qb
+              .select('COUNT(*)')
+              .from('messages', 'm')
+              .where('m.channel_id = channel.id')
+              .andWhere('m.deleted_at IS NULL')
+              .andWhere('m.is_read = false')
+              .andWhere('m.sender_id <> :currentUserId'),
+          'unread_count',
+        )
+        .setParameter('currentUserId', currentUserId);
+    } else {
+      query.addSelect('0', 'unread_count');
+    }
+
+    return query;
+  }
+
+  private buildTotalChannelsQuery(userId: number, search?: string) {
+    const totalQuery = this.channelRepo
+      .createQueryBuilder('channel')
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('cm.channel_id')
+          .from('channel_members', 'cm')
+          .where('cm.participant_id = :userId');
+
+        return `channel.id IN ${subQuery.getQuery()}`;
+      })
+      .setParameter('userId', userId);
+
+    if (search) {
+      totalQuery.andWhere((qb) => {
+        const searchSubQuery = qb
+          .subQuery()
+          .select('1')
+          .from('channel_members', 'cm_search')
+          .innerJoin(
+            'users',
+            'u_search',
+            'u_search.id = cm_search.participant_id',
+          )
+          .where('cm_search.channel_id = channel.id')
+          .andWhere('u_search.id != :userId')
+          .andWhere(
+            '(u_search.username ILIKE :search OR u_search.fullname ILIKE :search)',
+          )
+          .getQuery();
+
+        return `EXISTS ${searchSubQuery}`;
+      });
+      totalQuery.setParameter('search', `%${search}%`);
+    }
+
+    return totalQuery;
   }
 }

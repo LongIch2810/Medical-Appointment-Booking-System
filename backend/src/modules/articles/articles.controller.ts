@@ -26,12 +26,12 @@ import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInt
 import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto';
 
 @Controller('articles')
-@UseGuards(JwtAuthGuard)
 export class ArticlesController {
   private readonly logger = new Logger(ArticlesController.name);
   constructor(private readonly articlesService: ArticlesService) {}
 
   @Post('create-article')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FilesInterceptor('files', 4, {
@@ -55,6 +55,7 @@ export class ArticlesController {
   }
 
   @Patch(':articleId')
+  @UseGuards(JwtAuthGuard)
   async updateArticle(
     @Param('articleId', ParseIntPipe) articleId: number,
     bodyUpdateArticle: PartialUpdateArticleDto,
@@ -68,6 +69,7 @@ export class ArticlesController {
   }
 
   @Delete(':articleId')
+  @UseGuards(JwtAuthGuard)
   async deleteArticle(@Param('articleId', ParseIntPipe) articleId: number) {
     const { message } = await this.articlesService.deleteArticle(articleId);
     return message;
@@ -80,6 +82,7 @@ export class ArticlesController {
   }
 
   @Put(':articleId')
+  @UseGuards(JwtAuthGuard)
   async approveArticle(@Param('articleId', ParseIntPipe) articleId: number) {
     const { message } = await this.articlesService.approveArticle(articleId);
     return message;

@@ -143,3 +143,27 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  /* Thanh trượt mảnh, màu trắng - dùng cho topic nav trên nền primary */
+  .topic-scroll::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+  .topic-scroll::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 9999px;
+    margin: 0 8px;
+  }
+  .topic-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.55);
+    border-radius: 9999px;
+  }
+  .topic-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.85);
+  }
+  .topic-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.55) rgba(255, 255, 255, 0.12);
+  }
+}

@@ -9,7 +9,6 @@ import {
   UpdateDateColumn,
   DeleteDateColumn,
   Relation,
-  Unique,
 } from 'typeorm';
 import ExaminationResult from './examinationResult.entity';
 import SatisfactionRating from './satisfactionRating.entity';
@@ -20,10 +19,14 @@ import Relative from './relative.entity';
 import User from './user.entity';
 
 @Entity('appointments')
-// @Unique('UQ_appointment_doctor_schedule', [
+// @Unique('unique_doctor_schedule_date', [
 //   'doctor_schedule_id',
 //   'appointment_date',
 // ])
+// @Index('unique_doctor_schedule_date', ['doctorSchedule', 'appointmentDate'], {
+//   unique: true,
+//   where: `"status" IN ('PENDING', 'CONFIRMED') AND "deleted_at" IS NULL`,
+// })
 export default class Appointment {
   @PrimaryGeneratedColumn()
   id!: number;

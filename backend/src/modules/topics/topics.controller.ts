@@ -16,7 +16,6 @@ import { BodyFilterTopicsDto } from './dto/request/bodyFilterTopics.dto';
 import { BodyUpdateTopicDto } from './dto/request/bodyUpdateTopic.dto';
 
 @Controller('topics')
-@UseGuards(JwtAuthGuard)
 export class TopicsController {
   constructor(private topicsService: TopicsService) {}
 
@@ -26,16 +25,19 @@ export class TopicsController {
   }
 
   @Post('create-topic')
+  @UseGuards(JwtAuthGuard)
   async createTopic(@Body() bodyCreateTopic: BodyCreateTopicDto) {
     return this.topicsService.create(bodyCreateTopic);
   }
 
   @Get(':topicId')
+  @UseGuards(JwtAuthGuard)
   async getTopicDetail(@Param('topicId', ParseIntPipe) topicId: number) {
     return this.topicsService.findById(topicId);
   }
 
   @Patch(':topicId')
+  @UseGuards(JwtAuthGuard)
   async updateTopic(
     @Param('topicId', ParseIntPipe) topicId: number,
     @Body() bodyUpdateTopic: BodyUpdateTopicDto,
@@ -44,6 +46,7 @@ export class TopicsController {
   }
 
   @Delete(':topicId')
+  @UseGuards(JwtAuthGuard)
   async deleteTopic(@Param('topicId', ParseIntPipe) topicId: number) {
     return this.topicsService.remove(topicId);
   }

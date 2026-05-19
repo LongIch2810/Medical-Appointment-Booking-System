@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
 import Doctor from "@/pages/Doctor";
 import News from "@/pages/News";
+import NewsDetail from "@/pages/NewsDetail";
 import Contact from "@/pages/Contact";
 import Chatbot from "@/pages/Chatbot";
 import NotFound from "@/pages/NotFound";
@@ -60,9 +61,10 @@ const AppRoutes: React.FC = () => {
           </Route>
         </Route>
       </Route>
+      <Route path="/news" element={<News />}></Route>
+      <Route path="/news/:id" element={<NewsDetail />}></Route>
       <Route path="/sign-up" element={<SignUp />}></Route>
       <Route path="/sign-in" element={<SignIn />}></Route>
-      <Route path="/news" element={<News />}></Route>
       <Route path="/403" element={<Forbidden />}></Route>
       <Route path="*" element={<NotFound />}></Route>
     </Routes>
