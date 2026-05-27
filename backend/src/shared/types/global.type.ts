@@ -11,8 +11,8 @@ export type DoctorOutstandingWithIsOutstanding = DoctorOutstanding & {
   isOutstanding: boolean;
 };
 
-export type Paylaod = {
-  sub: number;
+export type RequestPaylaod = {
+  userId: number;
   roles: string[];
   tokenId: string;
   sessionVersion: number;

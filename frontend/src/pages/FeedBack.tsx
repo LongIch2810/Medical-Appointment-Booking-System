@@ -1,5 +1,4 @@
 import { useState } from "react";
-import MainLayout from "@/layouts/MainLayout";
 import {
   Card,
   CardHeader,
@@ -12,12 +11,17 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import FadeInView from "@/components/view/FadeInView";
+import { useComplaint } from "@/hooks/useComplaint";
+import { useUserStore } from "@/store/useUserStore";
+import { Link } from "react-router-dom";
 
 const Feedback = () => {
+  const { userInfo } = useUserStore();
+  const { mutate: submitComplaint, isPending } = useComplaint();
+
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    message: "",
+    title: "",
+    description: "",
   });
 
   const handleChange = (
@@ -28,8 +32,14 @@ const Feedback = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Cảm ơn bạn đã góp ý! Chúng tôi sẽ tiếp nhận và phản hồi sớm nhất.");
-    setForm({ name: "", email: "", message: "" });
+    submitComplaint(
+      { title: form.title, description: form.description },
+      {
+        onSuccess: () => {
+          setForm({ title: "", description: "" });
+        },
+      }
+    );
   };
 
   return (
@@ -52,47 +62,50 @@ const Feedback = () => {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Họ tên</Label>
+                  <Label htmlFor="fullname">Họ tên</Label>
                   <Input
-                    id="name"
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    required
-                    placeholder="Nhập họ tên của bạn"
+                    id="fullname"
+                    value={userInfo?.fullname || ""}
+                    disabled
+                    className="bg-gray-50"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="title">Tiêu đề</Label>
                   <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={form.email}
+                    id="title"
+                    name="title"
+                    value={form.title}
                     onChange={handleChange}
                     required
-                    placeholder="you@example.com"
+                    placeholder="Tiêu đề góp ý"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="message">Nội dung góp ý</Label>
+                  <Label htmlFor="description">Nội dung góp ý</Label>
                   <Textarea
-                    id="message"
-                    name="message"
+                    id="description"
+                    name="description"
                     rows={5}
-                    value={form.message}
+                    value={form.description}
                     onChange={handleChange}
                     required
                     placeholder="Hãy chia sẻ ý kiến của bạn..."
                   />
                 </div>
 
-                <CardFooter className="p-0">
-                  <Button type="submit" className="w-full">
-                    Gửi góp ý
+                <CardFooter className="flex flex-col gap-3 p-0">
+                  <Button type="submit" className="w-full" disabled={isPending}>
+                    {isPending ? "Đang gửi..." : "Gửi góp ý"}
                   </Button>
+                  <Link
+                    to="/patient/complaints"
+                    className="text-center text-xs text-primary underline-offset-2 hover:underline"
+                  >
+                    Xem lịch sử góp ý
+                  </Link>
                 </CardFooter>
               </form>
             </CardContent>

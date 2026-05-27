@@ -37,9 +37,10 @@ function PermissionRoute({
   children: ReactElement;
 }) {
   const currentUser = useAuthStore((state) => state.currentUser);
+  const userPermissions = useAuthStore((state) => state.permissions);
 
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (!hasPermissions(currentUser.permissions, requiredPermissions)) {
+  if (!hasPermissions(userPermissions, requiredPermissions)) {
     return <Navigate to="/403" replace />;
   }
 
@@ -48,11 +49,13 @@ function PermissionRoute({
 
 function RootRedirect() {
   const currentUser = useAuthStore((state) => state.currentUser);
+  const userPermissions = useAuthStore((state) => state.permissions);
+  const currentRole = useAuthStore((state) => state.currentRole);
   return (
     <Navigate
       to={
         currentUser
-          ? getFirstAccessiblePath(currentUser.permissions)
+          ? getFirstAccessiblePath(userPermissions, currentRole)
           : "/login"
       }
       replace

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/jobUploadName.ts"],"sourcesContent":["export enum JobUploadName {\r\n  UPLOAD_FILES_MESSAGE = 'UPLOAD_FILES_MESSAGE',\r\n  UPLOAD_FILES_ARTICLE = 'UPLOAD_FILES_ARTICLE',\r\n}\r\n"],"names":["JobUploadName"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,uCAAAA;;;WAAAA"}

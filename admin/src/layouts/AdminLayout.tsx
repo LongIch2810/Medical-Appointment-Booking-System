@@ -1,10 +1,13 @@
-import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Loader2, Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useLogout } from "@/hooks/useAuth";
+import { useCurrentUser } from "@/hooks/useUsers";
 import { cn } from "@/lib/utils";
 import {
   findMenuByPath,
@@ -14,10 +17,18 @@ import {
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUiStore } from "@/store/useUiStore";
 
+function getInitials(name: string) {
+  if (!name) return "AD";
+  const parts = name.trim().split(/\s+/);
+  const first = parts[0]?.[0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
+  return (first + last).toUpperCase() || "AD";
+}
+
 function SidebarNav({ mobile = false }: { mobile?: boolean }) {
-  const user = useAuthStore((state) => state.currentUser);
+  const permissions = useAuthStore((state) => state.permissions);
   const currentRole = useAuthStore((state) => state.currentRole);
-  const items = getWorkspaceMenu(currentRole, user?.permissions ?? []);
+  const items = getWorkspaceMenu(currentRole, permissions);
   const grouped = groupMenuBySection(items);
   const collapsed = useUiStore((state) => state.isSidebarCollapsed);
 
@@ -85,13 +96,34 @@ function SidebarNav({ mobile = false }: { mobile?: boolean }) {
 export function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const setSession = useAuthStore((state) => state.setSession);
   const currentUser = useAuthStore((state) => state.currentUser);
-  const logout = useAuthStore((state) => state.logout);
   const collapsed = useUiStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
   const activeMenu = findMenuByPath(location.pathname);
 
-  if (!currentUser) return null;
+  const profileQuery = useCurrentUser();
+  const logoutMutation = useLogout();
+
+  useEffect(() => {
+    if (profileQuery.data?.data) {
+      setSession(profileQuery.data.data);
+    }
+  }, [profileQuery.data, setSession]);
+
+  if (profileQuery.isLoading && !currentUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white text-[#75758a]">
+        <Loader2 className="size-5 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const displayUser = profileQuery.data?.data ?? currentUser;
+  if (!displayUser) return null;
+
+  const fullname = displayUser.fullname ?? displayUser.username ?? "Admin";
+  const titleHint = displayUser.email ?? displayUser.username ?? "Admin user";
 
   return (
     <div className="min-h-screen bg-white">
@@ -108,7 +140,7 @@ export function AdminLayout() {
               </span>
               <span className="mx-2 hidden text-white/[0.35] sm:inline">/</span>
               <span className="text-white/[0.72]">
-                Mock operations UI ready for API integration
+                Real-time data via secure backend APIs
               </span>
             </div>
             <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-6">
@@ -150,32 +182,35 @@ export function AdminLayout() {
               <div className="flex items-center gap-3">
                 <Card className="hidden rounded-lg border-[#d9d9dd] px-4 py-3 md:flex md:flex-row md:items-center md:gap-3">
                   <Avatar className="size-11">
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.displayName} />
-                    <AvatarFallback>
-                      {currentUser.displayName.slice(0, 2)}
-                    </AvatarFallback>
+                    <AvatarImage
+                      src={displayUser.picture ?? undefined}
+                      alt={fullname}
+                    />
+                    <AvatarFallback>{getInitials(fullname)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <div className="truncate text-sm font-medium text-[#212121]">
-                      {currentUser.displayName}
+                      {fullname}
                     </div>
                     <div className="truncate text-xs text-[#75758a]">
-                      {currentUser.title}
+                      {titleHint}
                     </div>
                   </div>
                 </Card>
 
-                <Button variant="outline" className="hidden sm:inline-flex" onClick={() => navigate("/login")}>
+                <Button
+                  variant="outline"
+                  className="hidden sm:inline-flex"
+                  onClick={() => navigate("/login")}
+                >
                   Switch role
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => {
-                    logout();
-                    navigate("/login");
-                  }}
+                  disabled={logoutMutation.isPending}
+                  onClick={() => logoutMutation.mutate()}
                 >
-                  Logout
+                  {logoutMutation.isPending ? "Đang đăng xuất..." : "Logout"}
                 </Button>
               </div>
             </div>

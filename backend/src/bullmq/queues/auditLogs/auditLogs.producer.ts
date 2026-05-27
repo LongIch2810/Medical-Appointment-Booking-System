@@ -9,7 +9,7 @@ export class AuditLogsProducer {
   constructor(@InjectQueue('audit-logs-queue') private readonly queue: Queue) {}
   async createAuditLog(data: AuditLogData) {
     await this.queue.add(jobAuditLogs.CREATE_AUDIT_LOG, data, {
-      attempts: 1, //Thử lại 1 lần,
+      attempts: 2, //Thử lại 1 lần,
       removeOnFail: false, // Xóa khi gặp lỗi
     });
   }

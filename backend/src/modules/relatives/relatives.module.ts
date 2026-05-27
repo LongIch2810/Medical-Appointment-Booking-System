@@ -7,9 +7,13 @@ import { UsersModule } from '../users/users.module';
 import { RelationshipsModule } from '../relationships/relationships.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Relative]), forwardRef(() => UsersModule), RelationshipsModule],
+  imports: [
+    TypeOrmModule.forFeature([Relative]),
+    forwardRef(() => UsersModule),
+    RelationshipsModule,
+  ],
   controllers: [RelativesController],
   providers: [RelativesService],
   exports: [RelativesService],
 })
-export class RelativesModule { }
+export class RelativesModule {}

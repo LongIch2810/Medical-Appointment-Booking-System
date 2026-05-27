@@ -24,8 +24,15 @@ export class UsersMapper {
   }
 
   static toUserListResponse(users: User[]): UserResponseDto[] {
-    return plainToInstance(UserResponseDto, users, {
-      excludeExtraneousValues: true,
-    });
+    return plainToInstance(
+      UserResponseDto,
+      users.map((user) => ({
+        ...user,
+        roles: (user.roles ?? []).map((userRole: UserRole) => userRole.role),
+      })),
+      {
+        excludeExtraneousValues: true,
+      },
+    );
   }
 }

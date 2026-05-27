@@ -24,6 +24,7 @@ import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto'
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { ArticleResponseDto } from './dto/response/articleResponse.dto';
 import { ArticleMapper } from './article.mapper';
+import { BodyFilterArticlesImproveDto } from './dto/request/bodyFilterArticlesImprove.dto';
 
 @Injectable()
 export class ArticlesService {
@@ -166,7 +167,7 @@ export class ArticlesService {
 
   async filterAndPagination(objectFilters: BodyFilterArticlesDto) {
     let { page, limit } = objectFilters;
-    const { topic_slug, search, arrange } = objectFilters;
+    const { topic_slug, search, arrange, is_approve } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -183,11 +184,16 @@ export class ArticlesService {
       .leftJoinAndSelect('article.topic', 'topic')
       .leftJoinAndSelect('article.tags', 'articleTag')
       .leftJoinAndSelect('articleTag.tag', 'tag')
-      .where('article.is_approve = :is_approve', { is_approve: true })
-      .andWhere('article.deleted_at IS NULL')
+      .where('article.deleted_at IS NULL')
       .orderBy('article.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
       .take(limit)
       .skip(skip);
+
+    if (is_approve === 'true' || is_approve === undefined) {
+      query.andWhere('article.is_approve = :is_approve', { is_approve: true });
+    } else if (is_approve === 'false') {
+      query.andWhere('article.is_approve = :is_approve', { is_approve: false });
+    }
 
     const filters = [
       {
@@ -251,5 +257,80 @@ export class ArticlesService {
     await this.articleRepo.update(article.id, { img_urls: urls });
     article.img_urls = urls;
     return article;
+  }
+
+  async filterAndPaginationByDoctors(
+    objectFilters: BodyFilterArticlesImproveDto,
+  ) {
+    let { page, limit } = objectFilters;
+    const { topic_slug, search, arrange, author_id, is_approve } =
+      objectFilters;
+    page = Math.max(1, page);
+    limit = Math.max(1, limit);
+    const skip = (page - 1) * limit;
+
+    // const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    // const cachedData = await this.redisCacheService.getData(cacheKey);
+    // if (cachedData) {
+    //   return cachedData;
+    // }
+
+    const query = this.articleRepo
+      .createQueryBuilder('article')
+      .leftJoinAndSelect('article.author', 'author')
+      .leftJoinAndSelect('article.topic', 'topic')
+      .leftJoinAndSelect('article.tags', 'articleTag')
+      .leftJoinAndSelect('articleTag.tag', 'tag')
+      .where('article.deleted_at IS NULL')
+      .orderBy('article.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
+      .take(limit)
+      .skip(skip);
+
+    if (is_approve === 'true' || is_approve === undefined) {
+      query.andWhere('article.is_approve = :is_approve', { is_approve: true });
+    } else if (is_approve === 'false') {
+      query.andWhere('article.is_approve = :is_approve', { is_approve: false });
+    }
+
+    const filters = [
+      {
+        condition: 'topic.slug = :topic_slug',
+        value: topic_slug,
+        key: 'topic_slug',
+      },
+      {
+        condition: `(LOWER(article.title) LIKE LOWER(:search) 
+      OR LOWER(author.fullname) LIKE LOWER(:search) 
+      OR LOWER(topic.name) LIKE LOWER(:search) 
+      OR LOWER(tag.name) LIKE LOWER(:search))`,
+        value: search,
+        key: 'search',
+      },
+      {
+        condition: 'author.id = :author_id',
+        value: author_id,
+        key: 'author_id',
+      },
+    ];
+
+    filters.forEach(({ condition, value, key }) => {
+      if (value !== undefined && value !== null) {
+        query.andWhere(condition, { [key]: value });
+      }
+    });
+
+    const [articles, total] = await query.getManyAndCount();
+
+    const result = new PaginationResultDto<ArticleResponseDto>(
+      'articles',
+      ArticleMapper.toArticleResponseDtoList(articles),
+      total,
+      page,
+      limit,
+    );
+
+    // await this.redisCacheService.setData(cacheKey, result, 3600);
+
+    return result;
   }
 }

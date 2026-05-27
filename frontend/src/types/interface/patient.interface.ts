@@ -39,6 +39,7 @@ export interface Relative {
   id: number;
   fullname: string | null;
   relationship: Relationship;
+  user?: DoctorUserSummary;
   phone: string | null;
   dob: string | null;
   gender: boolean;
@@ -113,8 +114,30 @@ export interface PatientAppointment {
   doctor_schedule: AppointmentDoctorSchedule;
   patient: Relative;
   doctor: DoctorSummary;
+  examination_result?: AppointmentExaminationResult | null;
+  satisfaction_rating?: AppointmentSatisfactionRating | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface AppointmentExaminationResult {
+  id: number;
+  symptoms?: string;
+  diagnosis?: string;
+  treatment?: string;
+  prescription?: string;
+}
+
+export interface AppointmentSatisfactionRating {
+  id: number;
+  rating_score: number;
+  feedback?: string;
+}
+
+export interface SatisfactionRatingPayload {
+  rating_score: number;
+  feedback: string;
+  appointment_id: number;
 }
 
 export interface ExaminationResult {

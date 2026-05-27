@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Doctor from 'src/entities/doctor.entity';
 import { Repository } from 'typeorm';
@@ -12,13 +16,53 @@ import {
 } from 'src/utils/setIsOutstanding';
 import { DoctorsMapper } from './doctors.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { BodyCreateDoctorDto } from './dto/request/bodyCreateDoctor.dto';
+import { BodyUpdateDoctorDto } from './dto/request/bodyUpdateDoctor.dto';
+import User from 'src/entities/user.entity';
+import Specialty from 'src/entities/specialty.entity';
 
 @Injectable()
 export class DoctorsService {
   constructor(
     @InjectRepository(Doctor) private readonly doctorRepo: Repository<Doctor>,
+    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(Specialty)
+    private readonly specialtyRepo: Repository<Specialty>,
     private readonly redisCacheService: RedisCacheService,
   ) {}
+
+  async create(body: BodyCreateDoctorDto) {
+    const user = await this.userRepo.findOne({ where: { id: body.user_id } });
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại.');
+    }
+
+    const specialty = await this.specialtyRepo.findOne({
+      where: { id: body.specialty_id },
+    });
+    if (!specialty) {
+      throw new NotFoundException('Chuyên khoa không tồn tại.');
+    }
+
+    const existedDoctor = await this.doctorRepo.findOne({
+      where: { user: { id: body.user_id } },
+    });
+    if (existedDoctor) {
+      throw new ConflictException('Người dùng đã là bác sĩ.');
+    }
+
+    const doctor = this.doctorRepo.create({
+      experience: body.experience,
+      about_me: body.about_me,
+      workplace: body.workplace,
+      doctor_level: body.doctor_level,
+      user,
+      specialty,
+    });
+
+    const newDoctor = await this.doctorRepo.save(doctor);
+    return this.getDoctorDetail(newDoctor.id);
+  }
 
   async findByDoctorId(doctorId: number): Promise<Doctor | null> {
     const doctor = await this.doctorRepo.findOne({
@@ -145,6 +189,41 @@ export class DoctorsService {
       appointments_completed: Number(row?.appointments_completed ?? 0),
     };
     return DoctorsMapper.toDoctorResponseDto(setIsOutstandingDoctor(doctor));
+  }
+
+  async update(doctorId: number, body: BodyUpdateDoctorDto) {
+    const doctor = await this.doctorRepo.findOne({
+      where: { id: doctorId },
+      relations: ['user', 'specialty'],
+    });
+    if (!doctor) {
+      throw new NotFoundException('Bác sĩ không tồn tại.');
+    }
+
+    if (body.specialty_id !== undefined) {
+      const specialty = await this.specialtyRepo.findOne({
+        where: { id: body.specialty_id },
+      });
+      if (!specialty) {
+        throw new NotFoundException('Chuyên khoa không tồn tại.');
+      }
+      doctor.specialty = specialty;
+    }
+
+    if (body.experience !== undefined) doctor.experience = body.experience;
+    if (body.about_me !== undefined) doctor.about_me = body.about_me;
+    if (body.workplace !== undefined) doctor.workplace = body.workplace;
+    if (body.doctor_level !== undefined)
+      doctor.doctor_level = body.doctor_level;
+
+    await this.doctorRepo.save(doctor);
+    return this.getDoctorDetail(doctorId);
+  }
+
+  async remove(doctorId: number) {
+    await this.getDoctorDetail(doctorId);
+    await this.doctorRepo.softDelete(doctorId);
+    return { message: 'Xóa bác sĩ thành công.' };
   }
 
   async getOutstandingDoctors() {

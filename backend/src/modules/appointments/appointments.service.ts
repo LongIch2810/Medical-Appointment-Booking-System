@@ -9,10 +9,9 @@ import Appointment from 'src/entities/appointment.entity';
 import {
   DataSource,
   EntityManager,
+  Equal,
   In,
-  IsNull,
   MoreThanOrEqual,
-  Not,
   QueryFailedError,
   Repository,
 } from 'typeorm';
@@ -31,6 +30,7 @@ import { AppointmentsMapper } from './appointments.mapper';
 import { isPgDriverError } from '../../utils/isPgDriverError';
 import Relative from '../../entities/relative.entity';
 import { AppointmentResponseDto } from './dto/response/appointmentResponse.dto';
+import { BodyFilterImproveDto } from './dto/request/bodyFilterImprove.dto';
 
 @Injectable()
 export class AppointmentsService {
@@ -90,6 +90,9 @@ export class AppointmentsService {
       const user_booked = await this.usersService.findByUserId(userId);
       if (!user_booked)
         throw new NotFoundException('Không tìm thấy người dùng.');
+      const isAdmin = (user_booked.roles ?? []).some(
+        (userRole) => userRole.role?.role_name === 'ADMIN',
+      );
       const {
         appointment_date,
         relative_id,
@@ -114,13 +117,15 @@ export class AppointmentsService {
         );
       }
 
-      const patient = await manager
+      const patientQuery = manager
         .getRepository(Relative)
         .createQueryBuilder('relative')
         .setLock('pessimistic_write')
-        .where('relative.id = :relative_id', { relative_id })
-        .andWhere('relative.user.id = :userId', { userId })
-        .getOne();
+        .where('relative.id = :relative_id', { relative_id });
+      if (!isAdmin) {
+        patientQuery.andWhere('relative.user.id = :userId', { userId });
+      }
+      const patient = await patientQuery.getOne();
       if (!patient) throw new NotFoundException('Không tìm thấy bệnh nhân.');
 
       const chosenSchedule: DoctorSchedule | null = await manager.findOne(
@@ -233,7 +238,7 @@ export class AppointmentsService {
     // }
     const query = this.baseAppointmentQuery()
       .where('appointment.booked_by_user.id = :userId', { userId })
-      .orderBy('appointment.appointment_date', 'DESC')
+      .orderBy('appointment.appointment_date', 'ASC')
       .take(limit)
       .skip(skip);
 
@@ -264,6 +269,214 @@ export class AppointmentsService {
     return result;
   }
 
+  async findAndPaginationOfDoctor(
+    userId: number,
+    objectFilters: BodyFilterImproveDto,
+  ) {
+    let { page, limit } = objectFilters;
+    const { appointmentStatus, relativeId, bookerId } = objectFilters;
+    page = Math.max(1, page);
+    limit = Math.max(1, limit);
+    const skip = (page - 1) * limit;
+    const user = await this.usersService.findByUserId(userId);
+    if (!user) {
+      throw new NotFoundException('Không tìm thấy người dùng.');
+    }
+
+    if (!user.doctor.id) {
+      throw new NotFoundException('Người dùng không phải là bác sĩ.');
+    }
+
+    const query = this.baseAppointmentQuery()
+      .where('doctor.id = :doctorId', { doctorId: user.doctor.id })
+      .orderBy('appointment.appointment_date', 'ASC')
+      .take(limit)
+      .skip(skip);
+
+    if (appointmentStatus) {
+      query.andWhere('appointment.status = :status', {
+        status: appointmentStatus,
+      });
+    }
+
+    if (relativeId) {
+      query.andWhere('appointment.patient.id = :relativeId', {
+        relativeId,
+      });
+    }
+
+    if (bookerId) {
+      query.andWhere('appointment.booked_by_user.id = :bookerId', {
+        bookerId,
+      });
+    }
+
+    const [appointments, total] = await query.getManyAndCount();
+
+    const result = new PaginationResultDto(
+      'appointments',
+      AppointmentsMapper.toAppointmentResponseDtoList(appointments),
+      total,
+      page,
+      limit,
+    );
+
+    return result;
+  }
+
+  async filterAndPaginationOfAdmin(objectFilters: BodyFilterImproveDto) {
+    let { page, limit } = objectFilters;
+    const {
+      appointmentStatus,
+      relativeId,
+      bookerId,
+      doctorId,
+      appointmentDate,
+    } = objectFilters;
+    page = Math.max(1, page);
+    limit = Math.max(1, limit);
+    const skip = (page - 1) * limit;
+
+    const query = this.baseAppointmentQuery()
+      .orderBy('appointment.appointment_date', 'ASC')
+      .take(limit)
+      .skip(skip);
+
+    if (appointmentStatus) {
+      query.andWhere('appointment.status = :status', {
+        status: appointmentStatus,
+      });
+    }
+
+    if (relativeId) {
+      query.andWhere('appointment.patient.id = :relativeId', {
+        relativeId,
+      });
+    }
+
+    if (bookerId) {
+      query.andWhere('appointment.booked_by_user.id = :bookerId', {
+        bookerId,
+      });
+    }
+
+    if (appointmentDate) {
+      const appointmentDateOnly = appointmentDate.slice(0, 10);
+      query.andWhere('appointment.appointment_date = :appointmentDate', {
+        appointmentDate: appointmentDateOnly,
+      });
+    }
+
+    if (doctorId) {
+      query.andWhere('doctor.id = :doctorId', { doctorId });
+    }
+    const [appointments, total] = await query.getManyAndCount();
+
+    const result = new PaginationResultDto(
+      'appointments',
+      AppointmentsMapper.toAppointmentResponseDtoList(appointments),
+      total,
+      page,
+      limit,
+    );
+
+    return result;
+  }
+
+  async updateStatus(appointmentId: number, status: AppointmentStatus) {
+    const appointment = await this.baseAppointmentQuery()
+      .where('appointment.id = :appointmentId', { appointmentId })
+      .getOne();
+
+    if (!appointment) {
+      throw new NotFoundException('Lịch hẹn không tồn tại.');
+    }
+
+    if (status === AppointmentStatus.COMPLETED) {
+      if (appointment.status === AppointmentStatus.COMPLETED) {
+        throw new BadRequestException('Lịch hẹn đã được đánh dấu khám xong.');
+      }
+
+      if (
+        appointment.status === AppointmentStatus.CANCELLED ||
+        appointment.status === AppointmentStatus.ABSENT
+      ) {
+        throw new BadRequestException(
+          'Không thể đánh dấu khám xong cho lịch hẹn đã hủy hoặc vắng mặt.',
+        );
+      }
+
+      if (appointment.status !== AppointmentStatus.CONFIRMED) {
+        throw new BadRequestException(
+          'Chỉ có thể đánh dấu khám xong cho lịch hẹn đã được xác nhận.',
+        );
+      }
+
+      const appointmentStart = this.buildAppointmentStartDate(appointment);
+      const now = new Date();
+      if (now < appointmentStart) {
+        throw new BadRequestException('Lịch hẹn chưa được khám xong');
+      }
+    }
+
+    if (status === AppointmentStatus.ABSENT) {
+      if (appointment.status === AppointmentStatus.ABSENT) {
+        throw new BadRequestException(
+          'Lịch hẹn đã được đánh dấu vắng mặt.',
+        );
+      }
+
+      if (
+        appointment.status === AppointmentStatus.CANCELLED ||
+        appointment.status === AppointmentStatus.COMPLETED
+      ) {
+        throw new BadRequestException(
+          'Không thể đánh dấu vắng mặt cho lịch hẹn đã hủy hoặc đã khám xong.',
+        );
+      }
+
+      if (appointment.status !== AppointmentStatus.CONFIRMED) {
+        throw new BadRequestException(
+          'Chỉ có thể đánh dấu vắng mặt cho lịch hẹn đã được xác nhận.',
+        );
+      }
+
+      const appointmentStart = this.buildAppointmentStartDate(appointment);
+      const now = new Date();
+      if (now < appointmentStart) {
+        throw new BadRequestException(
+          'Chỉ có thể đánh dấu vắng mặt khi đã đến ngày khám và qua giờ bắt đầu của lịch hẹn.',
+        );
+      }
+    }
+
+    appointment.status = status;
+    await this.appointmentRepo.save(appointment);
+
+    const updatedAppointment = await this.baseAppointmentQuery()
+      .where('appointment.id = :appointmentId', { appointmentId })
+      .getOne();
+
+    return AppointmentsMapper.toAppointmentResponseDto(updatedAppointment!);
+  }
+
+  private buildAppointmentStartDate(appointment: Appointment) {
+    const startTime = appointment.doctor_schedule?.start_time ?? '00:00:00';
+    const [hours, minutes, seconds] = startTime
+      .split(':')
+      .map((part) => Number(part) || 0);
+
+    const appointmentDate = new Date(appointment.appointment_date);
+    return new Date(
+      appointmentDate.getFullYear(),
+      appointmentDate.getMonth(),
+      appointmentDate.getDate(),
+      hours,
+      minutes,
+      seconds || 0,
+    );
+  }
+
   async getAppointmentDetail(userId: number, appointmentId: number) {
     const isUserExist = await this.usersService.isUserExists(userId);
     if (!isUserExist) {
@@ -285,6 +498,26 @@ export class AppointmentsService {
     }
 
     // await this.redisCacheService.setData(cacheKey, appointment, 3600);
+
+    return AppointmentsMapper.toAppointmentResponseDto(appointment);
+  }
+
+  async getAppoitnmentToDayEarlyOfDoctor(userId: number, doctorId: number) {
+    const isUserExist = await this.usersService.isUserExists(userId);
+    if (!isUserExist) {
+      throw new NotFoundException('Không tìm thấy người dùng.');
+    }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const appointment = await this.baseAppointmentQuery()
+      .where('doctor.id = :doctorId', { doctorId })
+      .andWhere('appointment.appointment_date = :today', { today })
+      .orderBy('appointment.appointment_date', 'ASC')
+      .getOne();
+
+    if (!appointment) {
+      throw new NotFoundException('Lịch hẹn không tồn tại.');
+    }
 
     return AppointmentsMapper.toAppointmentResponseDto(appointment);
   }
@@ -350,6 +583,25 @@ export class AppointmentsService {
     return !!appointment;
   }
 
+  async isAppointmentCompletedAndOwnedByDoctorUser(
+    doctorUserId: number,
+    appointmentId: number,
+  ): Promise<boolean> {
+    const isUserExist = await this.usersService.isUserExists(doctorUserId);
+    if (!isUserExist) {
+      throw new NotFoundException('Không tìm thấy người dùng.');
+    }
+
+    const appointment = await this.appointmentRepo.findOne({
+      where: {
+        id: appointmentId,
+        status: AppointmentStatus.COMPLETED,
+        doctor_schedule: { doctor: { user: { id: doctorUserId } } },
+      },
+    });
+    return !!appointment;
+  }
+
   async isAppointmentExistsCompletedAndResult(
     userId: number,
     appointmentId: number,
@@ -359,14 +611,13 @@ export class AppointmentsService {
       throw new NotFoundException('Không tìm thấy người dùng.');
     }
 
-    const appointment = await this.appointmentRepo.findOne({
-      where: {
-        id: appointmentId,
-        status: AppointmentStatus.COMPLETED,
-        examination_result: Not(IsNull()),
-        booked_by_user: { id: userId },
-      },
-    });
+    const appointment = await this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .innerJoinAndSelect('appointment.examination_result', 'examinationResult')
+      .where('appointment.id = :appointmentId', { appointmentId })
+      .andWhere('appointment.status = :status', { status: AppointmentStatus.COMPLETED })
+      .andWhere('appointment.booked_by_user = :userId', { userId })
+      .getOne();
     return !!appointment;
   }
 
@@ -410,6 +661,56 @@ export class AppointmentsService {
     return AppointmentsMapper.toAppointmentResponseDto(appointment);
   }
 
+  async numberOfAppointmentsToDayActive() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const count = await this.appointmentRepo.count({
+      where: {
+        appointment_date: Equal(today),
+        status: In([AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING]),
+      },
+    });
+    return count;
+  }
+
+  async numberOfAppointmentsToDayCancelled() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const count = await this.appointmentRepo.count({
+      where: {
+        appointment_date: Equal(today),
+        status: AppointmentStatus.CANCELLED,
+      },
+    });
+    return count;
+  }
+
+  async numberOfAppointmentsToDayActiveByDoctorId(doctorId: number) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const count = await this.appointmentRepo.count({
+      where: {
+        appointment_date: Equal(today),
+        status: In([AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING]),
+        doctor_schedule: { doctor: { id: doctorId } },
+      },
+    });
+    return count;
+  }
+
+  async numberOfUpcomingAppointmentsByDoctorId(doctorId: number) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const count = await this.appointmentRepo.count({
+      where: {
+        appointment_date: MoreThanOrEqual(today),
+        status: In([AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING]),
+        doctor_schedule: { doctor: { id: doctorId } },
+      },
+    });
+    return count;
+  }
+
   private baseAppointmentQuery() {
     return this.appointmentRepo
       .createQueryBuilder('appointment')
@@ -418,6 +719,8 @@ export class AppointmentsService {
       .leftJoinAndSelect('doctorSchedule.doctor', 'doctor')
       .leftJoinAndSelect('doctor.user', 'doctorUser')
       .leftJoinAndSelect('appointment.booked_by_user', 'bookedByUser')
-      .leftJoinAndSelect('doctor.specialty', 'specialty');
+      .leftJoinAndSelect('doctor.specialty', 'specialty')
+      .leftJoinAndSelect('appointment.examination_result', 'examinationResult')
+      .leftJoinAndSelect('appointment.satisfaction_rating', 'satisfactionRating');
   }
 }

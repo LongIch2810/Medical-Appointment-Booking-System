@@ -129,7 +129,10 @@ export class ChannelsService {
       }
 
       const { entities, raw } = await query.getRawAndEntities();
-      const total = await this.buildTotalChannelsQuery(userId, search).getCount();
+      const total = await this.buildTotalChannelsQuery(
+        userId,
+        search,
+      ).getCount();
 
       const enriched = entities.map((channel) => {
         const row = raw.find(

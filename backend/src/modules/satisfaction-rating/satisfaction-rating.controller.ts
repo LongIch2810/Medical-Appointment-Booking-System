@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -14,15 +16,21 @@ import { BodyCreateSatisfactionRating } from './dto/request/bodyCreateSatisfacti
 import { BodyFilterSatisfactionRatingsDto } from './dto/request/bodyFilterSatisfactionRatings.dto';
 import { BodyUpdateSatisfactionRatingDto } from './dto/request/bodyUpdateSatisfactionRating.dto';
 import { SatisfactionRatingService } from './satisfaction-rating.service';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('satisfaction-rating')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SatisfactionRatingController {
   constructor(
     private readonly satisfactionRatingService: SatisfactionRatingService,
   ) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
   async getSatisfactionRatings(
     @Body() bodyFilterSatisfactionRatings: BodyFilterSatisfactionRatingsDto,
   ) {
@@ -32,6 +40,9 @@ export class SatisfactionRatingController {
   }
 
   @Post('create-rating')
+  @HttpCode(HttpStatus.CREATED)
+  @Permissions(PERMISSIONS.SATISFACTION_RATING_CREATE)
+  @AuditLogAction({ action: 'CREATE', entityName: 'satisfaction-rating' })
   async createSatisfactionRating(
     @Request() req,
     @Body() bodyCreateSatisfactionRating: BodyCreateSatisfactionRating,
@@ -44,6 +55,8 @@ export class SatisfactionRatingController {
   }
 
   @Get(':ratingId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
   async getSatisfactionRatingDetail(
     @Param('ratingId', ParseIntPipe) ratingId: number,
   ) {
@@ -51,6 +64,9 @@ export class SatisfactionRatingController {
   }
 
   @Patch(':ratingId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.SATISFACTION_RATING_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'satisfaction-rating' })
   async updateSatisfactionRating(
     @Param('ratingId', ParseIntPipe) ratingId: number,
     @Body() bodyUpdateSatisfactionRating: BodyUpdateSatisfactionRatingDto,

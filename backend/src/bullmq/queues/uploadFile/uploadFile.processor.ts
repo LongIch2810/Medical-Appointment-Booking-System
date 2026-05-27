@@ -56,9 +56,12 @@ export class UploadFileProcessor extends WorkerHost {
         file_extension: item.format,
         public_id: item.public_id,
       }));
-      const article = await this.articlesService.updateFilesArticle(articleId, filesData);
+      const article = await this.articlesService.updateFilesArticle(
+        articleId,
+        filesData,
+      );
 
-      this.gateway.notifyUpdatedFilesArticle(article.author.id, article)
+      this.gateway.notifyUpdatedFilesArticle(article.author.id, article);
     }
   }
 }

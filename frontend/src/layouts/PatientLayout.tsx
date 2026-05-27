@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  AlertTriangle,
   CalendarClock,
   FileHeart,
   FileSearch,
@@ -33,6 +34,7 @@ const navItems = [
   },
   { label: "Hồ sơ sức khỏe", to: "/patient/health-records", icon: FileHeart },
   { label: "Kết quả khám", to: "/patient/visit-results", icon: FileSearch },
+  { label: "Góp ý & khiếu nại", to: "/patient/complaints", icon: AlertTriangle },
   { label: "Cài đặt", to: "/patient/settings", icon: Settings },
 ];
 

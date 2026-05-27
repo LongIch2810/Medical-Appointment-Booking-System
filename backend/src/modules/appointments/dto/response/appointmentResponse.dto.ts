@@ -11,48 +11,48 @@ import { formatDateDDMMYYYY } from 'src/utils/formatDate';
 
 @Exclude()
 export class AppointmentResponseDto {
-    @Expose()
-    id!: number;
+  @Expose()
+  id!: number;
 
-    @Expose()
-    @Transform(({ value }) => formatDateDDMMYYYY(value))
-    appointment_date!: string;
+  @Expose()
+  @Transform(({ value }) => formatDateDDMMYYYY(value))
+  appointment_date!: string;
 
-    @Expose()
-    status!: AppointmentStatus;
+  @Expose()
+  status!: AppointmentStatus;
 
-    @Expose()
-    booking_mode!: BookingMode;
+  @Expose()
+  booking_mode!: BookingMode;
 
-    @Expose()
-    @Type(() => DoctorScheduleResponseDto)
-    doctor_schedule!: DoctorScheduleResponseDto;
+  @Expose()
+  @Type(() => DoctorScheduleResponseDto)
+  doctor_schedule!: DoctorScheduleResponseDto;
 
-    @Expose()
-    @Type(() => RelativeResponseDto)
-    patient!: RelativeResponseDto;
+  @Expose()
+  @Type(() => RelativeResponseDto)
+  patient!: RelativeResponseDto;
 
-    @Expose()
-    @Type(() => ExaminationResultResponseDto)
-    examination_result!: ExaminationResultResponseDto;
+  @Expose()
+  @Type(() => ExaminationResultResponseDto)
+  examination_result!: ExaminationResultResponseDto;
 
-    @Expose()
-    @Type(() => SatisfactionRatingResponseDto)
-    satisfaction_rating!: SatisfactionRatingResponseDto;
+  @Expose()
+  @Type(() => SatisfactionRatingResponseDto)
+  satisfaction_rating!: SatisfactionRatingResponseDto;
 
-    @Expose()
-    @Type(() => UserResponseDto)
-    booked_by_user!: UserResponseDto;
+  @Expose()
+  @Type(() => UserResponseDto)
+  booked_by_user!: UserResponseDto;
 
-    @Expose()
-    @Type(() => DoctorInformationResponseDto)
-    doctor!: DoctorInformationResponseDto;
+  @Expose()
+  @Type(() => DoctorInformationResponseDto)
+  doctor!: DoctorInformationResponseDto;
 
-    @Expose()
-    @Transform(({ value }) => formatDateDDMMYYYY(value))
-    created_at!: string;
+  @Expose()
+  @Transform(({ value }) => formatDateDDMMYYYY(value))
+  created_at!: string;
 
-    @Expose()
-    @Transform(({ value }) => formatDateDDMMYYYY(value))
-    updated_at!: string;
+  @Expose()
+  @Transform(({ value }) => formatDateDDMMYYYY(value))
+  updated_at!: string;
 }

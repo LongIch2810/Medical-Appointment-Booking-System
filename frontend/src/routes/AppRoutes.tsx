@@ -29,6 +29,7 @@ import Settings from "@/pages/patient/Settings";
 import Messages from "@/pages/patient/Messages";
 import HealthRecords from "@/pages/patient/HealthRecords";
 import VisitResults from "@/pages/patient/VisitResults";
+import MyComplaints from "@/pages/patient/Complaints";
 import Forbidden from "@/pages/Forbidden";
 
 const AppRoutes: React.FC = () => {
@@ -58,6 +59,7 @@ const AppRoutes: React.FC = () => {
             <Route path="health-records" element={<HealthRecords />}></Route>
             <Route path="visit-results" element={<VisitResults />}></Route>
             <Route path="ai-coach-health" element={<AICoachHealth />}></Route>
+            <Route path="complaints" element={<MyComplaints />}></Route>
           </Route>
         </Route>
       </Route>

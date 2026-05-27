@@ -11,7 +11,7 @@ export class PermissionsService {
   constructor(
     @InjectRepository(Permission)
     private readonly permissionRepo: Repository<Permission>,
-  ) { }
+  ) {}
 
   async filterAndPagination(objectFilters: BodyFilterPermissionsDto) {
     let { page, limit, search, arrange, role_id } = objectFilters;
@@ -19,24 +19,30 @@ export class PermissionsService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
     const keyword = search?.trim() ?? '';
-    const roleIdCondition = role_id ? { roles: { role: { id: role_id } } } : {}
-    const where = keyword ? [
-      { name: Like(`%${keyword}%`) },
-      { description: Like(`%${keyword}%`) },
-      roleIdCondition
-    ] : [roleIdCondition]
+    const roleIdCondition = role_id ? { roles: { role: { id: role_id } } } : {};
+    const where = keyword
+      ? [
+          { name: Like(`%${keyword}%`) },
+          { description: Like(`%${keyword}%`) },
+          roleIdCondition,
+        ]
+      : [roleIdCondition];
     const [permissions, total] = await this.permissionRepo.findAndCount({
       skip,
       take: limit,
       order: {
-        name: arrange.toUpperCase() as "ASC" | "DESC",
+        name: arrange.toUpperCase() as 'ASC' | 'DESC',
       },
-      where
+      where,
     });
-    const result = new PaginationResultDto("permissions",
+    const result = new PaginationResultDto(
+      'permissions',
       PermissionsMapper.toPermissionResponseDtoList(permissions),
-      total, page, limit)
-    return result
+      total,
+      page,
+      limit,
+    );
+    return result;
   }
 
   async getPermissionDetail(id: number) {

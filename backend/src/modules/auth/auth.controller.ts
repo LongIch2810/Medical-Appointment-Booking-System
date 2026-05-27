@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
   HttpStatus,
   Post,
   Request,
@@ -19,24 +20,30 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import {
   ACCESS_TOKEN_EXPIRE_TIME,
+  PERMISSIONS,
   REFRESH_TOKEN_EXPIRE_TIME,
 } from 'src/utils/constants';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @AuditLogAction({ action: 'CREATE', entityName: 'auth.register' })
   async register(@Body() registerData: BodyRegisterDto) {
     const newUser = await this.authService.register(registerData);
     return newUser;
   }
 
   @Post('login')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
+  @AuditLogAction({ action: 'LOGIN', entityName: 'auth.login' })
   async login(@Request() req, @Response() res) {
     const { accessToken, refreshToken } = await this.authService.login(req);
 
@@ -62,8 +69,40 @@ export class AuthController {
     });
   }
 
+  @Post('/admin/login')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(LocalAuthGuard)
+  @AuditLogAction({ action: 'LOGIN', entityName: 'auth.login-administrator' })
+  async loginAdministrator(@Request() req, @Response() res) {
+    const { accessToken, refreshToken } =
+      await this.authService.loginAdministrator(req);
+
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: ACCESS_TOKEN_EXPIRE_TIME,
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'strict',
+      maxAge: REFRESH_TOKEN_EXPIRE_TIME,
+    });
+
+    return res.status(HttpStatus.OK).json({
+      statusCode: 200,
+      success: true,
+      data: { accessToken, refreshToken },
+      error: null,
+    });
+  }
+
   @UseGuards(JwtRefreshAuthGuard)
   @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  @AuditLogAction({ action: 'LOGIN', entityName: 'auth.refresh' })
   async refresh(@Request() req, @Response() res) {
     const payload = req.user;
     const { newAccessToken, newRefreshToken } = await this.authService.refresh(
@@ -92,8 +131,11 @@ export class AuthController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.AUTH_LOGOUT)
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout' })
   async logout(@Request() req, @Response() res) {
     const { message } = await this.authService.logout(req);
     res.clearCookie('accessToken');
@@ -106,8 +148,11 @@ export class AuthController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.AUTH_LOGOUT)
   @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout-all' })
   async logoutAll(@Request() req) {
     const { message } = await this.authService.logoutAll(req);
     return { message };
@@ -115,10 +160,11 @@ export class AuthController {
 
   @Get('google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuth() { }
+  async googleAuth() {}
 
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)
+  @AuditLogAction({ action: 'LOGIN', entityName: 'auth.google' })
   async googleAuthRedirect(@Request() req, @Response() res) {
     const { accessToken, refreshToken } = await this.authService.login(req);
 
@@ -142,6 +188,8 @@ export class AuthController {
   }
 
   @Post('set-new-password')
+  @HttpCode(HttpStatus.OK)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'auth.password' })
   async setNewPassword(
     @Body('email') email: string,
     @Body('newPassword') newPassword: string,

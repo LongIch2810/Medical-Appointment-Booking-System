@@ -1,14 +1,20 @@
 import React from "react";
 import {
   Activity,
+  AlertTriangle,
+  Cake,
   CalendarCheck2,
   CigaretteOff,
+  ClipboardList,
   Droplet,
   FileSearch,
   HeartPulse,
   MessageSquareMore,
+  Ruler,
+  Scale,
   ScrollText,
   Stethoscope,
+  Users,
   UsersRound,
   Wine,
 } from "lucide-react";
@@ -194,6 +200,7 @@ const Dashboard: React.FC = () => {
             <InfoTile
               label="Ngày sinh"
               value={formatValue(profile?.date_of_birth)}
+              icon={<Cake className="h-4 w-4 text-pink-400" />}
             />
             <InfoTile
               label="Giới tính"
@@ -204,6 +211,7 @@ const Dashboard: React.FC = () => {
                     ? "Nam"
                     : "Nữ"
               }
+              icon={<Users className="h-4 w-4 text-indigo-400" />}
             />
             <InfoTile
               label="Nhóm máu"
@@ -213,18 +221,21 @@ const Dashboard: React.FC = () => {
             <InfoTile
               label="Chiều cao"
               value={formatValue(healthProfile?.height, " cm")}
+              icon={<Ruler className="h-4 w-4 text-sky-400" />}
             />
             <InfoTile
               label="Cân nặng"
               value={formatValue(healthProfile?.weight, " kg")}
+              icon={<Scale className="h-4 w-4 text-emerald-400" />}
             />
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
             <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
-              <p className="mb-2 text-sm font-semibold text-amber-900">
-                Dị ứng
-              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <p className="text-sm font-semibold text-amber-900">Dị ứng</p>
+              </div>
               <Badge
                 variant="outline"
                 className="border-amber-300 bg-white text-amber-800"
@@ -233,9 +244,10 @@ const Dashboard: React.FC = () => {
               </Badge>
             </div>
             <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4">
-              <p className="mb-2 text-sm font-semibold text-rose-900">
-                Bệnh nền
-              </p>
+              <div className="mb-2 flex items-center gap-2">
+                <ClipboardList className="h-4 w-4 text-rose-600" />
+                <p className="text-sm font-semibold text-rose-900">Bệnh nền</p>
+              </div>
               <Badge className="bg-rose-600 hover:bg-rose-600">
                 {formatValue(healthProfile?.medical_history)}
               </Badge>

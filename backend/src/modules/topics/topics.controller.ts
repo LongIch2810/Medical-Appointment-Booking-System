@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -14,30 +16,43 @@ import { TopicsService } from './topics.service';
 import { BodyCreateTopicDto } from './dto/request/bodyCreateTopic.dto';
 import { BodyFilterTopicsDto } from './dto/request/bodyFilterTopics.dto';
 import { BodyUpdateTopicDto } from './dto/request/bodyUpdateTopic.dto';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('topics')
 export class TopicsController {
   constructor(private topicsService: TopicsService) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   async getTopics(@Body() bodyFilterTopics: BodyFilterTopicsDto) {
     return this.topicsService.filterAndPagination(bodyFilterTopics);
   }
 
   @Post('create-topic')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.TOPIC_CREATE)
+  @AuditLogAction({ action: 'CREATE', entityName: 'topics' })
   async createTopic(@Body() bodyCreateTopic: BodyCreateTopicDto) {
     return this.topicsService.create(bodyCreateTopic);
   }
 
   @Get(':topicId')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.TOPIC_READ)
   async getTopicDetail(@Param('topicId', ParseIntPipe) topicId: number) {
     return this.topicsService.findById(topicId);
   }
 
   @Patch(':topicId')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.TOPIC_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'topics' })
   async updateTopic(
     @Param('topicId', ParseIntPipe) topicId: number,
     @Body() bodyUpdateTopic: BodyUpdateTopicDto,
@@ -46,7 +61,10 @@ export class TopicsController {
   }
 
   @Delete(':topicId')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.TOPIC_DELETE)
+  @AuditLogAction({ action: 'DELETE', entityName: 'topics' })
   async deleteTopic(@Param('topicId', ParseIntPipe) topicId: number) {
     return this.topicsService.remove(topicId);
   }

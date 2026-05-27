@@ -1,6 +1,7 @@
 /* eslint-disable */
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -19,6 +20,8 @@ import { DataSource } from 'typeorm';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import Relationship from 'src/entities/relationship.entity';
 import { UsersMapper } from '../users/users.mapper';
+import { RequestPaylaod } from '../../shared/types/global.type';
+import { RoleName } from '../../shared/enums/roleName';
 
 @Injectable()
 export class AuthService {
@@ -41,72 +44,134 @@ export class AuthService {
   }
 
   async login(req: Request) {
-    const { userId, roles }: any = req.user;
-    try {
-      const sessionVersion =
-        (await this.redisService.getData(`session_version:${userId}`)) || 1;
-      await this.redisService.setData(
-        `session_version:${userId}`,
-        sessionVersion,
-      );
-
-      const tokenId = uuidv4();
-
-      const payload = {
-        sub: userId,
-        roles,
-        tokenId,
-        sessionVersion,
-      };
-
-      const accessToken = this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-        expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
-      });
-      const refreshToken = this.jwtService.sign(payload, {
-        secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-        expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
-      });
-
-      const refreshTokenDecoded = this.jwtService.decode(refreshToken);
-
-      const sessions = await this.redisService.lRange(
-        `refresh_tokens:${userId}`,
-        0,
-        -1,
-      );
-
-      if (sessions.length > 3) {
-        const oldest = JSON.parse(sessions[0]);
-        await this.redisService.lPop(`refresh_tokens:${userId}`);
-        const now = Math.floor(Date.now() / 1000);
-        const ttl = oldest.exp ? oldest.exp - now : 7 * 24 * 60 * 60;
-        await this.redisService.setData(
-          `blacklist:${oldest.tokenId}`,
-          true,
-          ttl,
-        );
-      }
-
-      await this.redisService.rPush(
-        `refresh_tokens:${userId}`,
-        JSON.stringify({
-          tokenId,
-          userAgent: req.headers['user-agent'],
-          ip: req.ip,
-          issuedAt: new Date().toISOString(),
-          exp: refreshTokenDecoded.exp,
-        }),
-      );
-
-      return {
-        accessToken,
-        refreshToken,
-      };
-    } catch (error) {
-      console.error('Lỗi khi đăng nhập:', error);
-      throw error;
+    const { userId, roles } = req.user as RequestPaylaod;
+    if (!roles.includes(RoleName.PATIENT)) {
+      throw new ForbiddenException('Bạn không có quyền truy cập!');
     }
+    const sessionVersion =
+      (await this.redisService.getData(`session_version:${userId}`)) || 1;
+    await this.redisService.setData(
+      `session_version:${userId}`,
+      sessionVersion,
+    );
+
+    const tokenId = uuidv4();
+
+    const payload = {
+      sub: userId,
+      roles,
+      tokenId,
+      sessionVersion,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
+    });
+
+    const refreshTokenDecoded = this.jwtService.decode(refreshToken);
+
+    const sessions = await this.redisService.lRange(
+      `refresh_tokens:${userId}`,
+      0,
+      -1,
+    );
+
+    if (sessions.length > 3) {
+      const oldest = JSON.parse(sessions[0]);
+      await this.redisService.lPop(`refresh_tokens:${userId}`);
+      const now = Math.floor(Date.now() / 1000);
+      const ttl = oldest.exp ? oldest.exp - now : 7 * 24 * 60 * 60;
+      await this.redisService.setData(`blacklist:${oldest.tokenId}`, true, ttl);
+    }
+
+    await this.redisService.rPush(
+      `refresh_tokens:${userId}`,
+      JSON.stringify({
+        tokenId,
+        userAgent: req.headers['user-agent'],
+        ip: req.ip,
+        issuedAt: new Date().toISOString(),
+        exp: refreshTokenDecoded.exp,
+      }),
+    );
+
+    await this.usersService.updateUserField(userId, 'is_active', true);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async loginAdministrator(req: Request) {
+    const { userId, roles } = req.user as RequestPaylaod;
+    if (roles.length === 1 && roles.includes(RoleName.PATIENT)) {
+      throw new ForbiddenException('Bạn không có quyền truy cập!');
+    }
+
+    const sessionVersion =
+      (await this.redisService.getData(`session_version:${userId}`)) || 1;
+    await this.redisService.setData(
+      `session_version:${userId}`,
+      sessionVersion,
+    );
+
+    const tokenId = uuidv4();
+
+    const payload = {
+      sub: userId,
+      roles,
+      tokenId,
+      sessionVersion,
+    };
+
+    const accessToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
+    });
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
+    });
+
+    const refreshTokenDecoded = this.jwtService.decode(refreshToken);
+
+    const sessions = await this.redisService.lRange(
+      `refresh_tokens:${userId}`,
+      0,
+      -1,
+    );
+
+    if (sessions.length > 3) {
+      const oldest = JSON.parse(sessions[0]);
+      await this.redisService.lPop(`refresh_tokens:${userId}`);
+      const now = Math.floor(Date.now() / 1000);
+      const ttl = oldest.exp ? oldest.exp - now : 7 * 24 * 60 * 60;
+      await this.redisService.setData(`blacklist:${oldest.tokenId}`, true, ttl);
+    }
+
+    await this.redisService.rPush(
+      `refresh_tokens:${userId}`,
+      JSON.stringify({
+        tokenId,
+        userAgent: req.headers['user-agent'],
+        ip: req.ip,
+        issuedAt: new Date().toISOString(),
+        exp: refreshTokenDecoded.exp,
+      }),
+    );
+
+    await this.usersService.updateUserField(userId, 'is_active', true);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 
   async register(dataRegister: BodyRegisterDto) {
@@ -169,6 +234,7 @@ export class AuthService {
     const match = list.find((t) => JSON.parse(t).tokenId === decoded.tokenId);
     if (!match) throw new UnauthorizedException('Token không hợp lệ!');
     await this.redisService.lRem(`refresh_tokens:${decoded.sub}`, 0, match);
+    await this.usersService.updateUserField(decoded.sub, 'is_active', false);
     return { message: 'Đăng xuất thành công!' };
   }
 
@@ -181,11 +247,12 @@ export class AuthService {
 
     await this.redisService.incr(`session_version:${decoded.sub}`);
     await this.redisService.delData(`refresh_tokens:${decoded.sub}`);
+    await this.usersService.updateUserField(decoded.sub, 'is_active', false);
     return { message: 'Đăng xuất tất cả các thiết bị thành công!' };
   }
 
   async refresh(req: Request, payload: any) {
-    const { userId, tokenId, sessionVersion } = payload;
+    const { userId, tokenId, sessionVersion, roles } = payload;
 
     const isBlacklisted = await this.redisService.getData(
       `blacklist:${tokenId}`,
@@ -206,6 +273,7 @@ export class AuthService {
       sub: userId,
       tokenId: newTokenId,
       sessionVersion: sessionVersion,
+      roles,
     };
     await this.redisService.lRem(`refresh_tokens:${userId}`, 0, match);
     const now = Math.floor(Date.now() / 1000);

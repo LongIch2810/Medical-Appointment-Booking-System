@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   forwardRef,
+  HttpCode,
+  HttpStatus,
   Inject,
   ParseIntPipe,
   Post,
@@ -12,10 +14,13 @@ import {
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { UploadFileProducer } from 'src/bullmq/queues/uploadFile/uploadFile.producer';
+import { Permissions } from 'src/common/decorators/permission.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('uploads')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class UploadsController {
   constructor(
     @Inject(forwardRef(() => UploadFileProducer))
@@ -23,6 +28,8 @@ export class UploadsController {
   ) {}
 
   @Post('/messages/files')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Permissions(PERMISSIONS.MESSAGE_CREATE)
   @UseInterceptors(
     FilesInterceptor('files', 4, {
       limits: { files: 4 },
@@ -39,6 +46,8 @@ export class UploadsController {
   }
 
   @Post('/articles/files')
+  @HttpCode(HttpStatus.ACCEPTED)
+  @Permissions(PERMISSIONS.ARTICLE_CREATE)
   @UseInterceptors(
     FilesInterceptor('files', 4, {
       limits: { files: 4 },

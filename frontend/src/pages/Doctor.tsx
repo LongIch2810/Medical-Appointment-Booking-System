@@ -1,5 +1,5 @@
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 
 import DialogChooseSpecialty from "../components/dialog/DialogChooseSpecialty";
 import DialogChooseExperience from "../components/dialog/DialogChooseExperience";
@@ -102,6 +102,24 @@ const Doctor = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
+
+  const hasActiveFilters =
+    Boolean(search) ||
+    Boolean(specialtyIdSelect) ||
+    Boolean(minExperienceSelect) ||
+    Boolean(maxExperienceSelect) ||
+    Boolean(workplaceInput) ||
+    Boolean(areaSelect);
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setSpecialtyIdSelect(0);
+    setMinExperienceSelect(0);
+    setMaxExperienceSelect(0);
+    setWorkplaceInput("");
+    setAreaSelect("");
+    setSearchParams({});
+  };
   return (
     <section className="mt-16 md:mt-28">
       <header className="container mx-auto max-w-[700px] lg:max-w-[900px]">
@@ -112,11 +130,21 @@ const Doctor = () => {
           value={search}
           onChange={handleSearch}
         />
-        <div className="flex flex-col md:flex-row gap-3 md:gap-5 mt-3 md:mt-5 md:justify-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 md:gap-5 mt-3 md:mt-5 md:justify-center">
           <DialogChooseSpecialty className="w-full md:w-auto" />
           <DialogChooseExperience className="w-full md:w-auto" />
           <DialogInputWorkplace className="w-full md:w-auto" />
           <DialogChooseArea className="w-full md:w-auto" />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!hasActiveFilters}
+            onClick={handleResetFilters}
+            className="w-full md:w-auto gap-2 rounded-full border-slate-300 bg-white text-slate-700 shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Đặt lại bộ lọc
+          </Button>
         </div>
       </header>
       <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto">

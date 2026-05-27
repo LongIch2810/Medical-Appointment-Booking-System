@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/roleCode.ts"],"sourcesContent":["export enum RoleCode {\r\n  ADMIN = 10001,\r\n  DOCTOR = 10002,\r\n  PATIENT = 10003,\r\n}\r\n"],"names":["RoleCode"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,kCAAAA;;;;WAAAA"}

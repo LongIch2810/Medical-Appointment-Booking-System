@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
@@ -16,6 +15,7 @@ export class LocalStrategy extends PassportStrategy(Strategy, 'local') {
     if (!user) {
       throw new UnauthorizedException();
     }
+    console.log('Validated user:', user);
     return user;
   }
 }

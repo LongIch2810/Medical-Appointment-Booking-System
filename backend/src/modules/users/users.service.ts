@@ -9,8 +9,10 @@ import User from 'src/entities/user.entity';
 import UserRole from 'src/entities/userRole.entity';
 import { ROLE_NAME } from 'src/utils/constants';
 import {
+  DataSource,
   EntityManager,
   FindOptionsWhere,
+  In,
   ILike,
   QueryFailedError,
   Repository,
@@ -24,6 +26,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
+    private readonly dataSource: DataSource,
   ) {}
 
   findAll(): Promise<User[]> {
@@ -125,7 +128,8 @@ export class UsersService {
   }
 
   async filterAndPagination(objectFilters: BodyFilterUsersDto) {
-    let { page, limit, arrange, search, role_id } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, role_id, arrange } = objectFilters;
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
@@ -149,19 +153,129 @@ export class UsersService {
       skip,
       take: limit,
     });
-
-    return new PaginationResultDto<UserResponseDto>(
+    const result = new PaginationResultDto<UserResponseDto>(
       'users',
       UsersMapper.toUserListResponse(users),
       total,
       page,
       limit,
     );
+
+    return result;
+  }
+
+  async filterAndPaginationPatients(objectFilters: BodyFilterUsersDto) {
+    let { page, limit } = objectFilters;
+    const { search, arrange } = objectFilters;
+    page = Math.max(page, 1);
+    limit = Math.max(limit, 1);
+    const skip = (page - 1) * limit;
+    let where: FindOptionsWhere<User> | FindOptionsWhere<User>[] | undefined;
+    const roleCondition = { roles: { role: { role_name: ROLE_NAME.PATIENT } } };
+    where = roleCondition;
+    const searchFields: (keyof User)[] = ['username', 'email', 'fullname'];
+    if (search) {
+      where = searchFields.map((field) => ({
+        [field]: ILike(`%${search}%`),
+        ...roleCondition,
+      }));
+    }
+
+    const [users, total] = await this.userRepo.findAndCount({
+      where,
+      relations: {
+        roles: { role: true },
+      },
+      order: { created_at: arrange.toUpperCase() as 'ASC' | 'DESC' },
+      skip,
+      take: limit,
+    });
+    const result = new PaginationResultDto<UserResponseDto>(
+      'users',
+      UsersMapper.toUserListResponse(users),
+      total,
+      page,
+      limit,
+    );
+
+    return result;
   }
 
   async isUserExists(userId: number): Promise<boolean> {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     return !!user;
+  }
+
+  async getAdminUserDetail(userId: number) {
+    const user = await this.findByUserId(userId);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    return UsersMapper.toUserProfileResponse(user);
+  }
+
+  async setLocking(userId: number, isLocking: boolean) {
+    const user = await this.findByUserId(userId);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    user.is_locking = isLocking;
+    const updatedUser = await this.userRepo.save(user);
+    return UsersMapper.toUserProfileResponse(updatedUser);
+  }
+
+  async setActive(userId: number, isActive: boolean) {
+    const user = await this.findByUserId(userId);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    user.is_active = isActive;
+    const updatedUser = await this.userRepo.save(user);
+    return UsersMapper.toUserProfileResponse(updatedUser);
+  }
+
+  async updateRoles(userId: number, roleIds: number[]) {
+    return this.dataSource.transaction(async (manager) => {
+      const user = await manager.findOne(User, { where: { id: userId } });
+      if (!user) {
+        throw new NotFoundException('Người dùng không tồn tại');
+      }
+
+      const uniqueRoleIds = [...new Set(roleIds)];
+      if (!uniqueRoleIds.length) {
+        throw new NotFoundException('Danh sách vai trò không hợp lệ');
+      }
+
+      const roles = await manager.find(Role, {
+        where: { id: In(uniqueRoleIds) },
+      });
+      if (roles.length !== uniqueRoleIds.length) {
+        throw new NotFoundException(
+          'Danh sách vai trò có vai trò không tồn tại',
+        );
+      }
+
+      await manager.delete(UserRole, { user: { id: userId } });
+      await manager.save(
+        UserRole,
+        roles.map((role) => ({ user: { id: userId }, role })),
+      );
+
+      const updatedUser = await manager.findOne(User, {
+        where: { id: userId },
+        relations: {
+          roles: {
+            role: {
+              permissions: {
+                permission: true,
+              },
+            },
+          },
+        },
+      });
+
+      return UsersMapper.toUserProfileResponse(updatedUser!);
+    });
   }
 
   async isUserExistsByUsername(username: string): Promise<boolean> {
@@ -172,5 +286,38 @@ export class UsersService {
   async isUserExistsByEmail(email: string): Promise<boolean> {
     const user = await this.userRepo.findOne({ where: { email } });
     return !!user;
+  }
+
+  async numberOfUsersByAllRoles() {
+    const count = await this.userRepo.count({});
+    return count;
+  }
+
+  async numberOfUsersByRolePatientActive() {
+    const count = await this.userRepo.count({
+      where: {
+        roles: {
+          role: {
+            role_name: ROLE_NAME.PATIENT,
+          },
+        },
+        is_active: true,
+      },
+    });
+    return count;
+  }
+
+  async numberOfUsersByRoleDoctorActive() {
+    const count = await this.userRepo.count({
+      where: {
+        roles: {
+          role: {
+            role_name: ROLE_NAME.DOCTOR,
+          },
+        },
+        is_active: true,
+      },
+    });
+    return count;
   }
 }

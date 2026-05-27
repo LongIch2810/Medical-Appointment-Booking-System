@@ -10,11 +10,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { JwtRefreshStrategy } from './refresh.strategy';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { GoogleStrategy } from './google.strategy';
-import { MailModule } from 'src/mail/mail.module';
 import { BullmqModule } from 'src/bullmq/bullmq.module';
-import { HealthProfileModule } from '../health-profile/health-profile.module';
-import { RolePermissionModule } from '../role-permission/role-permission.module';
-import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import Relative from 'src/entities/relative.entity';
 import HealthProfile from 'src/entities/healthProfile.entity';
@@ -34,7 +30,6 @@ import Relationship from 'src/entities/relationship.entity';
         signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES') },
       }),
     }),
-    RolePermissionModule,
   ],
   providers: [
     AuthService,

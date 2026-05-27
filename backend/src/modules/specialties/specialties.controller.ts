@@ -21,16 +21,24 @@ import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
 import { diskStorage } from 'multer';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
 import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { BodyUpdateSpecialtyDto } from './dto/request/bodyUpdateSpecialty.dto';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('specialties')
 export class SpecialtiesController {
   constructor(
     private specialtiesService: SpecialtiesService,
     private cloudinaryService: CloudinaryService,
-  ) { }
+  ) {}
 
   @Post('create-specialty')
-  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.SPECIALTY_CREATE)
+  @AuditLogAction({ action: 'CREATE', entityName: 'specialties' })
   @UseInterceptors(new FileRequiredInterceptor())
   async createSpecialty(
     @Body() bodyCreateSpecialty: BodyCreateSpecialtyDto,
@@ -45,24 +53,34 @@ export class SpecialtiesController {
   }
 
   @Patch(':specialtyId')
-  @UseGuards(JwtAuthGuard)
-  async updateSpecialty() { }
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.SPECIALTY_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'specialties' })
+  async updateSpecialty(
+    @Param('specialtyId') specialtyId: number,
+    @Body() bodyUpdateSpecialty: BodyUpdateSpecialtyDto,
+  ) {
+    return this.specialtiesService.update(specialtyId, bodyUpdateSpecialty);
+  }
 
   @Delete(':specialtyId')
-  @UseGuards(JwtAuthGuard)
-  async deleteSpecialty(
-    @Param('specialtyId') specialtyId: number,
-  ) {
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.SPECIALTY_DELETE)
+  @AuditLogAction({ action: 'DELETE', entityName: 'specialties' })
+  async deleteSpecialty(@Param('specialtyId') specialtyId: number) {
     const deletedSpecialty = await this.specialtiesService.delete(specialtyId);
     return deletedSpecialty;
   }
 
   @Get(':specialtyId')
-  @UseGuards(JwtAuthGuard)
-  async getSpecialty(
-    @Param('specialtyId') specialtyId: number,
-  ) {
-    const specialtyDetail = await this.specialtiesService.getSpecialtyDetail(specialtyId);
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.SPECIALTY_READ)
+  async getSpecialty(@Param('specialtyId') specialtyId: number) {
+    const specialtyDetail =
+      await this.specialtiesService.getSpecialtyDetail(specialtyId);
     return specialtyDetail;
   }
 

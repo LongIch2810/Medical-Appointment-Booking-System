@@ -22,7 +22,7 @@ export class HealthProfileService {
     private readonly relativesService: RelativesService,
     private readonly redisCacheService: RedisCacheService,
     private readonly usersService: UsersService,
-  ) { }
+  ) {}
 
   async create(userId: number, relativeId: number) {
     const isUserExists = await this.usersService.isUserExists(userId);
@@ -72,9 +72,11 @@ export class HealthProfileService {
       );
     }
 
-    Object.assign(relative.health_profile, bodyUpdateHealthProfile)
+    Object.assign(relative.health_profile, bodyUpdateHealthProfile);
 
-    const updatedHealthProfile = await this.healthProfileRepo.save(relative.health_profile);
+    const updatedHealthProfile = await this.healthProfileRepo.save(
+      relative.health_profile,
+    );
 
     return HealthProfileMapper.toHealthProfileResponseDto(updatedHealthProfile);
   }
@@ -232,6 +234,6 @@ export class HealthProfileService {
       .createQueryBuilder('health_profile')
       .leftJoinAndSelect('health_profile.patient', 'relative')
       .leftJoinAndSelect('relative.user', 'user')
-      .leftJoinAndSelect('relative.relationship', 'relationship')
+      .leftJoinAndSelect('relative.relationship', 'relationship');
   }
 }

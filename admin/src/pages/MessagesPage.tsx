@@ -1,178 +1,240 @@
-import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { FileImage, FileText, SendHorizonal } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Send } from "lucide-react";
 
+import { EmptyState } from "@/components/app/EmptyState";
+import { ErrorState } from "@/components/app/ErrorState";
+import { LoadingState } from "@/components/app/LoadingState";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { mockApi, queryKeys } from "@/services/mockApi";
+import { Input } from "@/components/ui/input";
+import { usePersonalChannels } from "@/hooks/useChannels";
+import { useCreateMessage, useMessagesByChannel } from "@/hooks/useMessages";
+import { useAuthStore } from "@/store/useAuthStore";
+import type { Channel } from "@/types/interface/channel.interface";
 
 export function MessagesPage() {
-  const { data } = useQuery({
-    queryKey: queryKeys.messages,
-    queryFn: () => mockApi.getMessages(),
-  });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [page] = useState(1);
+  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(
+    null,
+  );
+  const [messageText, setMessageText] = useState("");
+  const currentUser = useAuthStore((s) => s.currentUser);
 
-  const activeThread = useMemo(() => {
-    if (!data?.length) return null;
-    return data.find((thread) => thread.id === selectedId) ?? data[0];
-  }, [data, selectedId]);
+  const { data: channelsData, isLoading, isError, refetch } =
+    usePersonalChannels({ page, limit: 50 });
 
-  if (!data || !activeThread) return null;
+  const { data: messagesData, isLoading: messagesLoading } =
+    useMessagesByChannel(selectedChannelId ?? 0);
+
+  const createMessage = useCreateMessage();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const channels = useMemo(
+    () => channelsData?.data?.channels ?? [],
+    [channelsData],
+  );
+  const messages = useMemo(
+    () => messagesData?.data?.messages ?? [],
+    [messagesData],
+  );
+
+  useEffect(() => {
+    if (channels.length > 0 && !selectedChannelId) {
+      setSelectedChannelId(channels[0].channel_id);
+    }
+  }, [channels, selectedChannelId]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSend = () => {
+    const trimmed = messageText.trim();
+    if (!trimmed || !selectedChannelId || createMessage.isPending || !currentUser) return;
+    createMessage
+      .mutateAsync({
+        message_type: "TEXT",
+        content: trimmed,
+        sender_id: currentUser.id,
+        channel_id: selectedChannelId,
+      })
+      .then(() => {
+        setMessageText("");
+      })
+      .catch(() => {});
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Clinical comms"
+          title="Hộp thư"
+          description="Đang tải danh sách hội thoại..."
+        />
+        <LoadingState />
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Clinical comms"
+          title="Hộp thư"
+          description="Không thể tải dữ liệu."
+        />
+        <ErrorState onRetry={() => refetch()} />
+      </div>
+    );
+  }
+
+  if (channels.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          eyebrow="Clinical comms"
+          title="Hộp thư"
+          description="Trao đổi với bệnh nhân và đồng nghiệp"
+        />
+        <EmptyState
+          title="Không có hội thoại"
+          description="Hiện chưa có hội thoại nào. Hãy tạo hội thoại mới từ trang bệnh nhân."
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Doctor messages"
-        title="Patient messages"
-        description="A three-panel workspace for conversation triage, clinical context, and attachment review before the real channels/messages API is connected."
-        actions={["Create note", "View attachments"]}
-      />
+    <div className="flex h-[calc(100vh-8rem)] gap-4">
+      <div className="flex w-80 shrink-0 flex-col rounded-lg border border-[#d9d9dd] bg-white">
+        <div className="border-b border-[#d9d9dd] px-4 py-3">
+          <h2 className="text-sm font-semibold text-[#212121]">Hội thoại</h2>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          {channels.map((channel: Channel) => {
+            const otherParticipants = channel.participants.filter(
+              (p) => p.id !== 0,
+            );
+            const displayName =
+              otherParticipants.map((p) => p.fullname).join(", ") ||
+              `#${channel.channel_id}`;
+            const lastMsg = channel.last_message;
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.3fr_0.8fr]">
-        <Card>
-          <CardHeader>
-            <CardTitle>Conversations</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {data.map((thread) => (
+            return (
               <button
-                key={thread.id}
-                onClick={() => setSelectedId(thread.id)}
-                className={`w-full rounded-lg border p-4 text-left transition ${
-                  activeThread.id === thread.id
-                    ? "border-[#212121] bg-[#f7f6f2]"
-                    : "border-[#d9d9dd] bg-white hover:border-[#212121]"
+                key={channel.channel_id}
+                type="button"
+                onClick={() => setSelectedChannelId(channel.channel_id)}
+                className={`w-full border-b border-[#f0f0f0] px-4 py-3 text-left transition-colors hover:bg-[#f7f6f2] ${
+                  selectedChannelId === channel.channel_id
+                    ? "bg-[#f7f6f2]"
+                    : ""
                 }`}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-medium text-[#212121]">
-                    {thread.patientName}
-                  </div>
-                  {thread.unreadCount ? (
-                    <Badge variant="warning">{thread.unreadCount} new</Badge>
+                <div className="flex items-center justify-between">
+                  <span className="truncate text-sm font-medium text-[#212121]">
+                    {displayName}
+                  </span>
+                  {channel.unread_count > 0 ? (
+                    <Badge variant="danger" className="ml-2 shrink-0">
+                      {channel.unread_count}
+                    </Badge>
                   ) : null}
                 </div>
-                <div className="mt-1 text-xs text-[#75758a]">
-                  {thread.concern} / {thread.updatedAt}
-                </div>
-                <div className="mt-3 text-sm text-[#75758a]">
-                  {thread.lastMessage}
-                </div>
+                {lastMsg ? (
+                  <p className="mt-1 truncate text-xs text-[#75758a]">
+                    {lastMsg.content}
+                  </p>
+                ) : null}
               </button>
-            ))}
-          </CardContent>
-        </Card>
+            );
+          })}
+        </div>
+      </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{activeThread.patientName}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-3">
-              {activeThread.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`max-w-[92%] rounded-lg p-4 ${
-                    message.sender === "doctor"
-                      ? "ml-auto bg-[#071829] text-white"
-                      : "border border-[#d9d9dd] bg-[#f7f6f2] text-[#212121]"
-                  }`}
-                >
-                  <div className="text-sm leading-6">{message.content}</div>
-                  {message.attachments?.length ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {message.attachments.map((file) => (
+      <div className="flex flex-1 flex-col rounded-lg border border-[#d9d9dd] bg-white">
+        {selectedChannelId ? (
+          <>
+            <div className="flex-1 overflow-y-auto p-4">
+              {messagesLoading ? (
+                <LoadingState />
+              ) : messages.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-sm text-[#75758a]">
+                    Chưa có tin nhắn nào.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {messages.map((msg) => {
+                    const isMine = msg.sender.id === currentUser?.id;
+                    return (
+                      <div
+                        key={msg.id}
+                        className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                      >
                         <div
-                          key={file.id}
-                          className="rounded-full bg-white/10 px-3 py-1 text-xs"
+                          className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
+                            isMine
+                              ? "bg-[#212121] text-white"
+                              : "bg-[#f7f6f2] text-[#212121]"
+                          }`}
                         >
-                          {file.name}
+                          {!isMine ? (
+                            <p className="mb-1 text-[10px] font-medium text-[#75758a]">
+                              {msg.sender.fullname}
+                            </p>
+                          ) : null}
+                          <p className="whitespace-pre-wrap break-words">
+                            {msg.content}
+                          </p>
+                          <p
+                            className={`mt-1 text-[10px] ${
+                              isMine ? "text-[#b0b0b0]" : "text-[#75758a]"
+                            }`}
+                          >
+                            {msg.created_at}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  ) : null}
-                  <div className="mono-label mt-3 text-[10px] opacity-70">
-                    {message.time}
-                  </div>
+                      </div>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
                 </div>
-              ))}
+              )}
             </div>
-
-            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-              <Textarea placeholder="Mock reply composer..." />
-              <div className="mt-3 flex justify-end">
-                <Button>
-                  <SendHorizonal className="size-4" />
-                  Send reply
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Patient context</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-              <div className="text-sm font-medium text-[#212121]">
-                {activeThread.patientName}
-              </div>
-              <div className="mt-1 text-sm text-[#75758a]">
-                {activeThread.age} years old / {activeThread.concern}
-              </div>
-              <div className="mt-2">
-                <Badge variant="outline">Risk {activeThread.riskLevel}</Badge>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {activeThread.details.map((detail) => (
-                <div key={detail.label} className="rounded-lg border border-[#d9d9dd] bg-white p-4">
-                  <div className="mono-label text-[10px] text-[#75758a]">
-                    {detail.label}
-                  </div>
-                  <div className="mt-1 text-sm font-medium text-[#212121]">
-                    {detail.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-3">
-              {activeThread.attachments.map((file) => (
-                <a
-                  key={file.id}
-                  href={file.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center gap-3 rounded-lg border border-[#d9d9dd] bg-white p-4 transition hover:border-[#212121]"
+            <div className="border-t border-[#d9d9dd] p-3">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSend();
+                }}
+                className="flex gap-2"
+              >
+                <Input
+                  placeholder="Nhập tin nhắn..."
+                  value={messageText}
+                  onChange={(e) => setMessageText(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={!messageText.trim() || createMessage.isPending}
                 >
-                  <div className="rounded-full border border-[#d9d9dd] p-3 text-primary">
-                    {file.type === "image" ? (
-                      <FileImage className="size-4" />
-                    ) : (
-                      <FileText className="size-4" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-[#212121]">
-                      {file.name}
-                    </div>
-                    <div className="text-xs text-[#75758a]">
-                      {file.type.toUpperCase()} attachment
-                    </div>
-                  </div>
-                </a>
-              ))}
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
             </div>
-          </CardContent>
-        </Card>
+          </>
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <p className="text-sm text-[#75758a]">Chọn một hội thoại</p>
+          </div>
+        )}
       </div>
     </div>
   );

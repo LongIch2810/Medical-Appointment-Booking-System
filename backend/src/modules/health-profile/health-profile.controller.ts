@@ -2,6 +2,8 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -13,13 +15,19 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { HealthProfileService } from './health-profile.service';
 import { BodyFilterHealthProfilesDto } from './dto/request/bodyFilterHealthProfiles.dto';
 import { BodyUpdateHealthProfileDto } from './dto/request/bodyUpdateHealthProfile.dto';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('health-profiles')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class HealthProfileController {
-  constructor(private readonly healthProfileService: HealthProfileService) { }
+  constructor(private readonly healthProfileService: HealthProfileService) {}
 
   @Post('patient/list')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.HEALTH_PROFILE_READ)
   async getListHealthProfilesByPersonal(
     @Request() req,
     @Body() objectFilters: BodyFilterHealthProfilesDto,
@@ -32,6 +40,9 @@ export class HealthProfileController {
   }
 
   @Patch('update/:id')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.HEALTH_PROFILE_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'health-profiles' })
   async updateHealthProfile(
     @Request() req,
     @Param('id', ParseIntPipe) relativeId: number,
@@ -47,6 +58,8 @@ export class HealthProfileController {
   }
 
   @Get(':relativeId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.HEALTH_PROFILE_READ)
   async getHealthProfileByRelativeId(
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
@@ -56,6 +69,8 @@ export class HealthProfileController {
   }
 
   @Post('admin/list')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.HEALTH_PROFILE_MANAGE)
   async filterAndPagination(
     @Body() objectFilters: BodyFilterHealthProfilesDto,
   ) {

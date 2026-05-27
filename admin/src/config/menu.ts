@@ -85,6 +85,15 @@ export const menuItems: MenuItem[] = [
     requiredPermissions: [permissions.doctorMessages],
   },
   {
+    id: "doctor-exam-results",
+    label: "Kết quả khám",
+    path: "/doctor/exam-results",
+    section: "Clinical comms",
+    icon: FileHeart,
+    requiredPermissions: [permissions.examResults],
+    moduleId: "doctor-exam-results",
+  },
+  {
     id: "doctor-records",
     label: "Tóm tắt bệnh án",
     path: "/doctor/patient-records",

@@ -1,28 +1,30 @@
-import { ShieldCheck, Stethoscope } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { Loader2, ShieldCheck } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockProfiles } from "@/mock/profiles";
-import { getFirstAccessiblePath } from "@/lib/navigation";
-import { useAuthStore } from "@/store/useAuthStore";
-import type { AppRole } from "@/types/app";
+import { Input } from "@/components/ui/input";
+import { useLogin } from "@/hooks/useAuth";
 
 export function LoginPage() {
-  const navigate = useNavigate();
-  const loginAs = useAuthStore((state) => state.loginAs);
+  const loginMutation = useLogin();
+  const [usernameOrEmail, setUsernameOrEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleLogin = (role: AppRole) => {
-    loginAs(role);
-    navigate(getFirstAccessiblePath(mockProfiles[role].permissions));
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!usernameOrEmail.trim() || !password) return;
+    loginMutation.mutate({ usernameOrEmail: usernameOrEmail.trim(), password });
   };
+
+  const isPending = loginMutation.isPending;
 
   return (
     <div className="min-h-screen bg-white">
       <div className="flex h-9 items-center justify-center bg-black px-4 text-center text-xs text-white">
         <span className="text-white/[0.72]">
-          Medical operations console / mock access mode
+          Medical operations console
         </span>
       </div>
 
@@ -53,7 +55,7 @@ export function LoginPage() {
                 Clinical operations without visual noise.
               </h1>
               <p className="mt-6 max-w-2xl text-lg leading-8 text-[#75758a]">
-                A role-aware console for doctors and administrators, prepared for
+                A role-aware console for doctors and administrators across
                 appointment, patient, permission, message, and content workflows.
               </p>
             </div>
@@ -67,9 +69,9 @@ export function LoginPage() {
                 </div>
                 <div className="mt-8 space-y-4">
                   {[
-                    ["Appointments", "14 active slots", "stable"],
-                    ["Messages", "3 waiting replies", "review"],
-                    ["Permissions", "2 role changes", "guarded"],
+                    ["Appointments", "Live operational dashboard", "stable"],
+                    ["Messages", "Patient triage workspace", "review"],
+                    ["Permissions", "Role-based access control", "guarded"],
                   ].map(([label, value, status]) => (
                     <div
                       key={label}
@@ -106,63 +108,65 @@ export function LoginPage() {
             <CardContent className="space-y-6 p-6 md:p-8">
               <div>
                 <p className="mono-label text-[10px] text-[#75758a]">
-                  mock access
+                  sign in
                 </p>
                 <h2 className="mt-3 font-display text-3xl font-medium leading-tight text-[#212121]">
-                  Choose a role to enter the workspace.
+                  Đăng nhập vào bảng điều khiển.
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-[#75758a]">
-                  Routes and sidebar items change immediately according to the
-                  selected permission set.
+                  Đăng nhập bằng tài khoản admin hoặc bác sĩ. Hệ thống sẽ tự
+                  điều hướng tới workspace phù hợp với phân quyền.
                 </p>
               </div>
 
-              <button
-                onClick={() => handleLogin("doctor")}
-                className="group w-full rounded-lg border border-[#d9d9dd] bg-white p-5 text-left transition hover:border-[#212121]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full border border-[#d9d9dd] p-3 text-[#003c33] group-hover:border-[#003c33]">
-                    <Stethoscope className="size-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-medium text-[#212121]">
-                      Doctor workspace
-                    </div>
-                    <div className="mt-1 text-sm leading-6 text-[#75758a]">
-                      Schedule, appointments, patients, messages, records, and content.
-                    </div>
-                  </div>
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#212121]" htmlFor="usernameOrEmail">
+                    Tên đăng nhập hoặc email
+                  </label>
+                  <Input
+                    id="usernameOrEmail"
+                    autoComplete="username"
+                    placeholder="vd: admin hoặc admin@medihub.vn"
+                    value={usernameOrEmail}
+                    onChange={(event) => setUsernameOrEmail(event.target.value)}
+                    disabled={isPending}
+                    required
+                  />
                 </div>
-              </button>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-[#212121]" htmlFor="password">
+                    Mật khẩu
+                  </label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    disabled={isPending}
+                    required
+                  />
+                </div>
 
-              <button
-                onClick={() => handleLogin("admin")}
-                className="group w-full rounded-lg border border-[#d9d9dd] bg-white p-5 text-left transition hover:border-[#212121]"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="rounded-full border border-[#d9d9dd] p-3 text-[#071829] group-hover:border-[#071829]">
-                    <ShieldCheck className="size-5" />
-                  </div>
-                  <div>
-                    <div className="text-lg font-medium text-[#212121]">
-                      Admin control tower
-                    </div>
-                    <div className="mt-1 text-sm leading-6 text-[#75758a]">
-                      Users, doctors, roles, audit logs, complaints, and notifications.
-                    </div>
-                  </div>
-                </div>
-              </button>
+                <Button type="submit" className="w-full" disabled={isPending}>
+                  {isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" /> Đang đăng nhập
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="size-4" /> Đăng nhập
+                    </>
+                  )}
+                </Button>
+              </form>
 
               <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4 text-sm leading-6 text-[#75758a]">
-                Backend modules are mapped into the UI and currently use mock
-                data until API integration is connected.
+                Phiên đăng nhập sử dụng cookie httpOnly do backend cấp. Token
+                refresh tự động khi hết hạn.
               </div>
-
-              <Button className="w-full" onClick={() => handleLogin("admin")}>
-                Enter as admin
-              </Button>
             </CardContent>
           </Card>
         </aside>

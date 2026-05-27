@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/bookingMode.ts"],"sourcesContent":["export enum BookingMode {\r\n  USER_SELECT = 'user_select',\r\n  AI_SELECT = 'ai_select',\r\n}\r\n"],"names":["BookingMode"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,qCAAAA;;;WAAAA"}

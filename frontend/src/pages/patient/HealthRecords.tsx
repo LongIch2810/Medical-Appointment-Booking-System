@@ -1,5 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import {
+  Activity,
+  AlertTriangle,
+  CalendarCheck2,
+  CigaretteOff,
+  ClipboardList,
+  Dna,
+  Droplet,
+  Droplets,
+  HeartPulse,
+  Pill,
+  Ruler,
+  Scale,
+  Stethoscope,
+  Syringe,
+  Wine,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -250,7 +267,8 @@ const HealthRecords: React.FC = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                  <Droplet className="h-4 w-4 text-rose-500" />
                   Nhóm máu
                 </CardTitle>
               </CardHeader>
@@ -263,7 +281,8 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                  <Ruler className="h-4 w-4 text-sky-500" />
                   Chiều cao
                 </CardTitle>
               </CardHeader>
@@ -276,7 +295,8 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                  <Scale className="h-4 w-4 text-emerald-500" />
                   Cân nặng
                 </CardTitle>
               </CardHeader>
@@ -289,7 +309,8 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                  <CalendarCheck2 className="h-4 w-4 text-violet-500" />
                   Khám gần nhất
                 </CardTitle>
               </CardHeader>
@@ -313,10 +334,12 @@ const HealthRecords: React.FC = () => {
                   {
                     label: "Huyết áp",
                     value: formatValue(selectedHealthRecord.blood_pressure),
+                    icon: <HeartPulse className="h-4 w-4 text-rose-500" />,
                   },
                   {
                     label: "Nhịp tim",
                     value: formatValue(selectedHealthRecord.heart_rate, " bpm"),
+                    icon: <Activity className="h-4 w-4 text-pink-500" />,
                   },
                   {
                     label: "Đường huyết",
@@ -324,6 +347,7 @@ const HealthRecords: React.FC = () => {
                       selectedHealthRecord.glucose_level,
                       " mg/dL",
                     ),
+                    icon: <Droplets className="h-4 w-4 text-amber-500" />,
                   },
                   {
                     label: "Cholesterol",
@@ -331,15 +355,19 @@ const HealthRecords: React.FC = () => {
                       selectedHealthRecord.cholesterol_level,
                       " mg/dL",
                     ),
+                    icon: <Dna className="h-4 w-4 text-indigo-500" />,
                   },
                 ].map((metric) => (
                   <div
                     key={metric.label}
                     className="flex items-center justify-between rounded-lg border border-slate-200 p-3"
                   >
-                    <p className="text-sm font-semibold text-slate-900">
-                      {metric.label}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      {metric.icon}
+                      <p className="text-sm font-semibold text-slate-900">
+                        {metric.label}
+                      </p>
+                    </div>
                     <Badge variant="secondary">{metric.value}</Badge>
                   </div>
                 ))}
@@ -352,9 +380,12 @@ const HealthRecords: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-3 px-5">
                 <div className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-sm font-semibold text-slate-900">
-                    Thuốc đang sử dụng
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Pill className="h-4 w-4 text-cyan-500" />
+                    <p className="text-sm font-semibold text-slate-900">
+                      Thuốc đang sử dụng
+                    </p>
+                  </div>
                   <Textarea
                     readOnly
                     value={formatValue(selectedHealthRecord.medications)}
@@ -362,9 +393,12 @@ const HealthRecords: React.FC = () => {
                   />
                 </div>
                 <div className="rounded-lg border border-slate-200 p-3">
-                  <p className="text-sm font-semibold text-slate-900">
-                    Vắc xin đã tiêm
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Syringe className="h-4 w-4 text-teal-500" />
+                    <p className="text-sm font-semibold text-slate-900">
+                      Vắc xin đã tiêm
+                    </p>
+                  </div>
                   <Textarea
                     readOnly
                     value={formatValue(selectedHealthRecord.vaccinations)}
@@ -383,7 +417,10 @@ const HealthRecords: React.FC = () => {
             </CardHeader>
             <CardContent className="grid gap-3 px-5 md:grid-cols-2">
               <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-sm font-semibold text-slate-900">Dị ứng</p>
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
+                  <p className="text-sm font-semibold text-slate-900">Dị ứng</p>
+                </div>
                 <Textarea
                   readOnly
                   value={formatValue(selectedHealthRecord.allergies)}
@@ -391,7 +428,10 @@ const HealthRecords: React.FC = () => {
                 />
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-sm font-semibold text-slate-900">Bệnh nền</p>
+                <div className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4 text-rose-500" />
+                  <p className="text-sm font-semibold text-slate-900">Bệnh nền</p>
+                </div>
                 <Textarea
                   readOnly
                   value={formatValue(selectedHealthRecord.medical_history)}
@@ -399,23 +439,32 @@ const HealthRecords: React.FC = () => {
                 />
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  Hút thuốc
-                </p>
-                <p className="text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <CigaretteOff className="h-4 w-4 text-slate-500" />
+                  <p className="text-sm font-semibold text-slate-900">
+                    Hút thuốc
+                  </p>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
                   {formatValue(selectedHealthRecord.smoking)}
                 </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
-                <p className="text-sm font-semibold text-slate-900">Rượu bia</p>
-                <p className="text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <Wine className="h-4 w-4 text-purple-500" />
+                  <p className="text-sm font-semibold text-slate-900">Rượu bia</p>
+                </div>
+                <p className="mt-2 text-sm text-slate-600">
                   {formatValue(selectedHealthRecord.alcohol_consumption)}
                 </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3 md:col-span-2">
-                <p className="text-sm font-semibold text-slate-900">
-                  Tần suất vận động
-                </p>
+                <div className="flex items-center gap-2">
+                  <Stethoscope className="h-4 w-4 text-emerald-500" />
+                  <p className="text-sm font-semibold text-slate-900">
+                    Tần suất vận động
+                  </p>
+                </div>
                 <Textarea
                   readOnly
                   value={formatValue(selectedHealthRecord.exercise_frequency)}

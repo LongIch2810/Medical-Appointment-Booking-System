@@ -6,6 +6,7 @@ import { HealthProfileModule } from '../health-profile/health-profile.module';
 import { AppointmentsModule } from '../appointments/appointments.module';
 import { RelativesModule } from '../relatives/relatives.module';
 import { ExaminationResultModule } from '../examination-result/examination-result.module';
+import { MessagesModule } from '../messages/messages.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { ExaminationResultModule } from '../examination-result/examination-resul
     AppointmentsModule,
     ExaminationResultModule,
     RelativesModule,
+    MessagesModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],

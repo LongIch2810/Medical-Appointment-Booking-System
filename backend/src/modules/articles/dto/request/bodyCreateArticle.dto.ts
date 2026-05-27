@@ -10,20 +10,20 @@ import {
 } from 'class-validator';
 
 export class BodyCreateArticleDto {
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsNotEmpty({ message: 'Tiêu đề không được để trống' })
   @IsString({ message: 'Tiêu đề phải là chuỗi' })
   @MinLength(10, { message: 'Tiêu đề phải có ít nhất 10 ký tự' })
   @MaxLength(200, { message: 'Tiêu đề không được vượt quá 200 ký tự' })
   title!: string;
 
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsNotEmpty({ message: 'Nội dung không được để trống' })
   @IsString({ message: 'Nội dung phải là chuỗi' })
   @MinLength(200, { message: 'Nội dung phải có ít nhất 200 ký tự' })
   content!: string;
 
-  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   @IsString({ message: 'Mô tả phải là chuỗi' })
   @IsNotEmpty()
   @MinLength(30, { message: 'Tóm tắt phải có ít nhất 30 ký tự' })

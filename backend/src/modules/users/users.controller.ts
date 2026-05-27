@@ -3,8 +3,13 @@ import {
   Body,
   Controller,
   Get,
+  HttpCode,
+  HttpStatus,
   NotFoundException,
+  Param,
+  ParseIntPipe,
   Patch,
+  Post,
   Put,
   Request,
   UploadedFile,
@@ -20,8 +25,15 @@ import { PartialUpdateUserDto } from './dto/request/partialUpdateUser.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
 import { UploadApiResponse } from 'cloudinary';
+import { BodyFilterUsersDto } from './dto/request/bodyFilterUsers.dto';
+import { RequestPaylaod } from '../../shared/types/global.type';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { BodyUpdateUserRolesDto } from './dto/request/bodyUpdateUserRoles.dto';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('users')
 export class UsersController {
   constructor(
@@ -30,13 +42,17 @@ export class UsersController {
     private readonly redisService: RedisCacheService,
   ) {}
   @Get()
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_READ)
   getUsers() {
     return this.userService.findAll();
   }
 
   @Get('info')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_READ)
   async getUserInfo(@Request() req: any) {
-    const { userId } = req.user;
+    const { userId } = req.user as RequestPaylaod;
     // const cachedUserInfo = await this.redisService.getData(`user:${userId}`);
     // if (cachedUserInfo) {
     //   return cachedUserInfo;
@@ -51,6 +67,9 @@ export class UsersController {
   }
 
   @Patch('update-info')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.profile' })
   @UseInterceptors(
     FileInterceptor('file', {
       limits: {
@@ -72,7 +91,7 @@ export class UsersController {
     @Body() bodyUpdateUser: PartialUpdateUserDto,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    const { userId } = req.user;
+    const { userId } = req.user as RequestPaylaod;
 
     const user = await this.userService.findByUserId(userId);
     if (!user) {
@@ -97,11 +116,14 @@ export class UsersController {
   }
 
   @Put('change-password')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.password' })
   async changePassword(
     @Request() req,
     @Body() bodyChangePassword: BodyChangePasswordDto,
   ) {
-    const { userId } = req.user;
+    const { userId } = req.user as RequestPaylaod;
     const user = await this.userService.findByUserId(userId);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại!');
@@ -121,5 +143,69 @@ export class UsersController {
     );
 
     return { message: 'Thay đổi mật khẩu thành công.' };
+  }
+
+  @Post('users')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_READ)
+  getUsersFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
+    return this.userService.filterAndPagination(objectFilters);
+  }
+
+  @Post('patients')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.PATIENT_READ)
+  getPatientsFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
+    return this.userService.filterAndPaginationPatients(objectFilters);
+  }
+
+  @Get(':userId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_READ)
+  getAdminUserDetail(@Param('userId', ParseIntPipe) userId: number) {
+    return this.userService.getAdminUserDetail(userId);
+  }
+
+  @Patch(':userId/lock')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_LOCK)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.lock' })
+  lockUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.userService.setLocking(userId, true);
+  }
+
+  @Patch(':userId/unlock')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_UNLOCK)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.unlock' })
+  unlockUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.userService.setLocking(userId, false);
+  }
+
+  @Patch(':userId/activate')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_ACTIVATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.activate' })
+  activateUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.userService.setActive(userId, true);
+  }
+
+  @Patch(':userId/deactivate')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_DEACTIVATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.deactivate' })
+  deactivateUser(@Param('userId', ParseIntPipe) userId: number) {
+    return this.userService.setActive(userId, false);
+  }
+
+  @Patch(':userId/roles')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_UPDATE_ROLE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users.roles' })
+  updateUserRoles(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() body: BodyUpdateUserRolesDto,
+  ) {
+    return this.userService.updateRoles(userId, body.role_ids);
   }
 }

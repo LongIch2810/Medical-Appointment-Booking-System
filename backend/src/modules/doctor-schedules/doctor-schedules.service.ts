@@ -20,7 +20,7 @@ export class DoctorSchedulesService {
     private readonly doctorScheduleRepo: Repository<DoctorSchedule>,
     private readonly doctorsService: DoctorsService,
     private readonly redisCacheService: RedisCacheService,
-  ) { }
+  ) {}
 
   async create(userId: number, bodyCreateSchedule: BodyCreateScheduleDto) {
     try {
@@ -109,8 +109,8 @@ export class DoctorSchedulesService {
   }
 
   async getDoctorScheduleDetail(scheduleId: number) {
-    const schedule = await this.findScheduleByDoctorScheduleId(scheduleId)
-    return DoctorScheduleMapper.toDoctorScheduleResponseDto(schedule)
+    const schedule = await this.findScheduleByDoctorScheduleId(scheduleId);
+    return DoctorScheduleMapper.toDoctorScheduleResponseDto(schedule);
   }
 
   async updateActive(

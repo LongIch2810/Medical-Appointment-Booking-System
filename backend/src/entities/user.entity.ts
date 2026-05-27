@@ -22,6 +22,7 @@ import ChannelMembers from './channelMembers.entity';
 import Relative from './relative.entity';
 import { AuditLog } from './auditLog.entity';
 import { UserSetting } from './userSetting.entity';
+import Complaint from './complaint.entity';
 
 @Entity('users')
 export default class User {
@@ -58,6 +59,12 @@ export default class User {
   @Column({ type: 'boolean', default: false })
   isAdmin!: boolean;
 
+  @Column({ type: 'boolean', default: false })
+  is_active!: boolean;
+
+  @Column({ type: 'boolean', default: false })
+  is_locking!: boolean;
+
   @OneToMany(() => UserRole, (ur) => ur.user)
   roles!: Relation<UserRole[]>;
 
@@ -91,7 +98,10 @@ export default class User {
   @OneToMany(() => AuditLog, (al) => al.user)
   auditLogs!: Relation<AuditLog[]>;
 
-  @OneToOne(() => UserSetting, us => us.user)
+  @OneToMany(() => Complaint, (complaint) => complaint.user)
+  complaints!: Relation<Complaint[]>;
+
+  @OneToOne(() => UserSetting, (us) => us.user)
   user_setting!: Relation<UserSetting>;
 
   @CreateDateColumn({ name: 'created_at' })

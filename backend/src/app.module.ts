@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { RedisCacheModule } from './redis-cache/redis-cache.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -23,7 +24,6 @@ import { WebsocketModule } from './websockets/websoket.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { CloudinaryModule } from './uploads/cloudinary.module';
-import { WsCookieAuthGuard } from './common/guards/wsCookieAuth.guard';
 import { RelativesModule } from './modules/relatives/relatives.module';
 import { ExaminationResultModule } from './modules/examination-result/examination-result.module';
 import { TagsModule } from './modules/tags/tags.module';
@@ -31,6 +31,9 @@ import { SatisfactionRatingModule } from './modules/satisfaction-rating/satisfac
 import { AuditLogsModule } from './modules/audit-logs/audit-logs.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { RelationshipsModule } from './modules/relationships/relationships.module';
+import { WriteAuditLogInterceptor } from './common/interceptors/writeAuditLog.interceptor';
+import { ComplaintsModule } from './modules/complaints/complaints.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -67,6 +70,14 @@ import { RelationshipsModule } from './modules/relationships/relationships.modul
     AuditLogsModule,
     DashboardModule,
     RelationshipsModule,
+    ComplaintsModule,
+    NotificationsModule,
+  ],
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: WriteAuditLogInterceptor,
+    },
   ],
 })
 export class AppModule {}

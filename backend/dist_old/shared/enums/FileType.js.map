@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/FileType.ts"],"sourcesContent":["export enum FileType {\r\n  VIDEO = 'VIDEO',\r\n  IMAGE = 'IMAGE',\r\n  DOCUMENT = 'DOCUMENT',\r\n  OTHER = 'OTHER',\r\n}\r\n"],"names":["FileType"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,kCAAAA;;;;;WAAAA"}

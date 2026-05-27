@@ -19,7 +19,7 @@ export class AuditLog {
   action!: string;
 
   @Column({ type: 'text', nullable: false })
-  entity_type!: string;
+  entity_name!: string;
 
   @Column({ type: 'jsonb', nullable: true })
   old_data!: Record<string, any>;
@@ -40,20 +40,23 @@ export class AuditLog {
   is_success!: boolean;
 
   @Column({ type: 'text', nullable: true })
-  error_message!: string;
+  error_message!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  ip_address!: string;
+  ip_address!: string | null;
 
   @Column({ type: 'text', nullable: true })
-  user_agent!: string;
+  user_agent!: string | null;
 
-  @Column({ type: 'int', nullable: true })
+  @Column({ type: 'int' })
   duration_ms!: number;
 
-  @ManyToOne(() => User, (u) => u.auditLogs, { nullable: false })
+  @ManyToOne(() => User, (u) => u.auditLogs, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'user_id' })
-  user!: Relation<User>;
+  user!: Relation<User> | null;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;

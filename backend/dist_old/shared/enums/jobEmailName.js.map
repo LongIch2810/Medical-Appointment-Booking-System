@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/jobEmailName.ts"],"sourcesContent":["export enum jobEmailName {\r\n  WELCOME = 'send-welcome',\r\n  OTP = 'send-otp',\r\n}\r\n"],"names":["jobEmailName"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,sCAAAA;;;WAAAA"}

@@ -78,7 +78,8 @@ export class SatisfactionRatingService {
   async delete() {}
 
   async filterAndPagination(objectFilters: BodyFilterSatisfactionRatingsDto) {
-    let { fromDate, toDate, doctorId, arrange, page, limit } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { fromDate, toDate, doctorId, arrange } = objectFilters;
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;

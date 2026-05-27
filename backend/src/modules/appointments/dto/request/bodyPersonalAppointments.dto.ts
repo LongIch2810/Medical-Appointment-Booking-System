@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsEnum, IsNumber, IsOptional } from 'class-validator';
+import { IsDateString, IsEnum, IsNumber, IsOptional } from 'class-validator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 
@@ -12,4 +12,8 @@ export class BodyPersonalAppointmentsDto extends PaginationDto {
   @IsNumber()
   @IsOptional()
   relativeId?: number;
+
+  @IsOptional()
+  @IsDateString()
+  appointmentDate?: string;
 }

@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/roleMessage.ts"],"sourcesContent":["export enum RoleMessage {\r\n  HUMAN = 'human',\r\n  AI = 'ai',\r\n}\r\n"],"names":["RoleMessage"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,qCAAAA;;;WAAAA"}

@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Relationship from 'src/entities/relationship.entity';
 import { QueryFailedError, Repository } from 'typeorm';
@@ -6,13 +10,14 @@ import { BodyCreateRelationshipDto } from './dto/request/bodyCreateRelationship.
 import { BodyFilterRelationshipsDto } from './dto/request/bodyFilterRelationships.dto';
 import { RelationshipsMapper } from './relationships.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { BodyUpdateRelationshipDto } from './dto/request/bodyUpdateRelationship.dto';
 
 @Injectable()
 export class RelationshipsService {
   constructor(
     @InjectRepository(Relationship)
     private readonly relationshipRepo: Repository<Relationship>,
-  ) { }
+  ) {}
 
   async create(body: BodyCreateRelationshipDto) {
     try {
@@ -27,7 +32,8 @@ export class RelationshipsService {
       }
 
       const createdRelationship = this.relationshipRepo.create(body);
-      const newRelationship = await this.relationshipRepo.save(createdRelationship);
+      const newRelationship =
+        await this.relationshipRepo.save(createdRelationship);
       return RelationshipsMapper.toRelationshipResponseDto(newRelationship);
     } catch (error) {
       if (
@@ -40,7 +46,49 @@ export class RelationshipsService {
     }
   }
 
-  async update() { }
+  async update(
+    relationshipCode: string,
+    bodyUpdateRelationship: BodyUpdateRelationshipDto,
+  ) {
+    const relationship = await this.findByRelationshipCode(relationshipCode);
+
+    if (
+      bodyUpdateRelationship.relationship_name !== undefined &&
+      bodyUpdateRelationship.relationship_name !==
+        relationship.relationship_name
+    ) {
+      const existedRelationship = await this.relationshipRepo
+        .createQueryBuilder('relationship')
+        .where('LOWER(relationship.relationship_name) = LOWER(:name)', {
+          name: bodyUpdateRelationship.relationship_name,
+        })
+        .andWhere('relationship.relationship_code != :relationshipCode', {
+          relationshipCode,
+        })
+        .getOne();
+
+      if (existedRelationship) {
+        throw new ConflictException('Mối quan hệ đã tồn tại.');
+      }
+
+      relationship.relationship_name = bodyUpdateRelationship.relationship_name;
+    }
+
+    if (bodyUpdateRelationship.description !== undefined) {
+      relationship.description = bodyUpdateRelationship.description;
+    }
+
+    const updatedRelationship = await this.relationshipRepo.save(relationship);
+    return RelationshipsMapper.toRelationshipResponseDto(updatedRelationship);
+  }
+
+  async remove(relationshipCode: string) {
+    await this.findByRelationshipCode(relationshipCode);
+    await this.relationshipRepo.softDelete({
+      relationship_code: relationshipCode,
+    });
+    return { message: 'Xóa mối quan hệ thành công.' };
+  }
 
   async getRelationshipDetail(relationshipCode: string) {
     const relationship = await this.relationshipRepo.findOne({
@@ -76,7 +124,13 @@ export class RelationshipsService {
     }
 
     const [relationships, total] = await query.getManyAndCount();
-    const result = new PaginationResultDto("relationships", RelationshipsMapper.toRelationshipResponseDtoList(relationships), total, page, limit);
+    const result = new PaginationResultDto(
+      'relationships',
+      RelationshipsMapper.toRelationshipResponseDtoList(relationships),
+      total,
+      page,
+      limit,
+    );
     return result;
   }
 

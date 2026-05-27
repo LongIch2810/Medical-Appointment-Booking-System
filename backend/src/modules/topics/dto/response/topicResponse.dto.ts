@@ -13,6 +13,9 @@ export class TopicResponseDto {
   slug!: string;
 
   @Expose()
+  description!: string;
+
+  @Expose()
   @Transform(({ value }) => formatDateDDMMYYYY(value))
   created_at!: Date;
 

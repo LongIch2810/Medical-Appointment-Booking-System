@@ -24,8 +24,6 @@
 
 ## 3. Most Important Rule: Do Not Delete Codebase
 
-- Never delete existing code, files, folders, components, functions, routes, tests, or configuration unless the user explicitly asks for deletion.
-- Do not remove code just because it appears unused.
 - Do not rewrite large parts of the codebase without permission.
 - Do not replace existing architecture without approval.
 - If code seems obsolete, leave it in place and mention it in the final response.

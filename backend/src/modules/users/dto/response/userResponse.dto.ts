@@ -36,6 +36,12 @@ export class UserResponseDto {
   isAdmin!: boolean;
 
   @Expose()
+  is_active!: boolean;
+
+  @Expose()
+  is_locking!: boolean;
+
+  @Expose()
   @Type(() => RoleResponseDto)
   roles!: RoleResponseDto[];
 

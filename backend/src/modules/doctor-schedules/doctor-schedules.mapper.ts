@@ -15,7 +15,10 @@ export class DoctorScheduleMapper {
 
   static toDoctorScheduleResponseDtoList(
     doctorSchedules: DoctorSchedule[],
-  ): Record<DayOfWeek, { start_time: string, end_time: string, is_active: boolean }[]> {
-    return groupSchedulesByDay(doctorSchedules)
+  ): Record<
+    DayOfWeek,
+    { start_time: string; end_time: string; is_active: boolean }[]
+  > {
+    return groupSchedulesByDay(doctorSchedules);
   }
 }

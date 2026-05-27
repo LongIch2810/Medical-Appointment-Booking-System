@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Role from 'src/entities/role.entity';
-import { DataSource, Like, QueryFailedError, Repository } from 'typeorm';
+import { DataSource, In, Like, QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateRoleDto } from './dto/request/bodyCreateRole.dto';
 import { BodyFilterRolesDto } from './dto/request/bodyFilterRoles.dto';
 import { RolesMapper } from './roles.mapper';
@@ -18,8 +18,8 @@ export class RolesService {
   constructor(
     @InjectRepository(Role) private roleRepo: Repository<Role>,
     private readonly permissionsService: PermissionsService,
-    private datasource: DataSource
-  ) { }
+    private datasource: DataSource,
+  ) {}
 
   async create(body: BodyCreateRoleDto) {
     try {
@@ -31,9 +31,14 @@ export class RolesService {
           throw new ConflictException('Vai trò đã tồn tại');
         }
         const uniquePermissionIds = [...new Set(permission_ids)];
-        const isPermissionListExist = await this.permissionsService.isPermissionListExist(uniquePermissionIds);
+        const isPermissionListExist =
+          await this.permissionsService.isPermissionListExist(
+            uniquePermissionIds,
+          );
         if (!isPermissionListExist) {
-          throw new NotFoundException('Danh sách quyền có quyền không tồn tại trong hệ thống');
+          throw new NotFoundException(
+            'Danh sách quyền có quyền không tồn tại trong hệ thống',
+          );
         }
         const createdRole = manager.create(Role, {
           role_name,
@@ -41,13 +46,16 @@ export class RolesService {
           description,
         });
         const newRole = await manager.save(Role, createdRole);
-        await manager.save(RolePermission, uniquePermissionIds.map((permission_id) => ({
-          role: { id: newRole.id },
-          permission: { id: permission_id }
-        })))
+        await manager.save(
+          RolePermission,
+          uniquePermissionIds.map((permission_id) => ({
+            role: { id: newRole.id },
+            permission: { id: permission_id },
+          })),
+        );
         const roleDetail = await this.getRoleDetail(newRole.id);
         return roleDetail;
-      })
+      });
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
@@ -60,55 +68,148 @@ export class RolesService {
   }
 
   async update(roleId: number, body: Partial<BodyCreateRoleDto>) {
-    const role = await this.findById(roleId);
-    const nextRoleName = body.role_name?.trim();
-    const nextDescription = body.description?.trim();
-    const nextRoleCode =
-      body.role_code !== undefined ? Number(body.role_code) : undefined;
-
-    if (nextRoleName && nextRoleName !== role.role_name) {
-      const isExistsRoleByName = await this.roleRepo
-        .createQueryBuilder('role')
-        .where('LOWER(role.role_name) = LOWER(:role_name)', {
-          role_name: nextRoleName,
-        })
-        .andWhere('role.id != :roleId', { roleId })
-        .getOne();
-
-      if (isExistsRoleByName) {
-        throw new ConflictException('Vai trò đã tồn tại');
+    return await this.datasource.transaction(async (manager) => {
+      const role = await manager.findOne(Role, {
+        where: { id: roleId },
+        relations: ['permissions', 'permissions.permission'],
+      });
+      if (!role) {
+        throw new NotFoundException('Vai trò không tồn tại');
       }
-      role.role_name = nextRoleName;
-    }
+      const nextRoleName = body.role_name;
+      const nextDescription = body.description;
+      const nextRoleCode =
+        body.role_code !== undefined ? Number(body.role_code) : undefined;
 
-    if (nextRoleCode !== undefined && nextRoleCode !== role.role_code) {
-      const isExistsRoleByCode = await this.roleRepo
-        .createQueryBuilder('role')
-        .where('role.role_code = :role_code', {
-          role_code: nextRoleCode,
-        })
-        .andWhere('role.id != :roleId', { roleId })
-        .getOne();
+      if (nextRoleName && nextRoleName !== role.role_name) {
+        const isExistsRoleByName = await manager
+          .getRepository(Role)
+          .createQueryBuilder('role')
+          .where('LOWER(role.role_name) = LOWER(:role_name)', {
+            role_name: nextRoleName,
+          })
+          .andWhere('role.id != :roleId', { roleId })
+          .getOne();
 
-      if (isExistsRoleByCode) {
-        throw new ConflictException('Vai trò đã tồn tại');
+        if (isExistsRoleByName) {
+          throw new ConflictException('Vai trò đã tồn tại');
+        }
+        role.role_name = nextRoleName;
       }
-      role.role_code = nextRoleCode;
-    }
 
-    if (nextDescription) {
-      role.description = nextDescription;
-    }
+      if (nextRoleCode !== undefined && nextRoleCode !== role.role_code) {
+        const isExistsRoleByCode = await manager
+          .getRepository(Role)
+          .createQueryBuilder('role')
+          .where('role.role_code = :role_code', {
+            role_code: nextRoleCode,
+          })
+          .andWhere('role.id != :roleId', { roleId })
+          .getOne();
 
-    await this.roleRepo.save(role);
-    return {
-      message: 'Cập nhật vai trò thành công',
-      role,
-    };
+        if (isExistsRoleByCode) {
+          throw new ConflictException('Vai trò đã tồn tại');
+        }
+        role.role_code = nextRoleCode;
+      }
+
+      if (nextDescription) {
+        role.description = nextDescription;
+      }
+
+      await manager.save(role);
+      return RolesMapper.toRoleResponseDto(role);
+    });
+  }
+
+  async updateRolePermissions(roleId: number, permissionIds: number[]) {
+    return await this.datasource.transaction(async (manager) => {
+      const role = await manager.findOne(Role, { where: { id: roleId } });
+      if (!role) {
+        throw new NotFoundException('Vai trò không tồn tại');
+      }
+      const uniquePermissionIds = [...new Set(permissionIds)];
+      if (!uniquePermissionIds.length) {
+        throw new NotFoundException('Danh sách quyền không hợp lệ');
+      }
+      const isPermissionListExist =
+        await this.permissionsService.isPermissionListExist(
+          uniquePermissionIds,
+        );
+      if (!isPermissionListExist) {
+        throw new NotFoundException(
+          'Danh sách quyền có quyền không tồn tại trong hệ thống',
+        );
+      }
+      const rolePermissionRepo = manager.getRepository(RolePermission);
+      const existingRolePermissions = await rolePermissionRepo.find({
+        where: {
+          role: { id: roleId },
+          permission: { id: In(uniquePermissionIds) },
+        },
+        relations: ['permission'],
+        withDeleted: true,
+      });
+      const existingPermissionIds = new Set(
+        existingRolePermissions.map(
+          (rolePermission) => rolePermission.permission.id,
+        ),
+      );
+      const deletedRolePermissions = existingRolePermissions.filter(
+        (rolePermission) => rolePermission.deleted_at,
+      );
+      if (deletedRolePermissions.length) {
+        await rolePermissionRepo.restore(
+          deletedRolePermissions.map((rolePermission) => rolePermission.id),
+        );
+      }
+      const newRolePermissions = uniquePermissionIds
+        .filter((permissionId) => !existingPermissionIds.has(permissionId))
+        .map((permissionId) =>
+          rolePermissionRepo.create({
+            role: { id: roleId },
+            permission: { id: permissionId },
+          }),
+        );
+      if (newRolePermissions.length) {
+        await rolePermissionRepo.save(newRolePermissions);
+      }
+      return this.getRoleDetail(roleId);
+    });
+  }
+  async deleteRolePermissions(roleId: number, permissionIds: number[]) {
+    return await this.datasource.transaction(async (manager) => {
+      const role = await manager.findOne(Role, { where: { id: roleId } });
+      if (!role) {
+        throw new NotFoundException('Vai trò không tồn tại');
+      }
+      const uniquePermissionIds = [...new Set(permissionIds)];
+      if (!uniquePermissionIds.length) {
+        throw new NotFoundException('Danh sách quyền không hợp lệ');
+      }
+      const rolePermissionRepo = manager.getRepository(RolePermission);
+      const rolePermissions = await rolePermissionRepo.find({
+        where: {
+          role: { id: roleId },
+          permission: { id: In(uniquePermissionIds) },
+        },
+        relations: ['permission'],
+      });
+      if (rolePermissions.length !== uniquePermissionIds.length) {
+        throw new NotFoundException(
+          'Một hoặc nhiều quyền không thuộc vai trò này',
+        );
+      }
+      await rolePermissionRepo.softDelete(
+        rolePermissions.map((rolePermission) => rolePermission.id),
+      );
+      return this.getRoleDetail(roleId);
+    });
   }
 
   async filterAndPagination(objectFilters: BodyFilterRolesDto) {
-    let { page, limit, search, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -124,9 +225,13 @@ export class RolesService {
         description: Like(`%${search}%`),
       },
     });
-    const result = new PaginationResultDto("roles",
+    const result = new PaginationResultDto(
+      'roles',
       RolesMapper.toRoleResponseDtoList(roles),
-      total, page, limit)
+      total,
+      page,
+      limit,
+    );
     return result;
   }
 

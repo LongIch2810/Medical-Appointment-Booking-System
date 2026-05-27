@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/roleName.ts"],"sourcesContent":["export enum RoleName {\r\n  ADMIN = 'ADMIN',\r\n  DOCTOR = 'DOCTOR',\r\n  PATIENT = 'PATIENT',\r\n}\r\n"],"names":["RoleName"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,kCAAAA;;;;WAAAA"}

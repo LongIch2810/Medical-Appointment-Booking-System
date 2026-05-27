@@ -20,7 +20,7 @@ export class SpecialtiesService {
   constructor(
     @InjectRepository(Specialty) private specialtyRepo: Repository<Specialty>,
     private redisCacheService: RedisCacheService,
-  ) { }
+  ) {}
 
   async create(bodyCreateSpecialty: BodyCreateSpecialtyDto) {
     try {
@@ -59,7 +59,42 @@ export class SpecialtiesService {
   async update(
     specialtyId: number,
     bodyUpdateSpecialty: BodyUpdateSpecialtyDto,
-  ) { }
+  ) {
+    const specialty = await this.findSpecialtyById(specialtyId);
+
+    if (
+      bodyUpdateSpecialty.name !== undefined &&
+      bodyUpdateSpecialty.name !== specialty.name
+    ) {
+      const slug = generateSlug(bodyUpdateSpecialty.name);
+      const existedSpecialty = await this.specialtyRepo
+        .createQueryBuilder('specialty')
+        .where(
+          '(LOWER(specialty.name) = LOWER(:name) OR specialty.slug = :slug)',
+          { name: bodyUpdateSpecialty.name, slug },
+        )
+        .andWhere('specialty.id != :specialtyId', { specialtyId })
+        .getOne();
+
+      if (existedSpecialty) {
+        throw new ConflictException('Chuyên khoa đã tồn tại.');
+      }
+
+      specialty.name = bodyUpdateSpecialty.name;
+      specialty.slug = slug;
+    }
+
+    if (bodyUpdateSpecialty.description !== undefined) {
+      specialty.description = bodyUpdateSpecialty.description;
+    }
+
+    if (bodyUpdateSpecialty.img_url !== undefined) {
+      specialty.img_url = bodyUpdateSpecialty.img_url;
+    }
+
+    const updatedSpecialty = await this.specialtyRepo.save(specialty);
+    return SpecialtiesMapper.toSpecialtyResponseDto(updatedSpecialty);
+  }
 
   async delete(specialtyId: number) {
     const specialty = await this.specialtyRepo.findOne({
@@ -110,7 +145,13 @@ export class SpecialtiesService {
 
     const [specialties, total] = await query.getManyAndCount();
 
-    const result = new PaginationResultDto('specialties', specialties, total, page, limit);
+    const result = new PaginationResultDto(
+      'specialties',
+      specialties,
+      total,
+      page,
+      limit,
+    );
 
     // await this.redisCacheService.setData(cacheKey, result, 3600);
 

@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseIntPipe,
   Patch,
@@ -16,19 +18,28 @@ import { RelativesService } from './relatives.service';
 import { BodyFilterRelativesDto } from './dto/request/bodyFilterRelatives.dto';
 import { BodyUpdateRelativeDto } from './dto/request/bodyUpdateRelative.dto';
 import { BodyCreateRelativeDto } from './dto/request/bodyCreateRelative.dto';
+import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { Permissions } from 'src/common/decorators/permission.decorator';
+import { PermissionsGuard } from 'src/common/guards/permissions.guard';
+import { PERMISSIONS } from 'src/utils/constants';
 
 @Controller('relatives')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RelativesController {
   constructor(private readonly relativesService: RelativesService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @Permissions(PERMISSIONS.RELATIVE_CREATE)
+  @AuditLogAction({ action: 'CREATE', entityName: 'relatives' })
   createRelative(@Request() req, @Body() body: BodyCreateRelativeDto) {
     const { userId } = req.user;
     return this.relativesService.create(userId, body);
   }
 
   @Get('patient/relatives')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.RELATIVE_READ)
   findRelatives(@Request() req, @Query() query: Record<string, string>) {
     const { userId } = req.user;
     const bodyFilterRelatives: BodyFilterRelativesDto = {
@@ -49,6 +60,8 @@ export class RelativesController {
   }
 
   @Get(':relativeId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.RELATIVE_READ)
   async getRelativeDetail(
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
@@ -58,6 +71,9 @@ export class RelativesController {
   }
 
   @Patch(':relativeId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.RELATIVE_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'relatives' })
   async updateRelative(
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
@@ -68,6 +84,9 @@ export class RelativesController {
   }
 
   @Delete(':relativeId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.RELATIVE_DELETE)
+  @AuditLogAction({ action: 'DELETE', entityName: 'relatives' })
   async deleteRelative(
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
@@ -77,6 +96,8 @@ export class RelativesController {
   }
 
   @Post('admin/relatives')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.RELATIVE_MANAGE)
   findAdminRelatives(@Body() bodyFilterRelatives: BodyFilterRelativesDto) {
     return this.relativesService.filterAndPagination(bodyFilterRelatives);
   }

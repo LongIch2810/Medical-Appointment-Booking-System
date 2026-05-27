@@ -15,4 +15,13 @@ export class BodyFilterArticlesDto extends PaginationDto {
 
   @IsIn(['desc', 'asc'], { message: "'arrange phải là asc hoặc desc'" })
   arrange: Arrange = 'desc';
+
+  @IsIn(['true', 'false', 'all'])
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'boolean') return value ? 'true' : 'false';
+    if (typeof value === 'string') return value.toLowerCase();
+    return value;
+  })
+  is_approve?: 'true' | 'false' | 'all';
 }

@@ -244,9 +244,10 @@ export class RelativesService {
   }
 
   async remove(userId: number, relativeId: number) {
-    await this.findOwnedByUserId(userId, relativeId);
+    const relative = await this.findOwnedByUserId(userId, relativeId);
+    const response = RelativesMapper.toRelativeResponseDto(relative);
     await this.relativeRepo.softDelete(relativeId);
-    return this.getRelativeDetail(userId, relativeId);
+    return response;
   }
 
   async getRelativeDetail(userId: number, relativeId: number) {

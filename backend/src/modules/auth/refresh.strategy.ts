@@ -25,7 +25,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   }
 
   async validate(payload: any) {
-    const { sub: userId, tokenId, sessionVersion } = payload;
+    const { sub: userId, tokenId, sessionVersion, roles } = payload;
     const currentVersion = await this.redisService.getData(
       `session_version:${userId}`,
     );
@@ -41,6 +41,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException('Token đã bị thu hồi !');
     }
 
-    return { userId, tokenId, sessionVersion };
+    return { userId, tokenId, sessionVersion, roles };
   }
 }

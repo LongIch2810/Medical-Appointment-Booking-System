@@ -1,0 +1,1 @@
+{"version":3,"sources":["../../../src/shared/enums/messageType.ts"],"sourcesContent":["export enum MessageType {\r\n  REGULAR = 'regular',\r\n  CALL = 'call',\r\n}\r\n"],"names":["MessageType"],"mappings":";;;;+BAAYA;;;eAAAA;;;AAAL,IAAA,AAAKA,qCAAAA;;;WAAAA"}
