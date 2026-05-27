@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 
 import {
   createRole,
+  deleteRolePermissions,
   fetchRoleDetail,
   fetchRoles,
   updateRole,
@@ -11,6 +12,7 @@ import {
 import type {
   RoleListPayload,
   UpdateRolePayload,
+  UpdateRolePermissionsPayload,
 } from "@/types/interface/role.interface";
 
 export const roleQueryKeys = {
@@ -41,6 +43,7 @@ export function useCreateRole() {
     onSuccess: () => {
       toast.success("Tạo vai trò thành công");
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["role-permission-matrix"] });
     },
     onError: () => {
       toast.error("Tạo vai trò thất bại");
@@ -61,6 +64,7 @@ export function useUpdateRole() {
     onSuccess: (_, variables) => {
       toast.success("Cập nhật vai trò thành công");
       queryClient.invalidateQueries({ queryKey: ["roles"] });
+      queryClient.invalidateQueries({ queryKey: ["role-permission-matrix"] });
       queryClient.invalidateQueries({
         queryKey: roleQueryKeys.detail(variables.roleId),
       });
@@ -76,11 +80,11 @@ export function useUpdateRolePermissions() {
   return useMutation({
     mutationFn: ({
       roleId,
-      permissionIds,
+      payload,
     }: {
       roleId: number;
-      permissionIds: number[];
-    }) => updateRolePermissions(roleId, permissionIds),
+      payload: UpdateRolePermissionsPayload;
+    }) => updateRolePermissions(roleId, payload),
     onSuccess: (_, variables) => {
       toast.success("Cập nhật quyền thành công");
       queryClient.invalidateQueries({
@@ -90,6 +94,29 @@ export function useUpdateRolePermissions() {
     },
     onError: () => {
       toast.error("Cập nhật quyền thất bại");
+    },
+  });
+}
+
+export function useDeleteRolePermissions() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      roleId,
+      payload,
+    }: {
+      roleId: number;
+      payload: UpdateRolePermissionsPayload;
+    }) => deleteRolePermissions(roleId, payload),
+    onSuccess: (_, variables) => {
+      toast.success("Xoá quyền thành công");
+      queryClient.invalidateQueries({
+        queryKey: roleQueryKeys.detail(variables.roleId),
+      });
+      queryClient.invalidateQueries({ queryKey: ["role-permission-matrix"] });
+    },
+    onError: () => {
+      toast.error("Xoá quyền thất bại");
     },
   });
 }

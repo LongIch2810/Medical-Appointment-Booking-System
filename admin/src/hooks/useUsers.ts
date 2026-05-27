@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import {
   activateUser,
   changePassword,
+  createUser,
   deactivateUser,
   fetchCurrentUser,
   fetchPatients,
@@ -15,6 +16,7 @@ import {
   updateUserRoles,
 } from "@/api/userApi";
 import type {
+  CreateUserPayload,
   UpdateUserFieldsPayload,
   UpdateUserRolesPayload,
   UserListPayload,
@@ -54,6 +56,24 @@ export function useUserDetail(userId: number) {
     queryKey: userQueryKeys.detail(userId),
     queryFn: () => fetchUserDetail(userId),
     enabled: userId > 0,
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: CreateUserPayload) => createUser(payload),
+    onSuccess: () => {
+      toast.success("Tạo người dùng thành công");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["doctors"] });
+    },
+    onError: (error: unknown) => {
+      const message =
+        (error as { response?: { data?: { error?: { message?: string } } } })
+          ?.response?.data?.error?.message ?? "Tạo người dùng thất bại";
+      toast.error(message);
+    },
   });
 }
 

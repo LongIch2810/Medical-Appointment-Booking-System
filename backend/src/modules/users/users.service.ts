@@ -1,10 +1,17 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
+import Doctor from 'src/entities/doctor.entity';
+import HealthProfile from 'src/entities/healthProfile.entity';
+import Relationship from 'src/entities/relationship.entity';
+import Relative from 'src/entities/relative.entity';
 import Role from 'src/entities/role.entity';
+import Specialty from 'src/entities/specialty.entity';
 import User from 'src/entities/user.entity';
 import UserRole from 'src/entities/userRole.entity';
 import { ROLE_NAME } from 'src/utils/constants';
@@ -18,6 +25,7 @@ import {
   Repository,
 } from 'typeorm';
 import { UsersMapper } from './users.mapper';
+import { BodyCreateUserDto } from './dto/request/bodyCreateUser.dto';
 import { BodyFilterUsersDto } from './dto/request/bodyFilterUsers.dto';
 import { UserResponseDto } from './dto/response/userResponse.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
@@ -102,6 +110,140 @@ export class UsersService {
         role,
       });
       return newUser;
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        error.driverError?.code === '23505'
+      ) {
+        throw new ConflictException('Người dùng đã tồn tại');
+      }
+      throw error;
+    }
+  }
+
+  async adminCreateUser(dto: BodyCreateUserDto) {
+    try {
+      return await this.dataSource.transaction(async (manager) => {
+        const existingUsername = await manager.findOne(User, {
+          where: { username: dto.username },
+        });
+        if (existingUsername) {
+          throw new ConflictException('Username đã tồn tại');
+        }
+
+        const existingEmail = await manager.findOne(User, {
+          where: { email: dto.email },
+        });
+        if (existingEmail) {
+          throw new ConflictException('Email đã tồn tại');
+        }
+
+        if (dto.phone) {
+          const existingPhone = await manager.findOne(User, {
+            where: { phone: dto.phone },
+          });
+          if (existingPhone) {
+            throw new ConflictException('Số điện thoại đã tồn tại');
+          }
+        }
+
+        const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+        const createdUser = manager.create(User, {
+          username: dto.username,
+          email: dto.email,
+          password: hashedPassword,
+          fullname: dto.fullname,
+          phone: dto.phone ?? null,
+          gender: dto.gender ?? true,
+          date_of_birth: dto.date_of_birth ?? null,
+          address: dto.address ?? null,
+          picture: dto.picture ?? null,
+          is_active: dto.is_active ?? true,
+          is_locking: dto.is_locking ?? false,
+        });
+        const newUser = await manager.save(User, createdUser);
+
+        const uniqueRoleIds = [...new Set(dto.role_ids)];
+        const roles = await manager.find(Role, {
+          where: { id: In(uniqueRoleIds) },
+        });
+        if (roles.length !== uniqueRoleIds.length) {
+          throw new NotFoundException('Một hoặc nhiều vai trò không tồn tại');
+        }
+
+        await manager.save(
+          UserRole,
+          roles.map((role) => ({ user: newUser, role })),
+        );
+
+        const doctorRole = roles.find((r) => r.role_name === ROLE_NAME.DOCTOR);
+        if (doctorRole) {
+          if (!dto.doctor) {
+            throw new BadRequestException('Vui lòng nhập thông tin bác sĩ');
+          }
+
+          const specialty = await manager.findOne(Specialty, {
+            where: { id: dto.doctor.specialty_id },
+          });
+          if (!specialty) {
+            throw new NotFoundException('Chuyên khoa không tồn tại');
+          }
+
+          const existedDoctor = await manager.findOne(Doctor, {
+            where: { user: { id: newUser.id } },
+          });
+          if (!existedDoctor) {
+            const newDoctor = manager.create(Doctor, {
+              experience: dto.doctor.experience,
+              about_me: dto.doctor.about_me,
+              workplace: dto.doctor.workplace,
+              doctor_level: dto.doctor.doctor_level,
+              user: newUser,
+              specialty,
+            });
+            await manager.save(Doctor, newDoctor);
+          }
+        }
+
+        const patientRole = roles.find(
+          (r) => r.role_name === ROLE_NAME.PATIENT,
+        );
+        if (patientRole) {
+          const relationship = await manager.findOne(Relationship, {
+            where: { relationship_code: 'ban_than' },
+          });
+          if (!relationship) {
+            throw new NotFoundException('Mối quan hệ mặc định không tồn tại');
+          }
+
+          const newRelative = manager.create(Relative, {
+            user: newUser,
+            fullname: dto.fullname,
+            relationship,
+          });
+          await manager.save(Relative, newRelative);
+
+          const newHealth = manager.create(HealthProfile, {
+            patient: newRelative,
+          });
+          await manager.save(HealthProfile, newHealth);
+        }
+
+        const savedUser = await manager.findOne(User, {
+          where: { id: newUser.id },
+          relations: {
+            roles: {
+              role: {
+                permissions: {
+                  permission: true,
+                },
+              },
+            },
+          },
+        });
+        return UsersMapper.toUserProfileResponse(savedUser!);
+      });
     } catch (error) {
       if (
         error instanceof QueryFailedError &&

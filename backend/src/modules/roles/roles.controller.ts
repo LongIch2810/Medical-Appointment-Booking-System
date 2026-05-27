@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -15,6 +16,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateRoleDto } from './dto/request/bodyCreateRole.dto';
 import { BodyFilterRolesDto } from './dto/request/bodyFilterRoles.dto';
 import { BodyUpdateRoleDto } from './dto/request/bodyUpdateRole.dto';
+import { BodyUpdateRolePermissionsDto } from './dto/request/bodyUpdateRolePermissions.dto';
 import { RolesService } from './roles.service';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
@@ -65,8 +67,19 @@ export class RolesController {
   @AuditLogAction({ action: 'UPDATE', entityName: 'roles.permissions' })
   async updateRolePermissions(
     @Param('roleId', ParseIntPipe) roleId: number,
-    @Body() permission_ids: number[],
+    @Body() body: BodyUpdateRolePermissionsDto,
   ) {
-    return this.rolesService.updateRolePermissions(roleId, permission_ids);
+    return this.rolesService.updateRolePermissions(roleId, body.permission_ids);
+  }
+
+  @Delete(':roleId/permissions')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.ROLE_PERMISSION_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'roles.permissions' })
+  async deleteRolePermissions(
+    @Param('roleId', ParseIntPipe) roleId: number,
+    @Body() body: BodyUpdateRolePermissionsDto,
+  ) {
+    return this.rolesService.deleteRolePermissions(roleId, body.permission_ids);
   }
 }

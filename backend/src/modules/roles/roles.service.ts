@@ -53,8 +53,11 @@ export class RolesService {
             permission: { id: permission_id },
           })),
         );
-        const roleDetail = await this.getRoleDetail(newRole.id);
-        return roleDetail;
+        const roleDetail = await manager.findOne(Role, {
+          where: { id: newRole.id },
+          relations: ['permissions', 'permissions.permission'],
+        });
+        return RolesMapper.toRoleResponseDto(roleDetail!);
       });
     } catch (error) {
       if (

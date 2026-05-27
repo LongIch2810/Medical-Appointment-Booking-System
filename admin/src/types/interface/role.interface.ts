@@ -26,10 +26,18 @@ export interface RoleListResponse extends PaginationMeta {
 
 export interface CreateRolePayload {
   role_name: string;
-  description?: string;
+  role_code: number;
+  description: string;
+  permission_ids: number[];
 }
 
 export interface UpdateRolePayload {
   role_name?: string;
   description?: string;
 }
+
+export interface UpdateRolePermissionsPayload {
+  permission_ids: number[];
+}
+
+export type DeleteRolePermissionsPayload = UpdateRolePermissionsPayload;

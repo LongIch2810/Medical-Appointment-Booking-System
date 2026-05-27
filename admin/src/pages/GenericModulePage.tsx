@@ -23,6 +23,7 @@ import { ActionCell, GenericList } from "@/components/app/GenericList";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DetailDialog, type DetailRow } from "@/components/app/DetailDialog";
 import { FormDialog, FormField } from "@/components/app/FormDialog";
+import { UserCreateDialog } from "@/components/app/UserCreateDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -296,6 +297,7 @@ function UsersModule({
   );
   const canLock = can(PERMISSIONS.USER_LOCK, PERMISSIONS.USER_MANAGE);
   const canUnlock = can(PERMISSIONS.USER_UNLOCK, PERMISSIONS.USER_MANAGE);
+  const canCreate = can(PERMISSIONS.USER_CREATE, PERMISSIONS.USER_MANAGE);
 
   return (
     <GenericList
@@ -310,6 +312,17 @@ function UsersModule({
       isError={isError}
       onRetry={refetch}
       rowKey={(row) => row.id}
+      toolbar={
+        canCreate ? (
+          <UserCreateDialog
+            trigger={
+              <Button type="button" variant="outline" size="sm">
+                + Tạo người dùng
+              </Button>
+            }
+          />
+        ) : undefined
+      }
       columns={[
         { key: "id", label: "ID", render: (row) => row.id },
         {

@@ -1,4 +1,4 @@
-import type { PaginationMeta, PaginationPayload, SortOrder } from "./api.interface";
+import type { DoctorLevel, PaginationMeta, PaginationPayload, SortOrder } from "./api.interface";
 
 export interface RolePermissionSummary {
   id: number;
@@ -57,6 +57,30 @@ export interface UpdateUserFieldsPayload {
   date_of_birth?: string | Date;
   picture?: string;
   address?: string;
+}
+
+export interface CreateUserDoctorPayload {
+  specialty_id: number;
+  experience: number;
+  about_me: string;
+  workplace: string;
+  doctor_level: DoctorLevel | string;
+}
+
+export interface CreateUserPayload {
+  username: string;
+  email: string;
+  password: string;
+  fullname: string;
+  phone?: string;
+  gender?: boolean;
+  date_of_birth?: string;
+  address?: string;
+  picture?: string;
+  is_active?: boolean;
+  is_locking?: boolean;
+  role_ids: number[];
+  doctor?: CreateUserDoctorPayload;
 }
 
 export interface ChangePasswordPayload {

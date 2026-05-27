@@ -19,6 +19,7 @@ import {
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import { BodyCreateUserDto } from './dto/request/bodyCreateUser.dto';
 import { BodyChangePasswordDto } from './dto/request/bodyChangePassword.dto';
 import * as bcrypt from 'bcryptjs';
 import { PartialUpdateUserDto } from './dto/request/partialUpdateUser.dto';
@@ -150,6 +151,14 @@ export class UsersController {
   @Permissions(PERMISSIONS.USER_READ)
   getUsersFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
     return this.userService.filterAndPagination(objectFilters);
+  }
+
+  @Post('create')
+  @HttpCode(HttpStatus.CREATED)
+  @Permissions(PERMISSIONS.USER_CREATE)
+  @AuditLogAction({ action: 'CREATE', entityName: 'users' })
+  adminCreateUser(@Body() dto: BodyCreateUserDto) {
+    return this.userService.adminCreateUser(dto);
   }
 
   @Post('patients')

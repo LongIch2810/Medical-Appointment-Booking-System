@@ -6,6 +6,7 @@ import type {
   RoleListPayload,
   RoleListResponse,
   UpdateRolePayload,
+  UpdateRolePermissionsPayload,
 } from "@/types/interface/role.interface";
 
 export const fetchRoles = async (data: RoleListPayload) => {
@@ -39,11 +40,22 @@ export const updateRole = async (roleId: number, data: UpdateRolePayload) => {
 
 export const updateRolePermissions = async (
   roleId: number,
-  permissionIds: number[],
+  data: UpdateRolePermissionsPayload,
 ) => {
   const res = await axiosInstance.put<ApiResponse<Role>>(
     `/roles/${roleId}/permissions`,
-    permissionIds,
+    data,
+  );
+  return res.data;
+};
+
+export const deleteRolePermissions = async (
+  roleId: number,
+  data: UpdateRolePermissionsPayload,
+) => {
+  const res = await axiosInstance.delete<ApiResponse<Role>>(
+    `/roles/${roleId}/permissions`,
+    { data },
   );
   return res.data;
 };

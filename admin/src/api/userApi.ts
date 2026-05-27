@@ -2,6 +2,7 @@ import axiosInstance from "@/configs/axios";
 import type { ApiResponse } from "@/types/interface/api.interface";
 import type {
   ChangePasswordPayload,
+  CreateUserPayload,
   PatientListResponse,
   RoleSummary,
   UpdateUserFieldsPayload,
@@ -136,6 +137,14 @@ export const activateUser = async (userId: number) => {
 export const deactivateUser = async (userId: number) => {
   const res = await axiosInstance.patch<ApiResponse<User>>(
     `/users/${userId}/deactivate`,
+  );
+  return res.data;
+};
+
+export const createUser = async (data: CreateUserPayload) => {
+  const res = await axiosInstance.post<ApiResponse<User>>(
+    "/users/create",
+    data,
   );
   return res.data;
 };

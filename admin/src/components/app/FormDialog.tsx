@@ -25,6 +25,8 @@ type FormDialogProps = {
    */
   onSubmit: () => void | Promise<unknown>;
   children: ReactNode;
+  /** Extra classes for DialogContent (e.g. wider width). */
+  dialogClassName?: string;
 };
 
 export function FormDialog({
@@ -37,6 +39,7 @@ export function FormDialog({
   onOpen,
   onSubmit,
   children,
+  dialogClassName = "max-w-xl",
 }: FormDialogProps) {
   const [open, setOpen] = useState(false);
   const onOpenRef = useRef(onOpen);
@@ -60,7 +63,7 @@ export function FormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-xl">
+      <DialogContent className={dialogClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
@@ -68,7 +71,7 @@ export function FormDialog({
           ) : null}
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3">{children}</div>
+          <div className="flex flex-col gap-3 max-h-[55vh] overflow-y-auto pr-1">{children}</div>
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"

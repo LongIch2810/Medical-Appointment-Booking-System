@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/app/ErrorState";
 import { LoadingState } from "@/components/app/LoadingState";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -7,9 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useRolePermissionMatrix } from "@/hooks/useRolePermission";
+import { usePermission } from "@/hooks/usePermission";
+import { PERMISSIONS } from "@/config/permissions";
+
+import { RoleCreateDialog } from "@/components/app/RoleCreateDialog";
+import { RoleEditDialog } from "@/components/app/RoleEditDialog";
+import { RolePermissionsAddDialog } from "@/components/app/RolePermissionsAddDialog";
+import { RolePermissionsRemoveDialog } from "@/components/app/RolePermissionsRemoveDialog";
 
 export function RolePermissionPage() {
   const { data, isLoading, isError, refetch } = useRolePermissionMatrix();
+  const { can } = usePermission();
   const [search, setSearch] = useState("");
 
   const matrix = data?.data;
@@ -30,6 +39,13 @@ export function RolePermissionPage() {
       permission.name.toLowerCase().includes(term),
     );
   }, [matrix, search]);
+
+  const canCreate = can(PERMISSIONS.ROLE_CREATE, PERMISSIONS.ROLE_MANAGE);
+  const canEdit = can(PERMISSIONS.ROLE_UPDATE, PERMISSIONS.ROLE_MANAGE);
+  const canManagePermissions = can(
+    PERMISSIONS.ROLE_PERMISSION_UPDATE,
+    PERMISSIONS.ROLE_PERMISSION_MANAGE,
+  );
 
   if (isLoading) {
     return (
@@ -63,6 +79,14 @@ export function RolePermissionPage() {
         eyebrow="Governance"
         title="Phân quyền vai trò"
         description="Bảng quyền chuẩn theo backend role-permission/matrix. Hỗ trợ rà soát role hiện tại và quyền cấu hình."
+        extra={
+          canCreate && (
+            <RoleCreateDialog
+              trigger={<Button variant="default">+ Tạo vai trò</Button>}
+              allPermissions={matrix.permissions}
+            />
+          )
+        }
       />
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
@@ -126,6 +150,42 @@ export function RolePermissionPage() {
                       {role.permission_ids.length} permissions
                     </Badge>
                   </div>
+
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {canEdit && (
+                      <RoleEditDialog
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            Sửa thông tin
+                          </Button>
+                        }
+                        role={role}
+                      />
+                    )}
+                    {canManagePermissions && (
+                      <RolePermissionsAddDialog
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            + Thêm quyền
+                          </Button>
+                        }
+                        role={role}
+                        allPermissions={matrix.permissions}
+                      />
+                    )}
+                    {canManagePermissions && (
+                      <RolePermissionsRemoveDialog
+                        trigger={
+                          <Button variant="outline" size="sm">
+                            - Bỏ quyền
+                          </Button>
+                        }
+                        role={role}
+                        allPermissions={matrix.permissions}
+                      />
+                    )}
+                  </div>
+
                   <div className="mt-4 grid gap-2 sm:grid-cols-2">
                     {role.permission_ids.length === 0 ? (
                       <div className="text-sm text-[#75758a]">
