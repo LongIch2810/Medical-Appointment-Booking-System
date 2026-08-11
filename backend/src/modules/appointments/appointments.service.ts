@@ -190,6 +190,8 @@ export class AppointmentsService {
         saved.id,
       );
 
+      await this.redisCacheService.delByPrefix('appointments:');
+
       return appointmentDetail;
     });
   }
@@ -208,6 +210,9 @@ export class AppointmentsService {
     await this.appointmentRepo.update(appointmentId, {
       status: AppointmentStatus.CANCELLED,
     });
+
+    await this.redisCacheService.delByPrefix('appointments:');
+    await this.redisCacheService.delData(`user:${userId}:appointment:${appointmentId}`);
 
     const cancelledAppointment = await this.getAppointmentDetail(
       userId,
@@ -231,11 +236,11 @@ export class AppointmentsService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    // const cacheKey = `appointments:${userId}:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `appointments:${userId}:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
     const query = this.baseAppointmentQuery()
       .where('appointment.booked_by_user.id = :userId', { userId })
       .orderBy('appointment.appointment_date', 'ASC')
@@ -264,7 +269,7 @@ export class AppointmentsService {
       limit,
     );
 
-    // await this.redisCacheService.setData(cacheKey, result, 3600);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
@@ -453,6 +458,11 @@ export class AppointmentsService {
     appointment.status = status;
     await this.appointmentRepo.save(appointment);
 
+    await this.redisCacheService.delByPrefix('appointments:');
+    await this.redisCacheService.delData(
+      `user:${appointment.booked_by_user.id}:appointment:${appointmentId}`,
+    );
+
     const updatedAppointment = await this.baseAppointmentQuery()
       .where('appointment.id = :appointmentId', { appointmentId })
       .getOne();
@@ -482,11 +492,11 @@ export class AppointmentsService {
     if (!isUserExist) {
       throw new NotFoundException('Không tìm thấy người dùng.');
     }
-    // const cacheKey = `user:${userId}:appointment:${appointmentId}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `user:${userId}:appointment:${appointmentId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const appointment = await this.baseAppointmentQuery()
       .where('appointment.id = :appointmentId', { appointmentId })
@@ -497,9 +507,10 @@ export class AppointmentsService {
       throw new NotFoundException('Lịch hẹn không tồn tại.');
     }
 
-    // await this.redisCacheService.setData(cacheKey, appointment, 3600);
+    const result = AppointmentsMapper.toAppointmentResponseDto(appointment);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
-    return AppointmentsMapper.toAppointmentResponseDto(appointment);
+    return result;
   }
 
   async getAppoitnmentToDayEarlyOfDoctor(userId: number, doctorId: number) {
