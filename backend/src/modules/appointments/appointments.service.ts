@@ -86,7 +86,7 @@ export class AppointmentsService {
   }
 
   async create(userId: number, body: BodyCreateAppointmentDto) {
-    return this.dataSource.transaction(async (manager) => {
+    const appointmentDetail = await this.dataSource.transaction(async (manager) => {
       const user_booked = await this.usersService.findByUserId(userId);
       if (!user_booked)
         throw new NotFoundException('Không tìm thấy người dùng.');
@@ -190,10 +190,12 @@ export class AppointmentsService {
         saved.id,
       );
 
-      await this.redisCacheService.delByPrefix('appointments:');
-
       return appointmentDetail;
     });
+
+    await this.redisCacheService.delByPrefix('appointments:');
+
+    return appointmentDetail;
   }
 
   async cancel(userId: number, appointmentId: number) {
