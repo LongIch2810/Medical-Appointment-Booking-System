@@ -43,6 +43,7 @@ export class SpecialtiesService {
         img_url,
       });
       const specialtyDetail = await this.getSpecialtyDetail(newSpecialty.id);
+      await this.redisCacheService.delByPrefix('specialties:');
       return specialtyDetail;
     } catch (error) {
       if (
@@ -93,6 +94,8 @@ export class SpecialtiesService {
     }
 
     const updatedSpecialty = await this.specialtyRepo.save(specialty);
+    await this.redisCacheService.delByPrefix('specialties:');
+    await this.redisCacheService.delData(`specialty:${specialtyId}`);
     return SpecialtiesMapper.toSpecialtyResponseDto(updatedSpecialty);
   }
 
@@ -109,21 +112,29 @@ export class SpecialtiesService {
 
     const deletedSpecialty = await this.getSpecialtyDetail(specialtyId);
 
+    await this.redisCacheService.delByPrefix('specialties:');
+    await this.redisCacheService.delData(`specialty:${specialtyId}`);
+
     return deletedSpecialty;
   }
 
   async getSpecialtyDetail(specialtyId: number) {
+    const cacheKey = `specialty:${specialtyId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) return cachedData;
     const specialty = await this.findSpecialtyById(specialtyId);
-    return SpecialtiesMapper.toSpecialtyResponseDto(specialty);
+    const result = SpecialtiesMapper.toSpecialtyResponseDto(specialty);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async filterAndPagination(objectFilter: BodyFilterSpecialtiesDto) {
     let { page, limit, search, arrange } = objectFilter;
-    // const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${objectFilter || {}}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${JSON.stringify(objectFilter || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
 
@@ -153,7 +164,7 @@ export class SpecialtiesService {
       limit,
     );
 
-    // await this.redisCacheService.setData(cacheKey, result, 3600);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
