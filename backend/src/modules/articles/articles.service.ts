@@ -78,6 +78,8 @@ export class ArticlesService {
       files,
     });
 
+    await this.redisCacheService.delByPrefix('articles:');
+
     return ArticleMapper.toArticleResponseDto(newArticle);
   }
 
@@ -102,6 +104,7 @@ export class ArticlesService {
 
     await this.articleRepo.update(articleId, fields);
 
+    await this.redisCacheService.delByPrefix('articles:');
     await this.redisCacheService.delData(`article:${articleId}`);
 
     return { message: 'Cập nhật bài viết thành công' };
@@ -118,6 +121,7 @@ export class ArticlesService {
 
     await this.articleRepo.softDelete(articleId);
 
+    await this.redisCacheService.delByPrefix('articles:');
     await this.redisCacheService.delData(`article:${articleId}`);
 
     return { message: 'Xóa bài biết thành công.' };
@@ -162,6 +166,8 @@ export class ArticlesService {
 
     await this.articleRepo.update(articleId, { is_approve: true });
 
+    await this.redisCacheService.delByPrefix('articles:');
+
     return { message: 'Duyệt bài viết thành công.' };
   }
 
@@ -172,11 +178,11 @@ export class ArticlesService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    // const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `articles:public:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const query = this.articleRepo
       .createQueryBuilder('article')
@@ -227,7 +233,7 @@ export class ArticlesService {
       limit,
     );
 
-    // await this.redisCacheService.setData(cacheKey, result, 3600);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
@@ -269,11 +275,11 @@ export class ArticlesService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    // const cacheKey = `articles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `articles:byDoctors:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const query = this.articleRepo
       .createQueryBuilder('article')
@@ -329,7 +335,7 @@ export class ArticlesService {
       limit,
     );
 
-    // await this.redisCacheService.setData(cacheKey, result, 3600);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
