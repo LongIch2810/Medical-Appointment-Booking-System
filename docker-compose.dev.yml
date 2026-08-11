@@ -1,31 +1,83 @@
 version: "3.8"
 
 services:
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile.dev
-  #   container_name: frontend-app
-  #   ports:
-  #     - "5173:5173"
-  #   volumes:
-  #     - ./frontend:/app
-  #     - /app/node_modules
-  #   depends_on:
-  #     - backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: backend-app
+    ports:
+      - "3010:3000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DB_HOST=postgres
+      - REDIS_HOST=redis
+      - CHATBOT_URL=http://chatbot:5000
+      - FRONTEND_URL=http://localhost:5183
+      - GOOGLE_CALL_BACK=http://localhost:3010/api/v1/auth/google/redirect
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    depends_on:
+      - redis
+      - postgres
 
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile.dev
-  #   container_name: backend-app
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - ./backend:/app
-  #   depends_on:
-  #     - redis
-  #     - postgres
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend-app
+    ports:
+      - "5183:5173"
+    env_file:
+      - ./frontend/.env
+    environment:
+      - VITE_BACKEND_URL=http://localhost:3010
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile.dev
+    container_name: admin-app
+    ports:
+      - "4183:4173"
+    env_file:
+      - ./admin/.env
+    environment:
+      - VITE_BACKEND_URL=http://localhost:3010
+    volumes:
+      - ./admin:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  chatbot:
+    build:
+      context: ./chatbot
+      dockerfile: Dockerfile.dev
+    container_name: chatbot-app
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./chatbot/.env
+    environment:
+      - DB_HOST=postgres
+      - BACKEND_URL=http://backend:3000
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./chatbot:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - backend
 
   redis:
     image: redis

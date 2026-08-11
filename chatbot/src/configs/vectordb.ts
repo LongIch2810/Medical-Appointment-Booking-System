@@ -7,7 +7,10 @@ import { Document } from "@langchain/core/documents";
 dotenv.config();
 
 export default async function initVectorDB(texts?: Document[]) {
-  const embeddings = new OllamaEmbeddings({ model: "nomic-embed-text-v2-moe" });
+  const embeddings = new OllamaEmbeddings({
+    model: "nomic-embed-text-v2-moe",
+    baseUrl: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
+  });
   const client = new QdrantClient({
     url: process.env.QDRANT_URL,
     apiKey: process.env.QDRANT_API_KEY,
