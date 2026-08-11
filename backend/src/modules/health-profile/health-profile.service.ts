@@ -48,6 +48,8 @@ export class HealthProfileService {
     const newHealthProfile =
       await this.healthProfileRepo.save(createdHealthProfile);
 
+    await this.redisCacheService.delByPrefix('healthProfiles:');
+
     return HealthProfileMapper.toHealthProfileResponseDto(newHealthProfile);
   }
 
@@ -78,11 +80,20 @@ export class HealthProfileService {
       relative.health_profile,
     );
 
+    await this.redisCacheService.delByPrefix('healthProfiles:');
+    await this.redisCacheService.delData(
+      `healthProfile:relative:${relativeId}`,
+    );
+
     return HealthProfileMapper.toHealthProfileResponseDto(updatedHealthProfile);
   }
 
   async getHealthProfile(userId: number, relativeId: number) {
     await this.relativesService.findOwnedByUserId(userId, relativeId);
+
+    const cacheKey = `healthProfile:relative:${relativeId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) return cachedData;
 
     const healthProfile = await this.baseHealthProfileQuery()
       .where('relative.id = :relativeId', { relativeId })
@@ -92,7 +103,10 @@ export class HealthProfileService {
       throw new NotFoundException('Hồ sơ sức khỏe không tồn tại.');
     }
 
-    return HealthProfileMapper.toHealthProfileResponseDto(healthProfile);
+    const result =
+      HealthProfileMapper.toHealthProfileResponseDto(healthProfile);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async listHealthProfilesByUserId(
@@ -104,11 +118,18 @@ export class HealthProfileService {
       throw new NotFoundException('Người dùng không tồn tại.');
     }
 
-    let { page, limit, arrange, search } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { arrange, search } = objectFilters;
 
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
+
+    const cacheKey = `healthProfiles:user:${userId}:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const query = this.baseHealthProfileQuery()
       .where('user.id = :userId', { userId })
@@ -136,20 +157,31 @@ export class HealthProfileService {
       .take(limit)
       .getManyAndCount();
 
-    return new PaginationResultDto(
+    const result = new PaginationResultDto(
       'healthProfiles',
       HealthProfileMapper.toHealthProfileResponseDtoList(healthProfiles),
       total,
       page,
       limit,
     );
+
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+
+    return result;
   }
 
   async filterAndPagination(objectFilters: BodyFilterHealthProfilesDto) {
-    let { page, limit, search, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
+
+    const cacheKey = `healthProfiles:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilters || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const query = this.baseHealthProfileQuery()
       .orderBy(
@@ -176,13 +208,17 @@ export class HealthProfileService {
       .take(limit)
       .getManyAndCount();
 
-    return new PaginationResultDto(
+    const result = new PaginationResultDto(
       'healthProfiles',
       HealthProfileMapper.toHealthProfileResponseDtoList(healthProfiles),
       total,
       page,
       limit,
     );
+
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+
+    return result;
   }
 
   async getHealthProfileByRelativeId(userId: number, relativeId: number) {
