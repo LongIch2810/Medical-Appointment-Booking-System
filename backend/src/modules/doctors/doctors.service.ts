@@ -61,6 +61,7 @@ export class DoctorsService {
     });
 
     const newDoctor = await this.doctorRepo.save(doctor);
+    await this.redisCacheService.delByPrefix('doctors:');
     return this.getDoctorDetail(newDoctor.id);
   }
 
@@ -96,11 +97,11 @@ export class DoctorsService {
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
 
-    // const cacheKey = `doctors:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilter || {})}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) {
-    //   return cachedData;
-    // }
+    const cacheKey = `doctors:page=${page}:limit=${limit}:filters=${JSON.stringify(objectFilter || {})}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
 
     const doctorsQuery = this.baseDoctorQuery().take(limit).skip(skip);
 
@@ -165,15 +166,15 @@ export class DoctorsService {
       limit,
     );
 
-    // await this.redisCacheService.setData(cacheKey, result);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
 
   async getDoctorDetail(doctorId: number) {
-    // const cacheKey = `doctor:${doctorId}`;
-    // const cachedData = await this.redisCacheService.getData(cacheKey);
-    // if (cachedData) return cachedData;
+    const cacheKey = `doctor:${doctorId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) return cachedData;
     const { entities, raw } = await this.baseDoctorQuery()
       .where('doctor.id = :doctorId', { doctorId })
       .getRawAndEntities();
@@ -182,13 +183,14 @@ export class DoctorsService {
       throw new NotFoundException('Bác sĩ không tồn tại.');
     }
     const row = raw.find((i) => Number(i.doctor_id) === doctorId);
-    // await this.redisCacheService.setData(cacheKey, doctor, 3600);
     const doctor = {
       ...entities[0],
       avg_rating: Number(row?.avg_rating ?? 0),
       appointments_completed: Number(row?.appointments_completed ?? 0),
     };
-    return DoctorsMapper.toDoctorResponseDto(setIsOutstandingDoctor(doctor));
+    const result = DoctorsMapper.toDoctorResponseDto(setIsOutstandingDoctor(doctor));
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async update(doctorId: number, body: BodyUpdateDoctorDto) {
@@ -217,20 +219,23 @@ export class DoctorsService {
       doctor.doctor_level = body.doctor_level;
 
     await this.doctorRepo.save(doctor);
+    await this.redisCacheService.delByPrefix('doctors:');
+    await this.redisCacheService.delData(`doctor:${doctorId}`);
     return this.getDoctorDetail(doctorId);
   }
 
   async remove(doctorId: number) {
     await this.getDoctorDetail(doctorId);
     await this.doctorRepo.softDelete(doctorId);
+    await this.redisCacheService.delByPrefix('doctors:');
+    await this.redisCacheService.delData(`doctor:${doctorId}`);
     return { message: 'Xóa bác sĩ thành công.' };
   }
 
   async getOutstandingDoctors() {
-    // const outstandingDoctorsCached = await this.redisCacheService.getData(
-    //   `doctors:outstandingDoctors`,
-    // );
-    // if (outstandingDoctorsCached) return outstandingDoctorsCached;
+    const cacheKey = `doctors:outstandingDoctors`;
+    const outstandingDoctorsCached = await this.redisCacheService.getData(cacheKey);
+    if (outstandingDoctorsCached) return outstandingDoctorsCached;
     const query = this.baseDoctorQuery()
       .orderBy('avg_rating', 'DESC')
       .addOrderBy('appointments_completed', 'DESC');
@@ -244,16 +249,14 @@ export class DoctorsService {
         appointments_completed: Number(row?.appointments_completed ?? 0),
       };
     });
-    // await this.redisCacheService.setData(
-    //   `doctors:outstandingDoctors`,
-    //   outstandingDoctors,
-    // );
-
-    return DoctorsMapper.toDoctorResponseDtoList(
+    const result = DoctorsMapper.toDoctorResponseDtoList(
       setIsOutstandingDoctors(outstandingDoctors)
         .filter((doctor) => doctor.isOutstanding)
         .slice(0, 4),
     );
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+
+    return result;
   }
 
   private baseDoctorQuery() {
