@@ -55,6 +55,10 @@ export class DoctorSchedulesService {
         doctor,
       });
 
+      await this.redisCacheService.delData(
+        `doctorSchedules:doctor:${doctor.id}`,
+      );
+
       return DoctorScheduleMapper.toDoctorScheduleResponseDto(newSchedule);
     } catch (error: any) {
       if (error.code === '23505') {
@@ -105,12 +109,20 @@ export class DoctorSchedulesService {
     }
 
     Object.assign(schedule, bodyUpdateSchedule);
-    return this.doctorScheduleRepo.save(schedule);
+    const savedSchedule = await this.doctorScheduleRepo.save(schedule);
+    await this.redisCacheService.delData(`doctorSchedule:${doctorScheduleId}`);
+    await this.redisCacheService.delData(`doctorSchedules:doctor:${doctor.id}`);
+    return savedSchedule;
   }
 
   async getDoctorScheduleDetail(scheduleId: number) {
+    const cacheKey = `doctorSchedule:${scheduleId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) return cachedData;
     const schedule = await this.findScheduleByDoctorScheduleId(scheduleId);
-    return DoctorScheduleMapper.toDoctorScheduleResponseDto(schedule);
+    const result = DoctorScheduleMapper.toDoctorScheduleResponseDto(schedule);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async updateActive(
@@ -129,6 +141,9 @@ export class DoctorSchedulesService {
       is_active: isActive,
     });
 
+    await this.redisCacheService.delData(`doctorSchedule:${doctorScheduleId}`);
+    await this.redisCacheService.delData(`doctorSchedules:doctor:${doctor.id}`);
+
     return {
       message: isActive
         ? 'Kích hoạt ca khám thành công.'
@@ -140,6 +155,8 @@ export class DoctorSchedulesService {
     const doctor = await this.doctorsService.findDoctorByUserId(userId);
     const schedule = await this.findOwnedSchedule(doctor.id, doctorScheduleId);
     await this.doctorScheduleRepo.delete(schedule.id);
+    await this.redisCacheService.delData(`doctorSchedule:${doctorScheduleId}`);
+    await this.redisCacheService.delData(`doctorSchedules:doctor:${doctor.id}`);
     return { message: 'Xóa ca khám thành công.' };
   }
 
@@ -148,6 +165,10 @@ export class DoctorSchedulesService {
     if (!doctor) {
       throw new NotFoundException('Bác sĩ không tồn tại trong hệ thống.');
     }
+
+    const cacheKey = `doctorSchedules:doctor:${doctorId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) return cachedData;
 
     const schedules = await this.doctorScheduleRepo
       .createQueryBuilder('schedule')
@@ -165,7 +186,10 @@ export class DoctorSchedulesService {
       .addOrderBy('schedule.start_time', 'ASC')
       .getMany();
 
-    return DoctorScheduleMapper.toDoctorScheduleResponseDtoList(schedules);
+    const result =
+      DoctorScheduleMapper.toDoctorScheduleResponseDtoList(schedules);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async getPersonalSchedules(userId: number) {
