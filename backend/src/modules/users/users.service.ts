@@ -29,12 +29,14 @@ import { BodyCreateUserDto } from './dto/request/bodyCreateUser.dto';
 import { BodyFilterUsersDto } from './dto/request/bodyFilterUsers.dto';
 import { UserResponseDto } from './dto/response/userResponse.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly dataSource: DataSource,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   findAll(): Promise<User[]> {
@@ -415,6 +417,8 @@ export class UsersService {
           },
         },
       });
+
+      await this.redisCacheService.delData(`permissions:${userId}`);
 
       return UsersMapper.toUserProfileResponse(updatedUser!);
     });
