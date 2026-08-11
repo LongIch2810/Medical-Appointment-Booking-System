@@ -35,6 +35,7 @@ export class TopicsService {
       }
       const topic = this.topicRepo.create({ name, description, slug });
       const newTopic = await this.topicRepo.save(topic);
+      await this.redisCacheService.delByPrefix('topics:');
       return TopicMapper.toTopicResponse(newTopic);
     } catch (error) {
       if (
@@ -79,7 +80,10 @@ export class TopicsService {
       topic.description = nextDescription;
     }
 
-    return this.topicRepo.save(topic);
+    const savedTopic = await this.topicRepo.save(topic);
+    await this.redisCacheService.delByPrefix('topics:');
+    await this.redisCacheService.delData(`topic:${topicId}`);
+    return savedTopic;
   }
 
   async filterAndPagination(objectFilters: BodyFilterTopicsDto) {
@@ -116,7 +120,7 @@ export class TopicsService {
       limit,
     );
 
-    await this.redisCacheService.setData(cacheKey, result);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
   }
@@ -138,13 +142,22 @@ export class TopicsService {
   }
 
   async getTopic(topicId: number) {
+    const cacheKey = `topic:${topicId}`;
+    const cachedData = await this.redisCacheService.getData(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
     const topic = await this.findById(topicId);
-    return TopicMapper.toTopicResponse(topic);
+    const result = TopicMapper.toTopicResponse(topic);
+    await this.redisCacheService.setData(cacheKey, result, 3600);
+    return result;
   }
 
   async remove(topicId: number) {
     await this.findById(topicId);
     await this.topicRepo.softDelete(topicId);
+    await this.redisCacheService.delByPrefix('topics:');
+    await this.redisCacheService.delData(`topic:${topicId}`);
     return { message: 'Xóa topic thành công' };
   }
 }
