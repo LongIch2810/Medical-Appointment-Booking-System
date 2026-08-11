@@ -12,6 +12,7 @@ import { RolesMapper } from './roles.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { PermissionsService } from '../permissions/permissions.service';
 import RolePermission from 'src/entities/rolePermission.entity';
+import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 
 @Injectable()
 export class RolesService {
@@ -19,6 +20,7 @@ export class RolesService {
     @InjectRepository(Role) private roleRepo: Repository<Role>,
     private readonly permissionsService: PermissionsService,
     private datasource: DataSource,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
 
   async create(body: BodyCreateRoleDto) {
@@ -177,6 +179,7 @@ export class RolesService {
       if (newRolePermissions.length) {
         await rolePermissionRepo.save(newRolePermissions);
       }
+      await this.redisCacheService.delByPrefix('permissions:');
       return this.getRoleDetail(roleId);
     });
   }
@@ -206,6 +209,7 @@ export class RolesService {
       await rolePermissionRepo.softDelete(
         rolePermissions.map((rolePermission) => rolePermission.id),
       );
+      await this.redisCacheService.delByPrefix('permissions:');
       return this.getRoleDetail(roleId);
     });
   }
