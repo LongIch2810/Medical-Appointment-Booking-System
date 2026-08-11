@@ -29,11 +29,11 @@ export class RolePermissionService {
     userId: number,
     roles: string[],
   ): Promise<string[]> {
-    // const cacheKey = `permissions:${userId}`;
-    // const cachedData = (await this.redisCacheService.getData(
-    //   cacheKey,
-    // )) as string[];
-    // if (cachedData) return cachedData;
+    const cacheKey = `permissions:${userId}`;
+    const cachedData = (await this.redisCacheService.getData(
+      cacheKey,
+    )) as string[];
+    if (cachedData) return cachedData;
 
     const rawPermissions = await this.rolePermissionRepository
       .createQueryBuilder('rp')
@@ -45,7 +45,7 @@ export class RolePermissionService {
 
     const permissions = rawPermissions.map((item) => item.name);
 
-    // await this.redisCacheService.setData(cacheKey, permissions, 3600);
+    await this.redisCacheService.setData(cacheKey, permissions, 3600);
 
     return permissions;
   }
