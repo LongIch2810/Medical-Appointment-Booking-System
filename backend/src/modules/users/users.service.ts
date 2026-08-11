@@ -379,7 +379,7 @@ export class UsersService {
   }
 
   async updateRoles(userId: number, roleIds: number[]) {
-    return this.dataSource.transaction(async (manager) => {
+    const result = await this.dataSource.transaction(async (manager) => {
       const user = await manager.findOne(User, { where: { id: userId } });
       if (!user) {
         throw new NotFoundException('Người dùng không tồn tại');
@@ -418,10 +418,12 @@ export class UsersService {
         },
       });
 
-      await this.redisCacheService.delData(`permissions:${userId}`);
-
       return UsersMapper.toUserProfileResponse(updatedUser!);
     });
+
+    await this.redisCacheService.delData(`permissions:${userId}`);
+
+    return result;
   }
 
   async isUserExistsByUsername(username: string): Promise<boolean> {

@@ -2,15 +2,18 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import User from 'src/entities/user.entity';
-import Role from 'src/entities/role.entity';
-import UserRole from 'src/entities/userRole.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let service: UsersService;
   let redisCacheService: jest.Mocked<RedisCacheService>;
-  let manager: { findOne: jest.Mock; find: jest.Mock; delete: jest.Mock; save: jest.Mock };
+  let manager: {
+    findOne: jest.Mock;
+    find: jest.Mock;
+    delete: jest.Mock;
+    save: jest.Mock;
+  };
   let dataSource: { transaction: jest.Mock };
 
   beforeEach(async () => {
@@ -50,6 +53,7 @@ describe('UsersService', () => {
 
       await service.updateRoles(9, [1]);
 
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delData).toHaveBeenCalledWith('permissions:9');
     });
   });

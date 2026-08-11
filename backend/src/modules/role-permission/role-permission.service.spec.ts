@@ -24,7 +24,10 @@ describe('RolePermissionService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RolePermissionService,
-        { provide: getRepositoryToken(RolePermission), useValue: rolePermissionRepo },
+        {
+          provide: getRepositoryToken(RolePermission),
+          useValue: rolePermissionRepo,
+        },
         { provide: getRepositoryToken(Role), useValue: {} },
         { provide: getRepositoryToken(Permission), useValue: {} },
         { provide: RedisCacheService, useValue: redisCacheService },
@@ -57,7 +60,12 @@ describe('RolePermissionService', () => {
       const result = await service.getPermissionsByRoles(9, ['ADMIN']);
 
       expect(result).toEqual(['article:read']);
-      expect(redisCacheService.setData).toHaveBeenCalledWith('permissions:9', ['article:read'], 3600);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(redisCacheService.setData).toHaveBeenCalledWith(
+        'permissions:9',
+        ['article:read'],
+        3600,
+      );
     });
   });
 });

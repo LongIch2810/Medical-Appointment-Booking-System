@@ -128,7 +128,7 @@ export class RolesService {
   }
 
   async updateRolePermissions(roleId: number, permissionIds: number[]) {
-    return await this.datasource.transaction(async (manager) => {
+    const result = await this.datasource.transaction(async (manager) => {
       const role = await manager.findOne(Role, { where: { id: roleId } });
       if (!role) {
         throw new NotFoundException('Vai trò không tồn tại');
@@ -179,12 +179,13 @@ export class RolesService {
       if (newRolePermissions.length) {
         await rolePermissionRepo.save(newRolePermissions);
       }
-      await this.redisCacheService.delByPrefix('permissions:');
       return this.getRoleDetail(roleId);
     });
+    await this.redisCacheService.delByPrefix('permissions:');
+    return result;
   }
   async deleteRolePermissions(roleId: number, permissionIds: number[]) {
-    return await this.datasource.transaction(async (manager) => {
+    const result = await this.datasource.transaction(async (manager) => {
       const role = await manager.findOne(Role, { where: { id: roleId } });
       if (!role) {
         throw new NotFoundException('Vai trò không tồn tại');
@@ -209,9 +210,10 @@ export class RolesService {
       await rolePermissionRepo.softDelete(
         rolePermissions.map((rolePermission) => rolePermission.id),
       );
-      await this.redisCacheService.delByPrefix('permissions:');
       return this.getRoleDetail(roleId);
     });
+    await this.redisCacheService.delByPrefix('permissions:');
+    return result;
   }
 
   async filterAndPagination(objectFilters: BodyFilterRolesDto) {

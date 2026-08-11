@@ -36,7 +36,12 @@ describe('RolesService', () => {
       providers: [
         RolesService,
         { provide: getRepositoryToken(Role), useValue: {} },
-        { provide: PermissionsService, useValue: { isPermissionListExist: jest.fn().mockResolvedValue(true) } },
+        {
+          provide: PermissionsService,
+          useValue: {
+            isPermissionListExist: jest.fn().mockResolvedValue(true),
+          },
+        },
         { provide: DataSource, useValue: dataSource },
         { provide: RedisCacheService, useValue: redisCacheService },
       ],
@@ -52,7 +57,10 @@ describe('RolesService', () => {
 
       await service.updateRolePermissions(1, [10, 11]);
 
-      expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('permissions:');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
+        'permissions:',
+      );
     });
   });
 
@@ -60,13 +68,18 @@ describe('RolesService', () => {
     it('wipes the whole permissions cache, since every user with this role is affected', async () => {
       manager.findOne.mockResolvedValue({ id: 1 });
       manager.getRepository.mockReturnValue({
-        find: jest.fn().mockResolvedValue([{ id: 100, permission: { id: 10 } }]),
+        find: jest
+          .fn()
+          .mockResolvedValue([{ id: 100, permission: { id: 10 } }]),
         softDelete: jest.fn(),
       });
 
       await service.deleteRolePermissions(1, [10]);
 
-      expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('permissions:');
+      // eslint-disable-next-line @typescript-eslint/unbound-method
+      expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
+        'permissions:',
+      );
     });
   });
 });
