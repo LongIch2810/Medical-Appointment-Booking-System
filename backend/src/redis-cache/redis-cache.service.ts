@@ -33,6 +33,31 @@ export class RedisCacheService {
     }
   }
 
+  async delByPrefix(prefix: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const stream = this.client.scanStream({ match: `${prefix}*` });
+      const pipeline = this.client.pipeline();
+      let hasKeys = false;
+
+      stream.on('data', (keys: string[]) => {
+        if (keys.length) {
+          hasKeys = true;
+          keys.forEach((key) => pipeline.del(key));
+        }
+      });
+
+      stream.on('end', () => {
+        if (hasKeys) {
+          pipeline.exec().then(() => resolve()).catch(reject);
+        } else {
+          resolve();
+        }
+      });
+
+      stream.on('error', reject);
+    });
+  }
+
   async lRange(
     key: string,
     startIndex: number,
