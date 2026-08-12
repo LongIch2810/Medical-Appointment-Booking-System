@@ -2,6 +2,7 @@ import React from "react";
 import {
   AlertTriangle,
   CalendarClock,
+  CalendarPlus,
   FileHeart,
   FileSearch,
   LayoutDashboard,
@@ -14,6 +15,7 @@ import {
 import { NavLink, Outlet } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
 
@@ -42,6 +44,12 @@ const PatientNavigation: React.FC = () => {
   return (
     <>
       <aside className="hidden lg:flex lg:w-72 lg:shrink-0 lg:flex-col lg:gap-1 lg:rounded-2xl lg:border lg:border-slate-200 lg:bg-white lg:p-3 lg:shadow-sm">
+        <Button asChild className="mb-2 w-full justify-center gap-2 rounded-xl">
+          <NavLink to="/doctors">
+            <CalendarPlus className="h-4 w-4" />
+            Đặt lịch khám mới
+          </NavLink>
+        </Button>
         <p className="px-3 pb-2 pt-1 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
           Khu vực bệnh nhân
         </p>
@@ -79,6 +87,13 @@ const PatientNavigation: React.FC = () => {
       </aside>
 
       <div className="mb-4 flex gap-2 overflow-x-auto pb-2 lg:hidden">
+        <NavLink
+          to="/doctors"
+          className="flex min-w-fit items-center gap-2 rounded-full border border-primary bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm"
+        >
+          <CalendarPlus className="h-4 w-4" />
+          <span>Đặt lịch khám mới</span>
+        </NavLink>
         {navItems.map(({ label, to, icon: Icon, end }) => (
           <NavLink
             key={to}

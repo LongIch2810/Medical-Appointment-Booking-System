@@ -13,6 +13,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { PermissionsService } from '../permissions/permissions.service';
 import RolePermission from 'src/entities/rolePermission.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import UserRole from 'src/entities/userRole.entity';
 
 @Injectable()
 export class RolesService {
@@ -181,7 +182,7 @@ export class RolesService {
       }
       return this.getRoleDetail(roleId);
     });
-    await this.redisCacheService.delByPrefix('permissions:');
+    await this.invalidateRoleUsers(roleId);
     return result;
   }
   async deleteRolePermissions(roleId: number, permissionIds: number[]) {
@@ -212,8 +213,23 @@ export class RolesService {
       );
       return this.getRoleDetail(roleId);
     });
-    await this.redisCacheService.delByPrefix('permissions:');
+    await this.invalidateRoleUsers(roleId);
     return result;
+  }
+
+  private async invalidateRoleUsers(roleId: number): Promise<void> {
+    const userRoles = await this.datasource.getRepository(UserRole).find({
+      where: { role: { id: roleId } },
+      relations: ['user'],
+    });
+
+    await this.redisCacheService.delByPrefix('permissions:');
+    await Promise.all(
+      userRoles.flatMap(({ user }) => [
+        this.redisCacheService.incr(`session_version:${user.id}`),
+        this.redisCacheService.delData(`refresh_tokens:${user.id}`),
+      ]),
+    );
   }
 
   async filterAndPagination(objectFilters: BodyFilterRolesDto) {

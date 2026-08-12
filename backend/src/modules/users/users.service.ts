@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -277,26 +278,42 @@ export class UsersService {
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
-    let where: FindOptionsWhere<User> | FindOptionsWhere<User>[] | undefined;
-    const roleCondition = role_id ? { roles: { role: { id: role_id } } } : {};
-    const searchFields: (keyof User)[] = ['username', 'email', 'fullname'];
+
+    const query = this.userRepo
+      .createQueryBuilder('account')
+      .leftJoinAndSelect('account.roles', 'userRole')
+      .leftJoinAndSelect('userRole.role', 'role')
+      .where(
+        `NOT EXISTS (
+          SELECT 1
+          FROM user_roles patientUserRole
+          INNER JOIN roles patientRole ON patientRole.id = patientUserRole.role_id
+          WHERE patientUserRole.user_id = account.id
+            AND patientUserRole.deleted_at IS NULL
+            AND patientRole.deleted_at IS NULL
+            AND patientRole.role_name = :patientRole
+        )`,
+        { patientRole: ROLE_NAME.PATIENT },
+      );
+
     if (search) {
-      where = searchFields.map((field) => ({
-        [field]: ILike(`%${search}%`),
-        ...roleCondition,
-      }));
-    } else if (role_id) {
-      where = roleCondition;
+      query.andWhere(
+        '(account.username ILIKE :search OR account.email ILIKE :search OR account.fullname ILIKE :search)',
+        { search: `%${search}%` },
+      );
     }
-    const [users, total] = await this.userRepo.findAndCount({
-      where,
-      relations: {
-        roles: { role: true },
-      },
-      order: { created_at: arrange.toUpperCase() as 'ASC' | 'DESC' },
-      skip,
-      take: limit,
-    });
+
+    if (role_id) {
+      query
+        .innerJoin('account.roles', 'filterUserRole')
+        .andWhere('filterUserRole.role_id = :roleId', { roleId: role_id });
+    }
+
+    const [users, total] = await query
+      .orderBy('account.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
     const result = new PaginationResultDto<UserResponseDto>(
       'users',
       UsersMapper.toUserListResponse(users),
@@ -363,6 +380,11 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
+    if (isLocking && this.hasAdminRole(user)) {
+      throw new ForbiddenException(
+        'Không thể khóa tài khoản có vai trò ADMIN',
+      );
+    }
     user.is_locking = isLocking;
     const updatedUser = await this.userRepo.save(user);
     return UsersMapper.toUserProfileResponse(updatedUser);
@@ -373,9 +395,20 @@ export class UsersService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
+    if (!isActive && this.hasAdminRole(user)) {
+      throw new ForbiddenException(
+        'Không thể vô hiệu hóa tài khoản có vai trò ADMIN',
+      );
+    }
     user.is_active = isActive;
     const updatedUser = await this.userRepo.save(user);
     return UsersMapper.toUserProfileResponse(updatedUser);
+  }
+
+  private hasAdminRole(user: User): boolean {
+    return user.roles.some(
+      (userRole) => userRole.role.role_name === ROLE_NAME.ADMIN,
+    );
   }
 
   async updateRoles(userId: number, roleIds: number[]) {

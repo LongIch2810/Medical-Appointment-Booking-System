@@ -46,6 +46,7 @@ const DialogInputWorkplace = ({ className = "" }: { className: string }) => {
       <DialogTrigger>
         <FilterItem
           label="Nơi làm việc"
+          activeValue={workplaceInput || undefined}
           icon={<Briefcase size={16} />}
           className={cn("w-full md:w-auto", className)}
         />

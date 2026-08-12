@@ -79,7 +79,7 @@ export const changePassword = async (data: ChangePasswordPayload) => {
 
 export const fetchUsers = async (data: UserListPayload) => {
   const res = await axiosInstance.post<ApiResponse<UserListResponse>>(
-    "/users/users",
+    "/users",
     data,
   );
   return {

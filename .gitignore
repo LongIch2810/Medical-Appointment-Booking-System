@@ -12,6 +12,8 @@ node_modules
 dist
 dist-ssr
 build
+admin/dist_old2/
+backend/src/metadata.ts
 *.local
 
 # Tests

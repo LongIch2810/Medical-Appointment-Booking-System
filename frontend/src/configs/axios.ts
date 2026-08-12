@@ -1,7 +1,7 @@
 import { useUserStore } from "@/store/useUserStore";
 import axios from "axios";
 
-function getBackendBaseURL() {
+export function getBackendBaseURL() {
   const configuredURL =
     import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
@@ -21,7 +21,8 @@ function getBackendBaseURL() {
   return backendURL.toString().replace(/\/$/, "");
 }
 
-const backendBaseURL = `${getBackendBaseURL()}/api/v1`;
+export const backendOrigin = getBackendBaseURL();
+export const backendBaseURL = `${backendOrigin}/api/v1`;
 
 const axiosInstance = axios.create({
   baseURL: backendBaseURL,

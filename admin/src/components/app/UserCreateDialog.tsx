@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 
 import { FormDialog, FormField } from "@/components/app/FormDialog";
 import { Input } from "@/components/ui/input";
@@ -73,7 +73,10 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
     search: "",
     arrange: "asc",
   });
-  const roles = rolesQuery.data?.data?.roles ?? [];
+  const rawRoles = rolesQuery.data?.data?.roles ?? [];
+  const roles = useMemo(() => {
+    return rawRoles.filter((r) => r.role_name?.toUpperCase() !== "PATIENT");
+  }, [rawRoles]);
 
   const specialtiesQuery = useSpecialties({
     page: 1,

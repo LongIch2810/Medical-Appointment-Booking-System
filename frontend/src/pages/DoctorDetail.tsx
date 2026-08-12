@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import type { AxiosError } from "axios";
 import { GraduationCap, Mail, MapPin, Phone, Stethoscope } from "lucide-react";
-import { toast } from "react-toastify";
 import AlertDialogConfirmBook from "@/components/dialog/AlertDialogConfirmBook";
 import CalendarComponent from "@/components/calendar/CalendarComponent";
 import DoctorScheduleList from "@/components/list/DoctorScheduleList";
@@ -12,14 +10,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import type { createAppointmentData } from "@/api/appointmentApi";
-import { useBookingAppointment } from "@/hooks/useBookingAppointment";
+import ErrorState from "@/components/notification/ErrorState";
+import { useDoctorBooking } from "@/hooks/useDoctorBooking";
 import { useGetDoctorDetail } from "@/hooks/useGetDoctorDetail";
 import { useNotifyAppointmentSocket } from "@/hooks/useNotifyAppointmentSocket";
 import { useSocket } from "@/hooks/useSocket";
 import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
 import { useUserStore } from "@/store/useUserStore";
-import type { ApiError } from "@/types/interface/apiError.interface";
 import type { DoctorSchedule } from "@/types/interface/doctorSchedule.interface";
 import { checkSchedulesExpireOrBooked } from "@/utils/checkSchedulesExpire";
 import { formatDate, formatDateYYYYMMDD, getWeekday } from "@/utils/formatDate";
@@ -29,8 +26,13 @@ const DoctorDetail = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { userInfo } = useUserStore();
-  const [isPending, setIsPending] = useState(false);
-  const [openConfirm, setOpenConfirm] = useState(false);
+  const {
+    isPending,
+    setIsPending,
+    openConfirm,
+    setOpenConfirm,
+    handleBookingAppointment,
+  } = useDoctorBooking();
   const {
     selectedDate,
     setSelectedDate,
@@ -44,8 +46,6 @@ const DoctorDetail = () => {
 
   const socket = useSocket(userInfo?.id);
   useNotifyAppointmentSocket(socket, doctor_id, setIsPending);
-
-  const { mutate, error, isError: isErrorBooking } = useBookingAppointment();
 
   useEffect(() => {
     const selectedDateParam = searchParams.get("selectedDate");
@@ -81,22 +81,11 @@ const DoctorDetail = () => {
     }
   }, [userInfo, navigate]);
 
-  useEffect(() => {
-    if (isErrorBooking) {
-      const axiosError = error as AxiosError<ApiError>;
-      const details = axiosError.response?.data.error.details;
-      const message =
-        typeof details === "string"
-          ? details
-          : (details?.[0] ?? "Đặt lịch khám thất bại!");
-      toast.error(message);
-    }
-  }, [error, isErrorBooking]);
-
   const {
     data: doctorRes,
     isLoading,
     isError,
+    refetch,
   } = useGetDoctorDetail(Number(id));
 
   if (isLoading) {
@@ -105,8 +94,12 @@ const DoctorDetail = () => {
 
   if (isError || !doctorRes?.data) {
     return (
-      <div className="container mx-auto p-6 text-red-500">
-        Không tìm thấy bác sĩ.
+      <div className="container mx-auto px-4 py-6 mt-16 md:mt-28">
+        <ErrorState
+          title="Không tìm thấy bác sĩ"
+          description="Bác sĩ này có thể không tồn tại hoặc đã bị gỡ bỏ."
+          onRetry={() => refetch()}
+        />
       </div>
     );
   }
@@ -116,29 +109,6 @@ const DoctorDetail = () => {
     (doctor.doctor_schedules as Record<string, DoctorSchedule[]> | undefined) ??
     {};
   const selectedDaySchedules = schedules[getWeekday(selectedDate)] || [];
-
-  const handleBookingAppointment = (data: createAppointmentData) => {
-    if (!data.appointment_date) {
-      toast.error("Vui lòng chọn ngày khám!");
-    } else if (!data.doctor_id) {
-      toast.error("Vui lòng chọn bác sĩ!");
-    } else if (!data.doctor_schedule_id) {
-      toast.error("Vui lòng chọn khung giờ khám!");
-    } else if (!data.relative_id) {
-      toast.error("Vui lòng chọn người thân cần đặt lịch khám!");
-    } else {
-      setIsPending(true);
-      mutate(data, {
-        onSuccess: () => {
-          setIsPending(false);
-          setOpenConfirm(false);
-        },
-        onError: () => {
-          setIsPending(false);
-        },
-      });
-    }
-  };
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl mt-16 md:mt-28 space-y-8">

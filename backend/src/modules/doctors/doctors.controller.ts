@@ -20,11 +20,14 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('doctors')
 @Controller('doctors')
 export class DoctorsController {
   constructor(private readonly doctorsService: DoctorsService) {}
 
+  @ApiOperation({ summary: 'Danh sách bác sĩ (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   async getFilterDoctors(@Body() bodyFilterDoctor: BodyFilterDoctorsDto) {
@@ -33,6 +36,8 @@ export class DoctorsController {
     return result;
   }
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Tạo hồ sơ bác sĩ' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -42,6 +47,7 @@ export class DoctorsController {
     return this.doctorsService.create(body);
   }
 
+  @ApiOperation({ summary: 'Danh sách bác sĩ nổi bật' })
   @Get('outstanding-doctors')
   @HttpCode(HttpStatus.OK)
   async getOutstandingDoctors() {
@@ -53,6 +59,8 @@ export class DoctorsController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.DOCTOR_READ)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Chi tiết bác sĩ' })
   @Get(':doctorId')
   @HttpCode(HttpStatus.OK)
   async getDoctorDetail(@Param('doctorId', ParseIntPipe) doctorId: number) {
@@ -62,6 +70,8 @@ export class DoctorsController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.DOCTOR_UPDATE)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Cập nhật hồ sơ bác sĩ' })
   @Patch(':doctorId')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'UPDATE', entityName: 'doctors' })
@@ -74,6 +84,8 @@ export class DoctorsController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.DOCTOR_DELETE)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Xóa hồ sơ bác sĩ' })
   @Delete(':doctorId')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'DELETE', entityName: 'doctors' })

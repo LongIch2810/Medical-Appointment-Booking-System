@@ -20,6 +20,12 @@ async function bootstrap() {
       'http://127.0.0.1:4173',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
+      // Docker-mapped ports (docker-compose.dev.yml), used when running
+      // docker compose alongside native `npm run dev` on the same machine
+      'http://localhost:5183',
+      'http://127.0.0.1:5183',
+      'http://localhost:4183',
+      'http://127.0.0.1:4183',
     ],
     credentials: true,
   });
@@ -42,7 +48,11 @@ async function bootstrap() {
     .setTitle('System Booking Doctor')
     .setDescription('API cho hệ thống đặt lịch khám bác sĩ')
     .setVersion('1.0')
+    .addCookieAuth('accessToken')
     .build();
+  const swaggerMetadataPath = './metadata.js';
+  const { default: swaggerMetadata } = await import(swaggerMetadataPath);
+  await SwaggerModule.loadPluginMetadata(swaggerMetadata);
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, documentFactory);
   await app.listen(configService.get<number>('PORT') ?? 3000);

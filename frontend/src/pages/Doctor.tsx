@@ -14,6 +14,7 @@ import DoctorCard from "@/components/card/DoctorCard";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/loading/Loading";
 import NotFoundResult from "@/components/notification/NotFoundResult";
+import ErrorState from "@/components/notification/ErrorState";
 import { useDebounce } from "@/hooks/useDebounce";
 
 const Doctor = () => {
@@ -96,6 +97,7 @@ const Doctor = () => {
     isFetchingNextPage,
     hasNextPage,
     fetchNextPage,
+    refetch,
   } = useGetDoctorsInfinite(filters);
   const doctors = data?.pages.flatMap((page) => page.data.doctors) || [];
 
@@ -148,32 +150,44 @@ const Doctor = () => {
         </div>
       </header>
       <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto">
-        <div className="flex justify-center">
-          {!isLoading && doctors.length === 0 && <NotFoundResult />}
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {(isLoading || isError) &&
-            Array.from({ length: 20 }).map((_, i) => (
-              <DoctorCardSkeleton key={i} />
-            ))}
-          {doctors.map((item, index) => (
-            <DoctorCard key={index} item={item} />
-          ))}
-          {isFetchingNextPage &&
-            Array.from({ length: 20 }).map((_, i) => (
-              <DoctorCardSkeleton key={i} />
-            ))}
-        </div>
-        <div className="flex justify-center">
-          {hasNextPage && (
-            <Button
-              onClick={() => fetchNextPage()}
-              disabled={isFetchingNextPage}
-            >
-              {isFetchingNextPage ? <Loading /> : "Xem thêm"}
-            </Button>
-          )}
-        </div>
+        {isError ? (
+          <ErrorState
+            title="Không thể tải danh sách bác sĩ"
+            description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+            onRetry={() => refetch()}
+          />
+        ) : (
+          <>
+            <div className="flex justify-center">
+              {!isLoading && doctors.length === 0 && (
+                <NotFoundResult onReset={handleResetFilters} />
+              )}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {isLoading &&
+                Array.from({ length: 20 }).map((_, i) => (
+                  <DoctorCardSkeleton key={i} />
+                ))}
+              {doctors.map((item, index) => (
+                <DoctorCard key={index} item={item} />
+              ))}
+              {isFetchingNextPage &&
+                Array.from({ length: 20 }).map((_, i) => (
+                  <DoctorCardSkeleton key={i} />
+                ))}
+            </div>
+            <div className="flex justify-center">
+              {hasNextPage && (
+                <Button
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? <Loading /> : "Xem thêm"}
+                </Button>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

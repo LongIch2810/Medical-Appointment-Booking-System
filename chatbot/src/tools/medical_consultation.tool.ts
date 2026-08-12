@@ -2,13 +2,12 @@ import * as dotenv from "dotenv";
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 
 dotenv.config();
 
-const medicalLLM = new ChatGoogleGenerativeAI({
-  model: "gemini-2.5-flash",
-  apiKey: process.env.GOOGLE_API_KEY,
+const medicalLLM = getChatModel({
+  profile: "fast",
   temperature: 0.3,
 });
 

@@ -10,7 +10,7 @@ describe('RolesService', () => {
   let service: RolesService;
   let redisCacheService: jest.Mocked<RedisCacheService>;
   let manager: { findOne: jest.Mock; getRepository: jest.Mock };
-  let dataSource: { transaction: jest.Mock };
+  let dataSource: { transaction: jest.Mock; getRepository: jest.Mock };
 
   beforeEach(async () => {
     redisCacheService = {
@@ -18,6 +18,7 @@ describe('RolesService', () => {
       setData: jest.fn(),
       delData: jest.fn(),
       delByPrefix: jest.fn(),
+      incr: jest.fn(),
     } as unknown as jest.Mocked<RedisCacheService>;
 
     manager = {
@@ -30,7 +31,12 @@ describe('RolesService', () => {
         softDelete: jest.fn(),
       })),
     };
-    dataSource = { transaction: jest.fn((cb) => cb(manager)) };
+    dataSource = {
+      transaction: jest.fn((cb) => cb(manager)),
+      getRepository: jest.fn(() => ({
+        find: jest.fn().mockResolvedValue([{ user: { id: 9 } }]),
+      })),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -52,7 +58,7 @@ describe('RolesService', () => {
   });
 
   describe('updateRolePermissions', () => {
-    it('wipes the whole permissions cache, since every user with this role is affected', async () => {
+    it('invalidates sessions for users assigned to the role', async () => {
       manager.findOne.mockResolvedValue({ id: 1 });
 
       await service.updateRolePermissions(1, [10, 11]);
@@ -61,11 +67,15 @@ describe('RolesService', () => {
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'permissions:',
       );
+      expect(redisCacheService.incr).toHaveBeenCalledWith('session_version:9');
+      expect(redisCacheService.delData).toHaveBeenCalledWith(
+        'refresh_tokens:9',
+      );
     });
   });
 
   describe('deleteRolePermissions', () => {
-    it('wipes the whole permissions cache, since every user with this role is affected', async () => {
+    it('invalidates sessions for users assigned to the role', async () => {
       manager.findOne.mockResolvedValue({ id: 1 });
       manager.getRepository.mockReturnValue({
         find: jest
@@ -79,6 +89,10 @@ describe('RolesService', () => {
       // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'permissions:',
+      );
+      expect(redisCacheService.incr).toHaveBeenCalledWith('session_version:9');
+      expect(redisCacheService.delData).toHaveBeenCalledWith(
+        'refresh_tokens:9',
       );
     });
   });

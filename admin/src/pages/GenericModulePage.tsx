@@ -154,6 +154,10 @@ function getRoleNames(roles?: { role_name: string }[]) {
   return roles?.map((role) => role.role_name).join(", ") ?? "";
 }
 
+function hasAdminRole(roles?: { role_name: string }[]) {
+  return roles?.some((role) => role.role_name === "ADMIN") ?? false;
+}
+
 function getNextAppointmentStatus(
   status: AppointmentStatus,
 ): AppointmentStatus | null {
@@ -278,8 +282,16 @@ function UsersModule({
     search: search || undefined,
   });
   const { can } = usePermission();
-  const rows = data?.data?.users ?? [];
-  const total = data?.data?.total ?? 0;
+  const rawUsers = data?.data?.users ?? [];
+  const rows = useMemo(() => {
+    return rawUsers.filter(
+      (user) =>
+        !user.roles?.some(
+          (role) => role.role_name?.toUpperCase() === "PATIENT"
+        )
+    );
+  }, [rawUsers]);
+  const total = data?.data?.total ?? rows.length;
   const activateUser = useActivateUser();
   const deactivateUser = useDeactivateUser();
   const lockUser = useLockUser();
@@ -405,7 +417,7 @@ function UsersModule({
                   { label: "Cập nhật", value: formatDate(row.updated_at) },
                 ]}
               />
-              {row.is_active
+              {!hasAdminRole(row.roles) && (row.is_active
                 ? canDeactivate && (
                     <Button
                       type="button"
@@ -427,8 +439,8 @@ function UsersModule({
                     >
                       Kích hoạt
                     </Button>
-                  )}
-              {row.is_locked
+                  ))}
+              {!hasAdminRole(row.roles) && (row.is_locked
                 ? canUnlock && (
                     <Button
                       type="button"
@@ -450,7 +462,7 @@ function UsersModule({
                     >
                       Khóa
                     </Button>
-                  )}
+                  ))}
             </ActionCell>
           ),
         },

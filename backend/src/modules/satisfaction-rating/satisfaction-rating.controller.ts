@@ -11,6 +11,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateSatisfactionRating } from './dto/request/bodyCreateSatisfactionRating.dto';
 import { BodyFilterSatisfactionRatingsDto } from './dto/request/bodyFilterSatisfactionRatings.dto';
@@ -21,6 +22,8 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('satisfaction-rating')
+@ApiCookieAuth()
 @Controller('satisfaction-rating')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class SatisfactionRatingController {
@@ -28,6 +31,7 @@ export class SatisfactionRatingController {
     private readonly satisfactionRatingService: SatisfactionRatingService,
   ) {}
 
+  @ApiOperation({ summary: 'Danh sách đánh giá mức độ hài lòng' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
@@ -39,6 +43,7 @@ export class SatisfactionRatingController {
     );
   }
 
+  @ApiOperation({ summary: 'Tạo đánh giá mức độ hài lòng' })
   @Post('create-rating')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.SATISFACTION_RATING_CREATE)
@@ -54,6 +59,7 @@ export class SatisfactionRatingController {
     );
   }
 
+  @ApiOperation({ summary: 'Chi tiết đánh giá mức độ hài lòng' })
   @Get(':ratingId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
@@ -63,6 +69,7 @@ export class SatisfactionRatingController {
     return this.satisfactionRatingService.findById(ratingId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật đánh giá mức độ hài lòng' })
   @Patch(':ratingId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.SATISFACTION_RATING_UPDATE)

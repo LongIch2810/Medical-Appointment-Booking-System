@@ -21,7 +21,10 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('examination-result')
+@ApiCookieAuth()
 @Controller('examination-result')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ExaminationResultController {
@@ -29,6 +32,7 @@ export class ExaminationResultController {
     private readonly examinationResultService: ExaminationResultService,
   ) {}
 
+  @ApiOperation({ summary: 'Danh sách kết quả khám (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_READ)
@@ -40,6 +44,7 @@ export class ExaminationResultController {
     );
   }
 
+  @ApiOperation({ summary: 'Tạo kết quả khám' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_CREATE)
@@ -55,6 +60,7 @@ export class ExaminationResultController {
     );
   }
 
+  @ApiOperation({ summary: 'Danh sách kết quả khám cá nhân' })
   @Post('personal/list')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_READ)
@@ -69,6 +75,7 @@ export class ExaminationResultController {
     );
   }
 
+  @ApiOperation({ summary: 'Chi tiết kết quả khám' })
   @Get(':resultId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_READ)
@@ -78,6 +85,7 @@ export class ExaminationResultController {
     return this.examinationResultService.getExaminationResultDetail(resultId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật kết quả khám' })
   @Patch(':resultId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_UPDATE)
@@ -95,6 +103,7 @@ export class ExaminationResultController {
     );
   }
 
+  @ApiOperation({ summary: 'Xóa kết quả khám' })
   @Delete(':resultId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_DELETE)
@@ -107,6 +116,9 @@ export class ExaminationResultController {
     return this.examinationResultService.remove(userId, resultId);
   }
 
+  @ApiOperation({
+    summary: 'Danh sách kết quả khám do bác sĩ đang đăng nhập tạo',
+  })
   @Post('personal/doctor/list')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.EXAMINATION_RESULT_READ)

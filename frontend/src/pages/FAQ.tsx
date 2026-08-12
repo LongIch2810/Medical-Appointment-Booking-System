@@ -83,8 +83,10 @@ const FAQ = () => {
                 Làm sao để xem lịch sử khám bệnh?
               </AccordionTrigger>
               <AccordionContent>
-                Bạn có thể xem lại lịch sử khám bệnh trong mục "Hồ sơ sức khỏe"
-                sau khi đăng nhập.
+                Bạn có thể xem lại lịch sử khám bệnh trong mục "Kết quả khám"
+                sau khi đăng nhập. Mục "Hồ sơ sức khỏe" chỉ lưu các thông tin
+                sức khỏe bạn tự khai báo (chỉ số cơ thể, tiền sử, dị ứng...),
+                không phải kết quả khám của bác sĩ.
               </AccordionContent>
             </AccordionItem>
 

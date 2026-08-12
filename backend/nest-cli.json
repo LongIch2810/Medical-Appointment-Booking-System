@@ -6,6 +6,14 @@
     "outputPath": "dist",
     "builder": "swc",
     "typeCheck": true,
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "dtoFileNameSuffix": [".dto.ts"]
+        }
+      }
+    ],
     "watchOptions": {
       "poll": 1000
     },

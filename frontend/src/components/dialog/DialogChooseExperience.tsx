@@ -16,6 +16,7 @@ import { CalendarCheck, Check } from "lucide-react";
 import FilterItem from "../item/FilterItem";
 import { cn } from "@/lib/utils";
 import { MAX_EXPERIENCE } from "@/utils/constants";
+import { useState } from "react";
 interface ExperienceItem {
   id: number;
   minExperience: number;
@@ -44,6 +45,7 @@ const items: ExperienceItem[] = [
   },
 ];
 const DialogChooseExperience = ({ className = "" }: { className: string }) => {
+  const [open, setOpen] = useState(false);
   const {
     setMinExperienceSelect,
     setMaxExperienceSelect,
@@ -51,16 +53,31 @@ const DialogChooseExperience = ({ className = "" }: { className: string }) => {
     maxExperienceSelect,
   } = useFilterDoctorsStore();
 
+  const selectedItem = items.find(
+    (item) =>
+      item.minExperience === minExperienceSelect &&
+      item.maxExperience === maxExperienceSelect
+  );
+  const activeValue = selectedItem
+    ? `${selectedItem.minExperience} năm ${
+        selectedItem.maxExperience === MAX_EXPERIENCE
+          ? "trở lên"
+          : `- ${selectedItem.maxExperience} năm`
+      }`
+    : undefined;
+
   const handleSelect = (item: ExperienceItem) => {
     setMinExperienceSelect(item.minExperience);
     setMaxExperienceSelect(item.maxExperience);
+    setOpen(false);
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
         <FilterItem
           label="Năm kinh nghiệm"
+          activeValue={activeValue}
           icon={<CalendarCheck size={16} />}
           className={cn("w-full md:w-auto", className)}
         />

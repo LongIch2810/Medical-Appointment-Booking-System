@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import { SqlDatabase } from "langchain/sql_db";
 import { Annotation, StateGraph } from "@langchain/langgraph";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { pull } from "langchain/hub";
 import { QuerySqlTool } from "langchain/tools/sql";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -29,10 +29,9 @@ const setupQASql = async () => {
     answer: Annotation<string>,
   });
 
-  const llm = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash",
+  const llm = getChatModel({
+    profile: "fast",
     temperature: 0,
-    apiKey: process.env.GOOGLE_API_KEY,
   });
 
   const queryPromptTemplate = await pull<ChatPromptTemplate>(

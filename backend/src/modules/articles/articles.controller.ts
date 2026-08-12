@@ -28,12 +28,16 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('articles')
 @Controller('articles')
 export class ArticlesController {
   private readonly logger = new Logger(ArticlesController.name);
   constructor(private readonly articlesService: ArticlesService) {}
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Tạo bài viết' })
   @Post('create-article')
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.ARTICLE_CREATE)
@@ -60,6 +64,8 @@ export class ArticlesController {
     return message;
   }
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Cập nhật bài viết' })
   @Patch(':articleId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -77,6 +83,8 @@ export class ArticlesController {
     return message;
   }
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Xóa bài viết' })
   @Delete(':articleId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -87,6 +95,7 @@ export class ArticlesController {
     return message;
   }
 
+  @ApiOperation({ summary: 'Chi tiết bài viết' })
   @Get(':articleId')
   @HttpCode(HttpStatus.OK)
   async getArticleDetail(@Param('articleId', ParseIntPipe) articleId: number) {
@@ -94,6 +103,8 @@ export class ArticlesController {
     return article;
   }
 
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Duyệt bài viết' })
   @Put(':articleId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -104,6 +115,7 @@ export class ArticlesController {
     return message;
   }
 
+  @ApiOperation({ summary: 'Danh sách bài viết (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   async getArticles(@Body() objectFilters: BodyFilterArticlesDto) {

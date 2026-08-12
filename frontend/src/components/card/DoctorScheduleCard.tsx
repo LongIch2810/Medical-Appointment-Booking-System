@@ -1,4 +1,4 @@
-import { Clock } from "lucide-react";
+import { CheckCircle2, Clock, Lock, XCircle } from "lucide-react";
 import { useNow } from "@/hooks/useNow";
 import type { DoctorScheduleCardProps } from "@/types/global";
 import {
@@ -32,28 +32,34 @@ const DoctorScheduleCard = ({
     appointments.length > 0 &&
     checkTimeBooked(selectedDate, appointments);
 
+  const isDisabled = isExpired || !is_active || isBooked;
+  const isSelected = doctor_schedule_id === id;
+
   const handleClick = (item: DoctorSchedule) => {
-    if (isExpired || isBooked) return;
+    if (isDisabled) return;
     setDoctorScheduleId(item.id);
     setTempTime({ start_time: item.start_time, end_time: item.end_time });
   };
 
   return (
-    <div
+    <button
       key={id}
+      type="button"
+      disabled={isDisabled}
+      aria-pressed={isSelected}
       onClick={() => handleClick(item)}
       className={`w-full
-        rounded-xl border cursor-pointer text-sm sm:text-base
+        rounded-xl border text-sm sm:text-base
         transition-all duration-200 ease-in-out p-3
         flex items-center justify-between
         ${
           isExpired || !is_active
             ? "bg-gray-100 text-gray-500 cursor-not-allowed"
             : isBooked
-            ? "bg-red-400 text-white"
-            : doctor_schedule_id === id
-            ? "bg-sky-500 text-white"
-            : "hover:shadow-md hover:scale-[1.02] bg-white"
+            ? "bg-red-400 text-white cursor-not-allowed"
+            : isSelected
+            ? "bg-sky-500 text-white cursor-pointer"
+            : "hover:shadow-md hover:scale-[1.02] bg-white cursor-pointer"
         }`}
     >
       {/* Thời gian */}
@@ -63,7 +69,24 @@ const DoctorScheduleCard = ({
           {toHHMM(start_time)} - {toHHMM(end_time)}
         </span>
       </div>
-    </div>
+
+      {/* Trạng thái (không chỉ dựa vào màu sắc) */}
+      {isBooked && (
+        <span className="flex items-center gap-1 text-xs font-medium">
+          <XCircle className="h-4 w-4" /> Đã đặt
+        </span>
+      )}
+      {!isBooked && (isExpired || !is_active) && (
+        <span className="flex items-center gap-1 text-xs font-medium">
+          <Lock className="h-4 w-4" /> Hết hạn
+        </span>
+      )}
+      {!isBooked && !isExpired && is_active && isSelected && (
+        <span className="flex items-center gap-1 text-xs font-medium">
+          <CheckCircle2 className="h-4 w-4" /> Đang chọn
+        </span>
+      )}
+    </button>
   );
 };
 

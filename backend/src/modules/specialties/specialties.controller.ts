@@ -13,6 +13,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SpecialtiesService } from './specialties.service';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -27,6 +28,7 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('specialties')
 @Controller('specialties')
 export class SpecialtiesController {
   constructor(
@@ -34,6 +36,8 @@ export class SpecialtiesController {
     private cloudinaryService: CloudinaryService,
   ) {}
 
+  @ApiOperation({ summary: 'Tạo chuyên khoa' })
+  @ApiCookieAuth()
   @Post('create-specialty')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -52,6 +56,8 @@ export class SpecialtiesController {
     return createdSpecialty;
   }
 
+  @ApiOperation({ summary: 'Cập nhật chuyên khoa' })
+  @ApiCookieAuth()
   @Patch(':specialtyId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -64,6 +70,8 @@ export class SpecialtiesController {
     return this.specialtiesService.update(specialtyId, bodyUpdateSpecialty);
   }
 
+  @ApiOperation({ summary: 'Xóa chuyên khoa' })
+  @ApiCookieAuth()
   @Delete(':specialtyId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -74,6 +82,8 @@ export class SpecialtiesController {
     return deletedSpecialty;
   }
 
+  @ApiOperation({ summary: 'Chi tiết chuyên khoa' })
+  @ApiCookieAuth()
   @Get(':specialtyId')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -84,6 +94,7 @@ export class SpecialtiesController {
     return specialtyDetail;
   }
 
+  @ApiOperation({ summary: 'Danh sách chuyên khoa (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   async getSpecialties(

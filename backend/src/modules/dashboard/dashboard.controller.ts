@@ -14,12 +14,16 @@ import { DashboardService } from './dashboard.service';
 import { AdminDashboardResponseDto } from './dto/response/adminDashboardResponse.dto';
 import { DoctorDashboardResponseDto } from './dto/response/doctorDashboardResponse.dto';
 import { PatientDashboardResponseDto } from './dto/response/patientDashboardResponse.dto';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('dashboard')
+@ApiCookieAuth()
 @Controller('dashboard')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
+  @ApiOperation({ summary: 'Thống kê dashboard bệnh nhân' })
   @Get('/patient')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DASHBOARD_PATIENT)
@@ -28,6 +32,7 @@ export class DashboardController {
     return this.dashboardService.getPatientDashboard(userId);
   }
 
+  @ApiOperation({ summary: 'Thống kê dashboard bác sĩ' })
   @Get('/doctor')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DASHBOARD_DOCTOR)
@@ -37,6 +42,7 @@ export class DashboardController {
     return this.dashboardService.getDoctorDashboard(userId, doctorId);
   }
 
+  @ApiOperation({ summary: 'Thống kê dashboard admin' })
   @Get('/admin')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DASHBOARD_ADMIN)

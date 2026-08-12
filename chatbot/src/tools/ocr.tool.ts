@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getVisionModel } from "../configs/llm.js";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { extractImgUrl } from "../utils/extractImgUrl.js";
 
@@ -208,11 +208,7 @@ export const BenhAnSchema = z.object({
 
 export type BenhAn = z.infer<typeof BenhAnSchema>;
 
-const visionLLM = new ChatGoogleGenerativeAI({
-  model: process.env.OCR_MODEL || "gemini-2.5-pro",
-  apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0,
-});
+const visionLLM = getVisionModel({ temperature: 0 });
 
 const structuredOutput = visionLLM.withStructuredOutput(BenhAnSchema);
 

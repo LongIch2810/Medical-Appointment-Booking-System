@@ -55,6 +55,7 @@ export interface FilterItemProps {
   label: string;
   icon: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLElement>;
+  activeValue?: string;
 }
 
 export type Role = {

@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Activity,
   AlertTriangle,
@@ -31,6 +33,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import {
   usePatientHealthProfiles,
@@ -40,6 +49,12 @@ import type {
   HealthProfile,
   HealthProfilePayload,
 } from "@/types/interface/patient.interface";
+import {
+  BLOOD_TYPE_OPTIONS,
+  UNSPECIFIED,
+  healthProfileFormSchema,
+  type HealthProfileFormValues,
+} from "@/schemas/healthProfile.schema";
 
 const formatValue = (
   value: string | number | boolean | null | undefined,
@@ -52,24 +67,6 @@ const formatValue = (
     return value ? "Có" : "Không";
   }
   return `${value}${suffix}`;
-};
-
-type HealthProfileFormState = {
-  weight: string;
-  height: string;
-  blood_type: string;
-  medical_history: string;
-  allergies: string;
-  heart_rate: string;
-  blood_pressure: string;
-  glucose_level: string;
-  cholesterol_level: string;
-  medications: string;
-  vaccinations: string;
-  smoking: string;
-  alcohol_consumption: string;
-  exercise_frequency: string;
-  last_checkup_date: string;
 };
 
 const toDateInputValue = (value: string | null | undefined) => {
@@ -90,10 +87,14 @@ const toDateInputValue = (value: string | null | undefined) => {
 
 const getInitialForm = (
   profile?: HealthProfile | null,
-): HealthProfileFormState => ({
+): HealthProfileFormValues => ({
   weight: profile?.weight?.toString() ?? "",
   height: profile?.height?.toString() ?? "",
-  blood_type: profile?.blood_type ?? "",
+  blood_type:
+    profile?.blood_type &&
+    (BLOOD_TYPE_OPTIONS as readonly string[]).includes(profile.blood_type)
+      ? profile.blood_type
+      : UNSPECIFIED,
   medical_history: profile?.medical_history ?? "",
   allergies: profile?.allergies ?? "",
   heart_rate: profile?.heart_rate?.toString() ?? "",
@@ -104,25 +105,25 @@ const getInitialForm = (
   vaccinations: profile?.vaccinations ?? "",
   smoking:
     profile?.smoking === null || profile?.smoking === undefined
-      ? ""
+      ? UNSPECIFIED
       : String(profile.smoking),
   alcohol_consumption:
     profile?.alcohol_consumption === null ||
     profile?.alcohol_consumption === undefined
-      ? ""
+      ? UNSPECIFIED
       : String(profile.alcohol_consumption),
   exercise_frequency: profile?.exercise_frequency ?? "",
   last_checkup_date: toDateInputValue(profile?.last_checkup_date),
 });
 
-const optionalNumber = (value: string) =>
-  value.trim() === "" ? undefined : Number(value);
+const optionalNumber = (value: string | undefined) =>
+  !value || value.trim() === "" ? undefined : Number(value);
 
-const optionalBoolean = (value: string) =>
-  value === "" ? undefined : value === "true";
+const optionalBoolean = (value: string | undefined) =>
+  !value || value === UNSPECIFIED ? undefined : value === "true";
 
-const optionalString = (value: string) =>
-  value.trim() === "" ? undefined : value.trim();
+const optionalString = (value: string | undefined) =>
+  !value || value.trim() === "" ? undefined : value.trim();
 
 const HealthRecords: React.FC = () => {
   const { data, isLoading, isError } = usePatientHealthProfiles({
@@ -135,7 +136,16 @@ const HealthRecords: React.FC = () => {
     null,
   );
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [form, setForm] = useState<HealthProfileFormState>(getInitialForm());
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<HealthProfileFormValues>({
+    resolver: zodResolver(healthProfileFormSchema),
+    defaultValues: getInitialForm(),
+  });
 
   useEffect(() => {
     if (!selectedRelativeId && healthProfiles[0]?.patient.id) {
@@ -152,33 +162,29 @@ const HealthRecords: React.FC = () => {
   );
 
   useEffect(() => {
-    setForm(getInitialForm(selectedHealthRecord));
-  }, [selectedHealthRecord]);
+    reset(getInitialForm(selectedHealthRecord));
+  }, [selectedHealthRecord, reset]);
 
-  const handleChange = (key: keyof HealthProfileFormState, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleUpdate = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleUpdate = (values: HealthProfileFormValues) => {
     if (!selectedHealthRecord) return;
 
     const payload: HealthProfilePayload = {
-      weight: optionalNumber(form.weight),
-      height: optionalNumber(form.height),
-      blood_type: optionalString(form.blood_type),
-      medical_history: optionalString(form.medical_history),
-      allergies: optionalString(form.allergies),
-      heart_rate: optionalNumber(form.heart_rate),
-      blood_pressure: optionalString(form.blood_pressure),
-      glucose_level: optionalNumber(form.glucose_level),
-      cholesterol_level: optionalNumber(form.cholesterol_level),
-      medications: optionalString(form.medications),
-      vaccinations: optionalString(form.vaccinations),
-      smoking: optionalBoolean(form.smoking),
-      alcohol_consumption: optionalBoolean(form.alcohol_consumption),
-      exercise_frequency: optionalString(form.exercise_frequency),
-      last_checkup_date: optionalString(form.last_checkup_date),
+      weight: optionalNumber(values.weight),
+      height: optionalNumber(values.height),
+      blood_type:
+        values.blood_type === UNSPECIFIED ? undefined : values.blood_type,
+      medical_history: optionalString(values.medical_history),
+      allergies: optionalString(values.allergies),
+      heart_rate: optionalNumber(values.heart_rate),
+      blood_pressure: optionalString(values.blood_pressure),
+      glucose_level: optionalNumber(values.glucose_level),
+      cholesterol_level: optionalNumber(values.cholesterol_level),
+      medications: optionalString(values.medications),
+      vaccinations: optionalString(values.vaccinations),
+      smoking: optionalBoolean(values.smoking),
+      alcohol_consumption: optionalBoolean(values.alcohol_consumption),
+      exercise_frequency: optionalString(values.exercise_frequency),
+      last_checkup_date: optionalString(values.last_checkup_date),
     };
 
     updateHealthProfileMutation.mutate(
@@ -188,10 +194,10 @@ const HealthRecords: React.FC = () => {
       },
       {
         onSuccess: () => {
-          toast.success("Da cap nhat ho so suc khoe.");
+          toast.success("Đã cập nhật hồ sơ sức khỏe.");
           setIsUpdateOpen(false);
         },
-        onError: () => toast.error("Khong the cap nhat ho so suc khoe."),
+        onError: () => toast.error("Không thể cập nhật hồ sơ sức khỏe."),
       },
     );
   };
@@ -252,9 +258,9 @@ const HealthRecords: React.FC = () => {
           <Card className="border-primary/15 py-5">
             <CardContent className="flex flex-col gap-3 px-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-slate-500">Ho so dang chon</p>
+                <p className="text-sm text-slate-500">Hồ sơ đang chọn</p>
                 <p className="text-lg font-bold text-slate-900">
-                  {selectedHealthRecord.patient.fullname ?? "Benh nhan"} -{" "}
+                  {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"} -{" "}
                   {selectedHealthRecord.patient.relationship.relationship_name}
                 </p>
               </div>
@@ -386,11 +392,9 @@ const HealthRecords: React.FC = () => {
                       Thuốc đang sử dụng
                     </p>
                   </div>
-                  <Textarea
-                    readOnly
-                    value={formatValue(selectedHealthRecord.medications)}
-                    className="mt-2 min-h-20 resize-none bg-slate-50 text-sm text-slate-600"
-                  />
+                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                    {formatValue(selectedHealthRecord.medications)}
+                  </p>
                 </div>
                 <div className="rounded-lg border border-slate-200 p-3">
                   <div className="flex items-center gap-2">
@@ -399,11 +403,9 @@ const HealthRecords: React.FC = () => {
                       Vắc xin đã tiêm
                     </p>
                   </div>
-                  <Textarea
-                    readOnly
-                    value={formatValue(selectedHealthRecord.vaccinations)}
-                    className="mt-2 min-h-20 resize-none bg-slate-50 text-sm text-slate-600"
-                  />
+                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                    {formatValue(selectedHealthRecord.vaccinations)}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -421,22 +423,18 @@ const HealthRecords: React.FC = () => {
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
                   <p className="text-sm font-semibold text-slate-900">Dị ứng</p>
                 </div>
-                <Textarea
-                  readOnly
-                  value={formatValue(selectedHealthRecord.allergies)}
-                  className="mt-2 min-h-20 resize-none bg-slate-50 text-sm text-slate-600"
-                />
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                  {formatValue(selectedHealthRecord.allergies)}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4 text-rose-500" />
                   <p className="text-sm font-semibold text-slate-900">Bệnh nền</p>
                 </div>
-                <Textarea
-                  readOnly
-                  value={formatValue(selectedHealthRecord.medical_history)}
-                  className="mt-2 min-h-20 resize-none bg-slate-50 text-sm text-slate-600"
-                />
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                  {formatValue(selectedHealthRecord.medical_history)}
+                </p>
               </div>
               <div className="rounded-lg border border-slate-200 bg-white p-3">
                 <div className="flex items-center gap-2">
@@ -465,11 +463,9 @@ const HealthRecords: React.FC = () => {
                     Tần suất vận động
                   </p>
                 </div>
-                <Textarea
-                  readOnly
-                  value={formatValue(selectedHealthRecord.exercise_frequency)}
-                  className="mt-2 min-h-20 resize-none bg-slate-50 text-sm text-slate-600"
-                />
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                  {formatValue(selectedHealthRecord.exercise_frequency)}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -482,16 +478,28 @@ const HealthRecords: React.FC = () => {
 
               <form
                 className="grid gap-4 md:grid-cols-2"
-                onSubmit={handleUpdate}
+                onSubmit={handleSubmit(handleUpdate)}
               >
                 <div className="space-y-2">
                   <Label htmlFor="bloodType">Nhóm máu</Label>
-                  <Input
-                    id="bloodType"
-                    value={form.blood_type}
-                    onChange={(event) =>
-                      handleChange("blood_type", event.target.value)
-                    }
+                  <Controller
+                    name="blood_type"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="bloodType" className="w-full">
+                          <SelectValue placeholder="Chọn nhóm máu" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
+                          {BLOOD_TYPE_OPTIONS.map((type) => (
+                            <SelectItem key={type} value={type}>
+                              {type}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
                   />
                 </div>
 
@@ -500,10 +508,7 @@ const HealthRecords: React.FC = () => {
                   <Input
                     id="lastCheckupDate"
                     type="date"
-                    value={form.last_checkup_date}
-                    onChange={(event) =>
-                      handleChange("last_checkup_date", event.target.value)
-                    }
+                    {...register("last_checkup_date")}
                   />
                 </div>
 
@@ -513,10 +518,8 @@ const HealthRecords: React.FC = () => {
                     id="height"
                     type="number"
                     min="0"
-                    value={form.height}
-                    onChange={(event) =>
-                      handleChange("height", event.target.value)
-                    }
+                    error={errors.height?.message}
+                    {...register("height")}
                   />
                 </div>
 
@@ -526,10 +529,8 @@ const HealthRecords: React.FC = () => {
                     id="weight"
                     type="number"
                     min="0"
-                    value={form.weight}
-                    onChange={(event) =>
-                      handleChange("weight", event.target.value)
-                    }
+                    error={errors.weight?.message}
+                    {...register("weight")}
                   />
                 </div>
 
@@ -539,10 +540,8 @@ const HealthRecords: React.FC = () => {
                     id="heartRate"
                     type="number"
                     min="0"
-                    value={form.heart_rate}
-                    onChange={(event) =>
-                      handleChange("heart_rate", event.target.value)
-                    }
+                    error={errors.heart_rate?.message}
+                    {...register("heart_rate")}
                   />
                 </div>
 
@@ -550,10 +549,9 @@ const HealthRecords: React.FC = () => {
                   <Label htmlFor="bloodPressure">Huyết áp</Label>
                   <Input
                     id="bloodPressure"
-                    value={form.blood_pressure}
-                    onChange={(event) =>
-                      handleChange("blood_pressure", event.target.value)
-                    }
+                    placeholder="Ví dụ: 120/80"
+                    error={errors.blood_pressure?.message}
+                    {...register("blood_pressure")}
                   />
                 </div>
 
@@ -563,10 +561,8 @@ const HealthRecords: React.FC = () => {
                     id="glucoseLevel"
                     type="number"
                     min="0"
-                    value={form.glucose_level}
-                    onChange={(event) =>
-                      handleChange("glucose_level", event.target.value)
-                    }
+                    error={errors.glucose_level?.message}
+                    {...register("glucose_level")}
                   />
                 </div>
 
@@ -576,98 +572,102 @@ const HealthRecords: React.FC = () => {
                     id="cholesterolLevel"
                     type="number"
                     min="0"
-                    value={form.cholesterol_level}
-                    onChange={(event) =>
-                      handleChange("cholesterol_level", event.target.value)
-                    }
+                    error={errors.cholesterol_level?.message}
+                    {...register("cholesterol_level")}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="smoking">Hút thuốc</Label>
-                  <select
-                    id="smoking"
-                    value={form.smoking}
-                    onChange={(event) =>
-                      handleChange("smoking", event.target.value)
-                    }
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                  >
-                    <option value="">Chưa cập nhật</option>
-                    <option value="true">Có</option>
-                    <option value="false">Không</option>
-                  </select>
+                  <Controller
+                    name="smoking"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="smoking" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
+                          <SelectItem value="true">Có</SelectItem>
+                          <SelectItem value="false">Không</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="alcoholConsumption">Rượu bia</Label>
-                  <select
-                    id="alcoholConsumption"
-                    value={form.alcohol_consumption}
-                    onChange={(event) =>
-                      handleChange("alcohol_consumption", event.target.value)
-                    }
-                    className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                  >
-                    <option value="">Chưa cập nhật</option>
-                    <option value="true">Có</option>
-                    <option value="false">Không</option>
-                  </select>
+                  <Controller
+                    name="alcohol_consumption"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="alcoholConsumption" className="w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
+                          <SelectItem value="true">Có</SelectItem>
+                          <SelectItem value="false">Không</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="exerciseFrequency">Tần suất vận động</Label>
                   <Textarea
                     id="exerciseFrequency"
-                    value={form.exercise_frequency}
-                    onChange={(event) =>
-                      handleChange("exercise_frequency", event.target.value)
-                    }
+                    {...register("exercise_frequency")}
                   />
+                  {errors.exercise_frequency?.message && (
+                    <p className="text-sm text-red-600">
+                      {errors.exercise_frequency.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="medicalHistory">Bệnh nền</Label>
-                  <Textarea
-                    id="medicalHistory"
-                    value={form.medical_history}
-                    onChange={(event) =>
-                      handleChange("medical_history", event.target.value)
-                    }
-                  />
+                  <Textarea id="medicalHistory" {...register("medical_history")} />
+                  {errors.medical_history?.message && (
+                    <p className="text-sm text-red-600">
+                      {errors.medical_history.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="allergies">Dị ứng</Label>
-                  <Textarea
-                    id="allergies"
-                    value={form.allergies}
-                    onChange={(event) =>
-                      handleChange("allergies", event.target.value)
-                    }
-                  />
+                  <Textarea id="allergies" {...register("allergies")} />
+                  {errors.allergies?.message && (
+                    <p className="text-sm text-red-600">
+                      {errors.allergies.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="medications">Thuốc đang sử dụng</Label>
-                  <Textarea
-                    id="medications"
-                    value={form.medications}
-                    onChange={(event) =>
-                      handleChange("medications", event.target.value)
-                    }
-                  />
+                  <Textarea id="medications" {...register("medications")} />
+                  {errors.medications?.message && (
+                    <p className="text-sm text-red-600">
+                      {errors.medications.message}
+                    </p>
+                  )}
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="vaccinations">Vac xin đã tiêm</Label>
-                  <Textarea
-                    id="vaccinations"
-                    value={form.vaccinations}
-                    onChange={(event) =>
-                      handleChange("vaccinations", event.target.value)
-                    }
-                  />
+                  <Label htmlFor="vaccinations">Vắc xin đã tiêm</Label>
+                  <Textarea id="vaccinations" {...register("vaccinations")} />
+                  {errors.vaccinations?.message && (
+                    <p className="text-sm text-red-600">
+                      {errors.vaccinations.message}
+                    </p>
+                  )}
                 </div>
 
                 <DialogFooter className="md:col-span-2">

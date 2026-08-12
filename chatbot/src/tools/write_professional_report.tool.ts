@@ -1,4 +1,4 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import * as dotenv from "dotenv";
@@ -56,11 +56,7 @@ Hãy viết báo cáo phân tích chuyên nghiệp theo định dạng đã nêu
   ],
 ]);
 
-const model = new ChatGoogleGenerativeAI({
-  model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
-  apiKey: process.env.GOOGLE_API_KEY,
-  temperature: 0.3,
-});
+const model = getChatModel({ temperature: 0.3 });
 
 const structuredModel = model.withStructuredOutput(ReportSchema);
 

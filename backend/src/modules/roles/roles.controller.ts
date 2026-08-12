@@ -12,6 +12,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateRoleDto } from './dto/request/bodyCreateRole.dto';
 import { BodyFilterRolesDto } from './dto/request/bodyFilterRoles.dto';
@@ -23,11 +24,14 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('roles')
+@ApiCookieAuth()
 @Controller('roles')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RolesController {
   constructor(private readonly rolesService: RolesService) {}
 
+  @ApiOperation({ summary: 'Danh sách vai trò (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_READ)
@@ -35,6 +39,7 @@ export class RolesController {
     return this.rolesService.filterAndPagination(bodyFilterRoles);
   }
 
+  @ApiOperation({ summary: 'Tạo vai trò' })
   @Post('create-role')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.ROLE_CREATE)
@@ -43,6 +48,7 @@ export class RolesController {
     return this.rolesService.create(bodyCreateRole);
   }
 
+  @ApiOperation({ summary: 'Chi tiết vai trò' })
   @Get(':roleId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_READ)
@@ -50,6 +56,7 @@ export class RolesController {
     return this.rolesService.findById(roleId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật vai trò' })
   @Patch(':roleId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_UPDATE)
@@ -61,6 +68,7 @@ export class RolesController {
     return this.rolesService.update(roleId, bodyUpdateRole);
   }
 
+  @ApiOperation({ summary: 'Gán quyền cho vai trò' })
   @Put(':roleId/permissions')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_PERMISSION_UPDATE)
@@ -72,6 +80,7 @@ export class RolesController {
     return this.rolesService.updateRolePermissions(roleId, body.permission_ids);
   }
 
+  @ApiOperation({ summary: 'Xóa quyền khỏi vai trò' })
   @Delete(':roleId/permissions')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_PERMISSION_UPDATE)

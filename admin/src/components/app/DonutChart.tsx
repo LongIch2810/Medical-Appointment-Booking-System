@@ -80,16 +80,16 @@ export function DonutChart({
             : null}
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-          <span className="font-display text-3xl font-medium leading-none text-[#212121]">
+          <span className="font-display text-3xl font-medium leading-none text-[#212121] dark:text-slate-100">
             {centerTitle ?? total.toLocaleString()}
           </span>
           {centerSubtitle ? (
-            <span className="mt-1 text-xs text-[#75758a]">{centerSubtitle}</span>
+            <span className="mt-1 text-xs text-[#75758a] dark:text-slate-400">{centerSubtitle}</span>
           ) : null}
         </div>
       </div>
       {segments.length > 0 ? (
-        <ul className="grid w-full gap-2 text-xs text-[#212121]">
+        <ul className="grid w-full gap-2 text-xs text-[#212121] dark:text-slate-200">
           {segments.map((segment) => {
             const percent = total
               ? Math.round((segment.value / total) * 100)
@@ -104,10 +104,10 @@ export function DonutChart({
                     className="inline-block size-2.5 rounded-full"
                     style={{ backgroundColor: segment.color }}
                   />
-                  <span className="text-[#212121]">{segment.label}</span>
+                  <span className="text-[#212121] dark:text-slate-200">{segment.label}</span>
                 </span>
-                <span className="text-[#75758a]">
-                  <span className="font-medium text-[#212121]">
+                <span className="text-[#75758a] dark:text-slate-400">
+                  <span className="font-medium text-[#212121] dark:text-slate-100">
                     {segment.value.toLocaleString()}
                   </span>
                   <span className="ml-1">({percent}%)</span>

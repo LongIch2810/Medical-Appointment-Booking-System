@@ -20,7 +20,10 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('doctor-schedules')
+@ApiCookieAuth()
 @Controller('doctor-schedules')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class DoctorSchedulesController {
@@ -28,6 +31,9 @@ export class DoctorSchedulesController {
     private readonly doctorSchedulesService: DoctorSchedulesService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Danh sách ca khám của bác sĩ đang đăng nhập',
+  })
   @Post('personal-schedules')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_READ)
@@ -36,6 +42,7 @@ export class DoctorSchedulesController {
     return this.doctorSchedulesService.getPersonalSchedules(userId);
   }
 
+  @ApiOperation({ summary: 'Tạo ca khám cho bác sĩ' })
   @Post('create-schedule')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_CREATE)
@@ -48,6 +55,7 @@ export class DoctorSchedulesController {
     return this.doctorSchedulesService.create(userId, bodyCreateSchedule);
   }
 
+  @ApiOperation({ summary: 'Danh sách ca khám theo bác sĩ' })
   @Get(':doctorId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_READ)
@@ -55,6 +63,7 @@ export class DoctorSchedulesController {
     return this.doctorSchedulesService.getSchedulesByDoctorId(doctorId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật ca khám' })
   @Patch(':doctorScheduleId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_UPDATE)
@@ -72,6 +81,7 @@ export class DoctorSchedulesController {
     );
   }
 
+  @ApiOperation({ summary: 'Bật/tắt kích hoạt ca khám' })
   @Patch(':doctorScheduleId/status')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_UPDATE_STATUS)
@@ -89,6 +99,7 @@ export class DoctorSchedulesController {
     );
   }
 
+  @ApiOperation({ summary: 'Xóa ca khám' })
   @Delete(':doctorScheduleId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.DOCTOR_SCHEDULE_DELETE)

@@ -19,12 +19,16 @@ import { BodyChatDto } from './dto/request/bodyChat.dto';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('chat-history')
+@ApiCookieAuth()
 @Controller('chat-history')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ChatHistoryController {
   constructor(private chatHistoryService: ChatHistoryService) {}
 
+  @ApiOperation({ summary: 'Ngữ cảnh hội thoại gần nhất của người dùng' })
   @Get('/context/:userId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.CHATBOT_CHAT)
@@ -33,6 +37,7 @@ export class ChatHistoryController {
     return history.reverse();
   }
 
+  @ApiOperation({ summary: 'Lưu lịch sử hội thoại' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.CHATBOT_CHAT)
@@ -42,6 +47,7 @@ export class ChatHistoryController {
     return { message: 'Message saved successfully' };
   }
 
+  @ApiOperation({ summary: 'Gửi tin nhắn tới chatbot' })
   @Post('chat')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.CHATBOT_CHAT)
@@ -57,6 +63,7 @@ export class ChatHistoryController {
     return { answer };
   }
 
+  @ApiOperation({ summary: 'Lịch sử hội thoại của người dùng' })
   @Get(':userId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.CHATBOT_CHAT)

@@ -19,12 +19,16 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('channels')
+@ApiCookieAuth()
 @Controller('channels')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) {}
 
+  @ApiOperation({ summary: 'Tạo kênh chat' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.CHANNEL_CREATE)
@@ -33,6 +37,9 @@ export class ChannelsController {
     return this.channelsService.createChannel(member_ids);
   }
 
+  @ApiOperation({
+    summary: 'Danh sách kênh chat của người dùng đang đăng nhập',
+  })
   @Post('/personal-channels')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.CHANNEL_READ)
@@ -44,6 +51,7 @@ export class ChannelsController {
     return this.channelsService.findChannelsByUserId(userId, objectFilters);
   }
 
+  @ApiOperation({ summary: 'Chi tiết kênh chat' })
   @Get(':channelId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.CHANNEL_READ)

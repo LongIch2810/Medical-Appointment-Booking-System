@@ -1,5 +1,6 @@
 import { CalendarDays, Stethoscope, User } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   AlertDialog,
@@ -126,6 +127,18 @@ const AlertDialogConfirmBook = ({
                     ))}
                   </select>
                 </label>
+                {!isLoadingRelatives && relatives.length === 0 && (
+                  <p className="w-full max-w-xs text-left text-sm text-error">
+                    Bạn chưa có hồ sơ người thân nào.{" "}
+                    <Link
+                      to="/patient/relatives"
+                      className="font-medium underline hover:text-primary"
+                    >
+                      Thêm người thân
+                    </Link>{" "}
+                    trước khi đặt lịch.
+                  </p>
+                )}
               </div>
             </div>
           </AlertDialogDescription>

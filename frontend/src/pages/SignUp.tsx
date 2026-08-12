@@ -2,38 +2,36 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "react-router-dom";
+import { FaGoogle } from "react-icons/fa";
 import { Typewriter } from "react-simple-typewriter";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useShow } from "@/hooks/useShow";
 import { Unlock, Lock, Mail, UserCircle, User } from "lucide-react";
 import { useRegister } from "@/hooks/useRegister";
 import Loading from "@/components/loading/Loading";
-
-const schema = z.object({
-  username: z.string().min(6, "Username tối thiểu 6 kí tự !"),
-  email: z.string().email("Email không hợp lệ !"),
-  password: z.string().min(6, "Mật khẩu tối thiểu 6 kí tự !"),
-  fullname: z.string().min(3, "Họ tên tối thiểu 3 kí tự !"),
-});
-
-type FormData = z.infer<typeof schema>;
+import { signUpSchema, type SignUpFormData } from "@/schemas/auth.schema";
+import { backendBaseURL } from "@/configs/axios";
 
 const SignUp = () => {
   const { isShow, toggleShow } = useShow(false);
+  const { isShow: isShowConfirm, toggleShow: toggleShowConfirm } = useShow(false);
   const { mutate, isPending } = useRegister();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
+  } = useForm<SignUpFormData>({
+    resolver: zodResolver(signUpSchema),
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: SignUpFormData) => {
     mutate(data);
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${backendBaseURL}/auth/google`;
   };
 
   return (
@@ -113,6 +111,16 @@ const SignUp = () => {
                 error={errors.password?.message}
                 {...register("password")}
               />
+
+              <Input
+                type={isShowConfirm ? "text" : "password"}
+                placeholder="Xác nhận mật khẩu"
+                icon={isShowConfirm ? <Unlock size={16} /> : <Lock size={16} />}
+                onClickIcon={toggleShowConfirm}
+                error={errors.confirmPassword?.message}
+                {...register("confirmPassword")}
+              />
+
               <Button
                 type="submit"
                 className="w-full py-3 text-base"
@@ -121,6 +129,22 @@ const SignUp = () => {
                 {isPending ? <Loading /> : "Đăng ký"}
               </Button>
             </form>
+
+            <div className="mt-8">
+              <div className="flex items-center justify-center text-sm text-gray-400">
+                <span>hoặc đăng ký với</span>
+              </div>
+              <div className="mt-4">
+                <Button
+                  type="button"
+                  variant={"google"}
+                  className="flex items-center justify-center w-full px-4 py-2"
+                  onClick={handleGoogleLogin}
+                >
+                  <FaGoogle className="mr-2" /> Google
+                </Button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

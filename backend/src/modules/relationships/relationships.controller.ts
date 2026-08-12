@@ -10,6 +10,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RelationshipsService } from './relationships.service';
 import { BodyFilterRelationshipsDto } from './dto/request/bodyFilterRelationships.dto';
 import { BodyCreateRelationshipDto } from './dto/request/bodyCreateRelationship.dto';
@@ -20,10 +21,12 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('relationships')
 @Controller('relationships')
 export class RelationshipsController {
   constructor(private readonly relationshipsService: RelationshipsService) {}
 
+  @ApiOperation({ summary: 'Danh sách quan hệ (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   async getFilterRelationships(
@@ -34,6 +37,8 @@ export class RelationshipsController {
     return result;
   }
 
+  @ApiOperation({ summary: 'Tạo quan hệ' })
+  @ApiCookieAuth()
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -43,6 +48,7 @@ export class RelationshipsController {
     return this.relationshipsService.create(body);
   }
 
+  @ApiOperation({ summary: 'Chi tiết quan hệ' })
   @Get(':relationshipCode')
   @HttpCode(HttpStatus.OK)
   async getRelationshipDetail(
@@ -51,6 +57,8 @@ export class RelationshipsController {
     return this.relationshipsService.getRelationshipDetail(relationshipCode);
   }
 
+  @ApiOperation({ summary: 'Cập nhật quan hệ' })
+  @ApiCookieAuth()
   @Patch(':relationshipCode')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)
@@ -63,6 +71,8 @@ export class RelationshipsController {
     return this.relationshipsService.update(relationshipCode, body);
   }
 
+  @ApiOperation({ summary: 'Xóa quan hệ' })
+  @ApiCookieAuth()
   @Delete(':relationshipCode')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard, PermissionsGuard)

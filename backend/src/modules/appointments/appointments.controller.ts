@@ -23,12 +23,16 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { BodyUpdateAppointmentStatusDto } from './dto/request/bodyUpdateAppointmentStatus.dto';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('appointments')
+@ApiCookieAuth()
 @Controller('appointments')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
+  @ApiOperation({ summary: 'Đặt lịch khám (bệnh nhân tự đặt)' })
   @Post('booking')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.APPOINTMENT_CREATE)
@@ -44,6 +48,7 @@ export class AppointmentsController {
     );
   }
 
+  @ApiOperation({ summary: 'Hủy lịch hẹn' })
   @Delete('cancel/:id')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_CANCEL)
@@ -60,6 +65,7 @@ export class AppointmentsController {
     return cancelAppointments;
   }
 
+  @ApiOperation({ summary: 'Danh sách lịch hẹn cá nhân của bệnh nhân' })
   @Post('personal-appointments')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_READ)
@@ -76,6 +82,7 @@ export class AppointmentsController {
     return personalAppointments;
   }
 
+  @ApiOperation({ summary: 'Chi tiết một lịch hẹn' })
   @Get(':appointmentId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_READ)
@@ -91,6 +98,7 @@ export class AppointmentsController {
     return appointment;
   }
 
+  @ApiOperation({ summary: 'Danh sách lịch hẹn dành cho admin' })
   @Post('admin/appointments')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_MANAGE)
@@ -103,6 +111,9 @@ export class AppointmentsController {
     return adminAppointments;
   }
 
+  @ApiOperation({
+    summary: 'Danh sách lịch hẹn của bác sĩ đang đăng nhập',
+  })
   @Post('doctor/appointments')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_MANAGE)
@@ -119,6 +130,7 @@ export class AppointmentsController {
     return doctorAppointments;
   }
 
+  @ApiOperation({ summary: 'Cập nhật trạng thái lịch hẹn' })
   @Patch(':appointmentId/status')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.APPOINTMENT_UPDATE_STATUS)

@@ -32,35 +32,13 @@ import {
   usePatientAppointments,
 } from "@/hooks/usePatientPortalApi";
 import { useCreateSatisfactionRating } from "@/hooks/useSatisfactionRating";
+import { AppointmentStatusBadge as StatusBadge } from "@/components/badge/AppointmentStatusBadge";
+import ErrorState from "@/components/notification/ErrorState";
 import { cn } from "@/lib/utils";
 import type {
   AppointmentStatus,
   PatientAppointment,
 } from "@/types/interface/patient.interface";
-
-const statusLabelMap: Record<AppointmentStatus, string> = {
-  PENDING: "Chờ xác nhận",
-  CONFIRMED: "Đã xác nhận",
-  COMPLETED: "Đã khám",
-  CANCELLED: "Đã hủy",
-  ABSENT: "Vắng mặt",
-};
-
-const statusBadgeClassMap: Record<AppointmentStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-700 border border-amber-200",
-  CONFIRMED: "bg-sky-100 text-sky-700 border border-sky-200",
-  COMPLETED: "bg-emerald-100 text-emerald-700 border border-emerald-200",
-  CANCELLED: "bg-rose-100 text-rose-700 border border-rose-200",
-  ABSENT: "bg-slate-200 text-slate-700 border border-slate-300",
-};
-
-const statusDotClassMap: Record<AppointmentStatus, string> = {
-  PENDING: "bg-amber-500",
-  CONFIRMED: "bg-sky-500",
-  COMPLETED: "bg-emerald-500",
-  CANCELLED: "bg-rose-500",
-  ABSENT: "bg-slate-500",
-};
 
 const bookingModeLabelMap: Record<PatientAppointment["booking_mode"], string> =
   {
@@ -81,18 +59,6 @@ const getSpecialtyName = (appointment: PatientAppointment) =>
   appointment.doctor.specialty.name ??
   "Chưa cập nhật chuyên khoa";
 
-const StatusBadge: React.FC<{ status: AppointmentStatus }> = ({ status }) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-      statusBadgeClassMap[status],
-    )}
-  >
-    <span className={cn("h-1.5 w-1.5 rounded-full", statusDotClassMap[status])} />
-    {statusLabelMap[status]}
-  </span>
-);
-
 const Appointments: React.FC = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(0);
   const [openDetail, setOpenDetail] = useState(false);
@@ -108,7 +74,7 @@ const Appointments: React.FC = () => {
   const [examResultTarget, setExamResultTarget] =
     useState<PatientAppointment | null>(null);
 
-  const { data, isLoading, isError } = usePatientAppointments({
+  const { data, isLoading, isError, refetch } = usePatientAppointments({
     page: 1,
     limit: 50,
   });
@@ -231,9 +197,11 @@ const Appointments: React.FC = () => {
               ))}
             </div>
           ) : isError ? (
-            <div className="rounded-xl border border-red-200 bg-red-50/50 p-5 text-sm text-red-600">
-              Không thể tải lịch khám.
-            </div>
+            <ErrorState
+              title="Không thể tải lịch khám"
+              description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+              onRetry={() => refetch()}
+            />
           ) : filteredAppointments.length === 0 ? (
             <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
               <CalendarClock className="mx-auto mb-2 h-8 w-8 text-slate-400" />

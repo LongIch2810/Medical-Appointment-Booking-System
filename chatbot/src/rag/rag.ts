@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 config();
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -8,10 +8,9 @@ import { Document } from "@langchain/core/documents";
 import initVectorDB from "../configs/vectordb.js";
 
 async function setupRagGraph() {
-  const llm = new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash",
+  const llm = getChatModel({
+    profile: "fast",
     temperature: 0,
-    apiKey: process.env.GOOGLE_API_KEY,
   });
 
   const InputStateAnnotation = Annotation.Root({

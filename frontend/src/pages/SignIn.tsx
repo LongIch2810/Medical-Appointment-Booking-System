@@ -5,27 +5,13 @@ import { Link } from "react-router-dom";
 import { FaGoogle } from "react-icons/fa";
 import { Typewriter } from "react-simple-typewriter";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Unlock, UserCircle } from "lucide-react";
 import { useShow } from "@/hooks/useShow";
 import { useLogin } from "@/hooks/useLogin";
-
-const schema = z.object({
-  usernameOrEmail: z
-    .string()
-    .min(6, "Phải có ít nhất 6 kí tự !")
-    .refine(
-      (val) =>
-        val.includes("@") ? /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(val) : true,
-      {
-        message: "Email không hợp lệ !",
-      },
-    ),
-  password: z.string().min(6, "Mật khẩu tối thiểu 6 kí tự !"),
-});
-
-type FormData = z.infer<typeof schema>;
+import { signInSchema, type SignInFormData } from "@/schemas/auth.schema";
+import { backendBaseURL } from "@/configs/axios";
+import Loading from "@/components/loading/Loading";
 
 const SignIn = () => {
   const { isShow, toggleShow } = useShow(false);
@@ -33,12 +19,16 @@ const SignIn = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(schema) });
+  } = useForm<SignInFormData>({ resolver: zodResolver(signInSchema) });
 
   const { mutate, isPending } = useLogin();
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: SignInFormData) => {
     mutate(data);
+  };
+
+  const handleGoogleLogin = () => {
+    window.location.href = `${backendBaseURL}/auth/google`;
   };
 
   return (
@@ -111,7 +101,7 @@ const SignIn = () => {
                 className="w-full py-3 text-base"
                 disabled={isPending}
               >
-                {isPending ? "Đang xử lý..." : "Đăng nhập"}
+                {isPending ? <Loading /> : "Đăng nhập"}
               </Button>
             </form>
 
@@ -121,9 +111,10 @@ const SignIn = () => {
               </div>
               <div className="mt-4">
                 <Button
+                  type="button"
                   variant={"google"}
                   className="flex items-center justify-center w-full px-4 py-2"
-                  onClick={() => alert("Google Login")}
+                  onClick={handleGoogleLogin}
                 >
                   <FaGoogle className="mr-2" /> Google
                 </Button>

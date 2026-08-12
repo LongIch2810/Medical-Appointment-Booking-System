@@ -9,6 +9,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
@@ -16,11 +17,14 @@ import { PERMISSIONS } from 'src/utils/constants';
 import { PermissionsService } from './permissions.service';
 import { BodyFilterPermissionsDto } from './dto/request/bodyFilterPermissions.dto';
 
+@ApiTags('permissions')
+@ApiCookieAuth()
 @Controller('permissions')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class PermissionsController {
   constructor(private readonly permissionsService: PermissionsService) {}
 
+  @ApiOperation({ summary: 'Danh sách quyền (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.PERMISSION_READ)
@@ -30,6 +34,7 @@ export class PermissionsController {
     return result;
   }
 
+  @ApiOperation({ summary: 'Chi tiết quyền' })
   @Get(':permissionId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.PERMISSION_READ)

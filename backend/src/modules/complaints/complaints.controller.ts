@@ -22,12 +22,16 @@ import { ComplaintsService } from './complaints.service';
 import { BodyCreateComplaintDto } from './dto/request/bodyCreateComplaint.dto';
 import { BodyFilterComplaintsDto } from './dto/request/bodyFilterComplaints.dto';
 import { BodyUpdateComplaintDto } from './dto/request/bodyUpdateComplaint.dto';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('complaints')
+@ApiCookieAuth()
 @Controller('complaints')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class ComplaintsController {
   constructor(private readonly complaintsService: ComplaintsService) {}
 
+  @ApiOperation({ summary: 'Danh sách góp ý/khiếu nại (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_READ)
@@ -36,6 +40,7 @@ export class ComplaintsController {
     return this.complaintsService.filterAndPagination(objectFilters);
   }
 
+  @ApiOperation({ summary: 'Danh sách góp ý/khiếu nại của tôi' })
   @Post('my')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_READ)
@@ -47,6 +52,7 @@ export class ComplaintsController {
     });
   }
 
+  @ApiOperation({ summary: 'Gửi góp ý/khiếu nại' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.COMPLAINT_CREATE)
@@ -59,6 +65,7 @@ export class ComplaintsController {
     });
   }
 
+  @ApiOperation({ summary: 'Chi tiết góp ý/khiếu nại' })
   @Get(':complaintId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_READ)
@@ -66,6 +73,7 @@ export class ComplaintsController {
     return this.complaintsService.findById(complaintId);
   }
 
+  @ApiOperation({ summary: 'Phản hồi/cập nhật góp ý/khiếu nại' })
   @Patch(':complaintId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_UPDATE)
@@ -77,6 +85,7 @@ export class ComplaintsController {
     return this.complaintsService.update(complaintId, body);
   }
 
+  @ApiOperation({ summary: 'Xóa góp ý/khiếu nại' })
   @Delete(':complaintId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_DELETE)

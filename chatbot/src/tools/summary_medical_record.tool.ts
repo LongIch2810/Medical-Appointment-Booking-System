@@ -1,5 +1,5 @@
 import { tool } from "@langchain/core/tools";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { z } from "zod";
 import * as dotenv from "dotenv";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
@@ -11,9 +11,8 @@ const recordSchema = z.object({
 
 export type BanGhiTomTat = z.infer<typeof recordSchema>;
 
-const model = new ChatGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_API_KEY,
-  model: process.env.SUMMARY_MODEL || "gemini-2.5-flash",
+const model = getChatModel({
+  profile: "fast",
   temperature: 0.2,
 });
 

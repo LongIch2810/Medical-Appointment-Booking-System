@@ -22,6 +22,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import ErrorState from "@/components/notification/ErrorState";
+import UpcomingAppointmentsCard from "@/components/dashboard/UpcomingAppointmentsCard";
 import { usePatientDashboard } from "@/hooks/usePatientPortalApi";
 import { useProfile } from "@/hooks/useProfile";
 import type { PatientUser } from "@/types/interface/patient.interface";
@@ -69,8 +71,14 @@ const InfoTile: React.FC<{
 );
 
 const Dashboard: React.FC = () => {
-  const { data: dashboardResponse, isLoading, isError } = usePatientDashboard();
-  const { data: profileResponse } = useProfile();
+  const {
+    data: dashboardResponse,
+    isLoading: isDashboardLoading,
+    isError,
+    refetch,
+  } = usePatientDashboard();
+  const { data: profileResponse, isLoading: isProfileLoading } = useProfile();
+  const isLoading = isDashboardLoading || isProfileLoading;
 
   const dashboard = dashboardResponse?.data;
   const profile = profileResponse?.data as PatientUser | undefined;
@@ -131,9 +139,11 @@ const Dashboard: React.FC = () => {
 
   if (isError) {
     return (
-      <Card className="border-red-200 bg-red-50/50 p-5 text-sm text-red-600">
-        Không thể tải dữ liệu dashboard.
-      </Card>
+      <ErrorState
+        title="Không thể tải dữ liệu dashboard"
+        description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+        onRetry={() => refetch()}
+      />
     );
   }
 
@@ -175,6 +185,8 @@ const Dashboard: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      <UpcomingAppointmentsCard />
 
       <Card className="border-slate-200 py-0 shadow-sm">
         <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">

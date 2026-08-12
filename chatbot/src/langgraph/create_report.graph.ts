@@ -12,7 +12,7 @@ import {
 import { AdminQaSqlTool } from "../tools/admin_qa_sql.tool.js";
 import { generatePdfReport } from "../utils/generatePdfReport.js";
 import { renderChartToImage } from "../utils/renderChartToImage.js";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 type ChartConfig = z.infer<typeof ChartSchema>;
@@ -113,11 +113,7 @@ Nhiệm vụ:
         "Dưới đây là danh sách lỗi cần diễn giải:\n\n{errors}\n\nHãy trả về lời nhắn thân thiện cho người dùng.",
       ],
     ]);
-    const llm = new ChatGoogleGenerativeAI({
-      model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
-      apiKey: process.env.GOOGLE_API_KEY,
-      temperature: 0.3,
-    });
+    const llm = getChatModel({ temperature: 0.3 });
     const structuredModel = llm.withStructuredOutput(errorSchema);
 
     const pipeline = promptTemplate.pipe(structuredModel);

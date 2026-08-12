@@ -1,4 +1,4 @@
-import axiosInstance from "@/configs/axios";
+import axiosInstance, { backendOrigin } from "@/configs/axios";
 import { io, Socket } from "socket.io-client";
 
 interface PendingEvent {
@@ -14,7 +14,7 @@ const eventHandlers: { event: string; handler: (...args: any[]) => void }[] =
   [];
 
 export const connectSocket = (userId: number) => {
-  socket = io("http://localhost:3000", {
+  socket = io(backendOrigin, {
     transports: ["websocket"],
     withCredentials: true,
   });

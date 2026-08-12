@@ -1,7 +1,7 @@
 import * as dotenv from "dotenv";
 import { SqlDatabase } from "langchain/sql_db";
 import { Annotation, StateGraph } from "@langchain/langgraph";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
+import { getChatModel } from "../configs/llm.js";
 import { QuerySqlTool } from "langchain/tools/sql";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
@@ -25,11 +25,7 @@ const StateAnnotation = Annotation.Root({
   result: Annotation<string>,
 });
 
-const llm = new ChatGoogleGenerativeAI({
-  model: process.env.GEMINI_MODEL || "gemini-2.5-pro",
-  temperature: 0,
-  apiKey: process.env.GOOGLE_API_KEY,
-});
+const llm = getChatModel({ temperature: 0 });
 
 const systemQaSqlPrompt = `
 Bạn là chuyên gia SQL có kinh nghiệm cao trong việc phân tích và thông kê.

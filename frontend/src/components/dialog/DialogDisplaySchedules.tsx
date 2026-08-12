@@ -14,18 +14,13 @@ import { getWeekday } from "@/utils/formatDate";
 import CalendarComponent from "../calendar/CalendarComponent";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { useState } from "react";
 import Loading from "../loading/Loading";
 import AlertDialogConfirmBook from "./AlertDialogConfirmBook";
-import { useBookingAppointment } from "@/hooks/useBookingAppointment";
-import type { createAppointmentData } from "@/api/appointmentApi";
-import { toast } from "react-toastify";
+import { useDoctorBooking } from "@/hooks/useDoctorBooking";
 import { useProfile } from "@/hooks/useProfile";
 import { useNotifyAppointmentSocket } from "@/hooks/useNotifyAppointmentSocket";
 import { useSocket } from "@/hooks/useSocket";
 import { X } from "lucide-react";
-import type { AxiosError } from "axios";
-import type { ApiError } from "@/types/interface/apiError.interface";
 
 interface DialogDisplaySchedulesProps {
   open: boolean;
@@ -46,41 +41,17 @@ const DialogDisplaySchedules = ({
   const { selectedDate, doctor_schedule_id, tempTime, reset } =
     useBookingAppointmentStore();
   const schedules = doctorSchedulesRes?.data || [];
-  const [isPending, setIsPending] = useState(false);
-  const [openConfirm, setOpenConfirm] = useState(false);
-  const { mutate } = useBookingAppointment();
+  const {
+    isPending,
+    setIsPending,
+    openConfirm,
+    setOpenConfirm,
+    handleBookingAppointment,
+  } = useDoctorBooking();
   const { data: userRes } = useProfile();
   const socket = useSocket(userRes?.data?.id);
   useNotifyAppointmentSocket(socket, doctorId, setIsPending);
 
-  const handleConfirm = (data: createAppointmentData) => {
-    if (!data.appointment_date) {
-      toast.error("Vui lòng chọn ngày khám !");
-    } else if (!data.doctor_id) {
-      toast.error("Vui lòng chọn bác sĩ !");
-    } else if (!data.doctor_schedule_id) {
-      toast.error("Vui lòng chọn khung giờ khám !");
-    } else {
-      setIsPending(true);
-      mutate(data, {
-        onSuccess: () => {
-          setIsPending(false);
-          setOpenConfirm(false);
-        },
-        onError: (error) => {
-          const axiosError = error as AxiosError<ApiError>;
-          const details = axiosError.response?.data.error.details;
-          const message =
-            typeof details === "string"
-              ? details
-              : (details?.[0] ?? "Äáº·t lá»‹ch khÃ¡m tháº¥t báº¡i!");
-
-          setIsPending(false);
-          toast.error(message);
-        },
-      });
-    }
-  };
   return (
     <>
       <Dialog
@@ -97,21 +68,20 @@ const DialogDisplaySchedules = ({
           className="
     fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
     w-[95vw] md:max-w-[90vw] lg:max-w-[70vw] 2xl:max-w-[50vw]
-    h-[90vh]
-    md:h-auto
+    max-h-[90vh]
     p-3
     rounded-lg shadow-lg
     text-sm sm:text-base
   "
         >
           <DialogClose
-            className="absolute -right-4 -top-4 z-50 rounded-full bg-error text-white 
+            className="absolute -right-4 -top-4 z-50 rounded-full bg-error text-white
                hover:opacity-90 transition-opacity flex items-center justify-center h-7 w-7 cursor-pointer"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DialogClose>
-          <div className="overflow-y-auto max-h-[90vh]">
+          <div className="max-h-[90vh] overflow-y-auto">
             <DialogHeader className="mb-3">
               <DialogTitle>Ca khám của {doctorName}</DialogTitle>
             </DialogHeader>
@@ -161,7 +131,7 @@ const DialogDisplaySchedules = ({
           doctorId={doctorId}
           doctorName={doctorName}
           doctorScheduleId={doctor_schedule_id}
-          handleConfirm={handleConfirm}
+          handleConfirm={handleBookingAppointment}
           isPending={isPending}
           openConfirm={openConfirm}
           setOpenConfirm={setOpenConfirm}

@@ -16,6 +16,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
@@ -34,6 +35,8 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('users')
+@ApiCookieAuth()
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('users')
 export class UsersController {
@@ -42,6 +45,7 @@ export class UsersController {
     private readonly cloudinaryService: CloudinaryService,
     private readonly redisService: RedisCacheService,
   ) {}
+  @ApiOperation({ summary: 'Danh sách người dùng' })
   @Get()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_READ)
@@ -49,6 +53,7 @@ export class UsersController {
     return this.userService.findAll();
   }
 
+  @ApiOperation({ summary: 'Thông tin người dùng đang đăng nhập' })
   @Get('info')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_READ)
@@ -67,6 +72,7 @@ export class UsersController {
     return userInfo;
   }
 
+  @ApiOperation({ summary: 'Cập nhật thông tin người dùng đang đăng nhập' })
   @Patch('update-info')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_UPDATE)
@@ -116,6 +122,7 @@ export class UsersController {
     return updatedUser;
   }
 
+  @ApiOperation({ summary: 'Đổi mật khẩu' })
   @Put('change-password')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_UPDATE)
@@ -142,17 +149,21 @@ export class UsersController {
       'password',
       hashedNewPassword,
     );
+    await this.redisService.incr(`session_version:${userId}`);
+    await this.redisService.delData(`refresh_tokens:${userId}`);
 
     return { message: 'Thay đổi mật khẩu thành công.' };
   }
 
-  @Post('users')
+  @ApiOperation({ summary: 'Danh sách người dùng (phân trang, lọc)' })
+  @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_READ)
   getUsersFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
     return this.userService.filterAndPagination(objectFilters);
   }
 
+  @ApiOperation({ summary: 'Admin tạo người dùng' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.USER_CREATE)
@@ -161,6 +172,7 @@ export class UsersController {
     return this.userService.adminCreateUser(dto);
   }
 
+  @ApiOperation({ summary: 'Danh sách bệnh nhân (phân trang, lọc)' })
   @Post('patients')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.PATIENT_READ)
@@ -168,6 +180,7 @@ export class UsersController {
     return this.userService.filterAndPaginationPatients(objectFilters);
   }
 
+  @ApiOperation({ summary: 'Chi tiết người dùng dành cho admin' })
   @Get(':userId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_READ)
@@ -175,6 +188,7 @@ export class UsersController {
     return this.userService.getAdminUserDetail(userId);
   }
 
+  @ApiOperation({ summary: 'Khóa người dùng' })
   @Patch(':userId/lock')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_LOCK)
@@ -183,6 +197,7 @@ export class UsersController {
     return this.userService.setLocking(userId, true);
   }
 
+  @ApiOperation({ summary: 'Mở khóa người dùng' })
   @Patch(':userId/unlock')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_UNLOCK)
@@ -191,6 +206,7 @@ export class UsersController {
     return this.userService.setLocking(userId, false);
   }
 
+  @ApiOperation({ summary: 'Kích hoạt người dùng' })
   @Patch(':userId/activate')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_ACTIVATE)
@@ -199,6 +215,7 @@ export class UsersController {
     return this.userService.setActive(userId, true);
   }
 
+  @ApiOperation({ summary: 'Vô hiệu hóa người dùng' })
   @Patch(':userId/deactivate')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_DEACTIVATE)
@@ -207,6 +224,7 @@ export class UsersController {
     return this.userService.setActive(userId, false);
   }
 
+  @ApiOperation({ summary: 'Cập nhật vai trò của người dùng' })
   @Patch(':userId/roles')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.USER_UPDATE_ROLE)

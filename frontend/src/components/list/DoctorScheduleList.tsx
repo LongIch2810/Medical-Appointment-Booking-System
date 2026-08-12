@@ -22,19 +22,7 @@ const DoctorScheduleList = ({
   return (
     <div className="space-y-4">
       {/* Header + Legend */}
-      <div
-        className="
-          max-h-[500px] 
-          overflow-y-auto 
-          pr-2 
-          space-y-2 
-          rounded-lg 
-          border 
-          bg-white 
-          shadow-sm
-          p-2
-        "
-      >
+      <div className="space-y-2 rounded-lg border bg-white shadow-sm p-2">
         {list.map((schedule) => (
           <DoctorScheduleCard
             key={schedule.id}

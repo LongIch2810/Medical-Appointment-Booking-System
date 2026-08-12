@@ -20,12 +20,16 @@ import { BodyCreateNotificationDto } from './dto/request/bodyCreateNotification.
 import { BodyFilterNotificationsDto } from './dto/request/bodyFilterNotifications.dto';
 import { BodyUpdateNotificationDto } from './dto/request/bodyUpdateNotification.dto';
 import { NotificationsService } from './notifications.service';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('notifications')
+@ApiCookieAuth()
 @Controller('notifications')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class NotificationsController {
   constructor(private readonly notificationsService: NotificationsService) {}
 
+  @ApiOperation({ summary: 'Danh sách thông báo (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.NOTIFICATION_READ)
@@ -34,6 +38,7 @@ export class NotificationsController {
     return this.notificationsService.filterAndPagination(objectFilters);
   }
 
+  @ApiOperation({ summary: 'Tạo thông báo' })
   @Post('create')
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.NOTIFICATION_CREATE)
@@ -42,6 +47,7 @@ export class NotificationsController {
     return this.notificationsService.create(body);
   }
 
+  @ApiOperation({ summary: 'Chi tiết thông báo' })
   @Get(':notificationId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.NOTIFICATION_READ)
@@ -49,6 +55,7 @@ export class NotificationsController {
     return this.notificationsService.findById(notificationId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật thông báo' })
   @Patch(':notificationId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.NOTIFICATION_UPDATE)
@@ -60,6 +67,7 @@ export class NotificationsController {
     return this.notificationsService.update(notificationId, body);
   }
 
+  @ApiOperation({ summary: 'Đánh dấu thông báo đã đọc' })
   @Patch(':notificationId/notified')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.NOTIFICATION_UPDATE)
@@ -70,6 +78,7 @@ export class NotificationsController {
     return this.notificationsService.markAsNotified(notificationId);
   }
 
+  @ApiOperation({ summary: 'Xóa thông báo' })
   @Delete(':notificationId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.NOTIFICATION_DELETE)

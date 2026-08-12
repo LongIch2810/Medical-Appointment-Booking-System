@@ -19,17 +19,21 @@ import FilterItem from "../item/FilterItem";
 import { useProvinces } from "@/hooks/useProvinces";
 import { cn } from "@/lib/utils";
 import { cleanProvinceName } from "../../utils/cleanProvinceName";
+import { useState } from "react";
 const DialogChooseArea = ({ className = "" }: { className: string }) => {
+  const [open, setOpen] = useState(false);
   const { areaSelect, setAreaSelect } = useFilterDoctorsStore();
   const { data, isLoading, isError } = useProvinces();
   const handleSelect = (province_name: string) => {
     setAreaSelect(cleanProvinceName(province_name));
+    setOpen(false);
   };
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger>
         <FilterItem
           label="Khu vực"
+          activeValue={areaSelect || undefined}
           icon={<MapPin size={16} />}
           className={cn("w-full md:w-auto", className)}
         />

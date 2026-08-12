@@ -24,7 +24,9 @@ import {
   REFRESH_TOKEN_EXPIRE_TIME,
 } from 'src/utils/constants';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -32,6 +34,7 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  @ApiOperation({ summary: 'Đăng ký tài khoản' })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @AuditLogAction({ action: 'CREATE', entityName: 'auth.register' })
@@ -40,6 +43,7 @@ export class AuthController {
     return newUser;
   }
 
+  @ApiOperation({ summary: 'Đăng nhập' })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -69,6 +73,7 @@ export class AuthController {
     });
   }
 
+  @ApiOperation({ summary: 'Đăng nhập cho admin/bác sĩ' })
   @Post('/admin/login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -100,6 +105,8 @@ export class AuthController {
   }
 
   @UseGuards(JwtRefreshAuthGuard)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Làm mới access token' })
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.refresh' })
@@ -133,6 +140,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.AUTH_LOGOUT)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Đăng xuất' })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout' })
@@ -150,6 +159,8 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.AUTH_LOGOUT)
+  @ApiCookieAuth()
+  @ApiOperation({ summary: 'Đăng xuất khỏi tất cả thiết bị' })
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout-all' })
@@ -158,10 +169,12 @@ export class AuthController {
     return { message };
   }
 
+  @ApiOperation({ summary: 'Bắt đầu đăng nhập Google OAuth' })
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   async googleAuth() {}
 
+  @ApiOperation({ summary: 'Callback redirect từ Google OAuth' })
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.google' })
@@ -187,6 +200,7 @@ export class AuthController {
     );
   }
 
+  @ApiOperation({ summary: 'Đặt lại mật khẩu mới' })
   @Post('set-new-password')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'UPDATE', entityName: 'auth.password' })

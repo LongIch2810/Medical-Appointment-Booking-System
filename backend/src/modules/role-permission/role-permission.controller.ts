@@ -1,4 +1,5 @@
 import { Controller, Get, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
@@ -7,11 +8,14 @@ import { PERMISSIONS } from 'src/utils/constants';
 import { RolePermissionService } from './role-permission.service';
 import { RolePermissionMatrixResponseDto } from './dto/response/rolePermissionMatrixResponse.dto';
 
+@ApiTags('role-permission')
+@ApiCookieAuth()
 @Controller('role-permission')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RolePermissionController {
   constructor(private readonly rolePermissionService: RolePermissionService) {}
 
+  @ApiOperation({ summary: 'Ma trận vai trò và quyền' })
   @Get('matrix')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.ROLE_PERMISSION_READ)

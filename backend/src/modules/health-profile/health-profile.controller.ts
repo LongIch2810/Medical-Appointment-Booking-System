@@ -19,12 +19,18 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('health-profiles')
+@ApiCookieAuth()
 @Controller('health-profiles')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class HealthProfileController {
   constructor(private readonly healthProfileService: HealthProfileService) {}
 
+  @ApiOperation({
+    summary: 'Danh sách hồ sơ sức khỏe của bệnh nhân đang đăng nhập',
+  })
   @Post('patient/list')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.HEALTH_PROFILE_READ)
@@ -39,6 +45,7 @@ export class HealthProfileController {
     );
   }
 
+  @ApiOperation({ summary: 'Cập nhật hồ sơ sức khỏe' })
   @Patch('update/:id')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.HEALTH_PROFILE_UPDATE)
@@ -57,6 +64,7 @@ export class HealthProfileController {
     return updatedHealProfile;
   }
 
+  @ApiOperation({ summary: 'Chi tiết hồ sơ sức khỏe theo người thân' })
   @Get(':relativeId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.HEALTH_PROFILE_READ)
@@ -68,6 +76,9 @@ export class HealthProfileController {
     return this.healthProfileService.getHealthProfile(userId, relativeId);
   }
 
+  @ApiOperation({
+    summary: 'Danh sách hồ sơ sức khỏe (admin, phân trang, lọc)',
+  })
   @Post('admin/list')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.HEALTH_PROFILE_MANAGE)

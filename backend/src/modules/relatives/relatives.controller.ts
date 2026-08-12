@@ -13,6 +13,7 @@ import {
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RelativesService } from './relatives.service';
 import { BodyFilterRelativesDto } from './dto/request/bodyFilterRelatives.dto';
@@ -23,11 +24,14 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 
+@ApiTags('relatives')
+@ApiCookieAuth()
 @Controller('relatives')
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class RelativesController {
   constructor(private readonly relativesService: RelativesService) {}
 
+  @ApiOperation({ summary: 'Tạo người thân' })
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.RELATIVE_CREATE)
@@ -37,6 +41,7 @@ export class RelativesController {
     return this.relativesService.create(userId, body);
   }
 
+  @ApiOperation({ summary: 'Danh sách người thân của bệnh nhân' })
   @Get('patient/relatives')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.RELATIVE_READ)
@@ -59,6 +64,7 @@ export class RelativesController {
     );
   }
 
+  @ApiOperation({ summary: 'Chi tiết người thân' })
   @Get(':relativeId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.RELATIVE_READ)
@@ -70,6 +76,7 @@ export class RelativesController {
     return this.relativesService.getRelativeDetail(userId, relativeId);
   }
 
+  @ApiOperation({ summary: 'Cập nhật người thân' })
   @Patch(':relativeId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.RELATIVE_UPDATE)
@@ -83,6 +90,7 @@ export class RelativesController {
     return this.relativesService.update(userId, relativeId, bodyUpdateRelative);
   }
 
+  @ApiOperation({ summary: 'Xóa người thân' })
   @Delete(':relativeId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.RELATIVE_DELETE)
@@ -95,6 +103,7 @@ export class RelativesController {
     return this.relativesService.remove(userId, relativeId);
   }
 
+  @ApiOperation({ summary: 'Danh sách người thân dành cho admin' })
   @Post('admin/relatives')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.RELATIVE_MANAGE)

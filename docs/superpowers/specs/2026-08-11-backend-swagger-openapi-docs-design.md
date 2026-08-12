@@ -5,7 +5,7 @@ Status: Approved
 
 ## Problem
 
-`backend/src/main.ts` already wires up `SwaggerModule` (`DocumentBuilder` + `SwaggerModule.setup('api-docs', app, ...)`), so `/api-docs` renders and is reachable. But zero `@Api*` decorators exist anywhere in `backend/src` — no `@ApiTags`, `@ApiOperation`, `@ApiProperty`, `@ApiCookieAuth`, `@ApiResponse` across all 25 controllers and their DTOs. The generated page currently shows undifferentiated routes with no grouping, no descriptions, no request/response schemas, and no working "Authorize" button, even though the plumbing to render a real API reference is already in place.
+`backend/src/main.ts` already wires up `SwaggerModule` (`DocumentBuilder` + `SwaggerModule.setup('api-docs', app, ...)`), so `/api-docs` renders and is reachable. But zero `@Api*` decorators exist anywhere in `backend/src` — no `@ApiTags`, `@ApiOperation`, `@ApiProperty`, `@ApiCookieAuth`, `@ApiResponse` across all 26 controllers and their DTOs. The generated page currently shows undifferentiated routes with no grouping, no descriptions, no request/response schemas, and no working "Authorize" button, even though the plumbing to render a real API reference is already in place.
 
 Auth is cookie-based JWT (`req.cookies.accessToken`, set by `backend/src/modules/auth/jwt.strategy.ts`), not a Bearer header, so the default Swagger UI auth affordances don't apply without an explicit cookie auth scheme.
 
@@ -40,7 +40,7 @@ const config = new DocumentBuilder()
 
 Then add `@ApiCookieAuth()` to every controller (or individual handler) currently guarded by `JwtGuard`/`PermissionsGuard`, so Swagger UI shows a padlock and routes the browser's session cookie through "Try it out" once a user has logged in via `/auth/login` in another tab (cookies are shared across same-origin requests from the Swagger UI page, which is served by the same backend origin).
 
-### 3. `@ApiTags` + `@ApiOperation` on all 25 controllers
+### 3. `@ApiTags` + `@ApiOperation` on all 26 controllers
 
 Each controller gets `@ApiTags('<domain>')` at the class level (matching its module name, e.g. `articles`, `doctors`, `appointments`) so Swagger UI groups endpoints by feature instead of listing them flat. Each handler gets `@ApiOperation({ summary: '<short description>' })` — a one-line human-readable summary of what the endpoint does, derived from the existing method name/behavior (no new behavior, purely descriptive).
 
@@ -50,7 +50,7 @@ Every response is wrapped by the global `ResponseInterceptor` as `{ statusCode, 
 
 ### 5. Scope
 
-All 25 existing controllers get `@ApiTags` + `@ApiCookieAuth` (where guarded) + `@ApiOperation` per handler. DTOs get schema inference via the CLI plugin (step 1) rather than manual annotation. This is additive-only — no controller logic, routes, guards, or DTOs change behaviorally; only decorators are added.
+All 26 existing controllers get `@ApiTags` + `@ApiCookieAuth` (where guarded) + `@ApiOperation` per handler. DTOs get schema inference via the CLI plugin (step 1) rather than manual annotation. This is additive-only — no controller logic, routes, guards, or DTOs change behaviorally; only decorators are added.
 
 ## Testing
 
