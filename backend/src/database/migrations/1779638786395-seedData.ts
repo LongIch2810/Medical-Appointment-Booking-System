@@ -1271,101 +1271,111 @@ export class SeedData1779638786395 implements MigrationInterface {
     //Thêm dữ liệu bài viết
     const articles = [
       {
-        title: 'Kiến thức y học số 1',
+        title: 'Chăm sóc da nhạy cảm trong thời tiết nóng ẩm',
         content:
-          'Đây là nội dung chi tiết của bài viết số 1, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 1 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-1',
+          'Da nhạy cảm dễ đỏ, ngứa hoặc châm chích khi thay đổi thời tiết. Làm sạch bằng sản phẩm dịu nhẹ, dưỡng ẩm đều đặn và thoa kem chống nắng phù hợp giúp hàng rào bảo vệ da ổn định hơn. Nếu tổn thương kéo dài hoặc lan rộng, người bệnh nên được bác sĩ da liễu thăm khám.',
+        summary:
+          'Các bước cơ bản giúp da nhạy cảm hạn chế kích ứng trong thời tiết nóng ẩm.',
+        slug: 'cham-soc-da-nhay-cam-thoi-tiet-nong-am',
         is_approve: true,
         topic_id: 7,
         author_id: 25,
       },
       {
-        title: 'Kiến thức y học số 2',
+        title: 'Phòng ngã cho người lớn tuổi ngay tại nhà',
         content:
-          'Đây là nội dung chi tiết của bài viết số 2, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 2 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-2',
+          'Ngã có thể gây ảnh hưởng lớn đến khả năng vận động của người cao tuổi. Gia đình nên giữ lối đi thông thoáng, bổ sung ánh sáng ở cầu thang, dùng thảm chống trượt và khuyến khích tập các bài vận động phù hợp. Khi có chóng mặt, nhìn mờ hoặc yếu chân, cần trao đổi với bác sĩ để tìm nguyên nhân.',
+        summary:
+          'Những điều chỉnh đơn giản trong nhà giúp giảm nguy cơ ngã ở người lớn tuổi.',
+        slug: 'phong-nga-cho-nguoi-lon-tuoi-tai-nha',
         is_approve: true,
         topic_id: 10,
         author_id: 18,
       },
       {
-        title: 'Kiến thức y học số 3',
+        title: 'Gợi ý bữa sáng cân bằng cho ngày bận rộn',
         content:
-          'Đây là nội dung chi tiết của bài viết số 3, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 3 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-3',
+          'Một bữa sáng cân bằng nên có tinh bột giàu chất xơ, nguồn đạm và rau quả tươi. Có thể kết hợp bánh mì nguyên cám với trứng, sữa chua không đường cùng trái cây theo mùa. Hạn chế bỏ bữa hoặc dùng quá nhiều đồ uống ngọt để tránh cảm giác mệt và đói sớm.',
+        summary:
+          'Cách chuẩn bị bữa sáng đủ chất, nhanh gọn và phù hợp nhịp sống hằng ngày.',
+        slug: 'goi-y-bua-sang-can-bang-cho-ngay-ban-ron',
         is_approve: true,
         topic_id: 2,
         author_id: 16,
       },
       {
-        title: 'Kiến thức y học số 4',
+        title: 'Khi nào nam giới nên khám sức khỏe định kỳ',
         content:
-          'Đây là nội dung chi tiết của bài viết số 4, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 4 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-4',
+          'Khám sức khỏe định kỳ giúp phát hiện sớm các yếu tố nguy cơ như tăng huyết áp, rối loạn đường huyết và bệnh lý tiết niệu. Nam giới nên đi khám khi có tiểu buốt, tiểu nhiều về đêm, đau kéo dài vùng bẹn hoặc thay đổi sức khỏe sinh lý. Việc trao đổi thẳng thắn với bác sĩ giúp lựa chọn xét nghiệm phù hợp.',
+        summary:
+          'Các dấu hiệu và mốc thời gian nên lưu ý khi theo dõi sức khỏe nam giới.',
+        slug: 'khi-nao-nam-gioi-nen-kham-suc-khoe-dinh-ky',
         is_approve: true,
         topic_id: 15,
         author_id: 2,
       },
       {
-        title: 'Kiến thức y học số 5',
+        title: 'Rửa tay đúng cách để phòng bệnh theo mùa',
         content:
-          'Đây là nội dung chi tiết của bài viết số 5, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 5 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-5',
+          'Rửa tay với xà phòng và nước sạch trước khi ăn, sau khi đi vệ sinh hoặc trở về từ nơi công cộng là thói quen quan trọng. Chà kỹ lòng bàn tay, mu bàn tay, kẽ ngón và đầu ngón trong ít nhất 20 giây. Khi không có nước sạch, có thể dùng dung dịch sát khuẩn tay phù hợp.',
+        summary:
+          'Hướng dẫn thói quen rửa tay giúp hạn chế nguy cơ lây nhiễm trong cộng đồng.',
+        slug: 'rua-tay-dung-cach-de-phong-benh-theo-mua',
         is_approve: true,
         topic_id: 20,
         author_id: 29,
       },
       {
-        title: 'Kiến thức y học số 6',
+        title: 'Dùng thuốc và thảo dược an toàn',
         content:
-          'Đây là nội dung chi tiết của bài viết số 6, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 6 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-6',
+          'Thảo dược và thuốc y học cổ truyền vẫn có thể gây tương tác với thuốc đang điều trị. Người bệnh cần cung cấp đầy đủ danh sách sản phẩm đang dùng cho bác sĩ hoặc dược sĩ, đặc biệt khi có bệnh gan, thận hoặc đang mang thai. Không tự ý tăng liều hay ngừng thuốc đã được kê đơn.',
+        summary:
+          'Lưu ý quan trọng để sử dụng thuốc và thảo dược một cách an toàn.',
+        slug: 'dung-thuoc-va-thao-duoc-an-toan',
         is_approve: true,
         topic_id: 16,
         author_id: 1,
       },
       {
-        title: 'Kiến thức y học số 7',
+        title: 'Chăm sóc da mụn: những điều nên và không nên',
         content:
-          'Đây là nội dung chi tiết của bài viết số 7, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 7 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-7',
+          'Mụn có thể nặng hơn khi nặn không đúng cách hoặc dùng nhiều sản phẩm tẩy rửa mạnh. Nên làm sạch da nhẹ nhàng, sử dụng sản phẩm không gây bít tắc và kiên trì theo hướng dẫn điều trị. Mụn viêm đau, để lại sẹo hoặc tái phát nhiều lần cần được bác sĩ da liễu đánh giá.',
+        summary:
+          'Nguyên tắc chăm sóc cơ bản giúp kiểm soát mụn và hạn chế thâm sẹo.',
+        slug: 'cham-soc-da-mun-nhung-dieu-nen-va-khong-nen',
         is_approve: true,
         topic_id: 7,
         author_id: 2,
       },
       {
-        title: 'Kiến thức y học số 8',
+        title: 'Nhận biết sớm các dấu hiệu tăng đường huyết',
         content:
-          'Đây là nội dung chi tiết của bài viết số 8, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 8 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-8',
+          'Khát nước nhiều, đi tiểu thường xuyên, mệt mỏi và sụt cân không rõ nguyên nhân có thể liên quan đến tăng đường huyết. Những dấu hiệu này không đủ để tự chẩn đoán, nhưng là lý do nên kiểm tra tại cơ sở y tế. Chế độ ăn, vận động và việc dùng thuốc cần được cá thể hóa theo tư vấn chuyên môn.',
+        summary:
+          'Các biểu hiện thường gặp cần lưu ý và thời điểm nên kiểm tra đường huyết.',
+        slug: 'nhan-biet-som-dau-hieu-tang-duong-huyet',
         is_approve: true,
         topic_id: 13,
         author_id: 28,
       },
       {
-        title: 'Kiến thức y học số 9',
+        title: 'Đầy bụng sau ăn: khi nào cần đi khám',
         content:
-          'Đây là nội dung chi tiết của bài viết số 9, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 9 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-9',
+          'Đầy bụng thoáng qua có thể liên quan đến ăn nhanh, nhiều chất béo hoặc đồ uống có ga. Người bệnh nên ăn chậm, chia nhỏ bữa và theo dõi thực phẩm gây khó chịu. Nếu kèm sụt cân, nôn kéo dài, phân đen hoặc đau tăng dần, cần đi khám sớm.',
+        summary:
+          'Phân biệt cảm giác đầy bụng thông thường với các dấu hiệu tiêu hóa cần được đánh giá.',
+        slug: 'day-bung-sau-an-khi-nao-can-di-kham',
         is_approve: true,
         topic_id: 3,
         author_id: 19,
       },
       {
-        title: 'Kiến thức y học số 10',
+        title: 'Giảm trào ngược dạ dày bằng thay đổi thói quen',
         content:
-          'Đây là nội dung chi tiết của bài viết số 10, tập trung vào chủ đề sức khỏe cộng đồng và phòng tránh bệnh tật.',
-        summary: 'Tóm tắt bài viết 10 về kiến thức sức khỏe và y học.',
-        slug: 'kien-thuc-y-hoc-so-10',
+          'Người thường xuyên ợ nóng nên tránh nằm ngay sau ăn, hạn chế bữa tối quá muộn và theo dõi các món dễ gây khó chịu như cà phê hoặc thức ăn nhiều dầu mỡ. Duy trì cân nặng phù hợp cũng giúp giảm áp lực lên dạ dày. Cần khám chuyên khoa khi nuốt nghẹn, đau ngực hoặc triệu chứng kéo dài.',
+        summary:
+          'Một số thay đổi trong sinh hoạt có thể giúp giảm cảm giác ợ nóng và trào ngược.',
+        slug: 'giam-trao-nguoc-da-day-bang-thay-doi-thoi-quen',
         is_approve: true,
         topic_id: 3,
         author_id: 12,

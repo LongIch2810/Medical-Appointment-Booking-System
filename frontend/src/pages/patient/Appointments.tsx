@@ -52,6 +52,8 @@ const filterTabs: Array<{ key: AppointmentStatus | "ALL"; label: string }> = [
   { key: "CONFIRMED", label: "Đã xác nhận" },
   { key: "COMPLETED", label: "Đã khám" },
   { key: "CANCELLED", label: "Đã hủy" },
+  { key: "ABSENT", label: "Vắng mặt" },
+  { key: "EXPIRED", label: "Quá hạn khám" },
 ];
 
 const getSpecialtyName = (appointment: PatientAppointment) =>
@@ -62,9 +64,9 @@ const getSpecialtyName = (appointment: PatientAppointment) =>
 const Appointments: React.FC = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(0);
   const [openDetail, setOpenDetail] = useState(false);
-  const [activeFilter, setActiveFilter] = useState<
-    AppointmentStatus | "ALL"
-  >("ALL");
+  const [activeFilter, setActiveFilter] = useState<AppointmentStatus | "ALL">(
+    "ALL",
+  );
 
   const [ratingTarget, setRatingTarget] = useState<PatientAppointment | null>(
     null,
@@ -101,6 +103,7 @@ const Appointments: React.FC = () => {
       COMPLETED: 0,
       CANCELLED: 0,
       ABSENT: 0,
+      EXPIRED: 0,
     };
     appointments.forEach((appointment) => {
       map[appointment.status] += 1;
@@ -233,14 +236,16 @@ const Appointments: React.FC = () => {
                         <div className="min-w-0 space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-bold text-slate-900">
-                              BS. {appointment.doctor.user.fullname ??
+                              BS.{" "}
+                              {appointment.doctor.user.fullname ??
                                 "Chưa cập nhật"}
                             </p>
                             <StatusBadge status={appointment.status} />
                             {hasRating ? (
                               <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
                                 <Star className="h-3 w-3 fill-current" />
-                                {appointment.satisfaction_rating?.rating_score}/5
+                                {appointment.satisfaction_rating?.rating_score}
+                                /5
                               </span>
                             ) : null}
                           </div>
@@ -498,8 +503,8 @@ const Appointments: React.FC = () => {
                     Bác sĩ
                   </div>
                   <p className="text-sm font-medium text-slate-800">
-                    BS. {appointmentDetail.doctor.user.fullname ??
-                      "Chưa cập nhật"}
+                    BS.{" "}
+                    {appointmentDetail.doctor.user.fullname ?? "Chưa cập nhật"}
                   </p>
                   <p className="text-xs text-slate-500">
                     {getSpecialtyName(appointmentDetail)}

@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DetailDialog, type DetailRow } from "@/components/app/DetailDialog";
 import { FormDialog, FormField } from "@/components/app/FormDialog";
 import { UserCreateDialog } from "@/components/app/UserCreateDialog";
+import { UserEditDialog } from "@/components/app/UserEditDialog";
 import { PageHeader } from "@/components/app/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -309,6 +310,7 @@ function UsersModule({
   );
   const canLock = can(PERMISSIONS.USER_LOCK, PERMISSIONS.USER_MANAGE);
   const canUnlock = can(PERMISSIONS.USER_UNLOCK, PERMISSIONS.USER_MANAGE);
+  const canUpdate = can(PERMISSIONS.USER_UPDATE, PERMISSIONS.USER_MANAGE);
   const canCreate = can(PERMISSIONS.USER_CREATE, PERMISSIONS.USER_MANAGE);
 
   return (
@@ -417,6 +419,16 @@ function UsersModule({
                   { label: "Cập nhật", value: formatDate(row.updated_at) },
                 ]}
               />
+              {canUpdate ? (
+                <UserEditDialog
+                  user={row}
+                  trigger={
+                    <Button type="button" variant="outline" size="sm">
+                      Sửa
+                    </Button>
+                  }
+                />
+              ) : null}
               {!hasAdminRole(row.roles) && (row.is_active
                 ? canDeactivate && (
                     <Button
@@ -811,6 +823,7 @@ const STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
   { value: "COMPLETED", label: "Hoàn tất" },
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "ABSENT", label: "Vắng mặt" },
+  { value: "EXPIRED", label: "Quá hạn khám" },
 ];
 
 function AppointmentsModule({
@@ -1167,7 +1180,8 @@ function AppointmentsModule({
                   ) : null}
                   {canCancel &&
                   row.appointment_status !== "CANCELLED" &&
-                  row.appointment_status !== "COMPLETED" ? (
+                  row.appointment_status !== "COMPLETED" &&
+                  row.appointment_status !== "EXPIRED" ? (
                     <ConfirmDialog
                       trigger={
                         <Button type="button" variant="destructive" size="sm">

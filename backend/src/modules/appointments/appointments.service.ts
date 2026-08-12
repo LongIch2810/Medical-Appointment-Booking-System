@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import Appointment from 'src/entities/appointment.entity';
 import {
@@ -44,6 +45,57 @@ export class AppointmentsService {
     private readonly dataSource: DataSource,
     private readonly gateway: WebsocketGateway,
   ) {}
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async markExpiredPendingAppointments() {
+    const now = new Date();
+    const today = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+
+    const pendingAppointments = await this.appointmentRepo
+      .createQueryBuilder('appointment')
+      .leftJoinAndSelect('appointment.doctor_schedule', 'doctorSchedule')
+      .leftJoinAndSelect('appointment.booked_by_user', 'bookedByUser')
+      .where('appointment.status = :status', {
+        status: AppointmentStatus.PENDING,
+      })
+      .andWhere('appointment.appointment_date <= :today', { today })
+      .getMany();
+
+    const expiredAppointmentIds = pendingAppointments
+      .filter((appointment) => this.buildAppointmentEndDate(appointment) < now)
+      .map((appointment) => appointment.id);
+
+    if (expiredAppointmentIds.length === 0) {
+      return;
+    }
+
+    const result = await this.appointmentRepo
+      .createQueryBuilder()
+      .update(Appointment)
+      .set({ status: AppointmentStatus.EXPIRED })
+      .whereInIds(expiredAppointmentIds)
+      .andWhere('status = :status', {
+        status: AppointmentStatus.PENDING,
+      })
+      .execute();
+
+    if (!result.affected) {
+      return;
+    }
+
+    await this.redisCacheService.delByPrefix('appointments:');
+    await Promise.all(
+      pendingAppointments.map((appointment) =>
+        this.redisCacheService.delData(
+          `user:${appointment.booked_by_user.id}:appointment:${appointment.id}`,
+        ),
+      ),
+    );
+  }
 
   async createWithNotifications(
     userId: number,
@@ -86,112 +138,120 @@ export class AppointmentsService {
   }
 
   async create(userId: number, body: BodyCreateAppointmentDto) {
-    const appointmentDetail = await this.dataSource.transaction(async (manager) => {
-      const user_booked = await this.usersService.findByUserId(userId);
-      if (!user_booked)
-        throw new NotFoundException('Không tìm thấy người dùng.');
-      const isAdmin = (user_booked.roles ?? []).some(
-        (userRole) => userRole.role?.role_name === 'ADMIN',
-      );
-      const {
-        appointment_date,
-        relative_id,
-        booking_mode,
-        doctor_schedule_id,
-      } = body;
-
-      const appointmentDateOnly = appointment_date.slice(0, 10);
-      const appointmentDate = new Date(`${appointmentDateOnly}T00:00:00`);
-      const now = new Date();
-      const appointmentDay = new Date(
-        appointmentDate.getFullYear(),
-        appointmentDate.getMonth(),
-        appointmentDate.getDate(),
-      );
-
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-      if (appointmentDay < today) {
-        throw new BadRequestException(
-          'Ngày đặt lịch không được là ngày trong quá khứ.',
+    const appointmentDetail = await this.dataSource.transaction(
+      async (manager) => {
+        const user_booked = await this.usersService.findByUserId(userId);
+        if (!user_booked)
+          throw new NotFoundException('Không tìm thấy người dùng.');
+        const isAdmin = (user_booked.roles ?? []).some(
+          (userRole) => userRole.role?.role_name === 'ADMIN',
         );
-      }
+        const {
+          appointment_date,
+          relative_id,
+          booking_mode,
+          doctor_schedule_id,
+        } = body;
 
-      const patientQuery = manager
-        .getRepository(Relative)
-        .createQueryBuilder('relative')
-        .setLock('pessimistic_write')
-        .where('relative.id = :relative_id', { relative_id });
-      if (!isAdmin) {
-        patientQuery.andWhere('relative.user.id = :userId', { userId });
-      }
-      const patient = await patientQuery.getOne();
-      if (!patient) throw new NotFoundException('Không tìm thấy bệnh nhân.');
+        const appointmentDateOnly = appointment_date.slice(0, 10);
+        const appointmentDate = new Date(`${appointmentDateOnly}T00:00:00`);
+        const now = new Date();
+        const appointmentDay = new Date(
+          appointmentDate.getFullYear(),
+          appointmentDate.getMonth(),
+          appointmentDate.getDate(),
+        );
 
-      const chosenSchedule: DoctorSchedule | null = await manager.findOne(
-        DoctorSchedule,
-        {
-          where: {
-            id: doctor_schedule_id,
-            is_active: true,
+        const today = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+        );
+
+        if (appointmentDay < today) {
+          throw new BadRequestException(
+            'Ngày đặt lịch không được là ngày trong quá khứ.',
+          );
+        }
+
+        const patientQuery = manager
+          .getRepository(Relative)
+          .createQueryBuilder('relative')
+          .setLock('pessimistic_write')
+          .where('relative.id = :relative_id', { relative_id });
+        if (!isAdmin) {
+          patientQuery.andWhere('relative.user.id = :userId', { userId });
+        }
+        const patient = await patientQuery.getOne();
+        if (!patient) throw new NotFoundException('Không tìm thấy bệnh nhân.');
+
+        const chosenSchedule: DoctorSchedule | null = await manager.findOne(
+          DoctorSchedule,
+          {
+            where: {
+              id: doctor_schedule_id,
+              is_active: true,
+            },
           },
-        },
-      );
-      if (!chosenSchedule)
-        throw new NotFoundException(
-          'Bác sĩ nghỉ hoặc không có làm việc trong ngày bạn yêu cầu !',
+        );
+        if (!chosenSchedule)
+          throw new NotFoundException(
+            'Bác sĩ nghỉ hoặc không có làm việc trong ngày bạn yêu cầu !',
+          );
+
+        const appointmentDayOfWeek = dayNumberToEnum[appointmentDate.getDay()];
+        if (chosenSchedule.day_of_week !== appointmentDayOfWeek) {
+          throw new BadRequestException(
+            'Ca khám không khớp với ngày mà bạn yêu cầu. Vui lòng chọn ca khác.',
+          );
+        }
+
+        const patientConflict = await manager
+          .getRepository(Appointment)
+          .createQueryBuilder('appointment')
+          .innerJoin('appointment.doctor_schedule', 'doctor_schedule')
+          .where('appointment.patient.id = :patientId', {
+            patientId: patient.id,
+          })
+          .andWhere('DATE(appointment.appointment_date) = :appointmentDate', {
+            appointmentDate: appointmentDateOnly,
+          })
+          .andWhere('doctor_schedule.start_time < :new_end_time', {
+            new_end_time: chosenSchedule.end_time,
+          })
+          .andWhere('doctor_schedule.end_time > :new_start_time', {
+            new_start_time: chosenSchedule.start_time,
+          })
+          .andWhere('appointment.status IN (:...statuses)', {
+            statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
+          })
+          .getOne();
+
+        if (patientConflict) {
+          throw new ConflictException(
+            'Bệnh nhân đã có lịch hẹn khác vào thời gian này.',
+          );
+        }
+
+        const appointment = manager.create(Appointment, {
+          appointment_date: appointmentDate,
+          doctor_schedule: chosenSchedule,
+          booked_by_user: user_booked,
+          patient,
+          booking_mode,
+        });
+
+        const saved = await manager.save(Appointment, appointment);
+
+        const appointmentDetail = await this.getAppointmentDetailTransaction(
+          manager,
+          userId,
+          saved.id,
         );
 
-      const appointmentDayOfWeek = dayNumberToEnum[appointmentDate.getDay()];
-      if (chosenSchedule.day_of_week !== appointmentDayOfWeek) {
-        throw new BadRequestException(
-          'Ca khám không khớp với ngày mà bạn yêu cầu. Vui lòng chọn ca khác.',
-        );
-      }
-
-      const patientConflict = await manager
-        .getRepository(Appointment)
-        .createQueryBuilder('appointment')
-        .innerJoin('appointment.doctor_schedule', 'doctor_schedule')
-        .where('appointment.patient.id = :patientId', { patientId: patient.id })
-        .andWhere('DATE(appointment.appointment_date) = :appointmentDate', {
-          appointmentDate: appointmentDateOnly,
-        })
-        .andWhere('doctor_schedule.start_time < :new_end_time', {
-          new_end_time: chosenSchedule.end_time,
-        })
-        .andWhere('doctor_schedule.end_time > :new_start_time', {
-          new_start_time: chosenSchedule.start_time,
-        })
-        .andWhere('appointment.status IN (:...statuses)', {
-          statuses: [AppointmentStatus.PENDING, AppointmentStatus.CONFIRMED],
-        })
-        .getOne();
-
-      if (patientConflict) {
-        throw new ConflictException(
-          'Bệnh nhân đã có lịch hẹn khác vào thời gian này.',
-        );
-      }
-
-      const appointment = manager.create(Appointment, {
-        appointment_date: appointmentDate,
-        doctor_schedule: chosenSchedule,
-        booked_by_user: user_booked,
-        patient,
-        booking_mode,
-      });
-
-      const saved = await manager.save(Appointment, appointment);
-
-      const appointmentDetail = await this.getAppointmentDetailTransaction(
-        manager,
-        userId,
-        saved.id,
-      );
-
-      return appointmentDetail;
-    });
+        return appointmentDetail;
+      },
+    );
 
     await this.redisCacheService.delByPrefix('appointments:');
 
@@ -214,7 +274,9 @@ export class AppointmentsService {
     });
 
     await this.redisCacheService.delByPrefix('appointments:');
-    await this.redisCacheService.delData(`user:${userId}:appointment:${appointmentId}`);
+    await this.redisCacheService.delData(
+      `user:${userId}:appointment:${appointmentId}`,
+    );
 
     const cancelledAppointment = await this.getAppointmentDetail(
       userId,
@@ -399,6 +461,12 @@ export class AppointmentsService {
       throw new NotFoundException('Lịch hẹn không tồn tại.');
     }
 
+    if (status === AppointmentStatus.EXPIRED) {
+      throw new BadRequestException(
+        'Trạng thái quá hạn khám được hệ thống tự động cập nhật.',
+      );
+    }
+
     if (status === AppointmentStatus.COMPLETED) {
       if (appointment.status === AppointmentStatus.COMPLETED) {
         throw new BadRequestException('Lịch hẹn đã được đánh dấu khám xong.');
@@ -428,9 +496,7 @@ export class AppointmentsService {
 
     if (status === AppointmentStatus.ABSENT) {
       if (appointment.status === AppointmentStatus.ABSENT) {
-        throw new BadRequestException(
-          'Lịch hẹn đã được đánh dấu vắng mặt.',
-        );
+        throw new BadRequestException('Lịch hẹn đã được đánh dấu vắng mặt.');
       }
 
       if (
@@ -473,8 +539,21 @@ export class AppointmentsService {
   }
 
   private buildAppointmentStartDate(appointment: Appointment) {
-    const startTime = appointment.doctor_schedule?.start_time ?? '00:00:00';
-    const [hours, minutes, seconds] = startTime
+    return this.buildAppointmentDateTime(
+      appointment,
+      appointment.doctor_schedule?.start_time ?? '00:00:00',
+    );
+  }
+
+  private buildAppointmentEndDate(appointment: Appointment) {
+    return this.buildAppointmentDateTime(
+      appointment,
+      appointment.doctor_schedule?.end_time ?? '00:00:00',
+    );
+  }
+
+  private buildAppointmentDateTime(appointment: Appointment, time: string) {
+    const [hours, minutes, seconds] = time
       .split(':')
       .map((part) => Number(part) || 0);
 
@@ -628,7 +707,9 @@ export class AppointmentsService {
       .createQueryBuilder('appointment')
       .innerJoinAndSelect('appointment.examination_result', 'examinationResult')
       .where('appointment.id = :appointmentId', { appointmentId })
-      .andWhere('appointment.status = :status', { status: AppointmentStatus.COMPLETED })
+      .andWhere('appointment.status = :status', {
+        status: AppointmentStatus.COMPLETED,
+      })
       .andWhere('appointment.booked_by_user = :userId', { userId })
       .getOne();
     return !!appointment;
@@ -734,6 +815,9 @@ export class AppointmentsService {
       .leftJoinAndSelect('appointment.booked_by_user', 'bookedByUser')
       .leftJoinAndSelect('doctor.specialty', 'specialty')
       .leftJoinAndSelect('appointment.examination_result', 'examinationResult')
-      .leftJoinAndSelect('appointment.satisfaction_rating', 'satisfactionRating');
+      .leftJoinAndSelect(
+        'appointment.satisfaction_rating',
+        'satisfactionRating',
+      );
   }
 }

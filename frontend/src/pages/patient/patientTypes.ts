@@ -1,8 +1,5 @@
 export type AppointmentStatus =
-  | "confirmed"
-  | "pending"
-  | "completed"
-  | "cancelled";
+  "confirmed" | "pending" | "completed" | "cancelled" | "absent" | "expired";
 
 export interface PatientProfile {
   fullName: string;

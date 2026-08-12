@@ -4,4 +4,5 @@ export enum AppointmentStatus {
   COMPLETED = 'COMPLETED', // đã khám xong
   CANCELLED = 'CANCELLED', // đã hủy
   ABSENT = 'ABSENT', //vắng mặt
+  EXPIRED = 'EXPIRED', // quá hạn khám
 }

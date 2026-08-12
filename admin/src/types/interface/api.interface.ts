@@ -24,7 +24,8 @@ export type AppointmentStatus =
   | "CONFIRMED"
   | "COMPLETED"
   | "CANCELLED"
-  | "ABSENT";
+  | "ABSENT"
+  | "EXPIRED";
 
 export type BookingMode = "user_select" | "ai_select";
 

@@ -40,6 +40,7 @@ const STATUS_META: Record<
   COMPLETED: { label: "Hoàn tất", color: "#10b981" },
   CANCELLED: { label: "Đã hủy", color: "#ef4444" },
   ABSENT: { label: "Vắng mặt", color: "#75758a" },
+  EXPIRED: { label: "Quá hạn khám", color: "#a16207" },
 };
 
 const STATUS_ORDER: AppointmentStatus[] = [
@@ -48,6 +49,7 @@ const STATUS_ORDER: AppointmentStatus[] = [
   "COMPLETED",
   "CANCELLED",
   "ABSENT",
+  "EXPIRED",
 ];
 
 function buildStatusSegments(appointments: Appointment[]): StatusSegment[] {
@@ -62,6 +64,7 @@ function buildStatusSegments(appointments: Appointment[]): StatusSegment[] {
       COMPLETED: 0,
       CANCELLED: 0,
       ABSENT: 0,
+      EXPIRED: 0,
     },
   );
 

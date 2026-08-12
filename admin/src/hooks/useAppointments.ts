@@ -25,6 +25,7 @@ const APPOINTMENT_STATUS_LABEL: Record<AppointmentStatus, string> = {
   COMPLETED: "Đã khám xong",
   CANCELLED: "Đã hủy",
   ABSENT: "Vắng mặt",
+  EXPIRED: "Quá hạn khám",
 };
 
 function readApiErrorMessage(error: unknown, fallback: string) {

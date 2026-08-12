@@ -13,6 +13,7 @@ import {
   lockUser,
   unlockUser,
   updateCurrentUser,
+  updateUser,
   updateUserRoles,
 } from "@/api/userApi";
 import type {
@@ -93,6 +94,29 @@ export function useUpdateCurrentUser() {
     },
     onError: () => {
       toast.error("Cập nhật thông tin thất bại");
+    },
+  });
+}
+
+export function useUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      userId,
+      payload,
+    }: {
+      userId: number;
+      payload: UpdateUserFieldsPayload;
+    }) => updateUser(userId, payload),
+    onSuccess: (_, variables) => {
+      toast.success("Cập nhật thông tin người dùng thành công");
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({
+        queryKey: userQueryKeys.detail(variables.userId),
+      });
+    },
+    onError: () => {
+      toast.error("Cập nhật thông tin người dùng thất bại");
     },
   });
 }

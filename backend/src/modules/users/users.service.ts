@@ -272,6 +272,39 @@ export class UsersService {
     return this.userRepo.update(userId, updateFields);
   }
 
+  async updateAdminUser(
+    userId: number,
+    updateFields: Partial<
+      Pick<User, 'fullname' | 'phone' | 'gender' | 'date_of_birth' | 'address'>
+    >,
+  ) {
+    const user = await this.findByUserId(userId);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+
+    const { fullname, phone, gender, date_of_birth, address } = updateFields;
+    const editableFields = {
+      fullname,
+      phone,
+      gender,
+      date_of_birth,
+      address,
+    };
+
+    Object.assign(
+      user,
+      Object.fromEntries(
+        Object.entries(editableFields).filter(
+          ([, value]) => value !== undefined,
+        ),
+      ),
+    );
+
+    const updatedUser = await this.userRepo.save(user);
+    return UsersMapper.toUserProfileResponse(updatedUser);
+  }
+
   async filterAndPagination(objectFilters: BodyFilterUsersDto) {
     let { page, limit } = objectFilters;
     const { search, role_id, arrange } = objectFilters;
@@ -381,9 +414,7 @@ export class UsersService {
       throw new NotFoundException('Người dùng không tồn tại');
     }
     if (isLocking && this.hasAdminRole(user)) {
-      throw new ForbiddenException(
-        'Không thể khóa tài khoản có vai trò ADMIN',
-      );
+      throw new ForbiddenException('Không thể khóa tài khoản có vai trò ADMIN');
     }
     user.is_locking = isLocking;
     const updatedUser = await this.userRepo.save(user);

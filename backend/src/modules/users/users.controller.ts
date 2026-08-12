@@ -188,6 +188,20 @@ export class UsersController {
     return this.userService.getAdminUserDetail(userId);
   }
 
+  @ApiOperation({ summary: 'Admin cập nhật thông tin người dùng' })
+  @Patch(':userId')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.USER_UPDATE)
+  @AuditLogAction({ action: 'UPDATE', entityName: 'users' })
+  async updateAdminUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() body: PartialUpdateUserDto,
+  ) {
+    const updatedUser = await this.userService.updateAdminUser(userId, body);
+    await this.redisService.delData(`user:${userId}`);
+    return updatedUser;
+  }
+
   @ApiOperation({ summary: 'Khóa người dùng' })
   @Patch(':userId/lock')
   @HttpCode(HttpStatus.OK)

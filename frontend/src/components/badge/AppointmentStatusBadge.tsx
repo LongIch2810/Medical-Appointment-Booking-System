@@ -7,6 +7,7 @@ export const appointmentStatusLabelMap: Record<AppointmentStatus, string> = {
   COMPLETED: "Đã khám",
   CANCELLED: "Đã hủy",
   ABSENT: "Vắng mặt",
+  EXPIRED: "Quá hạn khám",
 };
 
 const statusBadgeClassMap: Record<AppointmentStatus, string> = {
@@ -15,6 +16,7 @@ const statusBadgeClassMap: Record<AppointmentStatus, string> = {
   COMPLETED: "bg-emerald-100 text-emerald-700 border border-emerald-200",
   CANCELLED: "bg-rose-100 text-rose-700 border border-rose-200",
   ABSENT: "bg-slate-200 text-slate-700 border border-slate-300",
+  EXPIRED: "bg-amber-100 text-amber-800 border border-amber-200",
 };
 
 const statusDotClassMap: Record<AppointmentStatus, string> = {
@@ -23,18 +25,21 @@ const statusDotClassMap: Record<AppointmentStatus, string> = {
   COMPLETED: "bg-emerald-500",
   CANCELLED: "bg-rose-500",
   ABSENT: "bg-slate-500",
+  EXPIRED: "bg-amber-600",
 };
 
-export const AppointmentStatusBadge: React.FC<{ status: AppointmentStatus }> = ({
-  status,
-}) => (
+export const AppointmentStatusBadge: React.FC<{
+  status: AppointmentStatus;
+}> = ({ status }) => (
   <span
     className={cn(
       "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
       statusBadgeClassMap[status],
     )}
   >
-    <span className={cn("h-1.5 w-1.5 rounded-full", statusDotClassMap[status])} />
+    <span
+      className={cn("h-1.5 w-1.5 rounded-full", statusDotClassMap[status])}
+    />
     {appointmentStatusLabelMap[status]}
   </span>
 );

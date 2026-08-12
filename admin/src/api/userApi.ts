@@ -69,6 +69,17 @@ export const updateCurrentUser = async (data: UpdateUserFieldsPayload, file?: Fi
   return res.data;
 };
 
+export const updateUser = async (
+  userId: number,
+  data: UpdateUserFieldsPayload,
+) => {
+  const res = await axiosInstance.patch<ApiResponse<User>>(
+    `/users/${userId}`,
+    data,
+  );
+  return res.data;
+};
+
 export const changePassword = async (data: ChangePasswordPayload) => {
   const res = await axiosInstance.put<ApiResponse<{ message: string }>>(
     "/users/change-password",
