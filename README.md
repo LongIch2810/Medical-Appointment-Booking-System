@@ -24,10 +24,10 @@ The Admin Workspace provides clinical directors and system operators with operat
 | ![Admin Dashboard](docs/images/admin-dashboard.webp) | ![Admin Role Management](docs/images/admin-role-management.webp) |
 | *Real-time clinical control tower with active metrics, daily appointment tracking, and role breakdown.* | *Fine-grained RBAC matrix managing 130+ system permissions across clinical and administrative domains.* |
 
-| Centralized User & Practitioner Management |
-| :---: |
-| ![Admin User Management](docs/images/admin-user-management.webp) |
-| *System user directory with lifecycle controls (lock/unlock, activation, and role assignments).* |
+| Centralized User & Practitioner Management | AI Enterprise Report Generator |
+| :---: | :---: |
+| ![Admin User Management](docs/images/admin-user-management.webp) | ![AI Enterprise Report Generator](docs/images/admin-ai-report.webp) |
+| *System user directory with lifecycle controls (lock/unlock, activation, and role assignments).* | *Automated clinical & operational reporting engine with AI insights, interactive charts, and CSV/PDF export.* |
 
 ---
 
@@ -51,10 +51,10 @@ The Patient Portal provides an intuitive, accessible experience for discovering 
 | ![Patient Home](docs/images/patient-home.webp) | ![Patient Booking](docs/images/patient-booking.webp) |
 | *Modern landing page with clear care pathways, specialist discovery, and verified practitioner credentials.* | *Multi-criteria doctor search with real-time availability, experience filters, and 10-second booking.* |
 
-| Personal Health Dashboard |
-| :---: |
-| ![Patient Dashboard](docs/images/patient-dashboard.webp) |
-| *Unified patient dashboard organizing upcoming appointments, linked family members, and medical profiles.* |
+| Personal Health Dashboard | LifeHealth MedAI Consultation Assistant |
+| :---: | :---: |
+| ![Patient Dashboard](docs/images/patient-dashboard.webp) | ![LifeHealth MedAI Chatbot](docs/images/patient-chatbot.webp) |
+| *Unified patient dashboard organizing upcoming appointments, linked family members, and medical profiles.* | *24/7 intelligent healthcare assistant providing medical guidance, symptom triage, and preliminary consultation.* |
 
 ## Technology Stack
 
