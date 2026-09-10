@@ -11,6 +11,51 @@ LifeHealth is a multi-service healthcare platform for discovering doctors, booki
 - Real-time messaging and file uploads
 - AI chatbot, retrieval-augmented generation, and health report generation
 
+## Visual Tour & Role-Based Experiences
+
+LifeHealth delivers tailored, high-productivity interfaces designed for each distinct healthcare stakeholder: **Administrators**, **Doctors**, and **Patients**. All screenshots are captured directly from the live platform with anonymized demonstration data.
+
+### 1. Administrator Experience
+
+The Admin Workspace provides clinical directors and system operators with operational visibility, patient flow governance, and strict access control.
+
+| Operational Dashboard | Role & Permission Governance (RBAC) |
+| :---: | :---: |
+| ![Admin Dashboard](docs/images/admin-dashboard.webp) | ![Admin Role Management](docs/images/admin-role-management.webp) |
+| *Real-time clinical control tower with active metrics, daily appointment tracking, and role breakdown.* | *Fine-grained RBAC matrix managing 130+ system permissions across clinical and administrative domains.* |
+
+| Centralized User & Practitioner Management |
+| :---: |
+| ![Admin User Management](docs/images/admin-user-management.webp) |
+| *System user directory with lifecycle controls (lock/unlock, activation, and role assignments).* |
+
+---
+
+### 2. Doctor Experience
+
+The Doctor Portal streamlines clinical consultation schedules, appointment processing, and clinical record analysis with integrated AI assistance.
+
+| Clinical Dashboard & Queue | AI-Assisted Medical Record Summary |
+| :---: | :---: |
+| ![Doctor Dashboard](docs/images/doctor-dashboard.webp) | ![Doctor Medical Summary](docs/images/doctor-medical-summary.webp) |
+| *Daily clinical workspace tracking consultation volume, appointment statuses, and pending patient actions.* | *AI clinical summary tool parsing multi-page documents/PDFs with mandatory verification safeguards.* |
+
+---
+
+### 3. Patient Experience
+
+The Patient Portal provides an intuitive, accessible experience for discovering verified medical specialists, booking appointments, and managing lifelong family health records.
+
+| Portal Landing Page | Specialist Discovery & Booking |
+| :---: | :---: |
+| ![Patient Home](docs/images/patient-home.webp) | ![Patient Booking](docs/images/patient-booking.webp) |
+| *Modern landing page with clear care pathways, specialist discovery, and verified practitioner credentials.* | *Multi-criteria doctor search with real-time availability, experience filters, and 10-second booking.* |
+
+| Personal Health Dashboard |
+| :---: |
+| ![Patient Dashboard](docs/images/patient-dashboard.webp) |
+| *Unified patient dashboard organizing upcoming appointments, linked family members, and medical profiles.* |
+
 ## Technology Stack
 
 | Service | Main technologies |
@@ -25,7 +70,7 @@ LifeHealth is a multi-service healthcare platform for discovering doctors, booki
 Each service is independent (own `package.json`, own dependencies) and communicates over HTTP/WebSocket — there is no shared workspace tooling.
 
 - **Backend (NestJS)** — feature modules live under `src/modules/<feature>/`, entities are centralized in `src/entities/`, and TypeORM migrations live in `src/database/migrations/`. Every request passes through cookie-based JWT auth (Passport strategies + Google OAuth), a custom RBAC layer (`@Permissions('domain:action')` decorators enforced by `PermissionsGuard`, resolved against `role → role_permission → permissions`), and a global interceptor chain that wraps every response as `{ statusCode, success, data, error }`. Real-time messaging/notifications go through a Socket.IO gateway; background jobs (mail, notifications, uploads) run on BullMQ; Redis backs both caching and queues.
-- **Frontend & Admin (React 19 + Vite)** — `admin/` mirrors `frontend/`'s architecture and structure (the workspace for doctors/administrators vs. the patient-facing portal). Both enforce a strict one-way data flow: `component/page → hook (TanStack Query) → api module → shared axios instance`, with Zustand reserved for client-only UI state and server data always living in the Query cache. `frontend/` centralizes react-hook-form + zod validation in `src/schemas/<domain>.schema.ts` and shares a common loading/error/empty-state UI pattern in `src/components/notification/` (`StateCard`, `ErrorState`, `NotFoundResult`); `admin/` doesn't have these yet but should adopt the same conventions as it converges on `frontend/`'s patterns.
+- **Frontend & Admin (React 19 + Vite)** — `admin/` mirrors `frontend/`'s architecture and structure (the workspace for doctors/administrators vs. the patient-facing portal). Both enforce a strict one-way data flow: `component/page → hook (TanStack Query) → api module → shared axios instance`, with Zustand reserved for client-only UI state and server data always living in the Query cache. `frontend/` centralizes react-hook-form + zod validation in `src/schemas/<domain>.schema.ts` and shares a common loading/error/empty-state UI pattern in `src/components/notification/` (`StateCard`, `ErrorState`, `NotFoundResult`). `admin/` has its own equivalent shared components under `src/components/app/` (`EmptyState.tsx`, `ErrorState.tsx`, `LoadingState.tsx`) with different naming than `frontend/`'s — reuse those in `admin/` rather than the `frontend/` ones. `admin/` still doesn't have a `src/schemas/` zod-validation folder.
 - **Chatbot (Express + LangChain/LangGraph)** — conversational flows (booking, diagnosis, report generation, health roadmap, medical-record summary) are LangGraph state graphs composed from tools for RAG lookup (Qdrant-backed), SQL Q&A over read-only database views, booking, OCR, and PDF report generation.
 
 ## Repository Layout
@@ -145,9 +190,12 @@ npm --prefix backend run build
 npm --prefix backend run lint
 npm --prefix backend run test
 npm --prefix backend run test:cov
+
+# Patient app end-to-end tests (Playwright)
+npm --prefix frontend run test:e2e
 ```
 
-Backend unit tests use Jest and follow the `*.spec.ts` naming convention. The frontend, admin, and chatbot packages currently do not define automated test scripts.
+Backend unit tests use Jest and follow the `*.spec.ts` naming convention. `frontend/` has Playwright end-to-end specs under `frontend/e2e/` (run via `test:e2e`, or `test:e2e:ui` for the interactive UI runner) — `admin/` and `chatbot/` still do not define any automated test scripts.
 
 ## Database Migrations
 

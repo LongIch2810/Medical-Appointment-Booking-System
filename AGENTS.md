@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-LifeHealth has four TypeScript services. `frontend/` is the patient React/Vite app; `admin/` is the doctor and administrator app. `backend/` is the NestJS API, with features in `src/modules/` and persistence in `src/entities/` and `src/database/`. `chatbot/src/` contains Express/LangChain agents, RAG, routes, and tools. Never edit `dist/`, `dist_old*/`, or dependency directories.
+LifeHealth has four TypeScript services. `frontend/` is the patient React/Vite app; `admin/` is the doctor and administrator app. `backend/` is the NestJS API, with features in `src/modules/` and persistence in `src/entities/` and `src/database/`. `chatbot/src/` contains Express/LangChain agents, RAG, routes, and tools. Patient UI work must follow `frontend/AGENTS.md` and `frontend/DESIGN.md`; doctor/admin UI work must follow `admin/AGENTS.md` and `admin/DESIGN.md`. Never edit `dist/`, `dist_old*/`, or dependency directories.
 
 ## Mandatory Codebase Discovery Rule
 
@@ -21,16 +21,20 @@ Run from the repository root:
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation and TypeScript. Backend Prettier requires single quotes and trailing commas; maintained apps use ESLint. Use PascalCase for components/pages and types, `useXxx` for hooks, and camelCase for functions and variables. NestJS files use `.controller.ts`, `.service.ts`, `.dto.ts`, and `.entity.ts` suffixes. Reuse existing UI primitives; in `frontend/`, shared react-hook-form validation lives in `src/schemas/<domain>.schema.ts` (zod) and shared loading/error/empty-state UI lives in `src/components/notification/` (`StateCard`, `ErrorState`, `NotFoundResult`) — extend these instead of duplicating validation rules or state markup per page (`admin/` doesn't have these yet but should converge on them).
+Use two-space indentation and TypeScript. Backend Prettier requires single quotes and trailing commas; maintained apps use ESLint. Use PascalCase for components/pages and types, `useXxx` for hooks, and camelCase for functions and variables. NestJS files use `.controller.ts`, `.service.ts`, `.dto.ts`, and `.entity.ts` suffixes. Reuse existing UI primitives; in `frontend/`, shared react-hook-form validation lives in `src/schemas/<domain>.schema.ts` (zod) and shared loading/error/empty-state UI lives in `src/components/notification/` (`StateCard`, `ErrorState`, `NotFoundResult`) — extend these instead of duplicating validation rules or state markup per page. `admin/` has its own parallel loading/error/empty-state components under `src/components/app/` (`EmptyState.tsx`, `ErrorState.tsx`, `LoadingState.tsx`) — reuse those in `admin/` — but still has no `src/schemas/` folder for zod validation.
 
 ## Testing Guidelines
 
-Backend tests use Jest and Nest testing utilities. Co-locate `*.spec.ts` files with source and run `npm --prefix backend run test:cov`. The clients and chatbot have no test runner, so lint and build affected clients. The e2e script requires the currently absent `backend/test/jest-e2e.json`.
+Backend tests use Jest and Nest testing utilities. Co-locate `*.spec.ts` files with source and run `npm --prefix backend run test:cov`. `frontend/` has Playwright end-to-end specs under `frontend/e2e/` — run with `npm --prefix frontend run test:e2e` (or `test:e2e:ui` for the interactive runner). `admin/` and `chatbot/` still have no test runner, so lint and build affected clients. The backend e2e script requires the currently absent `backend/test/jest-e2e.json`.
 
 ## Commit & Pull Request Guidelines
 
 Use existing Conventional Commit prefixes: `feat:`, `fix:`, `refactor:`, or `chore:`, optionally scoped, as in `feat(admin): add role editor`. Keep subjects imperative. PRs should identify affected services, link issues, list verification, note migrations or environment changes, and include screenshots for UI work.
 
+## Documentation & Screenshots
+
+Keep product screenshots used by the root `README.md` under `docs/images/` with descriptive kebab-case names. Capture real Admin, Doctor, and Patient screens with demo or anonymized data only; never expose credentials, tokens, API keys, or real medical records. Optimize images for repository use, reference them with relative paths, and verify links render correctly after moving or renaming an asset.
+
 ## Security & Additional Instructions
 
-Copy `.env.example` locally; never commit secrets. Keep migrations reviewable. Within `admin/`, also follow `admin/AGENTS.md` without weakening the mandatory discovery rule.
+Copy `.env.example` locally; never commit secrets. Keep migrations reviewable. Nested `AGENTS.md` and `DESIGN.md` files add service-specific requirements without weakening the mandatory discovery rule.

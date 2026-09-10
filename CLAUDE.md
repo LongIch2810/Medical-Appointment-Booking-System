@@ -26,7 +26,7 @@ Claude Code MUST use Codebase Memory MCP before searching source code directly. 
 - `npm run build` — `nest build --builder swc`
 - `npm run lint` — eslint --fix
 - `npm run test` / `npm run test:cov` — Jest unit tests (spec files colocated under `src`, one Jest run per file: `npm run test -- path/to/file.spec.ts`)
-- `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`)
+- `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`) — note: `backend/test/jest-e2e.json` does not currently exist in this repo, so this script fails until that config is added
 - `npm run migration:run` / `migration:revert` / `migration:generate` / `migration:create` — TypeORM CLI against `src/database/data-source.ts`
 
 ### frontend/ and admin/ (from each directory)
@@ -34,7 +34,8 @@ Claude Code MUST use Codebase Memory MCP before searching source code directly. 
 - `npm run build` — `tsc -b && vite build`
 - `npm run lint` — eslint
 - `npm run preview`
-- No test runner is configured in either app; validate changes with `lint` + `build` + manual checks in `dev`.
+- `admin/` has no test runner configured; validate changes with `lint` + `build` + manual checks in `dev`.
+- `frontend/` has Playwright end-to-end specs under `frontend/e2e/` — `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive runner), config in `frontend/playwright.config.ts`.
 
 ### chatbot/ (from `chatbot/`)
 - `npm run dev` — nodemon (see `chatbot/nodemon.json`)
@@ -73,7 +74,7 @@ component / page  →  hook (src/hooks/, TanStack Query)  →  api module (src/a
 - `src/types/interface/<resource>.interface.ts` — request/response types plus shared `ApiResponse<T>` / `ApiError`.
 - `src/schemas/<domain>.schema.ts` — shared zod validation schemas paired with react-hook-form (`zodResolver`); extract a schema here whenever more than one form needs the same validation rules instead of redefining them inline per page. Established in `frontend/`; `admin/` doesn't have this folder yet but should follow the same convention when it needs cross-form validation reuse.
 
-Pages must render loading / error / empty states for every async view (see `admin/docs/rules.md` §7) and disable submit controls while a mutation is pending. `frontend/` has a shared visual pattern for this in `src/components/notification/` — `StateCard.tsx` is the generic building block, with `ErrorState.tsx` (retry action) and `NotFoundResult.tsx` (empty/no-results, reset action) as ready-made wrappers around it; reuse these instead of hand-rolling ad hoc loading/error markup.
+Pages must render loading / error / empty states for every async view (see `admin/docs/rules.md` §7) and disable submit controls while a mutation is pending. `frontend/` has a shared visual pattern for this in `src/components/notification/` — `StateCard.tsx` is the generic building block, with `ErrorState.tsx` (retry action) and `NotFoundResult.tsx` (empty/no-results, reset action) as ready-made wrappers around it. `admin/` has its own parallel (differently-named) set in `src/components/app/`: `LoadingState.tsx`, `ErrorState.tsx` (retry action), and `EmptyState.tsx` (title/description, no built-in reset action) — reuse the set that matches whichever app you're in instead of hand-rolling ad hoc loading/error markup.
 
 `admin/` currently has `src/services/mockApi.ts` powering screens not yet wired to the backend — do not remove or relocate it; migrate one page at a time following `admin/docs/workflow.md` §7.10.
 
@@ -88,4 +89,6 @@ Express server (`src/server.ts`) exposing routes in `src/routes/` → `src/contr
 - Naming: kebab-case folders/files, PascalCase React components, `useXxx` hooks, camelCase functions/variables with verb prefixes for actions, `isX/hasX/canX/shouldX` booleans, `UPPER_SNAKE_CASE` true constants, `xxxApi.ts` for API modules, `*.interface.ts` for shared types.
 - Reuse existing components/hooks/services before adding new ones; do not introduce a new state, HTTP, or test library without explicit approval.
 - Do not delete or rewrite existing code/architecture without approval — if something looks obsolete, flag it instead of removing it.
-- `admin/` has its own deeper contributor docs — read `admin/AGENTS.md`, `admin/DESIGN.md`, `admin/docs/rules.md`, and `admin/docs/workflow.md` before making non-trivial changes there (they cover full RBAC-in-UI, query-key, and mutation conventions with worked examples). `frontend/AGENTS.md` documents the equivalent conventions for the patient app.
+- `admin/` has its own deeper contributor docs — read `admin/AGENTS.md`, `admin/DESIGN.md`, `admin/docs/rules.md`, and `admin/docs/workflow.md` before making non-trivial changes there (they cover full RBAC-in-UI, query-key, and mutation conventions with worked examples).
+- Before making non-trivial Patient UI changes, read both `frontend/AGENTS.md` and `frontend/DESIGN.md`; the design guide governs visual tokens, responsive behavior, accessibility, loading states, and component composition for the patient-facing app.
+- Store screenshots referenced by the root `README.md` in `docs/images/` using descriptive kebab-case filenames and relative Markdown paths. Screenshots must come from the real Admin, Doctor, or Patient UI, use demo/anonymized data, omit browser secrets and credentials, and be optimized before committing.
