@@ -18,19 +18,19 @@ import { ChatOpenAI } from "@langchain/openai";
 
 export function getChatModel(opts?: { model?: string; temperature?: number }) {
   return new ChatOpenAI({
-    apiKey: process.env.LLM_API_KEY,
-    model: opts?.model ?? process.env.LLM_MODEL,
+    apiKey: process.env.OPENAI_API_KEY,
+    model: opts?.model ?? process.env.OPENAI_MODEL,
     temperature: opts?.temperature ?? 0,
-    configuration: { baseURL: process.env.LLM_BASE_URL },
+    configuration: { baseURL: process.env.OPENAI_BASE_URL },
   });
 }
 
 export function getVisionModel(opts?: { temperature?: number }) {
   return new ChatOpenAI({
-    apiKey: process.env.LLM_API_KEY,
-    model: process.env.LLM_VISION_MODEL,
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_VISION_MODEL,
     temperature: opts?.temperature ?? 0,
-    configuration: { baseURL: process.env.LLM_BASE_URL },
+    configuration: { baseURL: process.env.OPENAI_BASE_URL },
   });
 }
 ```
@@ -41,10 +41,10 @@ export function getVisionModel(opts?: { temperature?: number }) {
 
 | New | Replaces | Purpose |
 | --- | --- | --- |
-| `LLM_API_KEY` | `GOOGLE_API_KEY` | Provider API key |
-| `LLM_BASE_URL` | (new) | OpenAI-compatible base URL, e.g. `https://openrouter.ai/api/v1` |
-| `LLM_MODEL` | `GEMINI_MODEL` | Default reasoning/text model id (provider-specific format, e.g. OpenRouter's `google/gemini-2.5-pro`) |
-| `LLM_VISION_MODEL` | `OCR_MODEL` | Vision-capable model, used only by `ocr.tool.ts` |
+| `OPENAI_API_KEY` | `GOOGLE_API_KEY` | Provider API key |
+| `OPENAI_BASE_URL` | (new) | OpenAI-compatible base URL, e.g. `https://openrouter.ai/api/v1` |
+| `OPENAI_MODEL` | `GEMINI_MODEL` | Default reasoning/text model id (provider-specific format, e.g. OpenRouter's `google/gemini-2.5-pro`) |
+| `OPENAI_VISION_MODEL` | `OCR_MODEL` | Vision-capable model, used only by `ocr.tool.ts` |
 
 `SUMMARY_MODEL` (currently dead — never set, always falls back to a hardcoded string) is dropped as a distinct env var; `summary_medical_record.tool.ts` moves to the same pattern as the other three hardcoded-string call sites (see below): pass its specific model id as a `model` override to `getChatModel(...)` if it genuinely needs a different model than the shared default, otherwise just use the shared default like most call sites already effectively do.
 
@@ -60,10 +60,10 @@ Files removing their now-unused `import { ChatGoogleGenerativeAI } from "@langch
 
 ### 4. Out of scope
 
-- `@langchain/google-genai` and `@langchain/ollama` remain installed dependencies (untouched) — not part of this change; they're simply unused by the new factory.
+- `@langchain/google-genai` remains an installed dependency (untouched) — not part of this change; it is simply unused by the new factory.
 - No `LLM_PROVIDER`-style branching between multiple SDKs (rejected approach — see prior discussion). If a future provider genuinely isn't OpenAI-compatible, that's a separate design decision at that time.
 - No change to `chatbot/src/configs/vectordb.ts` (Qdrant) or any non-LLM configuration.
-- No change to embeddings: `chatbot/src/configs/vectordb.ts` uses `OllamaEmbeddings` (`@langchain/ollama`), unrelated to `GOOGLE_API_KEY`/`ChatGoogleGenerativeAI` and untouched by this change.
+- No embedding changes were included in this provider-agnostic chat migration. Embeddings were migrated separately to OpenAI afterward.
 
 ## Testing
 

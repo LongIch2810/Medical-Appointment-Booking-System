@@ -74,20 +74,24 @@ const DialogChooseExperience = ({ className = "" }: { className: string }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <FilterItem
-          label="Năm kinh nghiệm"
-          activeValue={activeValue}
-          icon={<CalendarCheck size={16} />}
-          className={cn("w-full md:w-auto", className)}
-        />
+      <DialogTrigger asChild>
+        <div>
+          <FilterItem
+            label="Năm kinh nghiệm"
+            activeValue={activeValue}
+            icon={<CalendarCheck size={16} />}
+            className={cn("w-full md:w-auto", className)}
+          />
+        </div>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Chọn năm kinh nghiệm</DialogTitle>
-        </DialogHeader>
-        <Command>
-          <CommandList>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
+          <DialogHeader>
+            <DialogTitle>Chọn năm kinh nghiệm</DialogTitle>
+          </DialogHeader>
+        </div>
+        <Command className="flex-1 min-h-0">
+          <CommandList className="max-h-[50dvh] sm:max-h-[350px] overflow-y-auto overscroll-contain">
             <CommandGroup>
               {items.map((item) => (
                 <CommandItem

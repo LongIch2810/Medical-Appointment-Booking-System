@@ -72,80 +72,87 @@ const AlertDialogConfirmBook = ({
 
   return (
     <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
-      <AlertDialogContent className="max-w-md rounded-2xl shadow-lg bg-white dark:bg-neutral-900">
-        <AlertDialogHeader className="space-y-3">
-          <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-full bg-primary/10 text-primary">
-            <CalendarDays size={28} />
+      <AlertDialogContent className="max-w-md p-0 gap-0 rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800">
+        <AlertDialogHeader className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-neutral-800 text-center">
+          <div className="flex items-center justify-center w-11 h-11 mx-auto rounded-full bg-primary/10 text-primary">
+            <CalendarDays size={24} />
           </div>
-          <AlertDialogTitle className="text-center text-xl font-bold">
+          <AlertDialogTitle className="text-center text-lg sm:text-xl font-bold mt-2">
             Xác nhận đặt lịch khám
           </AlertDialogTitle>
-
-          <AlertDialogDescription asChild>
-            <div className="text-center text-gray-600 dark:text-gray-300 space-y-2">
-              <span>
-                Bạn có chắc chắn muốn đặt lịch vào ngày{" "}
-                <strong className="text-primary">
-                  {formatDate(selectedDate, "vi-VN")}
-                </strong>{" "}
-                lúc{" "}
-                <strong className="text-primary">
-                  {tempTime?.start_time} - {tempTime?.end_time}
-                </strong>
-                ?
-              </span>
-
-              <div className="flex flex-col items-center gap-1 mt-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <Stethoscope size={18} className="text-primary" />
-                  Bác sĩ: <strong>{doctorName}</strong>
-                </div>
-                <div className="flex items-center gap-2">
-                  <User size={18} className="text-primary" />
-                  Chuyên khoa: <strong>{specialtyName}</strong>
-                </div>
-                <label className="w-full max-w-xs text-left font-medium text-gray-700 dark:text-gray-200">
-                  Đặt lịch khám cho
-                  <select
-                    value={selectedRelativeId}
-                    disabled={isLoadingRelatives || isPending}
-                    onChange={(event) =>
-                      setSelectedRelativeId(Number(event.target.value))
-                    }
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
-                  >
-                    <option value={0}>
-                      {isLoadingRelatives
-                        ? "Đang tải người thân..."
-                        : "Chọn người thân"}
-                    </option>
-                    {relatives.map((relative) => (
-                      <option key={relative.id} value={relative.id}>
-                        {relative.fullname || "Chưa có tên"} -{" "}
-                        {relative.relationship?.relationship_name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {!isLoadingRelatives && relatives.length === 0 && (
-                  <p className="w-full max-w-xs text-left text-sm text-error">
-                    Bạn chưa có hồ sơ người thân nào.{" "}
-                    <Link
-                      to="/patient/relatives"
-                      className="font-medium underline hover:text-primary"
-                    >
-                      Thêm người thân
-                    </Link>{" "}
-                    trước khi đặt lịch.
-                  </p>
-                )}
-              </div>
-            </div>
+          <AlertDialogDescription className="sr-only">
+            Xác nhận chi tiết thời gian và hồ sơ người bệnh
           </AlertDialogDescription>
         </AlertDialogHeader>
 
-        <AlertDialogFooter className="flex justify-between gap-4 mt-6">
-          <AlertDialogCancel className="py-2 rounded-xl bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:hover:bg-neutral-700">
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm scrollbar-soft">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center leading-relaxed">
+            Bạn có chắc chắn muốn đặt lịch vào ngày{" "}
+            <strong className="text-primary font-bold">
+              {formatDate(selectedDate, "vi-VN")}
+            </strong>{" "}
+            lúc{" "}
+            <strong className="text-primary font-bold">
+              {tempTime?.start_time} - {tempTime?.end_time}
+            </strong>
+            ?
+          </div>
+
+          <div className="rounded-xl border border-slate-100 dark:border-neutral-800 bg-slate-50/70 dark:bg-neutral-800/50 p-3.5 space-y-2 text-xs sm:text-sm">
+            <div className="flex items-center gap-2">
+              <Stethoscope size={16} className="text-primary shrink-0" />
+              <span className="text-slate-500 dark:text-neutral-400">Bác sĩ:</span>
+              <strong className="text-slate-800 dark:text-neutral-100 font-semibold">{doctorName}</strong>
+            </div>
+            <div className="flex items-center gap-2">
+              <User size={16} className="text-primary shrink-0" />
+              <span className="text-slate-500 dark:text-neutral-400">Chuyên khoa:</span>
+              <strong className="text-slate-800 dark:text-neutral-100 font-semibold">{specialtyName}</strong>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
+              Đặt lịch khám cho bệnh nhân
+            </label>
+            <select
+              value={selectedRelativeId}
+              disabled={isLoadingRelatives || isPending}
+              onChange={(event) =>
+                setSelectedRelativeId(Number(event.target.value))
+              }
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100"
+            >
+              <option value={0}>
+                {isLoadingRelatives
+                  ? "Đang tải danh sách người thân..."
+                  : "Chọn người thân để khám"}
+              </option>
+              {relatives.map((relative) => (
+                <option key={relative.id} value={relative.id}>
+                  {relative.fullname || "Chưa có tên"} -{" "}
+                  {relative.relationship?.relationship_name}
+                </option>
+              ))}
+            </select>
+
+            {!isLoadingRelatives && relatives.length === 0 && (
+              <p className="text-xs text-error mt-1">
+                Bạn chưa có hồ sơ người thân nào.{" "}
+                <Link
+                  to="/patient/relatives"
+                  className="font-medium underline hover:text-primary"
+                >
+                  Thêm người thân
+                </Link>{" "}
+                trước khi đặt lịch.
+              </p>
+            )}
+          </div>
+        </div>
+
+        <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-neutral-800 flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-neutral-900/80">
+          <AlertDialogCancel className="w-full sm:w-auto rounded-xl">
             Hủy
           </AlertDialogCancel>
           <AlertDialogAction
@@ -156,9 +163,9 @@ const AlertDialogConfirmBook = ({
               !selectedRelativeId
             }
             onClick={handleBook}
-            className="py-2 rounded-xl bg-primary text-white hover:bg-white hover:text-primary"
+            className="w-full sm:w-auto rounded-xl font-bold !bg-primary text-white hover:!bg-primary/90"
           >
-            {isPending ? <Loading /> : "Xác nhận"}
+            {isPending ? <Loading /> : "Xác nhận đặt lịch"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

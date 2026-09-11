@@ -14,6 +14,7 @@ import { generatePdfReport } from "../utils/generatePdfReport.js";
 import { renderChartToImage } from "../utils/renderChartToImage.js";
 import { getChatModel } from "../configs/llm.js";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { logSafeError } from "../utils/safeLog.js";
 
 type ChartConfig = z.infer<typeof ChartSchema>;
 type Report = z.infer<typeof ReportSchema>;
@@ -59,16 +60,28 @@ const CreateReportState = Annotation.Root({
   } | null>(),
 });
 
+// retries: LLM proxy nội bộ đôi khi không gọi function trong lượt
+// withStructuredOutput (model trả lời rỗng, không phải lỗi cứng) — đã khảo
+// sát thực nghiệm: cùng input, tỉ lệ thành công ~1/3 mỗi lượt gọi. Thử lại
+// vài lần trước khi coi là thất bại thật sự để tránh báo lỗi oan.
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
-  args: Record<string, any>
+  args: Record<string, any>,
+  retries = 4,
 ) {
-  const result = await tool.invoke(args);
+  let result: any;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    result = await tool.invoke(args);
+    if (result) return result;
+    console.warn(
+      `⚠️ [runTool] ${tool.name} trả về rỗng, thử lại (${attempt + 1}/${retries + 1})...`,
+    );
+  }
   return result;
 }
 
 async function LLMGenerateErrorAnswerNode(
-  state: typeof CreateReportState.State
+  state: typeof CreateReportState.State,
 ) {
   try {
     const errorSchema = z.object({
@@ -78,7 +91,7 @@ async function LLMGenerateErrorAnswerNode(
       error_detail: z
         .string()
         .describe(
-          "Thông điệp lỗi thân thiện và dễ hiểu dành cho người dùng cuối, bằng tiếng Việt."
+          "Thông điệp lỗi thân thiện và dễ hiểu dành cho người dùng cuối, bằng tiếng Việt.",
         ),
     });
     const errors = [
@@ -113,8 +126,11 @@ Nhiệm vụ:
         "Dưới đây là danh sách lỗi cần diễn giải:\n\n{errors}\n\nHãy trả về lời nhắn thân thiện cho người dùng.",
       ],
     ]);
-    const llm = getChatModel({ temperature: 0.3 });
-    const structuredModel = llm.withStructuredOutput(errorSchema);
+    const llm = getChatModel({ profile: "fast", temperature: 0.3 });
+    // method: "functionCalling" — xem giải thích ở generate_chat_config.tool.ts.
+    const structuredModel = llm.withStructuredOutput(errorSchema, {
+      method: "functionCalling",
+    });
 
     const pipeline = promptTemplate.pipe(structuredModel);
     const res = await pipeline.invoke({
@@ -137,6 +153,35 @@ Nhiệm vụ:
           "Hệ thống đang gặp sự cố khi tạo thông báo lỗi. Vui lòng thử lại sau.",
       },
     };
+  }
+}
+
+// PostgreSQL trả numeric/bigint qua node-postgres dưới dạng chuỗi (giữ độ
+// chính xác), nên QuerySqlTool serialize JSON ra các field như
+// "total_appointments": "4" thay vì số thật. Đã khảo sát thực nghiệm: dữ
+// liệu numeric-dạng-chuỗi khiến LLM proxy nội bộ gần như không bao giờ gọi
+// được function trong withStructuredOutput (tỉ lệ thành công ~0%), trong
+// khi cùng dữ liệu với số thật (JS number) thành công ổn định — nên chuẩn
+// hoá lại chuỗi số về số thật trước khi đưa cho các bước LLM tiếp theo.
+function normalizeNumericStrings(jsonString: string): string {
+  try {
+    const parsed = JSON.parse(jsonString);
+    const NUMERIC_STRING = /^-?\d+(\.\d+)?$/;
+    const normalizeValue = (value: unknown): unknown => {
+      if (typeof value === "string" && NUMERIC_STRING.test(value)) {
+        return Number(value);
+      }
+      if (Array.isArray(value)) return value.map(normalizeValue);
+      if (value && typeof value === "object") {
+        return Object.fromEntries(
+          Object.entries(value).map(([k, v]) => [k, normalizeValue(v)]),
+        );
+      }
+      return value;
+    };
+    return JSON.stringify(normalizeValue(parsed));
+  } catch {
+    return jsonString;
   }
 }
 
@@ -171,9 +216,14 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
     }
 
     console.log("✅ [analyze_data_node] Data analyzed successfully.");
-    return { result: res, nextNodeAnalyzeData: "generate_chart_config_node" };
+    const normalizedResult =
+      typeof res === "string" ? normalizeNumericStrings(res) : res;
+    return {
+      result: normalizedResult,
+      nextNodeAnalyzeData: "generate_chart_config_node",
+    };
   } catch (error: any) {
-    console.error("🔥 [analyze_data_node] Error:", error);
+    logSafeError("[analyze_data_node] failed", error);
     return {
       errorAnalyzeData: {
         status: 500,
@@ -204,7 +254,7 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
       {
         question: state.question,
         data_json: state.result,
-      }
+      },
     );
 
     if (!res) {
@@ -221,7 +271,7 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
     console.log("✅ [generate_chart_config_node] Chart config created.");
     return { chartConfig: res, nextNodeChartConfig: "generate_content_node" };
   } catch (error: any) {
-    console.error("🔥 [generate_chart_config_node] Error:", error);
+    logSafeError("[generate_chart_config_node] failed", error);
     return {
       errorChartConfig: {
         status: 500,
@@ -252,7 +302,7 @@ async function generateContentNode(state: typeof CreateReportState.State) {
       {
         question: state.question,
         data_json: state.result,
-      }
+      },
     );
 
     if (!res) {
@@ -269,7 +319,7 @@ async function generateContentNode(state: typeof CreateReportState.State) {
     console.log("✅ [generate_content_node] Report generated.");
     return { report: res, nextNodeReport: "create_file_pdf_node" };
   } catch (error: any) {
-    console.error("🔥 [generate_content_node] Error:", error);
+    logSafeError("[generate_content_node] failed", error);
     return {
       errorReport: {
         status: 500,
@@ -308,7 +358,7 @@ async function CreateFilePdfNode(state: typeof CreateReportState.State) {
       },
     };
   } catch (error: any) {
-    console.error("🔥 [create_file_pdf_node] Error:", error);
+    logSafeError("[create_file_pdf_node] failed", error);
     return {
       errorPdf: {
         status: 500,
@@ -331,20 +381,20 @@ const workflow = new StateGraph(CreateReportState)
 
   .addConditionalEdges(
     "analyze_data_node",
-    (state) => state.nextNodeAnalyzeData || "__end__"
+    (state) => state.nextNodeAnalyzeData || "__end__",
   )
   .addConditionalEdges(
     "generate_chart_config_node",
-    (state) => state.nextNodeChartConfig || "__end__"
+    (state) => state.nextNodeChartConfig || "__end__",
   )
   .addConditionalEdges(
     "generate_content_node",
-    (state) => state.nextNodeReport || "__end__"
+    (state) => state.nextNodeReport || "__end__",
   )
 
   .addConditionalEdges(
     "create_file_pdf_node",
-    (state) => state.nextNodePdf || "__end__"
+    (state) => state.nextNodePdf || "__end__",
   )
 
   .addEdge("llm_generate_error_answer_node", "__end__");

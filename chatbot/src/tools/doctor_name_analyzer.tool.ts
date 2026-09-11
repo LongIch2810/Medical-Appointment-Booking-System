@@ -25,7 +25,7 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ["human", "Phân tích thông tin tên bác sĩ từ câu sau: {text_input}"],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "fast", temperature: 0 });
 
 const structuredModel = model.withStructuredOutput(doctorSchema);
 

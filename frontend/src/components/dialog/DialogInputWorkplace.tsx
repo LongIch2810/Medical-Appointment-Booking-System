@@ -5,7 +5,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -43,42 +42,47 @@ const DialogInputWorkplace = ({ className = "" }: { className: string }) => {
       }}
     >
       {/* Nút mở dialog */}
-      <DialogTrigger>
-        <FilterItem
-          label="Nơi làm việc"
-          activeValue={workplaceInput || undefined}
-          icon={<Briefcase size={16} />}
-          className={cn("w-full md:w-auto", className)}
-        />
+      <DialogTrigger asChild>
+        <div>
+          <FilterItem
+            label="Nơi làm việc"
+            activeValue={workplaceInput || undefined}
+            icon={<Briefcase size={16} />}
+            className={cn("w-full md:w-auto", className)}
+          />
+        </div>
       </DialogTrigger>
 
       {/* Nội dung dialog */}
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Nhập nơi làm việc</DialogTitle>
-          <DialogDescription>
-            Vui lòng nhập tên nơi làm việc của bác sĩ để hệ thống lọc danh sách
-            phù hợp. Ví dụ: "Bệnh viện Bạch Mai" hoặc "Phòng khám Hoàn Mỹ".Nhập
-            xong hãy xác nhận để chúng tôi ghi lại kết quả.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
+          <DialogHeader>
+            <DialogTitle>Nhập nơi làm việc</DialogTitle>
+            <DialogDescription className="mt-1.5 text-xs sm:text-sm text-slate-500">
+              Nhập tên nơi làm việc của bác sĩ (Ví dụ: &quot;Bệnh viện Bạch Mai&quot; hoặc &quot;Phòng khám Hoàn Mỹ&quot;) để lọc danh sách.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
         {/* Input nơi làm việc */}
-        <Input
-          placeholder="Nhập nơi làm việc ..."
-          value={tempValue}
-          onChange={(e) => setTempValue(e.target.value)}
-        />
+        <div className="p-5">
+          <Input
+            placeholder="Nhập nơi làm việc ..."
+            value={tempValue}
+            onChange={(e) => setTempValue(e.target.value)}
+            className="rounded-xl"
+          />
+        </div>
 
         {/* Footer với nút hành động */}
-        <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
+        <div className="shrink-0 p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+          <Button variant="outline" onClick={handleClose} className="rounded-xl">
             Đóng
           </Button>
-          <Button onClick={handleSave} disabled={!tempValue.trim()}>
+          <Button onClick={handleSave} disabled={!tempValue.trim()} className="rounded-xl font-bold !bg-primary text-white">
             Xác nhận
           </Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );

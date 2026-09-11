@@ -43,7 +43,7 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ["human", "Dưới đây là danh sách bệnh dự đoán:\n{diagnosisArr_json}"],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "quality", temperature: 0 });
 
 const structuredModel = model.withStructuredOutput(suggestionSchema);
 

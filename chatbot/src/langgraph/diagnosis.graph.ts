@@ -10,7 +10,7 @@ import { GetHealthProfileTool } from "../tools/get_health_profile.tool.js";
 import { z } from "zod";
 dotenv.config();
 
-const llm = getChatModel({ temperature: 0.3 });
+const llm = getChatModel({ profile: "quality", temperature: 0.3 });
 
 const AiDiagnosisState = Annotation.Root({
   text_input: Annotation<string>(),
@@ -103,14 +103,14 @@ const AiDiagnosisState = Annotation.Root({
 
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
-  args: Record<string, any>
+  args: Record<string, any>,
 ) {
   const result = await tool.invoke(args);
   return result;
 }
 
 async function LLMGenerateErrorAnswerNode(
-  state: typeof AiDiagnosisState.State
+  state: typeof AiDiagnosisState.State,
 ) {
   try {
     const errorSchema = z.object({
@@ -120,7 +120,7 @@ async function LLMGenerateErrorAnswerNode(
       error_detail: z
         .string()
         .describe(
-          "Thông điệp lỗi thân thiện và dễ hiểu dành cho người dùng cuối, bằng tiếng Việt."
+          "Thông điệp lỗi thân thiện và dễ hiểu dành cho người dùng cuối, bằng tiếng Việt.",
         ),
     });
 
@@ -158,7 +158,7 @@ Nhiệm vụ:
         "Dưới đây là danh sách lỗi cần diễn giải:\n\n{errors}\n\nHãy trả về lời nhắn thân thiện cho người dùng.",
       ],
     ]);
-    const llm = getChatModel({ temperature: 0.3 });
+    const llm = getChatModel({ profile: "fast", temperature: 0.3 });
     const structuredModel = llm.withStructuredOutput(errorSchema);
 
     const pipeline = promptTemplate.pipe(structuredModel);
@@ -266,7 +266,6 @@ async function AnalyzeSymptomsNode(state: typeof AiDiagnosisState.State) {
       };
     }
 
-    console.log("[Node] analyze_symptoms — output:", res);
     return { symptoms: res, nextNodeSymptoms: "diagnosis_node" };
   } catch (error: any) {
     return {

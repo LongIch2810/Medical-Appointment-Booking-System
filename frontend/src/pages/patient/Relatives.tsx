@@ -1,23 +1,48 @@
 import React, { useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Cake,
   HeartHandshake,
   Loader2,
   Pencil,
   Phone,
+  RotateCcw,
+  Sparkles,
   Trash2,
+  UserCheck,
   UserPlus,
   UsersRound,
   X,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import ErrorState from "@/components/notification/ErrorState";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import {
   useCreatePatientRelative,
   useDeletePatientRelative,
@@ -26,18 +51,13 @@ import {
   useUpdatePatientRelative,
 } from "@/hooks/usePatientPortalApi";
 import { cn } from "@/lib/utils";
+import {
+  relativeFormSchema,
+  type RelativeFormValues,
+} from "@/schemas/relative.schema";
 import type { Relative } from "@/types/interface/patient.interface";
 
-interface RelativesFormState {
-  id?: number;
-  fullname: string;
-  relationship_code: string;
-  dob: string;
-  gender: "true" | "false";
-  phone: string;
-}
-
-const defaultFormState: RelativesFormState = {
+const defaultFormState: RelativeFormValues = {
   fullname: "",
   relationship_code: "",
   dob: "",
@@ -45,12 +65,16 @@ const defaultFormState: RelativesFormState = {
   phone: "",
 };
 
-const toDateInputValue = (value: string | null | undefined) => {
+const toDateInputValue = (value: string | null | undefined): string => {
   if (!value) return "";
-  const parts = value.split("/");
+  if (/^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+  const separator = value.includes("/") ? "/" : "-";
+  const parts = value.split(separator);
   if (parts.length === 3) {
-    const [day, month, year] = parts;
-    return `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`;
+    const [first, second, third] = parts;
+    if (third?.length === 4) {
+      return `${third}-${second.padStart(2, "0")}-${first.padStart(2, "0")}`;
+    }
   }
   return value.slice(0, 10);
 };
@@ -59,60 +83,83 @@ const getInitial = (name?: string | null) =>
   (name ?? "").trim().charAt(0).toUpperCase() || "?";
 
 const Relatives: React.FC = () => {
-  const { data: relativesResponse, isLoading, isError } = usePatientRelatives({
+  const navigate = useNavigate();
+  const {
+    data: relativesResponse,
+    isLoading: isRelativesLoading,
+    isError: isRelativesError,
+    refetch: refetchRelatives,
+  } = usePatientRelatives({
     page: 1,
     limit: 50,
   });
-  const { data: relationshipsResponse } = useRelationships({
+
+  const {
+    data: relationshipsResponse,
+    isLoading: isRelationshipsLoading,
+  } = useRelationships({
     page: 1,
     limit: 50,
   });
+
   const createMutation = useCreatePatientRelative();
   const updateMutation = useUpdatePatientRelative();
   const deleteMutation = useDeletePatientRelative();
-  const [form, setForm] = useState<RelativesFormState>(defaultFormState);
+
+  const [editingRelativeId, setEditingRelativeId] = useState<number | null>(null);
+  const [deletingRelative, setDeletingRelative] = useState<Relative | null>(null);
 
   const relatives = relativesResponse?.data.relatives ?? [];
   const relationships = relationshipsResponse?.data.relationships ?? [];
-  const isEditing = useMemo(() => Boolean(form.id), [form.id]);
+  const isEditing = useMemo(() => editingRelativeId !== null, [editingRelativeId]);
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const handleChange = (key: keyof RelativesFormState, value: string) => {
-    setForm((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<RelativeFormValues>({
+    resolver: zodResolver(relativeFormSchema),
+    defaultValues: defaultFormState,
+  });
+
+  const handleResetForm = () => {
+    setEditingRelativeId(null);
+    reset(defaultFormState);
   };
 
-  const resetForm = () => {
-    setForm(defaultFormState);
+  const handleEdit = (relative: Relative) => {
+    setEditingRelativeId(relative.id);
+    setValue("id", relative.id);
+    setValue("fullname", relative.fullname ?? "");
+    setValue("relationship_code", relative.relationship.relationship_code);
+    setValue("dob", toDateInputValue(relative.dob));
+    setValue("gender", relative.gender ? "true" : "false");
+    setValue("phone", relative.phone ?? "");
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!form.fullname || !form.relationship_code || !form.dob) {
-      toast.error("Vui lòng nhập họ tên, mối quan hệ và ngày sinh.");
-      return;
-    }
-
-    const trimmedPhone = form.phone.trim();
+  const onSubmit = (values: RelativeFormValues) => {
+    const trimmedPhone = values.phone ? values.phone.trim() : "";
     const payload = {
-      fullname: form.fullname,
-      relationship_code: form.relationship_code,
-      dob: form.dob,
-      gender: form.gender === "true",
+      fullname: values.fullname.trim(),
+      relationship_code: values.relationship_code,
+      gender: values.gender === "true",
+      ...(values.dob ? { dob: values.dob } : {}),
       ...(trimmedPhone ? { phone: trimmedPhone } : {}),
     };
 
-    if (form.id) {
+    if (editingRelativeId) {
       updateMutation.mutate(
-        { relativeId: form.id, data: payload },
+        { relativeId: editingRelativeId, data: payload },
         {
           onSuccess: () => {
-            toast.success("Đã cập nhật thông tin người thân.");
-            resetForm();
+            toast.success("Đã cập nhật thông tin người thân thành công.");
+            handleResetForm();
           },
-          onError: () => toast.error("Không thể cập nhật người thân."),
+          onError: () => toast.error("Không thể cập nhật người thân. Vui lòng thử lại."),
         },
       );
       return;
@@ -120,317 +167,419 @@ const Relatives: React.FC = () => {
 
     createMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success("Đã thêm người thân.");
-        resetForm();
+        toast.success("Đã thêm người thân mới vào danh sách.");
+        handleResetForm();
       },
-      onError: () => toast.error("Không thể thêm người thân."),
+      onError: () => toast.error("Không thể thêm người thân. Vui lòng thử lại."),
     });
   };
 
-  const handleEdit = (relative: Relative) => {
-    setForm({
-      id: relative.id,
-      fullname: relative.fullname ?? "",
-      relationship_code: relative.relationship.relationship_code,
-      dob: toDateInputValue(relative.dob),
-      gender: relative.gender ? "true" : "false",
-      phone: relative.phone ?? "",
-    });
-  };
-
-  const handleDelete = (relativeId: number) => {
-    deleteMutation.mutate(relativeId, {
+  const handleConfirmDelete = () => {
+    if (!deletingRelative) return;
+    const targetId = deletingRelative.id;
+    deleteMutation.mutate(targetId, {
       onSuccess: () => {
-        toast.info("Đã xóa người thân khỏi danh sách.");
-        if (form.id === relativeId) resetForm();
+        toast.info(`Đã xóa "${deletingRelative.fullname}" khỏi danh sách người thân.`);
+        if (editingRelativeId === targetId) {
+          handleResetForm();
+        }
+        setDeletingRelative(null);
       },
-      onError: () => toast.error("Không thể xóa người thân."),
+      onError: () => {
+        toast.error("Không thể xóa người thân. Vui lòng thử lại.");
+        setDeletingRelative(null);
+      },
     });
+  };
+
+  const handleNavigateToAICoach = (relativeId: number) => {
+    navigate(`/patient/ai-coach-health?relativeId=${relativeId}`);
   };
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[1.3fr_1fr]">
-      <Card className="border-slate-200 py-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <UsersRound className="h-4 w-4" />
-            </span>
-            <CardTitle className="text-base font-semibold text-slate-900">
-              Danh sách người thân
-            </CardTitle>
-          </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
-            {relatives.length} người
-          </span>
-        </CardHeader>
-        <CardContent className="space-y-3 px-5 py-5">
-          {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, idx) => (
-                <Skeleton key={idx} className="h-24 rounded-xl" />
-              ))}
+    <>
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr] items-start">
+        {/* Left Column: Relatives List */}
+        <Card className="border-slate-200/80 bg-white py-0 shadow-sm transition-all">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <UsersRound className="h-4 w-4" />
+              </span>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  Danh sách người thân
+                </CardTitle>
+                <p className="text-xs text-slate-500">
+                  Quản lý hồ sơ y tế và đặt lịch khám cho các thành viên gia đình
+                </p>
+              </div>
             </div>
-          ) : isError ? (
-            <div className="rounded-xl border border-red-200 bg-red-50/50 p-5 text-sm text-red-600">
-              Không thể tải danh sách người thân.
-            </div>
-          ) : relatives.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center">
-              <UsersRound className="mx-auto mb-2 h-8 w-8 text-slate-400" />
-              <p className="text-sm font-medium text-slate-600">
-                Chưa có người thân nào.
-              </p>
-              <p className="mt-1 text-xs text-slate-400">
-                Thêm người thân để dễ dàng đặt lịch khám cho họ.
-              </p>
-            </div>
-          ) : (
-            relatives.map((relative) => {
-              const isActive = form.id === relative.id;
-              return (
-                <div
-                  key={relative.id}
-                  className={cn(
-                    "rounded-xl border p-4 transition-all",
-                    isActive
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-primary/30 hover:shadow-sm",
-                  )}
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="flex flex-1 items-center gap-3">
-                      <Avatar className="h-12 w-12 border border-slate-200">
-                        <AvatarFallback
-                          className={cn(
-                            "text-sm font-bold",
-                            relative.gender
-                              ? "bg-sky-100 text-sky-700"
-                              : "bg-rose-100 text-rose-700",
-                          )}
-                        >
-                          {getInitial(relative.fullname)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 space-y-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-bold text-slate-900">
-                            {relative.fullname}
-                          </p>
-                          <span
+            <Badge variant="secondary" className="rounded-full px-3 py-1 font-semibold text-xs">
+              {relatives.length} thành viên
+            </Badge>
+          </CardHeader>
+
+          <CardContent className="space-y-3.5 p-6">
+            {isRelativesLoading ? (
+              <MedicalAiLoading
+                label="Đang tải danh sách người thân..."
+                description="Đang lấy thông tin các thành viên gia đình đã liên kết"
+                minHeight="min-h-56"
+              />
+            ) : isRelativesError ? (
+              <ErrorState
+                title="Không thể tải danh sách người thân"
+                description="Đã có lỗi xảy ra khi lấy dữ liệu người thân."
+                onRetry={() => refetchRelatives()}
+              />
+            ) : relatives.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                  <UsersRound className="h-6 w-6" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800">Chưa có người thân nào</h4>
+                <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                  Thêm thành viên gia đình để đặt lịch khám bệnh, tạo hồ sơ sức khỏe và xây dựng lộ trình AI Coach.
+                </p>
+              </div>
+            ) : (
+              relatives.map((relative) => {
+                const isSelectedForEdit = editingRelativeId === relative.id;
+                return (
+                  <div
+                    key={relative.id}
+                    className={cn(
+                      "group rounded-2xl border p-4.5 transition-all",
+                      isSelectedForEdit
+                        ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
+                        : "border-slate-200/80 bg-white hover:border-primary/40 hover:shadow-md",
+                    )}
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      {/* Member Info */}
+                      <div className="flex flex-1 items-start gap-3.5 min-w-0">
+                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0 mt-0.5">
+                          <AvatarFallback
                             className={cn(
-                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                              "text-sm font-bold",
                               relative.gender
                                 ? "bg-sky-100 text-sky-700"
                                 : "bg-rose-100 text-rose-700",
                             )}
                           >
-                            {relative.gender ? "Nam" : "Nữ"}
-                          </span>
-                          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
-                            <HeartHandshake className="h-3 w-3" />
-                            {relative.relationship.relationship_name}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                          <span className="inline-flex items-center gap-1">
-                            <Cake className="h-3.5 w-3.5" />
-                            {relative.dob}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Phone className="h-3.5 w-3.5" />
-                            {relative.phone}
-                          </span>
+                            {getInitial(relative.fullname)}
+                          </AvatarFallback>
+                        </Avatar>
+
+                        <div className="min-w-0 space-y-1.5 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-bold text-slate-900 truncate">
+                              {relative.fullname}
+                            </p>
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold",
+                                relative.gender
+                                  ? "bg-sky-50 text-sky-700 border border-sky-200/60"
+                                  : "bg-rose-50 text-rose-700 border border-rose-200/60",
+                              )}
+                            >
+                              {relative.gender ? "Nam" : "Nữ"}
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 border border-violet-200/60 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                              <HeartHandshake className="h-3 w-3" />
+                              {relative.relationship?.relationship_name || "Người thân"}
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                            {relative.dob && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Cake className="h-3.5 w-3.5 text-slate-400" />
+                                {relative.dob}
+                              </span>
+                            )}
+                            {relative.phone && (
+                              <span className="inline-flex items-center gap-1.5">
+                                <Phone className="h-3.5 w-3.5 text-slate-400" />
+                                {relative.phone}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={() => handleEdit(relative)}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                        Sửa
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="gap-1.5"
-                        disabled={deleteMutation.isPending}
-                        onClick={() => handleDelete(relative.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                        Xóa
-                      </Button>
+                      {/* Actions */}
+                      <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-start">
+                        {/* Quick AI Coach Link */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleNavigateToAICoach(relative.id)}
+                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold"
+                          title="Tạo lộ trình dinh dưỡng & tập luyện AI cho người thân này"
+                        >
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                          AI Coach
+                        </Button>
+
+                        {/* Edit Button */}
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEdit(relative)}
+                          className="h-8 gap-1 rounded-lg text-slate-700 hover:text-primary text-xs font-medium"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Sửa
+                        </Button>
+
+                        {/* Delete Button */}
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => setDeletingRelative(relative)}
+                          className="h-8 gap-1 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-medium"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Xóa
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </CardContent>
-      </Card>
+                );
+              })
+            )}
+          </CardContent>
+        </Card>
 
-      <Card className="border-slate-200 py-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex h-9 w-9 items-center justify-center rounded-xl",
-                isEditing
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-emerald-100 text-emerald-700",
-              )}
-            >
-              {isEditing ? (
-                <Pencil className="h-4 w-4" />
-              ) : (
-                <UserPlus className="h-4 w-4" />
-              )}
-            </span>
-            <CardTitle className="text-base font-semibold text-slate-900">
-              {isEditing ? "Cập nhật người thân" : "Thêm người thân mới"}
-            </CardTitle>
-          </div>
-          {isEditing && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-slate-500 hover:text-slate-900"
-              onClick={resetForm}
-            >
-              <X className="h-3.5 w-3.5" />
-              Hủy
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="px-5 py-5">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label htmlFor="dependentName" className="text-sm font-semibold">
-                Họ và tên
-              </Label>
-              <Input
-                id="dependentName"
-                value={form.fullname}
-                onChange={(event) =>
-                  handleChange("fullname", event.target.value)
-                }
-                placeholder="Nguyễn Văn A"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label
-                htmlFor="dependentRelationship"
-                className="text-sm font-semibold"
-              >
-                Mối quan hệ
-              </Label>
-              <select
-                id="dependentRelationship"
-                value={form.relationship_code}
-                onChange={(event) =>
-                  handleChange("relationship_code", event.target.value)
-                }
-                className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-              >
-                <option value="">Chọn mối quan hệ</option>
-                {relationships.map((relationship) => (
-                  <option
-                    key={relationship.relationship_code}
-                    value={relationship.relationship_code}
-                  >
-                    {relationship.relationship_name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="dependentDateOfBirth"
-                  className="text-sm font-semibold"
-                >
-                  Ngày sinh
-                </Label>
-                <Input
-                  id="dependentDateOfBirth"
-                  type="date"
-                  value={form.dob}
-                  onChange={(event) => handleChange("dob", event.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="dependentGender"
-                  className="text-sm font-semibold"
-                >
-                  Giới tính
-                </Label>
-                <select
-                  id="dependentGender"
-                  value={form.gender}
-                  onChange={(event) =>
-                    handleChange("gender", event.target.value)
-                  }
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-                >
-                  <option value="true">Nam</option>
-                  <option value="false">Nữ</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="dependentPhone" className="text-sm font-semibold">
-                Số điện thoại
-              </Label>
-              <Input
-                id="dependentPhone"
-                value={form.phone}
-                onChange={(event) => handleChange("phone", event.target.value)}
-                placeholder="0901234567"
-              />
-            </div>
-
-            <div className="flex gap-2 pt-2">
-              <Button
-                type="submit"
-                className="flex-1 gap-2"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Đang lưu...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="h-4 w-4" />
-                    {isEditing ? "Lưu cập nhật" : "Thêm mới"}
-                  </>
+        {/* Right Column: Form Add / Edit Relative */}
+        <Card className="border-slate-200/80 bg-white py-0 shadow-sm transition-all sticky top-24">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
+            <div className="flex items-center gap-2.5">
+              <span
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl",
+                  isEditing
+                    ? "bg-amber-100 text-amber-700"
+                    : "bg-emerald-100 text-emerald-700",
                 )}
-              </Button>
+              >
+                {isEditing ? (
+                  <Pencil className="h-4 w-4" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
+              </span>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900">
+                  {isEditing ? "Cập nhật thông tin" : "Thêm người thân mới"}
+                </CardTitle>
+                <p className="text-xs text-slate-500">
+                  {isEditing
+                    ? "Chỉnh sửa thông tin hồ sơ người thân đã chọn"
+                    : "Nhập thông tin người thân vào tài khoản của bạn"}
+                </p>
+              </div>
+            </div>
+
+            {isEditing && (
               <Button
                 type="button"
-                variant="outline"
-                onClick={resetForm}
-                disabled={isSubmitting}
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 text-slate-500 hover:text-slate-900 rounded-lg text-xs"
+                onClick={handleResetForm}
               >
-                Làm mới
+                <X className="h-3.5 w-3.5" />
+                Hủy sửa
               </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+            )}
+          </CardHeader>
+
+          <CardContent className="p-6">
+            <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
+              {/* Họ tên */}
+              <div className="space-y-2">
+                <Label htmlFor="fullname" className="text-sm font-semibold text-slate-800">
+                  Họ và tên người thân <span className="text-rose-500">*</span>
+                </Label>
+                <Input
+                  id="fullname"
+                  placeholder="Ví dụ: Nguyễn Thị Mai"
+                  error={errors.fullname?.message}
+                  {...register("fullname")}
+                  className="rounded-xl"
+                />
+                {errors.fullname && (
+                  <p className="text-xs text-rose-500">{errors.fullname.message}</p>
+                )}
+              </div>
+
+              {/* Mối quan hệ */}
+              <div className="space-y-2">
+                <Label htmlFor="relationship_code" className="text-sm font-semibold text-slate-800">
+                  Mối quan hệ <span className="text-rose-500">*</span>
+                </Label>
+                <Controller
+                  name="relationship_code"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={isRelationshipsLoading}
+                    >
+                      <SelectTrigger id="relationship_code" className="rounded-xl w-full">
+                        <SelectValue placeholder="Chọn mối quan hệ" />
+                      </SelectTrigger>
+                      <SelectContent className="rounded-xl">
+                        {relationships.map((rel) => (
+                          <SelectItem key={rel.relationship_code} value={rel.relationship_code}>
+                            {rel.relationship_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.relationship_code && (
+                  <p className="text-xs text-rose-500">{errors.relationship_code.message}</p>
+                )}
+              </div>
+
+              {/* Giới tính & Ngày sinh */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="gender" className="text-sm font-semibold text-slate-800">
+                    Giới tính <span className="text-rose-500">*</span>
+                  </Label>
+                  <Controller
+                    name="gender"
+                    control={control}
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger id="gender" className="rounded-xl w-full">
+                          <SelectValue placeholder="Chọn giới tính" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="true">Nam</SelectItem>
+                          <SelectItem value="false">Nữ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.gender && (
+                    <p className="text-xs text-rose-500">{errors.gender.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="dob" className="text-sm font-semibold text-slate-800">
+                    Ngày sinh (tùy chọn)
+                  </Label>
+                  <Input
+                    id="dob"
+                    type="date"
+                    error={errors.dob?.message}
+                    {...register("dob")}
+                    className="rounded-xl"
+                  />
+                  {errors.dob && (
+                    <p className="text-xs text-rose-500">{errors.dob.message}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Số điện thoại */}
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-semibold text-slate-800">
+                  Số điện thoại (tùy chọn)
+                </Label>
+                <Input
+                  id="phone"
+                  placeholder="0912345678"
+                  error={errors.phone?.message}
+                  {...register("phone")}
+                  className="rounded-xl"
+                />
+                {errors.phone && (
+                  <p className="text-xs text-rose-500">{errors.phone.message}</p>
+                )}
+              </div>
+
+              {/* Form Action Buttons */}
+              <div className="flex gap-2.5 pt-3">
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 gap-2 rounded-xl !bg-primary hover:!bg-primary/90 font-semibold !text-white hover:!text-white shadow-sm cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-white" />
+                      <span className="text-white">Đang lưu...</span>
+                    </>
+                  ) : (
+                    <>
+                      {isEditing ? (
+                        <UserCheck className="h-4 w-4 text-white" />
+                      ) : (
+                        <UserPlus className="h-4 w-4 text-white" />
+                      )}
+                      <span className="text-white">{isEditing ? "Lưu cập nhật" : "Thêm người thân"}</span>
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleResetForm}
+                  disabled={isSubmitting}
+                  className="gap-1 rounded-xl text-slate-600"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  Làm mới
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Delete Confirmation Alert Dialog */}
+      <AlertDialog open={!!deletingRelative} onOpenChange={(open) => !open && setDeletingRelative(null)}>
+        <AlertDialogContent className="rounded-2xl sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              Xác nhận xóa người thân
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-slate-600 dark:text-slate-300">
+              Bạn có chắc chắn muốn xóa người thân{" "}
+              <strong className="font-semibold text-slate-900 dark:text-slate-100">
+                &quot;{deletingRelative?.fullname}&quot;
+              </strong>{" "}
+              khỏi danh sách? Hành động này sẽ không thể khôi phục lại.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl">Hủy bỏ</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700"
+            >
+              Xác nhận xóa
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

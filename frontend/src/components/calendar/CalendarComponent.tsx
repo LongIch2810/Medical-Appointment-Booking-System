@@ -22,9 +22,9 @@ const CalendarComponent = () => {
       />
 
       {/* Legend responsive */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 text-sm">
-        <Legend color="bg-gray-300" label="Đã hết hiệu lực" />
-        <Legend color="bg-white border" label="Có hiệu lực" />
+      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-slate-500">
+        <Legend color="bg-slate-200" label="Đã qua / không chọn được" />
+        <Legend color="bg-primary" label="Đang chọn" />
       </div>
     </div>
   );

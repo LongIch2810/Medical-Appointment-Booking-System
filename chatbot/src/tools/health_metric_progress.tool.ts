@@ -68,9 +68,11 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "quality", temperature: 0 });
 
-const structuredModel = model.withStructuredOutput(ProgressDataSchema);
+const structuredModel = model.withStructuredOutput(ProgressDataSchema, {
+  method: "functionCalling",
+});
 
 const pipeline = promptTemplate.pipe(structuredModel);
 

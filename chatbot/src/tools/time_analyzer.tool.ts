@@ -66,7 +66,7 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ["human", "Văn bản cần phân tích: {text_input}"],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "fast", temperature: 0 });
 
 const structuredModel = model.withStructuredOutput(dateTimeSchema);
 

@@ -50,29 +50,32 @@ export function DetailDialog({
             <DialogDescription>{description}</DialogDescription>
           ) : null}
         </DialogHeader>
-        {body ?? (
-          <div className="grid gap-3 md:grid-cols-2">
-            {rows.map((row) => (
-              <div
-                key={row.label}
-                className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4"
-              >
-                <div className="mono-label text-[10px] text-[#75758a]">
-                  {row.label}
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1 scrollbar-soft space-y-3 pt-2">
+          {body ?? (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {rows.map((row) => (
+                <div
+                  key={row.label}
+                  className="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/60"
+                >
+                  <div className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                    {row.label}
+                  </div>
+                  <div className="mt-1 text-xs sm:text-sm font-semibold text-slate-900 dark:text-slate-100 break-words">
+                    {row.value ?? "-"}
+                  </div>
                 </div>
-                <div className="mt-1 text-sm font-medium text-[#212121]">
-                  {row.value ?? "-"}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        {footer ? <div className="pt-2">{footer}</div> : null}
-        <div className="flex justify-end pt-2">
+              ))}
+            </div>
+          )}
+          {footer ? <div className="pt-2">{footer}</div> : null}
+        </div>
+        <div className="flex shrink-0 justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
           <Button
             type="button"
             variant="outline"
             onClick={() => setOpen(false)}
+            className="rounded-xl font-semibold"
           >
             Đóng
           </Button>
@@ -81,3 +84,4 @@ export function DetailDialog({
     </Dialog>
   );
 }
+

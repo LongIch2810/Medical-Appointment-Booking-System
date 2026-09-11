@@ -32,8 +32,10 @@ export interface TitleProps {
 }
 
 export interface SpecialtyProps {
+  id: number;
   name: string;
   img_url: string;
+  description?: string;
 }
 
 export interface FeatureItemProps {

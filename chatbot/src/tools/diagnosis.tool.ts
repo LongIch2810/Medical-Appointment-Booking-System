@@ -35,9 +35,18 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "quality", temperature: 0 });
 
-const structuredModel = model.withStructuredOutput(diagnosisArraySchema);
+// OpenAI structured output (response_format: json_schema) yêu cầu schema gốc
+// phải là object, không được là array — bọc diagnosisArraySchema vào một object
+// tạm ở đây rồi bóc lại bên dưới để giữ nguyên contract trả về (mảng phẳng)
+// cho DiagnosisTool, tránh phải sửa mọi nơi đang gọi tool này.
+const diagnosisOutputSchema = z.object({ diagnosis: diagnosisArraySchema });
+
+// method: "functionCalling" — xem giải thích ở generate_chat_config.tool.ts.
+const structuredModel = model.withStructuredOutput(diagnosisOutputSchema, {
+  method: "functionCalling",
+});
 
 const pipeline = promptTemplate.pipe(structuredModel);
 
@@ -46,7 +55,7 @@ export const DiagnosisTool = tool(
     const result = await pipeline.invoke({
       symptoms_json: JSON.stringify(symptoms, null, 2),
     });
-    return result;
+    return result.diagnosis;
   },
   {
     name: "diagnosis_tool",

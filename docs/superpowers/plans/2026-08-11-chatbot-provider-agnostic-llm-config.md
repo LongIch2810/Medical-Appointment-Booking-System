@@ -4,11 +4,11 @@
 
 **Goal:** Replace 24 direct `new ChatGoogleGenerativeAI(...)` call sites across `chatbot/src/` with a single shared factory backed by `ChatOpenAI` against a configurable OpenAI-compatible endpoint, so future provider swaps are env-only.
 
-**Architecture:** One new file, `chatbot/src/configs/llm.ts`, exports `getChatModel({ model?, profile?, temperature? })` and `getVisionModel({ temperature? })`. Every call site swaps its `new ChatGoogleGenerativeAI({...})` for a call to one of these, preserving its existing per-call `temperature`. Env vars move from `GOOGLE_API_KEY`/`GEMINI_MODEL`/`OCR_MODEL`/`SUMMARY_MODEL` to `LLM_API_KEY`/`LLM_MODEL`/`LLM_FAST_MODEL`/`LLM_VISION_MODEL`/`LLM_BASE_URL`.
+**Architecture:** One new file, `chatbot/src/configs/llm.ts`, exports `getChatModel({ model?, profile?, temperature? })` and `getVisionModel({ temperature? })`. Every call site swaps its `new ChatGoogleGenerativeAI({...})` for a call to one of these, preserving its existing per-call `temperature`. Env vars move from `GOOGLE_API_KEY`/`GEMINI_MODEL`/`OCR_MODEL`/`SUMMARY_MODEL` to `OPENAI_API_KEY`/`OPENAI_MODEL`/`OPENAI_FAST_MODEL`/`OPENAI_VISION_MODEL`/`OPENAI_BASE_URL`.
 
 **Tech Stack:** `@langchain/openai` (`ChatOpenAI`, already a dependency), TypeScript (`tsc --noEmit` for verification — `chatbot/` has no test runner or build script, per `CLAUDE.md`).
 
-**Verification note (2026-08-11):** Tasks 1-4 compile successfully and all 24 call sites now use the shared factory. Fast-model use cases use `profile: "fast"` backed by `LLM_FAST_MODEL`, avoiding provider-specific hardcoded IDs and preserving env-only provider swaps. The local `.env` was migrated to Google's official OpenAI-compatible endpoint without exposing its key. Live invocation reached the provider but returned `401 Invalid API key`, so Task 5 Step 2 remains open until a valid credential is supplied.
+**Verification note (2026-08-11):** Tasks 1-4 compile successfully and all 24 call sites now use the shared factory. Fast-model use cases use `profile: "fast"` backed by `OPENAI_FAST_MODEL`, avoiding provider-specific hardcoded IDs and preserving env-only provider swaps. The local `.env` was migrated to Google's official OpenAI-compatible endpoint without exposing its key. Live invocation reached the provider but returned `401 Invalid API key`, so Task 5 Step 2 remains open until a valid credential is supplied.
 
 ## Global Constraints
 
@@ -43,23 +43,23 @@ export function getChatModel(opts?: {
 }) {
   const configuredModel =
     opts?.profile === "fast"
-      ? process.env.LLM_FAST_MODEL
-      : process.env.LLM_MODEL;
+      ? process.env.OPENAI_FAST_MODEL
+      : process.env.OPENAI_MODEL;
 
   return new ChatOpenAI({
-    apiKey: process.env.LLM_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
     model: opts?.model ?? configuredModel,
     temperature: opts?.temperature ?? 0,
-    configuration: { baseURL: process.env.LLM_BASE_URL },
+    configuration: { baseURL: process.env.OPENAI_BASE_URL },
   });
 }
 
 export function getVisionModel(opts?: { temperature?: number }) {
   return new ChatOpenAI({
-    apiKey: process.env.LLM_API_KEY,
-    model: process.env.LLM_VISION_MODEL,
+    apiKey: process.env.OPENAI_API_KEY,
+    model: process.env.OPENAI_VISION_MODEL,
     temperature: opts?.temperature ?? 0,
-    configuration: { baseURL: process.env.LLM_BASE_URL },
+    configuration: { baseURL: process.env.OPENAI_BASE_URL },
   });
 }
 ```
@@ -80,11 +80,11 @@ with:
 
 ```
 PORT=
-LLM_API_KEY=
-LLM_BASE_URL=
-LLM_MODEL=
-LLM_FAST_MODEL=
-LLM_VISION_MODEL=
+OPENAI_API_KEY=
+OPENAI_BASE_URL=
+OPENAI_MODEL=
+OPENAI_FAST_MODEL=
+OPENAI_VISION_MODEL=
 ```
 
 - [x] **Step 3: Verify it compiles**
@@ -626,7 +626,7 @@ git commit -m "refactor(chatbot): migrate tools batch B (incl. OCR vision model)
 
 - [x] **Step 1: Update the local `.env`**
 
-Edit `chatbot/.env`: remove `GOOGLE_API_KEY`, `GEMINI_MODEL`, `OCR_MODEL`; add `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_FAST_MODEL`, `LLM_VISION_MODEL` with real values for the OpenAI-compatible provider in use.
+Edit `chatbot/.env`: remove `GOOGLE_API_KEY`, `GEMINI_MODEL`, `OCR_MODEL`; add `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `OPENAI_MODEL`, `OPENAI_FAST_MODEL`, `OPENAI_VISION_MODEL` with real values for the OpenAI-compatible provider in use.
 
 - [ ] **Step 2: Manually exercise a real flow**
 

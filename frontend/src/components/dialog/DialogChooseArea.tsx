@@ -30,30 +30,34 @@ const DialogChooseArea = ({ className = "" }: { className: string }) => {
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <FilterItem
-          label="Khu vực"
-          activeValue={areaSelect || undefined}
-          icon={<MapPin size={16} />}
-          className={cn("w-full md:w-auto", className)}
-        />
+      <DialogTrigger asChild>
+        <div>
+          <FilterItem
+            label="Khu vực"
+            activeValue={areaSelect || undefined}
+            icon={<MapPin size={16} />}
+            className={cn("w-full md:w-auto", className)}
+          />
+        </div>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Chọn khu vực</DialogTitle>
-        </DialogHeader>
-        <Command>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
+          <DialogHeader>
+            <DialogTitle>Chọn khu vực</DialogTitle>
+          </DialogHeader>
+        </div>
+        <Command className="flex-1 min-h-0">
           <CommandInput placeholder="Tìm kiếm khu vực..." />
-          <CommandList>
+          <CommandList className="max-h-[50dvh] sm:max-h-[350px] overflow-y-auto overscroll-contain">
             {(isLoading || isError) && (
               <div className="flex items-center justify-center p-4">
                 <Loader2 className="h-5 w-5 animate-spin text-primary" />
               </div>
             )}
-            <CommandEmpty>Không tìm thấy chuyên khoa.</CommandEmpty>
+            <CommandEmpty>Không tìm thấy khu vực.</CommandEmpty>
             <CommandGroup>
               {data &&
-                data.map((item: any) => (
+                data.map((item: { code: string | number; name: string }) => (
                   <CommandItem
                     key={item.code}
                     onSelect={() => handleSelect(item.name)}

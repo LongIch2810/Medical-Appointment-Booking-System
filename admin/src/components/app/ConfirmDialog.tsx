@@ -50,15 +50,16 @@ export function ConfirmDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {description ? (
-            <DialogDescription>{description}</DialogDescription>
+            <DialogDescription className="mt-2 text-sm leading-relaxed">{description}</DialogDescription>
           ) : null}
         </DialogHeader>
-        <div className="flex justify-end gap-2 pt-2">
+        <div className="flex shrink-0 flex-col-reverse sm:flex-row justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
           <Button
             type="button"
             variant="outline"
             onClick={() => setOpen(false)}
             disabled={isSubmitting}
+            className="rounded-xl font-semibold"
           >
             {cancelLabel}
           </Button>
@@ -67,6 +68,7 @@ export function ConfirmDialog({
             variant={destructive ? "destructive" : "default"}
             onClick={handleConfirm}
             disabled={isSubmitting}
+            className="rounded-xl font-bold shadow-xs"
           >
             {isSubmitting ? "Đang xử lý..." : confirmLabel}
           </Button>
@@ -75,3 +77,4 @@ export function ConfirmDialog({
     </Dialog>
   );
 }
+

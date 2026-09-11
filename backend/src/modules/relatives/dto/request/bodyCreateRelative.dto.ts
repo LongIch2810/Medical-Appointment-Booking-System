@@ -28,9 +28,10 @@ export class BodyCreateRelativeDto {
   @IsOptional()
   phone?: string;
 
+  @Transform(({ value }) => value?.trim())
   @IsDateString()
-  @IsNotEmpty()
-  dob!: string;
+  @IsOptional()
+  dob?: string;
 
   @IsBoolean()
   @IsNotEmpty()

@@ -33,16 +33,25 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ["human", "Phân tích thông tin tên bác sĩ từ câu sau: {text_input}"],
 ]);
 
-const model = getChatModel({ temperature: 0 });
+const model = getChatModel({ profile: "fast", temperature: 0 });
 
-const structuredModel = model.withStructuredOutput(symptomArraySchema);
+// OpenAI structured output (response_format: json_schema) yêu cầu schema gốc
+// phải là object, không được là array — bọc symptomArraySchema vào một object
+// tạm ở đây rồi bóc lại bên dưới để giữ nguyên contract trả về (mảng phẳng)
+// cho AnalyzeSymptomsTool, tránh phải sửa mọi nơi đang gọi tool này.
+const symptomOutputSchema = z.object({ symptoms: symptomArraySchema });
+
+// method: "functionCalling" — xem giải thích ở generate_chat_config.tool.ts.
+const structuredModel = model.withStructuredOutput(symptomOutputSchema, {
+  method: "functionCalling",
+});
 
 const pipeline = promptTemplate.pipe(structuredModel);
 
 export const AnalyzeSymptomsTool = tool(
   async ({ text_input }: { text_input: string }) => {
     const result = await pipeline.invoke({ text_input });
-    return result;
+    return result.symptoms;
   },
   {
     name: "analyze_symptoms_tool",
