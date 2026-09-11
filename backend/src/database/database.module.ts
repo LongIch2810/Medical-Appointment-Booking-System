@@ -65,14 +65,7 @@ const migrations = [
         database: configService.get<string>('DB_NAME'),
         entities: [__dirname + '/../entities/*.entity{.ts,.js}'],
         migrations,
-        // On Vercel, migrations already ran during the build step (see the
-        // "vercel-build" npm script) — running them again here would repeat
-        // that same work inside the request-serving function, which risks
-        // exceeding its execution timeout on a large pending batch and
-        // crash-looping every cold start. Locally/Docker (no VERCEL env var)
-        // keep running them at boot for the usual auto-migrate-on-start dev
-        // flow.
-        migrationsRun: process.env.VERCEL !== '1',
+        migrationsRun: true,
         synchronize: false,
         autoLoadEntities: true,
         logging: false,

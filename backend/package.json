@@ -9,7 +9,7 @@
     "clean:swagger-metadata": "node -e \"require('fs').rmSync('src/metadata.ts', { force: true })\"",
     "prebuild": "npm run clean:swagger-metadata && node -e \"require('fs').rmSync('dist', { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })\"",
     "build": "nest build --builder swc",
-    "postbuild": "npm run clean:swagger-metadata && node -e \"process.env.VERCEL === '1' && require('node:child_process').execSync('npm run migration:run', { stdio: 'inherit' })\"",
+    "postbuild": "npm run clean:swagger-metadata",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "prestart": "npm run clean:swagger-metadata",
     "start": "nest start --builder swc -r tsconfig-paths/register",
