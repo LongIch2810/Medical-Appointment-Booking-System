@@ -36,7 +36,7 @@ import { WsRateLimitGuard } from './ws-rate-limit.guard';
       'http://localhost:4183',
       'http://127.0.0.1:4183',
       'https://patientuilifehealth.vercel.app',
-      'https://chatbotlifehealth.vercel.app',
+      'https://medical-appointment-booking-system-u75m.onrender.com',
       'https://adminmanagementuilifehealth.vercel.app',
     ],
     credentials: true,
