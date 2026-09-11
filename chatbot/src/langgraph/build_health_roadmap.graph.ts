@@ -14,7 +14,7 @@ import {
 } from "../tools/health_metric_progress.tool.js";
 import {
   ChartSchema,
-  GenerateChartConfigTool,
+  HealthRoadmapGenerateChartConfigTool,
 } from "../tools/generate_chat_config.tool.js";
 import {
   HealthPlanGeneratorTool,
@@ -27,8 +27,14 @@ import {
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { renderChartToImage } from "../utils/renderChartToImage.js";
 import { generatePdfHealthRoadmap } from "../utils/generatePdfHealthRoadmap.js";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { getChatModel } from "../configs/llm.js";
+import {
+  getHealthRoadmapErrorType,
+  getHealthRoadmapFinalError,
+  HealthRoadmapNodeError,
+  logHealthRoadmapEvent,
+  runHealthRoadmapOperation,
+  toHealthRoadmapNodeError,
+} from "../utils/healthRoadmapRuntime.js";
 
 type HealthMetric = z.infer<typeof HealthMetricSchema>;
 type ProgressData = z.infer<typeof ProgressDataSchema>;
@@ -37,6 +43,7 @@ type HealthPlan = z.infer<typeof HealthPlanSchema>;
 type HealthRoadmapReport = z.infer<typeof HealthRoadmapReportSchema>;
 
 const HealthRoadMapState = Annotation.Root({
+  request_id: Annotation<string>(),
   relative_id: Annotation<number>(),
   token: Annotation<string>(),
   health_profile: Annotation<HealthProfile>(),
@@ -107,86 +114,84 @@ const HealthRoadMapState = Annotation.Root({
 
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
-  args: Record<string, any>
+  args: Record<string, any>,
+  runtime: {
+    requestId: string;
+    relativeId: number;
+    node: string;
+  }
 ) {
-  const result = await tool.invoke(args);
-  return result;
+  const startedAt = Date.now();
+  logHealthRoadmapEvent({
+    requestId: runtime.requestId,
+    relativeId: runtime.relativeId,
+    node: runtime.node,
+    event: "node_started",
+  });
+
+  try {
+    const result = await runHealthRoadmapOperation(
+      () => tool.invoke(args),
+      runtime
+    );
+    logHealthRoadmapEvent({
+      requestId: runtime.requestId,
+      relativeId: runtime.relativeId,
+      node: runtime.node,
+      event: "node_succeeded",
+      durationMs: Date.now() - startedAt,
+    });
+    return result;
+  } catch (error) {
+    logHealthRoadmapEvent({
+      requestId: runtime.requestId,
+      relativeId: runtime.relativeId,
+      node: runtime.node,
+      event: "node_failed",
+      durationMs: Date.now() - startedAt,
+      errorType: getHealthRoadmapErrorType(error),
+    });
+    throw error;
+  }
 }
 
 async function LLMGenerateErrorAnswerNode(
   state: typeof HealthRoadMapState.State
 ) {
-  try {
-    const errorSchema = z.object({
-      status: z
-        .number()
-        .describe("Mã trạng thái HTTP mô phỏng lỗi (ví dụ 400, 404, 500)."),
-      error_detail: z
-        .string()
-        .describe(
-          "Thông điệp lỗi thân thiện và dễ hiểu dành cho người dùng cuối, bằng tiếng Việt."
-        ),
-    });
-    const errors = [
-      state.errorHealthProfile,
-      state.errorChartConfig,
-      state.errorHealthMetric,
-      state.errorHealthRoadmapReport,
-      state.errorProgressData,
-      state.errorHealthPlan,
-      state.errorPdf,
-    ].filter(Boolean);
+  const errors = [
+    state.errorHealthProfile,
+    state.errorChartConfig,
+    state.errorHealthMetric,
+    state.errorHealthRoadmapReport,
+    state.errorProgressData,
+    state.errorHealthPlan,
+    state.errorPdf,
+  ].filter((error): error is HealthRoadmapNodeError => Boolean(error));
+  const finalResult = getHealthRoadmapFinalError(errors);
+  const selectedError =
+    errors.find((error) => error.status === finalResult.status) ?? errors[0];
 
-    if (errors.length === 0) {
-      return {
-        final_result: {
-          status: 200,
-          success: true,
-          message: "Không phát hiện lỗi nào, quá trình tạo báo cáo thành công.",
-        },
-      };
-    }
-    const systemPrompt = `
-Bạn là một trợ lý thông minh chuyên diễn giải lỗi hệ thống thành ngôn ngữ thân thiện cho người dùng.
-Hãy đọc dữ liệu JSON "errorSummary" bên dưới, trong đó chứa các thông tin lỗi từ các bước khác nhau.
-Nhiệm vụ:
-- Xác định bước nào bị lỗi (ví dụ: phân tích dữ liệu, tạo biểu đồ, sinh báo cáo, tạo PDF).
-- Giải thích lỗi bằng tiếng Việt dễ hiểu (thay vì lỗi kỹ thuật).
-- Gợi ý cho người dùng phải làm gì (ví dụ: kiểm tra lại câu hỏi, nhập dữ liệu khác, thử lại sau, hoặc liên hệ quản trị viên).
-`;
+  logHealthRoadmapEvent({
+    requestId: state.request_id,
+    relativeId: state.relative_id,
+    event: "roadmap_failed",
+    node: selectedError?.node ?? "unknown",
+    status: finalResult.status,
+    errorType: finalResult.status === 504 ? "timeout" : "node_error",
+  });
 
-    const promptTemplate = ChatPromptTemplate.fromMessages([
-      ["system", systemPrompt],
-      [
-        "human",
-        "Dưới đây là danh sách lỗi cần diễn giải:\n\n{errors}\n\nHãy trả về lời nhắn thân thiện cho người dùng.",
-      ],
-    ]);
-    const llm = getChatModel({ temperature: 0.3 });
-    const structuredModel = llm.withStructuredOutput(errorSchema);
+  return { final_result: finalResult };
+}
 
-    const pipeline = promptTemplate.pipe(structuredModel);
-    const res = await pipeline.invoke({
-      errors: JSON.stringify(errors, null, 2),
-    });
-
-    return {
-      final_result: {
-        success: false,
-        status: res.status,
-        message: res.error_detail,
-      },
-    };
-  } catch (error) {
-    return {
-      final_result: {
-        status: 500,
-        success: false,
-        message:
-          "Hệ thống đang gặp sự cố khi tạo thông báo lỗi. Vui lòng thử lại sau.",
-      },
-    };
-  }
+function getNodeRuntime(
+  state: typeof HealthRoadMapState.State,
+  node: string
+) {
+  return {
+    requestId: state.request_id,
+    relativeId: state.relative_id,
+    node,
+  };
 }
 
 async function GetHealthProfileNode(state: typeof HealthRoadMapState.State) {
@@ -201,10 +206,14 @@ async function GetHealthProfileNode(state: typeof HealthRoadMapState.State) {
         nextNodeHealthProfile: "llm_generate_error_answer_node",
       };
     }
-    const res = await runTool(GetHealthProfileTool as DynamicStructuredTool, {
-      relative_id: state.relative_id,
-      token: state.token,
-    });
+    const res = await runTool(
+      GetHealthProfileTool as DynamicStructuredTool,
+      {
+        relative_id: state.relative_id,
+        token: state.token,
+      },
+      getNodeRuntime(state, "health_profile_node")
+    );
 
     if (typeof res === "string") {
       return {
@@ -220,21 +229,13 @@ async function GetHealthProfileNode(state: typeof HealthRoadMapState.State) {
       health_profile: res,
       nextNodeHealthProfile: "analyze_health_metric_node",
     };
-  } catch (error: any) {
-    let message = "Lỗi không xác định khi lấy hồ sơ sức khỏe.";
-    if (error.isAxiosError) {
-      message =
-        error.response?.data?.message || `Lỗi kết nối API: ${error.message}`;
-    } else if (error.message) {
-      message = error.message;
-    }
-
+  } catch (error: unknown) {
     return {
-      errorHealthProfile: {
-        status: 500,
-        message,
-        node: "health_profile_node",
-      },
+      errorHealthProfile: toHealthRoadmapNodeError(
+        error,
+        "health_profile_node",
+        "Không thể lấy hồ sơ sức khỏe."
+      ),
       nextNodeHealthProfile: "llm_generate_error_answer_node",
     };
   }
@@ -245,7 +246,8 @@ async function AnalyzeHealthMetricNode(state: typeof HealthRoadMapState.State) {
     const health_profile_json = JSON.stringify(state.health_profile);
     const res = await runTool(
       HealthMetricAnalyzerTool as DynamicStructuredTool,
-      { health_profile_json }
+      { health_profile_json },
+      getNodeRuntime(state, "analyze_health_metric_node")
     );
 
     if (!res) {
@@ -263,13 +265,13 @@ async function AnalyzeHealthMetricNode(state: typeof HealthRoadMapState.State) {
       health_metric: res,
       nextNodeHealthMetric: "parallel_node",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      errorHealthMetric: {
-        status: 500,
-        message: error.message,
-        node: "analyze_health_metric_node",
-      },
+      errorHealthMetric: toHealthRoadmapNodeError(
+        error,
+        "analyze_health_metric_node",
+        "Không thể phân tích chỉ số sức khỏe."
+      ),
       nextNodeHealthMetric: "llm_generate_error_answer_node",
     };
   }
@@ -283,7 +285,8 @@ async function HealthMetricProgressNode(
       HealthMetricProgressTool as DynamicStructuredTool,
       {
         health_metric_analyzer_json: JSON.stringify(state.health_metric),
-      }
+      },
+      getNodeRuntime(state, "health_metric_progress_node")
     );
 
     if (!res) {
@@ -301,13 +304,13 @@ async function HealthMetricProgressNode(
       progress_data: res,
       nextNodeProgressData: "generate_chart_config_node",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      errorProgressData: {
-        status: 500,
-        message: error.message,
-        node: "health_metric_progress_node",
-      },
+      errorProgressData: toHealthRoadmapNodeError(
+        error,
+        "health_metric_progress_node",
+        "Không thể tạo dữ liệu tiến trình sức khỏe."
+      ),
       nextNodeProgressData: "llm_generate_error_answer_node",
     };
   }
@@ -316,13 +319,14 @@ async function HealthMetricProgressNode(
 async function GenerateChartConfigNode(state: typeof HealthRoadMapState.State) {
   try {
     const res = await runTool(
-      GenerateChartConfigTool as DynamicStructuredTool,
+      HealthRoadmapGenerateChartConfigTool as DynamicStructuredTool,
       {
         question: `Lộ trình cải thiện sức khỏe ${
           state.health_metric?.expectedImprovement?.duration_months || "?"
         } tháng`,
         data_json: JSON.stringify(state.progress_data),
-      }
+      },
+      getNodeRuntime(state, "generate_chart_config_node")
     );
 
     if (!res) {
@@ -340,13 +344,13 @@ async function GenerateChartConfigNode(state: typeof HealthRoadMapState.State) {
       chartConfig: res,
       nextNodeChartConfig: "merged_node",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      errorChartConfig: {
-        status: 500,
-        message: error.message,
-        node: "generate_chart_config_node",
-      },
+      errorChartConfig: toHealthRoadmapNodeError(
+        error,
+        "generate_chart_config_node",
+        "Không thể tạo cấu hình biểu đồ."
+      ),
       nextNodeChartConfig: "llm_generate_error_answer_node",
     };
   }
@@ -358,7 +362,8 @@ async function GenerateHealthPlanNode(state: typeof HealthRoadMapState.State) {
       HealthPlanGeneratorTool as DynamicStructuredTool,
       {
         health_metric_analyzer_json: JSON.stringify(state.health_metric),
-      }
+      },
+      getNodeRuntime(state, "generate_health_plan_node")
     );
 
     if (!res) {
@@ -376,13 +381,13 @@ async function GenerateHealthPlanNode(state: typeof HealthRoadMapState.State) {
       health_plan: res,
       nextNodeHealthPlan: "write_health_roadmap_report_node",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      errorHealthPlan: {
-        status: 500,
-        message: error.message,
-        node: "generate_health_plan_node",
-      },
+      errorHealthPlan: toHealthRoadmapNodeError(
+        error,
+        "generate_health_plan_node",
+        "Không thể tạo kế hoạch cải thiện sức khỏe."
+      ),
       nextNodeHealthPlan: "llm_generate_error_answer_node",
     };
   }
@@ -392,9 +397,13 @@ async function WriteHealthRoadmapReportNode(
   state: typeof HealthRoadMapState.State
 ) {
   try {
-    const res = await runTool(WriteHealthRoadmapTool as DynamicStructuredTool, {
-      data_json: JSON.stringify(state.health_plan),
-    });
+    const res = await runTool(
+      WriteHealthRoadmapTool as DynamicStructuredTool,
+      {
+        data_json: JSON.stringify(state.health_plan),
+      },
+      getNodeRuntime(state, "write_health_roadmap_report_node")
+    );
 
     if (!res) {
       return {
@@ -411,19 +420,33 @@ async function WriteHealthRoadmapReportNode(
       health_roadmap_report: res,
       nextNodeHealthRoadmapReport: "merged_node",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     return {
-      errorHealthRoadmapReport: {
-        status: 500,
-        message: error.message,
-        node: "write_health_roadmap_report_node",
-      },
+      errorHealthRoadmapReport: toHealthRoadmapNodeError(
+        error,
+        "write_health_roadmap_report_node",
+        "Không thể viết báo cáo lộ trình sức khỏe."
+      ),
       nextNodeHealthRoadmapReport: "llm_generate_error_answer_node",
     };
   }
 }
 
 async function MergedNode(state: typeof HealthRoadMapState.State) {
+  const errors = [
+    state.errorHealthProfile,
+    state.errorHealthMetric,
+    state.errorProgressData,
+    state.errorChartConfig,
+    state.errorHealthPlan,
+    state.errorHealthRoadmapReport,
+    state.errorPdf,
+  ].filter(Boolean);
+
+  if (errors.length > 0) {
+    return { nextNodeMergedData: "llm_generate_error_answer_node" };
+  }
+
   const merged_data = {
     health_profile: state.health_profile,
     health_metric: state.health_metric,
@@ -437,6 +460,13 @@ async function MergedNode(state: typeof HealthRoadMapState.State) {
 }
 
 async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
+  const startedAt = Date.now();
+  const runtime = getNodeRuntime(state, "create_file_pdf_node");
+  logHealthRoadmapEvent({
+    ...runtime,
+    event: "node_started",
+  });
+
   try {
     const outputPathImage = await renderChartToImage(
       state.merged_data.chartConfig
@@ -445,6 +475,16 @@ async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
       state.merged_data.health_roadmap_report,
       outputPathImage
     );
+
+    if (!url) {
+      throw new Error("PDF URL was not returned");
+    }
+
+    logHealthRoadmapEvent({
+      ...runtime,
+      event: "node_succeeded",
+      durationMs: Date.now() - startedAt,
+    });
 
     return {
       pdf_url: url,
@@ -455,13 +495,20 @@ async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
         message: "Không phát hiện lỗi nào, quá trình tạo báo cáo thành công.",
       },
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
+    logHealthRoadmapEvent({
+      ...runtime,
+      event: "node_failed",
+      durationMs: Date.now() - startedAt,
+      errorType: getHealthRoadmapErrorType(error),
+    });
+
     return {
-      errorPdf: {
-        status: 500,
-        message: error.message,
-        node: "create_file_pdf_node",
-      },
+      errorPdf: toHealthRoadmapNodeError(
+        error,
+        "create_file_pdf_node",
+        "Không thể tạo hoặc tải lên tệp PDF."
+      ),
       nextNodePdf: "llm_generate_error_answer_node",
     };
   }

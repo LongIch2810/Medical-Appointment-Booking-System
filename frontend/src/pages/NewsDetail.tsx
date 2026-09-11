@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import { useArticleDetail, useArticles } from "@/hooks/useArticles";
 import type { Article } from "@/types/interface/article.interface";
 
@@ -40,8 +41,11 @@ const NewsDetail = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-10 text-center text-gray-500">
-        Đang tải bài viết...
+      <div className="container mx-auto px-4 py-16">
+        <MedicalAiLoading
+          label="Đang tải nội dung bài viết..."
+          description="Đang tổng hợp thông tin y khoa và kiến thức sức khỏe"
+        />
       </div>
     );
   }

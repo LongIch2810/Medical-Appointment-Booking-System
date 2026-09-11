@@ -1,9 +1,5 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
-import { getChatModel } from "../configs/llm.js";
 import { z } from "zod";
-import * as dotenv from "dotenv";
-dotenv.config();
 
 export const HealthPlanSchema = z.object({
   duration_months: z
@@ -13,8 +9,10 @@ export const HealthPlanSchema = z.object({
   nutrition_plan: z
     .array(
       z.object({
-        week: z.string().describe("Tuần thứ mấy trong kế hoạch"),
-        goals: z.string().describe("Mục tiêu dinh dưỡng của tuần"),
+        week: z
+          .string()
+          .describe("Giai đoạn kế hoạch, ví dụ: Giai đoạn 1 (Tuần 1-4)"),
+        goals: z.string().describe("Mục tiêu dinh dưỡng của giai đoạn"),
         meals: z.object({
           breakfast: z.string(),
           lunch: z.string(),
@@ -22,7 +20,8 @@ export const HealthPlanSchema = z.object({
         }),
       })
     )
-    .describe("Lộ trình ăn uống chi tiết theo tuần (ăn sáng/trưa/tối)"),
+    .max(4)
+    .describe("Tối đa 4 giai đoạn ăn uống, mỗi giai đoạn có ba bữa mẫu"),
   exercise_plan: z
     .array(
       z.object({
@@ -31,7 +30,8 @@ export const HealthPlanSchema = z.object({
         activities: z.array(z.string()),
       })
     )
-    .describe("Kế hoạch vận động & thể thao chi tiết theo tuần"),
+    .max(4)
+    .describe("Tối đa 4 giai đoạn vận động và thể thao"),
   lifestyle_advice: z
     .array(z.string())
     .describe("Các khuyến nghị về lối sống lành mạnh"),
@@ -40,61 +40,84 @@ export const HealthPlanSchema = z.object({
     .describe("Các chỉ số cần theo dõi và kiểm tra định kỳ"),
 });
 
-const systemPrompt = `
-Bạn là **Chuyên gia dinh dưỡng và chăm sóc sức khỏe nhiều kinh nghiệm** có chuyên môn về dinh dưỡng, thể thao và y học lối sống.  
-Đầu vào là JSON {health_metric_analyzer_json} — chứa các thông tin phân tích sức khỏe đã được đánh giá, bao gồm:
-- bodyComposition (tình trạng cân nặng, BMI)
-- cardiovascular (tim mạch, huyết áp, cholesterol)
-- metabolic (đường huyết, chuyển hóa)
-- lifeStyle (hút thuốc, rượu, vận động)
-- other (bệnh nền, dị ứng, tiêm chủng)
-- expectedImprovement (thời gian và mục tiêu cải thiện)
+export function buildHealthPlan(healthMetricJson: string) {
+  const healthMetric = JSON.parse(healthMetricJson) as {
+    expectedImprovement?: { duration_months?: number; targetSummary?: string };
+    bodyComposition?: { status?: string; interpretation?: string };
+    cardiovascular?: { riskLevel?: string };
+    metabolic?: { riskLevel?: string };
+    lifeStyle?: { interpretation?: string };
+  };
+  const requestedMonths = Number(
+    healthMetric.expectedImprovement?.duration_months,
+  );
+  const durationMonths = Number.isFinite(requestedMonths)
+    ? Math.min(12, Math.max(1, Math.round(requestedMonths)))
+    : 3;
+  const phaseCount = Math.min(4, Math.max(1, Math.ceil(durationMonths / 3)));
+  const hasElevatedRisk = /cao|thừa|béo|nguy cơ/i.test(
+    JSON.stringify(healthMetric),
+  );
+  const target =
+    healthMetric.expectedImprovement?.targetSummary ??
+    "cải thiện sức khỏe tổng thể một cách an toàn và bền vững";
 
-**Nhiệm vụ của bạn:**
-Tạo một **kế hoạch cải thiện sức khỏe cá nhân hóa** trong suốt khoảng thời gian "expectedImprovement.duration_months", bao gồm:
-1. **Tóm tắt mục tiêu tổng thể (summary)**: Nêu rõ bạn sẽ đạt được gì sau kế hoạch này.
-2. **Nutrition plan** – kế hoạch ăn uống:
-   - Chia theo từng tuần (Tuần 1, Tuần 2, ...).
-   - Gồm 3 bữa chính: sáng, trưa, tối.
-   - Dựa vào tình trạng sức khỏe: ví dụ thừa cân → giảm tinh bột nhanh, tăng rau xanh; đường huyết cao → hạn chế đường đơn, tăng ngũ cốc nguyên hạt.
-   - Mỗi tuần có mục tiêu riêng (giảm 0.5-1kg, ổn định glucose, v.v.).
-3. **Exercise plan** – kế hoạch vận động:
-   - Từng tuần có mục tiêu và danh sách hoạt động (ví dụ: đi bộ nhanh, đạp xe, yoga, cardio nhẹ).
-   - Tăng dần cường độ theo tháng nhưng không quá sức.
-4. **Lifestyle advice** – lời khuyên lối sống:
-   - Giấc ngủ, uống nước, kiểm soát stress, giảm rượu bia, không hút thuốc.
-5. **Monitoring** – các chỉ số cần theo dõi:
-   - Ví dụ: cân nặng hàng tuần, huyết áp, đường huyết buổi sáng, nhịp tim khi nghỉ.
+  const phases = Array.from({ length: phaseCount }, (_, index) => {
+    const startMonth = Math.floor((index * durationMonths) / phaseCount) + 1;
+    const endMonth = Math.max(
+      startMonth,
+      Math.floor(((index + 1) * durationMonths) / phaseCount),
+    );
+    const label = `Giai đoạn ${index + 1} (Tháng ${startMonth}-${endMonth})`;
+    const goal =
+      index === 0
+        ? "Ổn định thói quen ăn uống, ngủ nghỉ và vận động phù hợp."
+        : index === phaseCount - 1
+          ? "Duy trì thói quen lành mạnh và đánh giá tiến độ để điều chỉnh."
+          : "Tăng dần mức độ tuân thủ kế hoạch theo thể trạng thực tế.";
 
-**Nguyên tắc:**
-- Dựa trên hướng dẫn WHO, ADA, ESC.
-- Không chẩn đoán hay kê đơn thuốc.
-- Dùng ngôn ngữ thân thiện, động viên (dùng “bạn” thay vì “bệnh nhân”).
-- Số liệu phải thực tế, an toàn, phù hợp với thời gian cải thiện.
-- Mỗi kế hoạch **phải có tiến trình cụ thể theo tuần**, không chỉ mô tả chung.
+    return { label, goal };
+  });
 
-Ví dụ cách diễn đạt:
-- "Tuần 1": "Ổn định nhịp sinh học, bắt đầu giảm tinh bột nhanh."
-- "breakfast": "Yến mạch + trứng luộc + 1 quả chuối nhỏ"
-- "activities": ["Đi bộ nhanh 30 phút mỗi ngày", "Kéo giãn cơ 10 phút buổi sáng"]
-- "lifestyle_advice": ["Ngủ đủ 7 tiếng mỗi đêm", "Uống ít nhất 2 lít nước/ngày"]
-
-Chỉ trả về **JSON hợp lệ duy nhất**, không giải thích thêm.
-`;
-
-const promptTemplate = ChatPromptTemplate.fromMessages([
-  ["ai", systemPrompt],
-  [
-    "human",
-    "Tạo kế hoạch cải thiện sức khỏe cơ bản cho bệnh nhân: {health_metric_analyzer_json}",
-  ],
-]);
-
-const model = getChatModel({ temperature: 0 });
-
-const structuredModel = model.withStructuredOutput(HealthPlanSchema);
-
-const pipeline = promptTemplate.pipe(structuredModel);
+  return HealthPlanSchema.parse({
+    duration_months: durationMonths,
+    summary: `Mục tiêu trong ${durationMonths} tháng là ${target}. Kế hoạch được xây dựng từ các chỉ số sức khỏe hiện có và ưu tiên tiến độ an toàn, có thể duy trì lâu dài.`,
+    nutrition_plan: phases.map(({ label, goal }) => ({
+      week: label,
+      goals: goal,
+      meals: {
+        breakfast: "Yến mạch hoặc ngũ cốc nguyên hạt, trứng và trái cây ít ngọt.",
+        lunch: "Một phần đạm nạc, nhiều rau xanh và tinh bột nguyên cám vừa phải.",
+        dinner: hasElevatedRisk
+          ? "Rau, đạm nạc và hạn chế đồ chiên, đường đơn, ăn trước giờ ngủ 2-3 tiếng."
+          : "Rau, đạm nạc và khẩu phần vừa đủ, hạn chế ăn khuya.",
+      },
+    })),
+    exercise_plan: phases.map(({ label, goal }, index) => ({
+      week: label,
+      goals: goal,
+      activities: [
+        `Đi bộ nhanh ${20 + index * 5} phút, ít nhất 5 ngày mỗi tuần.`,
+        "Kéo giãn nhẹ 10 phút mỗi ngày.",
+        index > 0
+          ? "Bổ sung 2 buổi bài tập sức mạnh nhẹ mỗi tuần nếu thể trạng cho phép."
+          : "Theo dõi nhịp tim và cảm nhận cơ thể khi bắt đầu vận động.",
+      ],
+    })),
+    lifestyle_advice: [
+      "Ngủ đều giờ và hướng tới 7-8 giờ mỗi đêm.",
+      "Uống đủ nước, ưu tiên nước lọc và hạn chế đồ uống có đường.",
+      "Dành thời gian thư giãn, giảm căng thẳng và không hút thuốc.",
+      "Không tự ý dùng thuốc hoặc thay đổi điều trị; trao đổi bác sĩ khi có triệu chứng bất thường.",
+    ],
+    monitoring: [
+      "Theo dõi cân nặng hoặc vòng eo mỗi tuần.",
+      "Theo dõi huyết áp, đường huyết hoặc chỉ số bác sĩ đã khuyến nghị.",
+      "Ghi nhận mức vận động, giấc ngủ và cảm nhận cơ thể.",
+      "Đánh giá lại sau mỗi giai đoạn để điều chỉnh cùng nhân viên y tế khi cần.",
+    ],
+  });
+}
 
 export const HealthPlanGeneratorTool = tool(
   async ({
@@ -102,8 +125,7 @@ export const HealthPlanGeneratorTool = tool(
   }: {
     health_metric_analyzer_json: string;
   }) => {
-    const result = await pipeline.invoke({ health_metric_analyzer_json });
-    return result;
+    return buildHealthPlan(health_metric_analyzer_json);
   },
   {
     name: "health_plan_generator_tool",

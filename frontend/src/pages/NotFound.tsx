@@ -8,7 +8,7 @@ const NotFound = () => {
 
   return (
     <div className="flex flex-col gap-3 items-center justify-center min-h-screen bg-muted/30 p-4">
-      <ErrorNotFoundAnimation width={700} />
+      <ErrorNotFoundAnimation />
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-center gap-x-1">
           <AlertTriangle className="w-6 h-6 text-destructive" />

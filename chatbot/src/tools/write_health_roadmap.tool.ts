@@ -1,10 +1,6 @@
-import { getChatModel } from "../configs/llm.js";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { tool } from "@langchain/core/tools";
-import * as dotenv from "dotenv";
 import { z } from "zod";
-
-dotenv.config();
+import { HealthPlanSchema } from "./health_plan_generator.tool.js";
 
 const SectionItemSchema = z.object({
   section_title: z
@@ -43,68 +39,50 @@ export const HealthRoadmapReportSchema = z.object({
     ),
 });
 
-const today = new Date();
-const currentDate = today.toISOString().split("T")[0];
+export function buildHealthRoadmapReport(dataJson: string) {
+  const healthPlan = HealthPlanSchema.parse(JSON.parse(dataJson));
+  const nutrition = healthPlan.nutrition_plan
+    .map(
+      (phase) =>
+        `${phase.week}: ${phase.goals} Bữa sáng: ${phase.meals.breakfast} Bữa trưa: ${phase.meals.lunch} Bữa tối: ${phase.meals.dinner}`,
+    )
+    .join("\n");
+  const exercise = healthPlan.exercise_plan
+    .map(
+      (phase) =>
+        `${phase.week}: ${phase.goals} ${phase.activities.join(" ")}`,
+    )
+    .join("\n");
 
-const systemPrompt = `
-Bạn là chuyên gia phân tích cấp cao của một công ty tư vấn chiến lược quốc tế và chuyên gia tư vấn dinh dưỡng – thể thao.  
-Nhiệm vụ của bạn là **viết bản lộ trình sức khỏe chuyên nghiệp** dựa trên dữ liệu kế hoạch chi tiết (JSON) được cung cấp {data_json}.
-
-Yêu cầu nội dung:
-1. Giới thiệu tổng quan (introduction):
-   - Tóm tắt tình trạng sức khỏe hiện tại của bệnh nhân (theo HealthPlan).
-   - Giải thích ngắn gọn mục tiêu và ý nghĩa của kế hoạch.
-
-2. Các phần chính (sections):
-   - Phần 1 – Dinh dưỡng: mô tả cách tổ chức bữa ăn, thay đổi theo tuần, nguyên tắc ăn uống, lưu ý quan trọng.
-   - Phần 2 – Vận động: mô tả chương trình luyện tập, cường độ, tần suất và mục tiêu từng giai đoạn.
-   - Phần 3 – Lối sống & thói quen:** nhấn mạnh việc ngủ, uống nước, kiểm soát stress, bỏ thuốc lá, hạn chế rượu bia.
-   - Phần 4 – Theo dõi & đánh giá:** hướng dẫn người dùng cách ghi lại kết quả (cân nặng, huyết áp, đường huyết, vòng eo...).
-
-3. Tổng kết tiến trình (progress_summary):
-   - Mô tả các cột mốc đạt được theo tháng (ví dụ: “Tháng 3: giảm 3kg, huyết áp ổn định…”).
-
-4. Động viên (motivation):
-   - Giọng văn tích cực, nhân văn, thể hiện sự đồng hành của AI Health Coach.
-   - Gợi ý phương pháp duy trì lâu dài.
-
-5. Kết luận (conclusion):
-   - Nhấn mạnh lợi ích khi tuân thủ lộ trình.
-   - Khuyến khích tái khám và cập nhật kế hoạch định kỳ.
-
-6. Footer:
-    - Thương hiệu của là AI LifeHealth
-    - Ngày hiện tại là: ${currentDate}
-
-Phong cách trình bày:
-- Chỉ có text không dùng bất cứ kí tự nào kể cả dấu *.
-- Giọng văn trang trọng, dễ hiểu, truyền cảm hứng.
-- Không sử dụng ngôn ngữ y khoa quá phức tạp.
-- Sử dụng tiếng Việt tự nhiên, gần gũi.
-- Không chẩn đoán hay kê đơn thuốc.
-- Trả về JSON hợp lệ duy nhất theo schema HealthRoadmapReportSchema.
-`;
-
-const promptTemplate = ChatPromptTemplate.fromMessages([
-  ["system", systemPrompt],
-  [
-    "human",
-    `
-Hãy viết bản lộ trình sức khỏe chuyên nghiệp cho bệnh nhân.
-Dữ liệu đầu vào (HealthPlan JSON): {data_json}
-    `,
-  ],
-]);
-
-const model = getChatModel({ temperature: 0.3 });
-
-const structuredModel = model.withStructuredOutput(HealthRoadmapReportSchema);
-const pipeline = promptTemplate.pipe(structuredModel);
+  return HealthRoadmapReportSchema.parse({
+    title: `Lộ trình cải thiện sức khỏe ${healthPlan.duration_months} tháng`,
+    introduction: healthPlan.summary,
+    sections: [
+      { section_title: "Dinh dưỡng", content: nutrition },
+      { section_title: "Vận động", content: exercise },
+      {
+        section_title: "Lối sống và thói quen",
+        content: healthPlan.lifestyle_advice.join(" "),
+      },
+      {
+        section_title: "Theo dõi và đánh giá",
+        content: healthPlan.monitoring.join(" "),
+      },
+    ],
+    progress_summary: `Theo dõi tiến độ theo ${healthPlan.nutrition_plan.length} giai đoạn, ưu tiên cải thiện ổn định và an toàn trong ${healthPlan.duration_months} tháng.`,
+    motivation:
+      "Những thay đổi nhỏ được duy trì đều đặn sẽ tạo nên kết quả bền vững. Hãy điều chỉnh nhịp độ phù hợp với thể trạng của bạn.",
+    conclusion:
+      "Lộ trình này hỗ trợ xây dựng thói quen lành mạnh, không thay thế chẩn đoán hoặc điều trị của bác sĩ. Hãy tái khám và cập nhật kế hoạch định kỳ.",
+    footer: `AI LifeHealth - Ngày lập kế hoạch: ${new Date()
+      .toISOString()
+      .slice(0, 10)}`,
+  });
+}
 
 export const WriteHealthRoadmapTool = tool(
   async ({ data_json }: { data_json: string }) => {
-    const result = await pipeline.invoke({ data_json });
-    return result;
+    return buildHealthRoadmapReport(data_json);
   },
   {
     name: "write_health_roadmap_tool",

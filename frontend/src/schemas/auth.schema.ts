@@ -41,3 +41,20 @@ export const forgotPasswordEmailSchema = z.object({
 export const resetPasswordSchema = z.object({
   newPassword: passwordSchema,
 });
+
+export const changePasswordSchema = z
+  .object({
+    old_password: passwordSchema,
+    new_password: passwordSchema,
+    confirm_password: passwordSchema,
+  })
+  .refine((data) => data.new_password === data.confirm_password, {
+    message: "Mật khẩu xác nhận không khớp !",
+    path: ["confirm_password"],
+  })
+  .refine((data) => data.old_password !== data.new_password, {
+    message: "Mật khẩu mới không được trùng với mật khẩu cũ !",
+    path: ["new_password"],
+  });
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>;
