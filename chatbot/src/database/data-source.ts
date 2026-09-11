@@ -15,6 +15,13 @@ if (!chatbotDbPassword || chatbotDbPassword.length < 16) {
 
 const READ_ONLY_CONNECTION_OPTIONS = {
   options: "-c default_transaction_read_only=on -c statement_timeout=15000",
+  // node-postgres has NO connection timeout by default (connectionTimeoutMillis
+  // defaults to 0 = wait forever). If the DB host/port/firewall is wrong or
+  // unreachable, dataSource.initialize() hangs indefinitely with zero error —
+  // initializeWithRetry() never even reaches its 2nd attempt or logs a
+  // warning, since attempt 1 simply never resolves or rejects. Bound it so a
+  // broken connection fails fast and visibly instead of hanging forever.
+  connectionTimeoutMillis: 10_000,
 };
 
 export const AppDatasource = new DataSource({

@@ -64,21 +64,27 @@ async function startServer(): Promise<void> {
       import("./configs/vectordb.js"),
     ]);
 
-  const vectorDbReady =
-    process.env.NODE_ENV === "production" ? initVectorDB() : buildKnowLedgeBase();
+  if (process.env.NODE_ENV === "production") {
+    await initVectorDB();
+  } else {
+    await buildKnowLedgeBase();
+  }
 
-  // getChatbotRouter() was previously only invoked lazily on the first
-  // real "/chatbot/*" request. That import chain pulls in qa_sql.ts /
-  // admin_qa_sql.ts, which run a top-level `await initializeWithRetry(...)`
-  // opening the read-only Postgres DataSources (up to 60 retries * 5s each
-  // — worst case 5 minutes). Deferring that to the first live chat message
-  // made every post-deploy/post-restart message pay for it silently (no
-  // request-scoped log runs until this import resolves), looking like an
-  // unexplained hang. Warm it up here, alongside the vector DB, so Render's
-  // own deploy-readiness wait absorbs this cost instead of a user's message.
-  const routerReady = getChatbotRouter();
-
-  await Promise.all([vectorDbReady, routerReady]);
+  // getChatbotRouter() imports qa_sql.ts/admin_qa_sql.ts, which open the
+  // read-only Postgres DataSources at module load (up to 60 retries * 5s —
+  // 5 min worst case if the DB is unreachable). That cost used to be paid
+  // silently by whichever chat message happened to be first after a
+  // restart. Kick it off here so it starts as early as possible — but do
+  // NOT await it before app.listen(): Render's port-scan has its own
+  // timeout (well under 5 minutes), and a slow/stuck DB connection must
+  // not stop the process from binding its port and going live. The first
+  // real request still awaits the same in-flight promise, same as before,
+  // just started a few seconds earlier.
+  void getChatbotRouter()
+    .then(() => console.info("[startup] Chatbot router warmed up"))
+    .catch((error) =>
+      console.error("[startup] Chatbot router warmup failed", error),
+    );
 
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
