@@ -7,6 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useLogin } from "@/hooks/useAuth";
 
+const DEMO_ACCOUNTS = [
+  { role: "Quản trị viên", usernameOrEmail: "admin01", password: "123456" },
+  { role: "Bác sĩ", usernameOrEmail: "bs.levanminh", password: "123456" },
+] as const;
+
 export function LoginPage() {
   const loginMutation = useLogin();
   const [usernameOrEmail, setUsernameOrEmail] = useState("");
@@ -164,6 +169,35 @@ export function LoginPage() {
                   )}
                 </Button>
               </form>
+
+              <div className="space-y-2 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-3.5 dark:border-emerald-500/30 dark:bg-emerald-500/5">
+                <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Tài khoản dùng thử (demo)
+                </p>
+                {DEMO_ACCOUNTS.map((account) => (
+                  <button
+                    key={account.usernameOrEmail}
+                    type="button"
+                    onClick={() => {
+                      setUsernameOrEmail(account.usernameOrEmail);
+                      setPassword(account.password);
+                    }}
+                    disabled={isPending}
+                    className="flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-xs transition hover:border-primary hover:bg-primary/5 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-emerald-500"
+                  >
+                    <span className="truncate">
+                      <span className="font-bold text-slate-700 dark:text-slate-200">{account.role}:</span>{" "}
+                      <span className="font-mono text-slate-500 dark:text-slate-400">{account.usernameOrEmail}</span>
+                    </span>
+                    <span className="shrink-0 font-mono text-slate-400 dark:text-slate-500">
+                      mật khẩu: {account.password}
+                    </span>
+                  </button>
+                ))}
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">
+                  Bấm vào một tài khoản để tự điền, sau đó nhấn "Đăng nhập hệ thống".
+                </p>
+              </div>
 
               <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3.5 text-xs leading-relaxed text-slate-500 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400">
                 🔒 Phiên đăng nhập được bảo vệ bởi HttpOnly Cookie &amp; JWT Token với cơ chế tự động gia hạn an toàn.
