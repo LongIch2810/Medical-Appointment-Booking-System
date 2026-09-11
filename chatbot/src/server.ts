@@ -1,22 +1,26 @@
 import "dotenv/config";
-import express from "express";
+import express, { type Router } from "express";
 import errorHandler from "./middlewares/errorHandler.js";
 import { assertInternalServiceKeyConfigured } from "./middlewares/internalServiceAuth.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isVercel = process.env.VERCEL === "1";
 
-assertInternalServiceKeyConfigured();
+let chatbotRouterPromise: Promise<Router> | undefined;
 
-const [
-  { default: chatRouter },
-  { buildKnowLedgeBase },
-  { default: initVectorDB },
-] = await Promise.all([
-  import("./routes/chatbot.route.js"),
-  import("./utils/buildKnowLedgeBase.js"),
-  import("./configs/vectordb.js"),
-]);
+async function getChatbotRouter(): Promise<Router> {
+  chatbotRouterPromise ??= import("./routes/chatbot.route.js").then(
+    ({ default: router }) => router,
+  );
+
+  try {
+    return await chatbotRouterPromise;
+  } catch (error) {
+    chatbotRouterPromise = undefined;
+    throw error;
+  }
+}
 
 app.disable("x-powered-by");
 app.use(express.json({ limit: "32kb" }));
@@ -39,16 +43,35 @@ app.get("/healthy", (_req, res) => {
   });
 });
 
-app.use("/chatbot", chatRouter);
+app.use("/chatbot", async (req, res, next) => {
+  try {
+    const chatRouter = await getChatbotRouter();
+    chatRouter(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.use(errorHandler);
 
-if (process.env.NODE_ENV === "production") {
-  await initVectorDB();
-} else {
-  await buildKnowLedgeBase();
-}
+export default app;
 
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
+if (!isVercel) {
+  assertInternalServiceKeyConfigured();
+
+  const [{ buildKnowLedgeBase }, { default: initVectorDB }] =
+    await Promise.all([
+      import("./utils/buildKnowLedgeBase.js"),
+      import("./configs/vectordb.js"),
+    ]);
+
+  if (process.env.NODE_ENV === "production") {
+    await initVectorDB();
+  } else {
+    await buildKnowLedgeBase();
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+}
