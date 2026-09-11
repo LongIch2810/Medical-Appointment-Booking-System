@@ -5,9 +5,6 @@ import { assertInternalServiceKeyConfigured } from "./middlewares/internalServic
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const shouldStartStandaloneServer =
-  process.env.START_STANDALONE_SERVER === "true" ||
-  process.env.NODE_ENV !== "production";
 
 let chatbotRouterPromise: Promise<Router> | undefined;
 
@@ -58,7 +55,7 @@ app.use(errorHandler);
 
 export default app;
 
-async function startStandaloneServer(): Promise<void> {
+async function startServer(): Promise<void> {
   assertInternalServiceKeyConfigured();
 
   const [{ buildKnowLedgeBase }, { default: initVectorDB }] =
@@ -79,13 +76,10 @@ async function startStandaloneServer(): Promise<void> {
 }
 
 console.info("[startup] Chatbot Express app initialized", {
-  mode: shouldStartStandaloneServer ? "standalone" : "serverless",
   node: process.version,
 });
 
-if (shouldStartStandaloneServer) {
-  void startStandaloneServer().catch((error) => {
-    console.error("[startup] Chatbot standalone initialization failed", error);
-    process.exitCode = 1;
-  });
-}
+void startServer().catch((error) => {
+  console.error("[startup] Chatbot initialization failed", error);
+  process.exitCode = 1;
+});
