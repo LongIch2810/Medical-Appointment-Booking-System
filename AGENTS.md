@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-LifeHealth has four TypeScript services. `frontend/` is the patient React/Vite app; `admin/` is the doctor and administrator app. `backend/` is the NestJS API, with features in `src/modules/` and persistence in `src/entities/` and `src/database/`. `chatbot/src/` contains Express/LangChain agents, RAG, routes, and tools. Patient UI work must follow `frontend/AGENTS.md` and `frontend/DESIGN.md`; doctor/admin UI work must follow `admin/AGENTS.md` and `admin/DESIGN.md`. Never edit `dist/`, `dist_old*/`, or dependency directories.
+LifeHealth has four TypeScript services. `frontend/` is the patient React/Vite app; `admin/` is the doctor and administrator app. `backend/` is the NestJS API, with features in `src/modules/` and persistence in `src/entities/` and `src/database/`. `chatbot/src/` contains Express/LangChain agents, RAG, routes, and tools. Patient UI work must follow `frontend/AGENTS.md` and `frontend/DESIGN.md`; doctor/admin UI work must follow `admin/AGENTS.md` and `admin/DESIGN.md`. Never edit `dist/` or dependency directories.
 
 ## Mandatory Codebase Discovery Rule
 
