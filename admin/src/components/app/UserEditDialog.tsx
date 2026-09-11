@@ -53,19 +53,20 @@ export function UserEditDialog({
   return (
     <FormDialog
       trigger={trigger}
-      title={`Sửa người dùng #${user.id}`}
-      description="Username và email là định danh tài khoản nên không thể chỉnh sửa."
+      title={`Chỉnh sửa người dùng #${user.id}`}
+      description="Cập nhật thông tin định danh cá nhân của tài khoản (Username & Email không thể thay đổi)."
       isSubmitting={updateUser.isPending}
       onOpen={() => setForm(toFormState(user))}
       onSubmit={handleSubmit}
+      submitLabel="Lưu cập nhật"
     >
-      <FormField label="Username" htmlFor={`user-${user.id}-username`}>
-        <Input id={`user-${user.id}-username`} value={user.username} disabled />
+      <FormField label="Tên đăng nhập (Username)" htmlFor={`user-${user.id}-username`}>
+        <Input id={`user-${user.id}-username`} value={user.username} disabled className="bg-slate-50 dark:bg-slate-800/60 opacity-80 cursor-not-allowed" />
       </FormField>
       <FormField label="Email" htmlFor={`user-${user.id}-email`}>
-        <Input id={`user-${user.id}-email`} value={user.email} disabled />
+        <Input id={`user-${user.id}-email`} value={user.email} disabled className="bg-slate-50 dark:bg-slate-800/60 opacity-80 cursor-not-allowed" />
       </FormField>
-      <FormField label="Họ tên" htmlFor={`user-${user.id}-fullname`} required>
+      <FormField label="Họ và tên" htmlFor={`user-${user.id}-fullname`} required>
         <Input
           id={`user-${user.id}-fullname`}
           value={form.fullname}
@@ -91,7 +92,7 @@ export function UserEditDialog({
       <FormField label="Giới tính" htmlFor={`user-${user.id}-gender`}>
         <select
           id={`user-${user.id}-gender`}
-          className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+          className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 text-sm text-slate-900 shadow-2xs outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           value={String(form.gender)}
           onChange={(event) => update("gender", event.target.value === "true")}
         >
@@ -99,13 +100,15 @@ export function UserEditDialog({
           <option value="false">Nữ</option>
         </select>
       </FormField>
-      <FormField label="Địa chỉ" htmlFor={`user-${user.id}-address`}>
+      <FormField label="Địa chỉ cư trú" htmlFor={`user-${user.id}-address`}>
         <Textarea
           id={`user-${user.id}-address`}
           value={form.address}
           onChange={(event) => update("address", event.target.value)}
+          className="rounded-xl border-slate-200 dark:border-slate-800"
         />
       </FormField>
     </FormDialog>
   );
 }
+

@@ -56,58 +56,66 @@ export function GenericList<T>({
   emptyDescription,
 }: GenericListProps<T>) {
   return (
-    <Card className="rounded-lg border-[#d9d9dd]">
-      <CardHeader>
+    <Card className="rounded-3xl border-slate-200/80 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+      <CardHeader className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-col gap-1">
-            <CardTitle className="text-base">{title}</CardTitle>
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">{title}</CardTitle>
             {description ? (
-              <span className="text-xs text-[#75758a]">{description}</span>
+              <span className="text-xs text-slate-500 dark:text-slate-400">{description}</span>
             ) : null}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {toolbar}
-            <Badge variant="outline">Tổng: {total}</Badge>
+            <Badge variant="outline" className="border-slate-200 bg-slate-50 text-xs font-bold text-slate-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300">
+              Tổng: {total}
+            </Badge>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 overflow-x-auto">
+      <CardContent className="p-0 overflow-x-auto">
         {isLoading ? (
-          <LoadingState />
+          <div className="p-8">
+            <LoadingState />
+          </div>
         ) : isError ? (
-          <ErrorState onRetry={onRetry} />
+          <div className="p-8">
+            <ErrorState onRetry={onRetry} />
+          </div>
         ) : !rows || rows.length === 0 ? (
-          <EmptyState
-            title={emptyTitle ?? "Chưa có dữ liệu"}
-            description={
-              emptyDescription ??
-              "Backend không trả về bản ghi nào cho bộ lọc hiện tại."
-            }
-          />
+          <div className="p-8">
+            <EmptyState
+              title={emptyTitle ?? "Chưa có dữ liệu"}
+              description={
+                emptyDescription ??
+                "Backend không trả về bản ghi nào cho bộ lọc hiện tại."
+              }
+            />
+          </div>
         ) : (
-          <table className="min-w-full divide-y divide-[#d9d9dd] text-left">
-            <thead>
+          <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
+            <thead className="bg-slate-50/80 dark:bg-slate-950/60">
               <tr>
                 {columns.map((column) => (
                   <th
                     key={column.key}
-                    className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]"
+                    className="mono-label px-4 py-3.5 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                   >
                     {column.label}
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e5e7eb]">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900">
               {rows.map((row) => (
                 <tr
                   key={rowKey(row)}
-                  className="align-top transition-colors hover:bg-[#f7f6f2]"
+                  className="align-middle transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
                 >
                   {columns.map((column) => (
                     <td
                       key={column.key}
-                      className="px-3 py-4 text-sm text-[#212121]"
+                      className="px-4 py-3.5 text-xs sm:text-sm text-slate-800 dark:text-slate-200"
                     >
                       {column.render(row)}
                     </td>
@@ -118,18 +126,21 @@ export function GenericList<T>({
           </table>
         )}
 
-        <Pagination
-          page={page}
-          limit={limit}
-          total={total}
-          onPageChange={onPageChange}
-          onLimitChange={onLimitChange}
-        />
+        <div className="p-4 sm:p-5 border-t border-slate-100 dark:border-slate-800">
+          <Pagination
+            page={page}
+            limit={limit}
+            total={total}
+            onPageChange={onPageChange}
+            onLimitChange={onLimitChange}
+          />
+        </div>
       </CardContent>
     </Card>
   );
 }
 
 export function ActionCell({ children }: { children: ReactNode }) {
-  return <div className="flex flex-wrap gap-2">{children}</div>;
+  return <div className="flex flex-wrap items-center gap-1.5">{children}</div>;
 }
+
