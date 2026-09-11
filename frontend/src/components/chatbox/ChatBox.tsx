@@ -177,7 +177,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
       content: input.trim(),
       message_type: MessageType.Regular,
     });
-    console.log(">>>send: ", input);
+
     uploadingFilesRef.current = selectedFiles;
     setUploadingFiles(selectedFiles);
     setSelectedFiles([]);
@@ -275,9 +275,9 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
   console.log(">>> messages : ", messages);
 
   return (
-    <div className="w-80 h-96 bg-white border rounded-lg shadow-lg flex flex-col z-50">
+    <div className="w-80 h-96 bg-white border border-slate-200 rounded-lg shadow-lg flex flex-col z-50 dark:bg-slate-900 dark:border-slate-800">
       {/* Header */}
-      <div className="flex items-center justify-between p-2 border-b bg-primary/10">
+      <div className="flex items-center justify-between p-2 border-b border-slate-200 bg-primary/10 dark:border-slate-800 dark:bg-slate-800/80">
         <div className="flex items-center gap-2">
           {icon ? (
             <div className="w-8 h-8 flex items-center justify-center">
@@ -294,7 +294,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
             </Avatar>
           )}
 
-          <span className="font-semibold text-sm">{title || "AI ASSIST."}</span>
+          <span className="font-semibold text-sm text-slate-800 dark:text-slate-100">{title || "AI ASSIST."}</span>
         </div>
 
         <div className="flex items-center gap-1">
@@ -302,7 +302,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
             size={"sm"}
             variant={"secondary"}
             onClick={() => {}}
-            className="hover:bg-gray-200"
+            className="hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200"
           >
             <Video size={16} />
           </Button>
@@ -310,7 +310,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
             size={"sm"}
             variant={"secondary"}
             onClick={() => handleResize(channel)}
-            className="hover:bg-gray-200"
+            className="hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200"
           >
             <Minus size={16} />
           </Button>
@@ -319,7 +319,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
             size={"sm"}
             variant={"secondary"}
             onClick={() => handleRemove(channel)}
-            className="hover:bg-red-500 hover:text-white transition-all"
+            className="hover:bg-red-500 hover:text-white transition-all dark:bg-slate-800 dark:hover:bg-rose-600 dark:text-slate-200"
           >
             ✕
           </Button>
@@ -330,7 +330,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
       <div
         ref={messagesContainerRef}
         onScroll={handleScroll}
-        className="flex-1 p-2 overflow-y-auto space-y-2 bg-muted/20"
+        className="flex-1 p-2 overflow-y-auto space-y-2 bg-muted/20 dark:bg-slate-950/60 scrollbar-soft"
       >
         {messages?.length > 0 &&
           messages.map((msg: ChatMessage) => {
@@ -371,7 +371,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
                           {uploadingFiles.map((_, idx) => (
                             <Skeleton
                               key={idx}
-                              className="w-32 h-32 rounded bg-gray-300 animate-pulse"
+                              className="w-32 h-32 rounded bg-gray-300 dark:bg-slate-800 animate-pulse"
                             />
                           ))}
                         </div>
@@ -386,7 +386,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
                     className={`px-3 py-2 rounded-lg text-sm max-w-[80%] break-words whitespace-pre-wrap ${
                       isMe
                         ? "bg-primary text-white"
-                        : "bg-gray-200 text-gray-800"
+                        : "bg-gray-200 text-gray-800 dark:bg-slate-800 dark:text-slate-100 dark:border dark:border-slate-700/80"
                     }`}
                   >
                     {msg.content}
@@ -399,7 +399,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
 
       {/* Preview ảnh đã chọn */}
       {selectedFiles.length > 0 && (
-        <div className="p-2 border-t bg-gray-50 flex flex-wrap gap-2">
+        <div className="p-2 border-t border-slate-200 bg-gray-50 flex flex-wrap gap-2 dark:border-slate-800 dark:bg-slate-950/40">
           <AnimatePresence>
             {selectedFiles.map((file, index) => {
               const previewUrl = URL.createObjectURL(file);
@@ -432,7 +432,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
         </div>
       )}
       {/* Input */}
-      <div className="p-2 border-t flex items-center gap-2">
+      <div className="p-2 border-t border-slate-200 flex items-center gap-2 dark:border-slate-800 dark:bg-slate-900">
         <Input
           value={input}
           onInput={handleInputContent}

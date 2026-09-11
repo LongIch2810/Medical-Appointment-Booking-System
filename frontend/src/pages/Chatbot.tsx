@@ -317,7 +317,7 @@ export default function Chatbot() {
             onInput={handleInputContent}
             onKeyDown={handleKeyDown}
             disabled={isPending}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-850 px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus-visible:ring-primary/20"
+            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus-visible:ring-primary/20"
             placeholder={isPending ? "Trợ lý AI đang suy nghĩ và soạn câu trả lời..." : "Nhập câu hỏi hoặc tình trạng sức khỏe của bạn..."}
           />
           <Button

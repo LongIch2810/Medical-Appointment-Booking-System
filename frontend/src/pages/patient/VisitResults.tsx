@@ -55,29 +55,29 @@ const sections: Section[] = [
     key: "symptoms",
     label: "Triệu chứng lâm sàng",
     icon: Activity,
-    iconClass: "bg-amber-100 text-amber-700",
-    surfaceClass: "border-amber-200/80 bg-amber-50/40",
+    iconClass: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+    surfaceClass: "border-amber-200/80 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20",
   },
   {
     key: "diagnosis",
     label: "Chẩn đoán y khoa",
     icon: Microscope,
-    iconClass: "bg-sky-100 text-sky-700",
-    surfaceClass: "border-sky-200/80 bg-sky-50/40",
+    iconClass: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+    surfaceClass: "border-sky-200/80 bg-sky-50/40 dark:border-sky-900/40 dark:bg-sky-950/20",
   },
   {
     key: "treatment",
     label: "Phác đồ điều trị",
     icon: ClipboardList,
-    iconClass: "bg-violet-100 text-violet-700",
-    surfaceClass: "border-violet-200/80 bg-violet-50/40",
+    iconClass: "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300",
+    surfaceClass: "border-violet-200/80 bg-violet-50/40 dark:border-violet-900/40 dark:bg-violet-950/20",
   },
   {
     key: "prescription",
     label: "Đơn thuốc chỉ định",
     icon: Pill,
-    iconClass: "bg-emerald-100 text-emerald-700",
-    surfaceClass: "border-emerald-200/80 bg-emerald-50/40",
+    iconClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+    surfaceClass: "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20",
   },
 ];
 
@@ -105,13 +105,13 @@ const ResultSection: React.FC<{
         >
           <Icon className="h-3.5 w-3.5" />
         </span>
-        <p className="text-xs font-bold uppercase tracking-wider text-slate-700">
+        <p className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
           {section.label}
         </p>
       </div>
       <p
         className={cn(
-          "mt-2 whitespace-pre-line text-xs sm:text-sm leading-relaxed text-slate-800 font-medium",
+          "mt-2 whitespace-pre-line text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 font-medium",
           compact && "line-clamp-2",
         )}
       >
@@ -154,18 +154,18 @@ const VisitResults: React.FC = () => {
   }, [search, visitResults]);
 
   return (
-    <Card className="overflow-hidden border-slate-200/80 bg-white py-0 shadow-xs">
-      <CardHeader className="space-y-4 border-b border-slate-100 bg-gradient-to-r from-primary/5 via-white to-sky-50/30 px-6 py-5">
+    <Card className="overflow-hidden border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-xs">
+      <CardHeader className="space-y-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-primary/5 via-white to-sky-50/30 dark:from-primary/10 dark:via-slate-900 dark:to-slate-900 px-6 py-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <FileText className="h-5.5 w-5.5" />
             </div>
             <div className="space-y-0.5">
-              <CardTitle className="text-base sm:text-lg font-bold text-slate-900">
+              <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
                 Kết quả khám &amp; Bệnh án điện tử
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Tổng hợp chi tiết triệu chứng, chẩn đoán y khoa, phác đồ điều trị và đơn thuốc.
               </p>
             </div>
@@ -184,7 +184,7 @@ const VisitResults: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Tìm kiếm theo bác sĩ, chuyên khoa, chẩn đoán hoặc tên thuốc..."
-            className="h-10.5 rounded-2xl border-slate-200 bg-white pl-10 text-xs sm:text-sm shadow-2xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            className="h-10.5 rounded-2xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 pl-10 text-xs sm:text-sm shadow-2xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           />
         </div>
       </CardHeader>
@@ -197,26 +197,26 @@ const VisitResults: React.FC = () => {
             minHeight="min-h-56"
           />
         ) : isError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5 text-sm text-rose-600 font-medium">
+          <div className="rounded-2xl border border-rose-200 bg-rose-50/60 dark:border-rose-900/50 dark:bg-rose-950/40 p-5 text-sm text-rose-600 dark:text-rose-300 font-medium">
             Không thể tải kết quả khám. Vui lòng thử lại sau.
           </div>
         ) : visitResults.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-12 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-12 text-center">
             <FileSearch className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-            <p className="text-sm font-bold text-slate-700">
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
               Chưa có kết quả khám nào
             </p>
-            <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
               Sau khi bác sĩ hoàn thành buổi khám và nhập kết luận, hồ sơ chi tiết sẽ tự động đồng bộ tại đây.
             </p>
           </div>
         ) : filteredResults.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 px-6 py-10 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-10 text-center">
             <Search className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-            <p className="text-sm font-bold text-slate-700">
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
               Không tìm thấy kết quả phù hợp
             </p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
               Thử thay đổi từ khóa tìm kiếm khác.
             </p>
           </div>
@@ -232,27 +232,27 @@ const VisitResults: React.FC = () => {
             return (
               <div
                 key={result.id}
-                className="group rounded-3xl border border-slate-200/80 bg-white p-5 shadow-2xs transition-all hover:border-primary/40 hover:shadow-md"
+                className="group rounded-3xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-5 shadow-2xs transition-all hover:border-primary/40 dark:hover:border-slate-700 hover:shadow-md"
               >
-                <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex flex-1 gap-3.5 min-w-0">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Stethoscope className="h-5.5 w-5.5" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                        <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
                           BS. {doctorName}
                         </p>
                         <Badge
                           variant="secondary"
-                          className="rounded-full bg-sky-100 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 border-none"
+                          className="rounded-full bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 px-2.5 py-0.5 text-[11px] font-bold text-sky-700 border-none"
                         >
                           {specialty}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
-                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
                           <CalendarClock className="h-3.5 w-3.5 text-primary" />
                           {appointmentDate ?? result.created_at}
                         </span>
@@ -263,7 +263,7 @@ const VisitResults: React.FC = () => {
                         ) : null}
                         <span className="inline-flex items-center gap-1">
                           <UserRound className="h-3.5 w-3.5 text-slate-400" />
-                          Bệnh nhân: <strong className="text-slate-700">{patientName}</strong>
+                          Bệnh nhân: <strong className="text-slate-700 dark:text-slate-200">{patientName}</strong>
                         </span>
                       </div>
                     </div>
@@ -273,7 +273,7 @@ const VisitResults: React.FC = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 shrink-0 gap-1.5 self-start rounded-xl border-slate-200 px-3.5 text-xs font-bold text-slate-700 hover:border-primary/40 hover:bg-primary/5 hover:text-primary md:self-center cursor-pointer"
+                    className="h-9 shrink-0 gap-1.5 self-start rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-3.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:hover:bg-slate-700 md:self-center cursor-pointer"
                     onClick={() => setSelected(result)}
                   >
                     <Eye className="h-3.5 w-3.5" />

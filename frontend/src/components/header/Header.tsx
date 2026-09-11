@@ -161,7 +161,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
   return (
     <motion.header
       ref={headerRef}
-      className="fixed top-0 flex h-[72px] lg:h-[112px] items-center justify-between px-4 sm:px-6 py-4 bg-white/95 backdrop-blur-md shadow-xs border-b border-slate-100 w-full z-[40]"
+      className="fixed top-0 flex h-[72px] lg:h-[112px] items-center justify-between px-4 sm:px-6 py-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xs border-b border-slate-100 dark:border-slate-800 w-full z-[40]"
       animate={{ y: hidden ? "-100%" : 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: "easeInOut" }}
       inert={hidden ? true : undefined}
@@ -174,7 +174,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 rounded-xl hover:bg-slate-100 cursor-pointer text-slate-700"
+                className="h-10 w-10 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer text-slate-700 dark:text-slate-200"
                 aria-label="Mở menu điều hướng"
               >
                 <Menu className="h-6 w-6" />
@@ -182,10 +182,10 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-[85vw] max-w-[340px] p-0 flex flex-col justify-between bg-white border-r border-slate-200 shadow-2xl h-full"
+              className="w-[85vw] max-w-[340px] p-0 flex flex-col justify-between bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl h-full"
             >
               {/* Top Drawer Header & Brand */}
-              <div className="border-b border-slate-100 p-5 pb-4">
+              <div className="border-b border-slate-100 dark:border-slate-800 p-5 pb-4">
                 <Link
                   to="/"
                   className="flex items-center gap-3 cursor-pointer"
@@ -210,27 +210,27 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
 
                 {/* User Identity Banner (if logged in) */}
                 {userInfo ? (
-                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 p-3 border border-slate-200/70">
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/70 dark:border-slate-700/60">
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-sm font-bold text-primary">
                         {(userInfo.username || "U").charAt(0).toUpperCase()}
                       </div>
                       <div className="truncate">
-                        <p className="truncate text-xs font-bold text-slate-900">{userInfo.username}</p>
-                        <p className="truncate text-[11px] text-slate-500">{userInfo.email || "Bệnh nhân"}</p>
+                        <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">{userInfo.username}</p>
+                        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{userInfo.email || "Bệnh nhân"}</p>
                       </div>
                     </div>
                     <NavLink
                       to="/patient/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-[11px] font-semibold text-primary shadow-xs border border-slate-200/80 hover:bg-primary hover:text-white transition-colors"
+                      className="shrink-0 rounded-lg bg-white dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-primary shadow-xs border border-slate-200/80 dark:border-slate-700 hover:bg-primary hover:text-white transition-colors"
                     >
                       Hồ sơ
                     </NavLink>
                   </div>
                 ) : (
                   <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3.5 border border-primary/15 text-center">
-                    <p className="text-xs font-semibold text-slate-700">Trải nghiệm dịch vụ y tế chuẩn quốc tế</p>
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Trải nghiệm dịch vụ y tế chuẩn quốc tế</p>
                     <div className="mt-2.5 flex gap-2">
                       <Button
                         asChild
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         asChild
                         variant="outline"
                         size="sm"
-                        className="flex-1 rounded-xl text-xs font-semibold border-slate-200 hover:bg-slate-50"
+                        className="flex-1 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                       >
                         <NavLink to="/sign-up" onClick={() => setIsMobileMenuOpen(false)}>
                           Đăng ký
@@ -275,7 +275,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                           "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                           isActive
                             ? "bg-primary text-white font-semibold shadow-xs"
-                            : "text-slate-700 hover:bg-slate-100 hover:text-primary",
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary",
                         )
                       }
                     >
@@ -287,7 +287,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                 "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
                                 isActive
                                   ? "bg-white/20 text-white"
-                                  : "bg-slate-100 text-slate-600 group-hover:bg-primary/10 group-hover:text-primary",
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary",
                               )}
                             >
                               <item.icon className="h-4 w-4" />
@@ -314,7 +314,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
 
                 {/* Patient Portal Items (If logged in) */}
                 {userInfo && (
-                  <div className="space-y-1 pt-2 border-t border-slate-100">
+                  <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       Khu vực Bệnh nhân
                     </p>
@@ -330,7 +330,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                             "group flex items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition-all",
                             isActive
                               ? "bg-primary text-white font-semibold shadow-xs"
-                              : "text-slate-600 hover:bg-slate-100 hover:text-primary",
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary",
                           )
                         }
                       >
@@ -342,7 +342,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                   "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
                                   isActive
                                     ? "bg-white/20 text-white"
-                                    : "bg-slate-100 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary",
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary",
                                 )}
                               >
                                 <item.icon className="h-3.5 w-3.5" />
@@ -370,7 +370,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               </div>
 
               {/* Bottom Drawer Footer */}
-              <div className="border-t border-slate-100 bg-slate-50/70 p-4 space-y-3">
+              <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 p-4 space-y-3">
                 {userInfo ? (
                   <Button
                     type="button"
@@ -380,7 +380,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       handleLogout();
                     }}
                     disabled={isPending}
-                    className="w-full justify-center gap-2 rounded-xl border-rose-200 bg-white text-rose-600 hover:bg-rose-50 hover:text-rose-700 font-semibold text-xs shadow-xs cursor-pointer"
+                    className="w-full justify-center gap-2 rounded-xl border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 font-semibold text-xs shadow-xs cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     {isPending ? "Đang đăng xuất..." : "Đăng xuất tài khoản"}
@@ -432,7 +432,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 "relative inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200",
                 isActive
                   ? "text-primary bg-primary/10 shadow-2xs font-bold"
-                  : "text-slate-600 hover:text-primary hover:bg-slate-50"
+                  : "text-slate-600 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800/80"
               )
             }
           >
@@ -451,7 +451,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
           <div className="flex items-center gap-2 pl-2">
             <NavLink
               to="/sign-in"
-              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold text-slate-700 hover:text-primary hover:bg-slate-50 border border-slate-200 transition-all"
+              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all"
             >
               Đăng nhập
             </NavLink>
@@ -465,28 +465,28 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
         ) : (
           <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
             <DropdownMenuTrigger asChild className="cursor-pointer">
-              <Button variant="outline" className="flex items-center gap-2.5 rounded-2xl h-10 px-3 border-slate-200/90 hover:border-primary/40 bg-white">
+              <Button variant="outline" className="flex items-center gap-2.5 rounded-2xl h-10 px-3 border-slate-200/90 dark:border-slate-700 hover:border-primary/40 bg-white dark:bg-slate-800 dark:text-slate-100">
                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary">
                   {(userInfo.fullname || userInfo.username || "U").charAt(0).toUpperCase()}
                 </div>
-                <span className="text-xs font-bold text-slate-800 max-w-[120px] truncate">
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 max-w-[120px] truncate">
                   {userInfo.fullname || userInfo.username}
                 </span>
                 <span className="text-slate-400 text-xs">▼</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border-slate-200 bg-white" align="end">
+            <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" align="end">
               <DropdownMenuLabel className="px-3 py-2">
                 <p className="text-xs text-slate-400 font-normal">Xin chào,</p>
-                <p className="font-bold text-slate-800 truncate">{userInfo.fullname || userInfo.username}</p>
-                <p className="text-[11px] text-slate-500 truncate font-normal">{userInfo.email}</p>
+                <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{userInfo.fullname || userInfo.username}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-normal">{userInfo.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {headerSubItems.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   asChild
-                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-primary transition-colors flex items-center justify-between"
+                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between"
                 >
                   <Link
                     to={item.to}
@@ -508,7 +508,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               ))}
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 focus:text-rose-700 transition-colors"
+                className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 hover:text-rose-700 dark:hover:text-rose-300 focus:text-rose-700 transition-colors"
                 onClick={handleLogout}
               >
                 <LogOut className="h-3.5 w-3.5 mr-2" />

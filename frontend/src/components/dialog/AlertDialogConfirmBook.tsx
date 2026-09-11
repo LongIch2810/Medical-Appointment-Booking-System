@@ -72,12 +72,12 @@ const AlertDialogConfirmBook = ({
 
   return (
     <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
-      <AlertDialogContent className="max-w-md p-0 gap-0 rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-neutral-900 border border-slate-200/80 dark:border-neutral-800">
-        <AlertDialogHeader className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-neutral-800 text-center">
-          <div className="flex items-center justify-center w-11 h-11 mx-auto rounded-full bg-primary/10 text-primary">
+      <AlertDialogContent className="max-w-md p-0 gap-0 rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
+        <AlertDialogHeader className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 text-center">
+          <div className="flex items-center justify-center w-11 h-11 mx-auto rounded-full bg-primary/10 text-primary dark:bg-primary/20">
             <CalendarDays size={24} />
           </div>
-          <AlertDialogTitle className="text-center text-lg sm:text-xl font-bold mt-2">
+          <AlertDialogTitle className="text-center text-lg sm:text-xl font-bold mt-2 text-slate-900 dark:text-slate-100">
             Xác nhận đặt lịch khám
           </AlertDialogTitle>
           <AlertDialogDescription className="sr-only">
@@ -86,7 +86,7 @@ const AlertDialogConfirmBook = ({
         </AlertDialogHeader>
 
         <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm scrollbar-soft">
-          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center leading-relaxed">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center leading-relaxed dark:bg-primary/10 dark:border-primary/30">
             Bạn có chắc chắn muốn đặt lịch vào ngày{" "}
             <strong className="text-primary font-bold">
               {formatDate(selectedDate, "vi-VN")}
@@ -98,16 +98,16 @@ const AlertDialogConfirmBook = ({
             ?
           </div>
 
-          <div className="rounded-xl border border-slate-100 dark:border-neutral-800 bg-slate-50/70 dark:bg-neutral-800/50 p-3.5 space-y-2 text-xs sm:text-sm">
+          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 p-3.5 space-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <Stethoscope size={16} className="text-primary shrink-0" />
-              <span className="text-slate-500 dark:text-neutral-400">Bác sĩ:</span>
-              <strong className="text-slate-800 dark:text-neutral-100 font-semibold">{doctorName}</strong>
+              <span className="text-slate-500 dark:text-slate-400">Bác sĩ:</span>
+              <strong className="text-slate-800 dark:text-slate-100 font-semibold">{doctorName}</strong>
             </div>
             <div className="flex items-center gap-2">
               <User size={16} className="text-primary shrink-0" />
-              <span className="text-slate-500 dark:text-neutral-400">Chuyên khoa:</span>
-              <strong className="text-slate-800 dark:text-neutral-100 font-semibold">{specialtyName}</strong>
+              <span className="text-slate-500 dark:text-slate-400">Chuyên khoa:</span>
+              <strong className="text-slate-800 dark:text-slate-100 font-semibold">{specialtyName}</strong>
             </div>
           </div>
 
@@ -121,7 +121,7 @@ const AlertDialogConfirmBook = ({
               onChange={(event) =>
                 setSelectedRelativeId(Number(event.target.value))
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingRelatives
@@ -151,7 +151,7 @@ const AlertDialogConfirmBook = ({
           </div>
         </div>
 
-        <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-neutral-800 flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-neutral-900/80">
+        <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-slate-950/80">
           <AlertDialogCancel className="w-full sm:w-auto rounded-xl">
             Hủy
           </AlertDialogCancel>

@@ -12,7 +12,10 @@ const DoctorScheduleListSkeleton = () => {
           space-y-2
           rounded-lg
           border
+          border-slate-200
+          dark:border-slate-800
           bg-white
+          dark:bg-slate-900/60
           shadow-sm
           p-2
         "

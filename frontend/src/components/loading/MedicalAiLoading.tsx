@@ -84,12 +84,12 @@ export function MedicalAiLoading({
         </svg>
       </div>
 
-      <p className="mt-4 text-sm font-semibold text-slate-800 tracking-tight">
+      <p className="mt-4 text-sm font-semibold text-slate-800 dark:text-slate-100 tracking-tight">
         {label}
       </p>
 
       {description && (
-        <p className="mt-1 text-xs text-slate-500 max-w-xs">
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-xs">
           {description}
         </p>
       )}
@@ -111,14 +111,14 @@ export function MedicalAiLoading({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 dark:bg-slate-950/85 backdrop-blur-xs">
         {content}
       </div>
     );
   }
 
   return (
-    <Card className="rounded-2xl border border-slate-200/80 bg-white/80 backdrop-blur-xs shadow-xs">
+    <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs shadow-xs">
       <CardContent className="p-0">{content}</CardContent>
     </Card>
   );

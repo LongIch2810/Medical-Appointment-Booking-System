@@ -54,12 +54,12 @@ const DoctorScheduleCard = ({
         flex items-center justify-between gap-2
         ${
           isExpired || !is_active
-            ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed"
+            ? "bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed dark:bg-slate-900/40 dark:border-slate-800 dark:text-slate-600"
             : isBooked
-            ? "bg-red-50 border-red-200 text-red-600 cursor-not-allowed"
+            ? "bg-red-50 border-red-200 text-red-600 cursor-not-allowed dark:bg-rose-950/30 dark:border-rose-900/40 dark:text-rose-400"
             : isSelected
-            ? "bg-sky-500 border-sky-500 text-white cursor-pointer shadow-sm"
-            : "border-slate-200 bg-white hover:border-sky-300 hover:shadow-md cursor-pointer"
+            ? "bg-sky-500 border-sky-500 text-white cursor-pointer shadow-sm dark:bg-sky-600 dark:border-sky-500"
+            : "border-slate-200 bg-white text-slate-800 hover:border-sky-300 hover:shadow-md cursor-pointer dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-sky-400"
         }`}
     >
       {/* Thời gian */}
@@ -72,12 +72,12 @@ const DoctorScheduleCard = ({
 
       {/* Trạng thái (không chỉ dựa vào màu sắc) */}
       {isBooked && (
-        <span className="flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] font-semibold px-2 py-1 rounded-full bg-red-100 text-red-600">
+        <span className="flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] font-semibold px-2 py-1 rounded-full bg-red-100 text-red-600 dark:bg-rose-950/60 dark:text-rose-300">
           <XCircle className="h-3.5 w-3.5" /> Đã đặt
         </span>
       )}
       {!isBooked && (isExpired || !is_active) && (
-        <span className="flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] font-semibold px-2 py-1 rounded-full bg-slate-200 text-slate-500">
+        <span className="flex items-center gap-1 shrink-0 whitespace-nowrap text-[11px] font-semibold px-2 py-1 rounded-full bg-slate-200 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
           <Lock className="h-3.5 w-3.5" /> Hết hạn
         </span>
       )}

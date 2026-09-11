@@ -46,7 +46,7 @@ export default function NotificationBell() {
           type="button"
           variant="outline"
           size="icon"
-          className="relative h-10 w-10 rounded-xl border-slate-200 bg-white"
+          className="relative h-10 w-10 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
           aria-label={`Thông báo, ${unreadCount} chưa đọc`}
         >
           <Bell className="h-4.5 w-4.5" />
@@ -59,10 +59,10 @@ export default function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-[min(92vw,380px)] rounded-2xl border-slate-200 p-2 shadow-xl"
+        className="w-[min(92vw,380px)] rounded-2xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 p-2 shadow-xl"
       >
         <div className="flex items-center justify-between gap-3 px-2 py-1.5">
-          <DropdownMenuLabel className="p-0 text-sm font-bold">
+          <DropdownMenuLabel className="p-0 text-sm font-bold text-slate-900 dark:text-slate-100">
             Thông báo
           </DropdownMenuLabel>
           {unreadCount > 0 && (
@@ -72,20 +72,20 @@ export default function NotificationBell() {
               size="sm"
               disabled={markAll.isPending}
               onClick={() => markAll.mutate()}
-              className="h-8 gap-1.5 text-[11px] text-primary"
+              className="h-8 gap-1.5 text-[11px] text-primary dark:text-teal-300"
             >
               <CheckCheck className="h-3.5 w-3.5" />
               Đọc tất cả
             </Button>
           )}
         </div>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="dark:bg-slate-800" />
         {notificationsQuery.isLoading ? (
-          <div className="flex items-center justify-center py-8 text-slate-500">
+          <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
             <Loader2 className="h-5 w-5 animate-spin" />
           </div>
         ) : notifications.length === 0 ? (
-          <p className="px-3 py-8 text-center text-xs text-slate-500">
+          <p className="px-3 py-8 text-center text-xs text-slate-500 dark:text-slate-400">
             Chưa có thông báo nào.
           </p>
         ) : (
@@ -93,21 +93,21 @@ export default function NotificationBell() {
             <DropdownMenuItem
               key={notification.id}
               onClick={() => void openNotification(notification)}
-              className="mb-1 cursor-pointer items-start gap-2 rounded-xl p-3 focus:bg-slate-50"
+              className="mb-1 cursor-pointer items-start gap-2 rounded-xl p-3 focus:bg-slate-50 dark:focus:bg-slate-800"
             >
               <span
                 className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                  notification.isRead ? "bg-slate-200" : "bg-primary"
+                  notification.isRead ? "bg-slate-200 dark:bg-slate-700" : "bg-primary"
                 }`}
               />
               <span className="min-w-0">
-                <span className="block text-xs font-bold text-slate-800">
+                <span className="block text-xs font-bold text-slate-800 dark:text-slate-100">
                   {notification.title}
                 </span>
-                <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-slate-500">
+                <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
                   {notification.content}
                 </span>
-                <span className="mt-1 block text-[10px] text-slate-400">
+                <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
                   {notification.createdAt}
                 </span>
               </span>

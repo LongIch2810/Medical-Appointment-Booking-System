@@ -200,17 +200,17 @@ const Relatives: React.FC = () => {
     <>
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr] items-start">
         {/* Left Column: Relatives List */}
-        <Card className="border-slate-200/80 bg-white py-0 shadow-sm transition-all">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
+        <Card className="border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-sm transition-all">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-5">
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <UsersRound className="h-4 w-4" />
               </span>
               <div>
-                <CardTitle className="text-base font-bold text-slate-900">
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                   Danh sách người thân
                 </CardTitle>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Quản lý hồ sơ y tế và đặt lịch khám cho các thành viên gia đình
                 </p>
               </div>
@@ -234,12 +234,12 @@ const Relatives: React.FC = () => {
                 onRetry={() => refetchRelatives()}
               />
             ) : relatives.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-8 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 p-8 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
                   <UsersRound className="h-6 w-6" />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800">Chưa có người thân nào</h4>
-                <p className="mt-1 text-xs text-slate-500 max-w-sm mx-auto">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Chưa có người thân nào</h4>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
                   Thêm thành viên gia đình để đặt lịch khám bệnh, tạo hồ sơ sức khỏe và xây dựng lộ trình AI Coach.
                 </p>
               </div>
@@ -252,20 +252,20 @@ const Relatives: React.FC = () => {
                     className={cn(
                       "group rounded-2xl border p-4.5 transition-all",
                       isSelectedForEdit
-                        ? "border-primary bg-primary/5 shadow-sm ring-1 ring-primary/20"
-                        : "border-slate-200/80 bg-white hover:border-primary/40 hover:shadow-md",
+                        ? "border-primary bg-primary/5 dark:bg-primary/20 shadow-sm ring-1 ring-primary/20"
+                        : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-primary/40 dark:hover:border-slate-700 hover:shadow-md",
                     )}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                       {/* Member Info */}
                       <div className="flex flex-1 items-start gap-3.5 min-w-0">
-                        <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0 mt-0.5">
+                        <Avatar className="h-12 w-12 border-2 border-white dark:border-slate-800 shadow-sm shrink-0 mt-0.5">
                           <AvatarFallback
                             className={cn(
                               "text-sm font-bold",
                               relative.gender
-                                ? "bg-sky-100 text-sky-700"
-                                : "bg-rose-100 text-rose-700",
+                                ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                                : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
                             )}
                           >
                             {getInitial(relative.fullname)}
@@ -274,26 +274,26 @@ const Relatives: React.FC = () => {
 
                         <div className="min-w-0 space-y-1.5 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm font-bold text-slate-900 truncate">
+                            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                               {relative.fullname}
                             </p>
                             <span
                               className={cn(
                                 "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold",
                                 relative.gender
-                                  ? "bg-sky-50 text-sky-700 border border-sky-200/60"
-                                  : "bg-rose-50 text-rose-700 border border-rose-200/60",
+                                  ? "bg-sky-50 text-sky-700 border border-sky-200/60 dark:bg-sky-950/40 dark:border-sky-800/60 dark:text-sky-300"
+                                  : "bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300",
                               )}
                             >
                               {relative.gender ? "Nam" : "Nữ"}
                             </span>
-                            <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 border border-violet-200/60 px-2 py-0.5 text-[11px] font-semibold text-violet-700">
+                            <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 border border-violet-200/60 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800/60 dark:text-violet-300 px-2 py-0.5 text-[11px] font-semibold">
                               <HeartHandshake className="h-3 w-3" />
                               {relative.relationship?.relationship_name || "Người thân"}
                             </span>
                           </div>
 
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                             {relative.dob && (
                               <span className="inline-flex items-center gap-1.5">
                                 <Cake className="h-3.5 w-3.5 text-slate-400" />
@@ -318,10 +318,10 @@ const Relatives: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleNavigateToAICoach(relative.id)}
-                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold"
+                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold"
                           title="Tạo lộ trình dinh dưỡng & tập luyện AI cho người thân này"
                         >
-                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                           AI Coach
                         </Button>
 
@@ -331,7 +331,7 @@ const Relatives: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(relative)}
-                          className="h-8 gap-1 rounded-lg text-slate-700 hover:text-primary text-xs font-medium"
+                          className="h-8 gap-1 rounded-lg text-slate-700 hover:text-primary dark:text-slate-300 dark:hover:text-primary text-xs font-medium"
                         >
                           <Pencil className="h-3.5 w-3.5" />
                           Sửa
@@ -344,7 +344,7 @@ const Relatives: React.FC = () => {
                           size="sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => setDeletingRelative(relative)}
-                          className="h-8 gap-1 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-medium"
+                          className="h-8 gap-1 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40 text-xs font-medium"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                           Xóa
@@ -359,15 +359,15 @@ const Relatives: React.FC = () => {
         </Card>
 
         {/* Right Column: Form Add / Edit Relative */}
-        <Card className="border-slate-200/80 bg-white py-0 shadow-sm transition-all sticky top-24">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-5">
+        <Card className="border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-sm transition-all sticky top-24">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-5">
             <div className="flex items-center gap-2.5">
               <span
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-xl",
                   isEditing
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-emerald-100 text-emerald-700",
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
+                    : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
                 )}
               >
                 {isEditing ? (
@@ -377,10 +377,10 @@ const Relatives: React.FC = () => {
                 )}
               </span>
               <div>
-                <CardTitle className="text-base font-bold text-slate-900">
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                   {isEditing ? "Cập nhật thông tin" : "Thêm người thân mới"}
                 </CardTitle>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   {isEditing
                     ? "Chỉnh sửa thông tin hồ sơ người thân đã chọn"
                     : "Nhập thông tin người thân vào tài khoản của bạn"}
@@ -393,7 +393,7 @@ const Relatives: React.FC = () => {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1 text-slate-500 hover:text-slate-900 rounded-lg text-xs"
+                className="h-8 gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg text-xs"
                 onClick={handleResetForm}
               >
                 <X className="h-3.5 w-3.5" />
@@ -406,7 +406,7 @@ const Relatives: React.FC = () => {
             <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
               {/* Họ tên */}
               <div className="space-y-2">
-                <Label htmlFor="fullname" className="text-sm font-semibold text-slate-800">
+                <Label htmlFor="fullname" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Họ và tên người thân <span className="text-rose-500">*</span>
                 </Label>
                 <Input
@@ -423,7 +423,7 @@ const Relatives: React.FC = () => {
 
               {/* Mối quan hệ */}
               <div className="space-y-2">
-                <Label htmlFor="relationship_code" className="text-sm font-semibold text-slate-800">
+                <Label htmlFor="relationship_code" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Mối quan hệ <span className="text-rose-500">*</span>
                 </Label>
                 <Controller
@@ -456,7 +456,7 @@ const Relatives: React.FC = () => {
               {/* Giới tính & Ngày sinh */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="gender" className="text-sm font-semibold text-slate-800">
+                  <Label htmlFor="gender" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     Giới tính <span className="text-rose-500">*</span>
                   </Label>
                   <Controller
@@ -480,7 +480,7 @@ const Relatives: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="dob" className="text-sm font-semibold text-slate-800">
+                  <Label htmlFor="dob" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                     Ngày sinh (tùy chọn)
                   </Label>
                   <Input
@@ -498,7 +498,7 @@ const Relatives: React.FC = () => {
 
               {/* Số điện thoại */}
               <div className="space-y-2">
-                <Label htmlFor="phone" className="text-sm font-semibold text-slate-800">
+                <Label htmlFor="phone" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
                   Số điện thoại (tùy chọn)
                 </Label>
                 <Input
@@ -542,7 +542,7 @@ const Relatives: React.FC = () => {
                   variant="outline"
                   onClick={handleResetForm}
                   disabled={isSubmitting}
-                  className="gap-1 rounded-xl text-slate-600"
+                  className="gap-1 rounded-xl text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:bg-slate-800"
                 >
                   <RotateCcw className="h-4 w-4" />
                   Làm mới

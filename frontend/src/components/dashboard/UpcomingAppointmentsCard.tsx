@@ -28,17 +28,17 @@ const UpcomingAppointmentsCard: React.FC = () => {
   );
 
   return (
-    <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
-      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-4.5">
+    <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
         <div className="flex items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <CalendarClock className="h-4.5 w-4.5" />
           </span>
           <div>
-            <CardTitle className="text-base font-bold text-slate-900">
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
               Lịch khám sắp tới
             </CardTitle>
-            <p className="text-xs text-slate-500">Các cuộc hẹn đang chờ hoặc đã xác nhận</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Các cuộc hẹn đang chờ hoặc đã xác nhận</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -85,18 +85,18 @@ const UpcomingAppointmentsCard: React.FC = () => {
             {upcoming.map((appointment) => (
               <div
                 key={appointment.id}
-                className="group flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between"
+                className="group flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/90 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
                     <Stethoscope className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 space-y-1">
-                    <p className="text-sm font-bold text-slate-900 truncate">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                       BS. {appointment.doctor.user.fullname ?? "Chưa cập nhật"}
                     </p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
-                      <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
+                      <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
                         <CalendarClock className="h-3.5 w-3.5 text-primary" />
                         {appointment.appointment_date}
                       </span>

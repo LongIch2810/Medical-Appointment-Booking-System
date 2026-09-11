@@ -63,7 +63,7 @@ function CoachProfileGate() {
 
   if (isLoading) {
     return (
-      <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex justify-center">
+      <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex justify-center dark:border-slate-800 dark:bg-slate-900">
         <HealthAILoading elapsed={0} />
       </Card>
     );
@@ -88,13 +88,13 @@ function CoachProfileGate() {
   }
 
   return (
-    <Card className="overflow-hidden border-slate-200/80 bg-white py-0 shadow-sm transition-all">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-slate-50/20 p-6 md:p-8">
+    <Card className="overflow-hidden border-slate-200/80 bg-white py-0 shadow-sm transition-all dark:border-slate-800/80 dark:bg-slate-900">
+      <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-slate-50/20 p-6 md:p-8 dark:border-slate-800 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-slate-900">
         <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
           <AIHealthCoachAvatar />
           <div className="flex-1 space-y-2.5 text-center md:text-left min-w-0">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
                 {coachProfile.display_name}
               </h2>
               <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold gap-1">
@@ -103,7 +103,7 @@ function CoachProfileGate() {
               </Badge>
             </div>
 
-            <p className="text-sm text-slate-700">
+            <p className="text-sm text-slate-700 dark:text-slate-300">
               Mục tiêu chính:{" "}
               <span className="font-bold text-primary">
                 {coachProfile.health_goal}
@@ -112,13 +112,13 @@ function CoachProfileGate() {
 
             {coachProfile.preferences && coachProfile.preferences.length > 0 && (
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-0.5">
-                <span className="text-xs font-semibold text-slate-500 mr-1">
+                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
                   Sở thích:
                 </span>
                 {coachProfile.preferences.map((pref) => (
                   <span
                     key={pref}
-                    className="inline-block rounded-full bg-white border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-2xs"
+                    className="inline-block rounded-full bg-white border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-2xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
                   >
                     {pref}
                   </span>
@@ -126,7 +126,7 @@ function CoachProfileGate() {
               </div>
             )}
 
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-slate-500 pt-1">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
               {coachProfile.age != null && <span>Tuổi: <strong>{coachProfile.age}</strong></span>}
               {coachProfile.height != null && <span>Chiều cao: <strong>{coachProfile.height} cm</strong></span>}
               {coachProfile.weight != null && <span>Cân nặng: <strong>{coachProfile.weight} kg</strong></span>}
@@ -136,7 +136,7 @@ function CoachProfileGate() {
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-xl border-slate-200 text-xs font-semibold hover:border-primary hover:text-primary"
+                className="rounded-xl border-slate-200 text-xs font-semibold hover:border-primary hover:text-primary dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-200"
                 onClick={() => setIsEditing(true)}
               >
                 Chỉnh sửa hồ sơ AI Coach
@@ -355,21 +355,21 @@ export default function AICoachHealth() {
 
       {/* Animations Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-        <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center">
+        <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center dark:border-slate-800/80 dark:bg-slate-900">
           <NutritionAnimation />
           <div className="mt-4">
-            <h4 className="text-sm font-bold text-slate-800">Dinh dưỡng cân bằng</h4>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Dinh dưỡng cân bằng</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Phân tích thực đơn phù hợp với thể trạng và bệnh nền
             </p>
           </div>
         </Card>
 
-        <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center">
+        <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center dark:border-slate-800/80 dark:bg-slate-900">
           <PlankAnimation />
           <div className="mt-4">
-            <h4 className="text-sm font-bold text-slate-800">Lộ trình rèn luyện</h4>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Lộ trình rèn luyện</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Kế hoạch bài tập thể chất tối ưu theo từng mục tiêu
             </p>
           </div>
@@ -377,17 +377,17 @@ export default function AICoachHealth() {
       </div>
 
       {/* Form & Generation Section */}
-      <Card className="border-slate-200/80 bg-white py-0 shadow-sm">
-        <CardHeader className="border-b border-slate-100 px-6 py-5">
+      <Card className="border-slate-200/80 bg-white py-0 shadow-sm dark:border-slate-800/80 dark:bg-slate-900">
+        <CardHeader className="border-b border-slate-100 dark:border-slate-800 px-6 py-5">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
               <Sparkles className="h-4 w-4" />
             </span>
             <div>
-              <CardTitle className="text-lg font-bold text-slate-900">
+              <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
                 Tạo lộ trình chăm sóc sức khỏe với AI
               </CardTitle>
-              <p className="text-xs sm:text-sm text-slate-500">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 Chọn người nhận lộ trình để AI tính toán khẩu phần dinh dưỡng và bài tập phù hợp
               </p>
             </div>
@@ -397,18 +397,18 @@ export default function AICoachHealth() {
         <CardContent className="p-6 md:p-8 space-y-6">
           {/* Profile Selector */}
           <div className="space-y-3">
-            <label className="block text-sm font-bold text-slate-800">
+            <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
               Đối tượng phân tích <span className="text-rose-500">*</span>
             </label>
 
             {isDataLoading ? (
               <Skeleton className="h-11 w-full rounded-xl" />
             ) : isRelativesError ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
                 Không thể tải danh sách hồ sơ sức khỏe. Vui lòng thử lại sau.
               </div>
             ) : availableProfiles.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+              <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
                 Chưa có dữ liệu hồ sơ. Vui lòng cập nhật thông tin cá nhân.
               </div>
             ) : (
@@ -423,8 +423,8 @@ export default function AICoachHealth() {
                 <SelectContent className="rounded-xl">
                   {availableProfiles.map((p) => (
                     <SelectItem key={p.key} value={p.key}>
-                      <span className="font-semibold text-slate-900">{p.fullname}</span>
-                      <span className="text-slate-500 text-xs ml-2">
+                      <span className="font-semibold text-slate-900 dark:text-slate-100">{p.fullname}</span>
+                      <span className="text-slate-500 dark:text-slate-400 text-xs ml-2">
                         ({p.relationship}{p.dob ? ` • ${p.dob}` : ""})
                       </span>
                     </SelectItem>
@@ -436,18 +436,18 @@ export default function AICoachHealth() {
 
           {/* Selected Member Summary Card */}
           {selectedProfileObj && (
-            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4.5 transition-all">
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4.5 transition-all dark:border-slate-800 dark:bg-slate-950/40">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0">
+                  <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0 dark:border-slate-800">
                     <AvatarFallback
                       className={cn(
                         "text-sm font-bold",
                         selectedProfileObj.isOwner
-                          ? "bg-emerald-100 text-emerald-800"
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300"
                           : selectedProfileObj.gender
-                            ? "bg-sky-100 text-sky-700"
-                            : "bg-rose-100 text-rose-700",
+                            ? "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300"
+                            : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
                       )}
                     >
                       {selectedProfileObj.fullname.charAt(0).toUpperCase()}
@@ -455,7 +455,7 @@ export default function AICoachHealth() {
                   </Avatar>
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                         {selectedProfileObj.fullname}
                       </p>
                       <Badge
@@ -463,15 +463,15 @@ export default function AICoachHealth() {
                         className={cn(
                           "text-[11px] font-semibold gap-1",
                           selectedProfileObj.isOwner
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                            : "bg-violet-100 text-violet-800 border-violet-200",
+                            ? "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60"
+                            : "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800/60",
                         )}
                       >
                         <HeartHandshake className="h-3 w-3" />
                         {selectedProfileObj.relationship}
                       </Badge>
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                       {selectedProfileObj.dob && (
                         <span className="inline-flex items-center gap-1">
                           <Cake className="h-3 w-3 text-slate-400" />
@@ -492,7 +492,7 @@ export default function AICoachHealth() {
                   </div>
                 </div>
 
-                <div className="text-xs text-slate-500 max-w-xs text-left sm:text-right">
+                <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs text-left sm:text-right">
                   Dữ liệu AI sẽ được tối ưu riêng theo thể trạng và độ tuổi của thành viên này.
                 </div>
               </div>
@@ -555,7 +555,7 @@ export default function AICoachHealth() {
               <motion.div
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-lg p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 flex items-center justify-center gap-2"
+                className="w-full max-w-lg p-4 bg-rose-50 border border-rose-200 rounded-xl text-sm text-rose-700 dark:bg-rose-950/30 dark:border-rose-900/50 dark:text-rose-300 flex items-center justify-center gap-2"
               >
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
@@ -567,16 +567,16 @@ export default function AICoachHealth() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="w-full rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 text-center space-y-4"
+                className="w-full rounded-2xl border border-emerald-200 bg-emerald-50/70 p-6 text-center space-y-4 dark:border-emerald-800/60 dark:bg-emerald-950/30"
               >
-                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
                   <CheckCircle2 className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-emerald-900">
+                  <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
                     Lộ trình sức khỏe đã được tạo thành công! 🎉
                   </h3>
-                  <p className="text-xs sm:text-sm text-emerald-700 mt-1">
+                  <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300 mt-1">
                     Báo cáo cá nhân hóa đã được tổng hợp dành riêng cho{" "}
                     <strong>{selectedProfileObj?.fullname}</strong> ({selectedProfileObj?.relationship}).
                   </p>
@@ -594,7 +594,7 @@ export default function AICoachHealth() {
                   </a>
                   <Button
                     variant="outline"
-                    className="rounded-xl border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 text-sm font-semibold gap-2"
+                    className="rounded-xl border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 text-sm font-semibold gap-2 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
                     onClick={() => window.open(pdfUrl, "_blank")}
                   >
                     <Download className="h-4 w-4" />

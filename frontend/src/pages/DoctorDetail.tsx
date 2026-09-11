@@ -240,7 +240,7 @@ const DoctorDetail = () => {
           <Separator className="md:hidden block bg-slate-100 dark:bg-slate-800" />
 
           <div className="flex-1 space-y-4">
-            <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-850 p-3.5">
+            <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/60 p-3.5">
               <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                 Ca khám ngày {formatDate(selectedDate, "vi-VN")}
               </h4>

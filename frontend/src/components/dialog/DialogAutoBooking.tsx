@@ -144,7 +144,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
               value={selectedRelativeId}
               disabled={isLoadingRelatives || isPending}
               onChange={(e) => setSelectedRelativeId(Number(e.target.value))}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingRelatives ? "Đang tải người thân..." : "Chọn người thân"}
@@ -173,7 +173,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                   onChange={(e) =>
                     handleNewRelativeFieldChange("fullname", e.target.value)
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                 />
               </label>
 
@@ -188,7 +188,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                       e.target.value
                     )
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                 >
                   <option value="">Chọn mối quan hệ</option>
                   {relationships.map((relationship) => (
@@ -212,7 +212,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                     onChange={(e) =>
                       handleNewRelativeFieldChange("dob", e.target.value)
                     }
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
                 <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -223,7 +223,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                     onChange={(e) =>
                       handleNewRelativeFieldChange("gender", e.target.value)
                     }
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                   >
                     <option value="true">Nam</option>
                     <option value="false">Nữ</option>
@@ -240,7 +240,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                   onChange={(e) =>
                     handleNewRelativeFieldChange("phone", e.target.value)
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
                 />
               </label>
             </div>
@@ -252,7 +252,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
               value={selectedSpecialtyId}
               disabled={isLoadingSpecialties || isPending}
               onChange={(e) => setSelectedSpecialtyId(Number(e.target.value))}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingSpecialties ? "Đang tải chuyên khoa..." : "Chọn chuyên khoa"}
@@ -283,7 +283,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                 value={startTime}
                 disabled={isPending}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />
             </label>
             <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -293,7 +293,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                 value={endTime}
                 disabled={isPending}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-neutral-700 dark:bg-neutral-800 dark:text-gray-100"
+                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />
             </label>
           </div>

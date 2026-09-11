@@ -48,12 +48,12 @@ const ChannelList: FC<ChannelListProps> = ({
 }) => {
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="flex items-center justify-between gap-3 border-b border-slate-100 p-4.5 bg-slate-50/50">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 p-4.5 bg-slate-50/50 dark:bg-slate-900/50">
         <div>
-          <h2 className="text-base font-bold text-slate-900">
+          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
             Tư vấn trực tuyến
           </h2>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             Kênh nhắn tin trực tiếp với bác sĩ
           </p>
         </div>
@@ -68,7 +68,7 @@ const ChannelList: FC<ChannelListProps> = ({
           <Plus className="h-4 w-4 !text-white" />
         </Button>
       </div>
-      <div className="flex-1 space-y-2 p-3 overflow-y-auto">
+      <div className="flex-1 space-y-2 p-3 overflow-y-auto dark:bg-slate-900/40">
         {isLoading ? (
           <div className="flex justify-center py-10">
             <Loading size={28} />
@@ -93,25 +93,25 @@ const ChannelList: FC<ChannelListProps> = ({
               className={cn(
                 "w-full rounded-2xl border p-3.5 text-left transition-all cursor-pointer",
                 channel.id === activeChannelId
-                  ? "border-primary bg-primary/10 shadow-2xs"
-                  : "border-slate-200/80 bg-white hover:border-primary/40 hover:bg-slate-50/80",
+                  ? "border-primary bg-primary/10 dark:bg-primary/20 dark:border-primary/80 shadow-2xs"
+                  : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-primary/40 dark:hover:border-slate-700 hover:bg-slate-50/80 dark:hover:bg-slate-800/60",
               )}
               onClick={() => onSelectChannel(channel.id)}
             >
               <div className="flex items-start gap-3">
-                <Avatar className="h-10 w-10 border border-slate-200 shadow-2xs shrink-0">
+                <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-700 shadow-2xs shrink-0">
                   <AvatarImage
                     src={getChatPersonAvatar(channel, currentUserId) ?? ""}
                     alt={getChatPersonName(channel, currentUserId)}
                     className="object-cover"
                   />
-                  <AvatarFallback className="bg-primary/10 text-xs font-bold text-primary">
+                  <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-xs font-bold text-primary dark:text-sky-300">
                     {getChatPersonInitial(channel, currentUserId)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
-                    <p className="truncate text-xs sm:text-sm font-bold text-slate-900">
+                    <p className="truncate text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
                       {getChatPersonName(channel, currentUserId)}
                     </p>
                     {channel.unread_count > 0 && (
@@ -123,13 +123,13 @@ const ChannelList: FC<ChannelListProps> = ({
                       </Badge>
                     )}
                   </div>
-                  <p className="mt-0.5 text-[11px] font-semibold text-primary">
+                  <p className="mt-0.5 text-[11px] font-semibold text-primary dark:text-sky-400">
                     Bác sĩ chuyên khoa
                   </p>
-                  <p className="mt-1 line-clamp-1 text-xs text-slate-600 break-words">
+                  <p className="mt-1 line-clamp-1 text-xs text-slate-600 dark:text-slate-300 break-words">
                     {getLastMessage(channel)}
                   </p>
-                  <p className="mt-1 text-[10px] font-medium text-slate-400">
+                  <p className="mt-1 text-[10px] font-medium text-slate-400 dark:text-slate-500">
                     {getLastMessageTime(channel)}
                   </p>
                 </div>

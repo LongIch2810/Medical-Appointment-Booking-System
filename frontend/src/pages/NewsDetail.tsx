@@ -65,13 +65,13 @@ const NewsDetail = () => {
   const images = Array.isArray(article.img_urls) ? article.img_urls : [];
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-primary"
+            className="gap-2 text-primary dark:text-teal-400 dark:hover:bg-slate-800"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -80,7 +80,7 @@ const NewsDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2"
+            className="gap-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             onClick={() => navigate("/news")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -88,7 +88,7 @@ const NewsDetail = () => {
           </Button>
         </div>
 
-        <article className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        <article className="bg-white rounded-2xl shadow-sm overflow-hidden dark:bg-slate-900 dark:border dark:border-slate-800">
           <img
             src={getCoverImage(article)}
             alt={article.title}
@@ -101,22 +101,22 @@ const NewsDetail = () => {
               {article.topic?.name && (
                 <Link
                   to={`/news?topic=${article.topic.slug ?? ""}`}
-                  className="inline-block text-xs font-semibold uppercase tracking-wider text-primary"
+                  className="inline-block text-xs font-semibold uppercase tracking-wider text-primary dark:text-teal-400"
                 >
                   {article.topic.name}
                 </Link>
               )}
-              <h1 className="text-2xl md:text-4xl font-bold leading-tight text-gray-900">
+              <h1 className="text-2xl md:text-4xl font-bold leading-tight text-slate-900 dark:text-slate-100">
                 {article.title}
               </h1>
               {article.summary && (
-                <p className="text-base md:text-lg text-gray-600">
+                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300">
                   {article.summary}
                 </p>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
               <div className="flex items-center gap-2">
                 <Avatar className="h-9 w-9">
                   <AvatarImage
@@ -126,11 +126,11 @@ const NewsDetail = () => {
                   <AvatarFallback>{getAuthorInitial(article)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium text-gray-700">
+                  <p className="font-medium text-slate-700 dark:text-slate-300">
                     {article.author?.fullname ?? "Tác giả"}
                   </p>
                   {article.author?.email && (
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-slate-400 dark:text-slate-500">
                       {article.author.email}
                     </p>
                   )}
@@ -144,11 +144,11 @@ const NewsDetail = () => {
 
             {article.tags?.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
-                <TagIcon className="h-4 w-4 text-gray-400" />
+                <TagIcon className="h-4 w-4 text-slate-400" />
                 {article.tags.map((tag) => (
                   <span
                     key={tag.name}
-                    className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5"
+                    className="text-xs bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-300 rounded-full px-2 py-0.5"
                   >
                     #{tag.name}
                   </span>
@@ -156,10 +156,10 @@ const NewsDetail = () => {
               </div>
             )}
 
-            <Separator />
+            <Separator className="dark:bg-slate-800" />
 
             <div
-              className="prose prose-slate max-w-none prose-img:rounded-xl prose-headings:scroll-mt-20"
+              className="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:scroll-mt-20 dark:text-slate-300"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 
@@ -181,14 +181,14 @@ const NewsDetail = () => {
 
         {relatedArticles.length > 0 && (
           <section className="mt-12 space-y-4">
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-900">
+            <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
               Bài viết liên quan
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedArticles.slice(0, 3).map((item) => (
                 <Card
                   key={item.id}
-                  className="overflow-hidden flex flex-col shadow-sm"
+                  className="overflow-hidden flex flex-col shadow-sm dark:border-slate-800 dark:bg-slate-900"
                 >
                   <Link to={`/news/${item.id}`}>
                     <img
@@ -201,14 +201,14 @@ const NewsDetail = () => {
                   <CardContent className="flex flex-col flex-grow gap-2">
                     <Link
                       to={`/news/${item.id}`}
-                      className="font-semibold hover:text-primary line-clamp-2"
+                      className="font-semibold hover:text-primary line-clamp-2 text-slate-900 dark:text-slate-100 dark:hover:text-primary"
                     >
                       {item.title}
                     </Link>
-                    <p className="text-sm text-gray-500 line-clamp-2">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
                       {item.summary}
                     </p>
-                    <p className="text-xs text-gray-400 mt-auto">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-auto">
                       {item.created_at ?? "—"}
                     </p>
                   </CardContent>

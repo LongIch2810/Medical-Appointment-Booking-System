@@ -64,9 +64,9 @@ const News = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* Header */}
-      <header className="bg-primary text-white shadow">
+      <header className="bg-primary text-white shadow dark:border-b dark:border-slate-800">
         <div className="container mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <Button
@@ -89,14 +89,14 @@ const News = () => {
             </div>
           </div>
 
-          <div className="w-full max-w-xs md:w-auto relative text-gray-700">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <div className="w-full max-w-xs md:w-auto relative text-slate-700 dark:text-slate-200">
+            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <Input
               type="search"
               placeholder="Tìm kiếm bài viết..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10"
+              className="pl-10 dark:bg-white/10 dark:border-white/20 dark:text-white dark:placeholder:text-white/60"
             />
           </div>
         </div>
@@ -140,13 +140,13 @@ const News = () => {
 
       <main className="container mx-auto px-4 py-10">
         {isLoading ? (
-          <p className="text-center text-gray-500">Đang tải bài viết...</p>
+          <p className="text-center text-slate-500 dark:text-slate-400">Đang tải bài viết...</p>
         ) : isError ? (
-          <p className="text-center text-red-500">
+          <p className="text-center text-rose-500 dark:text-rose-400">
             Không thể tải danh sách bài viết.
           </p>
         ) : articles.length === 0 ? (
-          <p className="text-center text-gray-500">
+          <p className="text-center text-slate-500 dark:text-slate-400">
             Không tìm thấy bài viết phù hợp.
           </p>
         ) : (
@@ -155,7 +155,7 @@ const News = () => {
               {articles.map((article) => (
                 <Card
                   key={article.id}
-                  className="overflow-hidden shadow-md flex flex-col"
+                  className="overflow-hidden shadow-md flex flex-col dark:border-slate-800/80 dark:bg-slate-900"
                 >
                   <img
                     src={getArticleImage(article)}
@@ -169,11 +169,11 @@ const News = () => {
                   <CardContent className="flex flex-col flex-grow">
                     <Link
                       to={`/news/${article.id}`}
-                      className="text-xl font-bold hover:text-primary hover:underline mb-2 line-clamp-2"
+                      className="text-xl font-bold hover:text-primary hover:underline mb-2 line-clamp-2 text-slate-900 dark:text-slate-100 dark:hover:text-primary"
                     >
                       {article.title}
                     </Link>
-                    <p className="text-gray-600 flex-grow line-clamp-3">
+                    <p className="text-slate-600 dark:text-slate-400 flex-grow line-clamp-3">
                       {article.summary}
                     </p>
 
@@ -182,7 +182,7 @@ const News = () => {
                         {article.tags.map((tag) => (
                           <span
                             key={tag.name}
-                            className="text-xs bg-primary/10 text-primary rounded-full px-2 py-0.5"
+                            className="text-xs bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-300 rounded-full px-2 py-0.5"
                           >
                             #{tag.name}
                           </span>
@@ -190,7 +190,7 @@ const News = () => {
                       </div>
                     )}
 
-                    <div className="mt-4 flex items-center space-x-3 text-sm text-gray-500">
+                    <div className="mt-4 flex items-center space-x-3 text-sm text-slate-500 dark:text-slate-400">
                       <Avatar className="w-8 h-8">
                         <AvatarImage
                           src={article.author?.picture ?? ""}
@@ -201,7 +201,7 @@ const News = () => {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium text-gray-700">
+                        <p className="font-medium text-slate-700 dark:text-slate-300">
                           {article.author?.fullname ?? "Tác giả"}
                         </p>
                         <p>{article.created_at ?? "—"}</p>
@@ -222,7 +222,7 @@ const News = () => {
               >
                 Trước
               </Button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-slate-500 dark:text-slate-400">
                 Trang {page}/{totalPages}
               </span>
               <Button

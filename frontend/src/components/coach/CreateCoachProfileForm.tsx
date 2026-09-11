@@ -107,7 +107,7 @@ export default function CreateCoachProfileForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="bg-white rounded-3xl shadow-lg p-8 md:p-10 text-left space-y-6"
+      className="bg-white rounded-3xl shadow-lg p-8 md:p-10 text-left space-y-6 dark:bg-slate-900 dark:border dark:border-slate-800"
     >
       <div className="space-y-2">
         <Label htmlFor="displayName">Tên hiển thị huấn luyện viên</Label>
@@ -140,7 +140,7 @@ export default function CreateCoachProfileForm({
           )}
         />
         {errors.health_goal?.message && (
-          <p className="text-red-600 text-sm">{errors.health_goal.message}</p>
+          <p className="text-rose-600 dark:text-rose-400 text-sm">{errors.health_goal.message}</p>
         )}
       </div>
 
@@ -168,7 +168,7 @@ export default function CreateCoachProfileForm({
                       "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
                       selected
                         ? "bg-primary text-white border-primary"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-primary",
+                        : "bg-white text-gray-600 border-gray-200 hover:border-primary dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:border-primary",
                     )}
                   >
                     {option}
@@ -179,7 +179,7 @@ export default function CreateCoachProfileForm({
           )}
         />
         {errors.preferences?.message && (
-          <p className="text-red-600 text-sm">{errors.preferences.message}</p>
+          <p className="text-rose-600 dark:text-rose-400 text-sm">{errors.preferences.message}</p>
         )}
       </div>
 

@@ -5,7 +5,7 @@ const DoctorInfoSkeleton = () => {
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl mt-16 md:mt-28 space-y-8">
       {/* Profile skeleton */}
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow p-6 space-y-8">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-6 space-y-8">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
           <Skeleton className="w-28 h-28 rounded-full" />
 
@@ -17,7 +17,7 @@ const DoctorInfoSkeleton = () => {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="dark:bg-slate-800" />
 
         <div className="grid md:grid-cols-2 gap-8">
           <div className="space-y-3">
@@ -32,7 +32,7 @@ const DoctorInfoSkeleton = () => {
       </div>
 
       {/* Schedules skeleton */}
-      <div className="bg-white dark:bg-neutral-900 rounded-2xl shadow p-6 space-y-6">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs p-6 space-y-6">
         <Skeleton className="h-6 w-40" />
 
         <div className="flex flex-col md:flex-row gap-6">

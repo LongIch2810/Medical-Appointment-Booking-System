@@ -44,45 +44,45 @@ type StatusMeta = {
 const statusMeta: Record<ComplaintStatus, StatusMeta> = {
   pending: {
     label: "Chờ xử lý",
-    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200",
+    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
     icon: Clock,
-    accentClass: "border-amber-200 bg-amber-50/60",
-    chipClass: "bg-amber-100 text-amber-700",
-    ringClass: "ring-amber-200",
+    accentClass: "border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20",
+    chipClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+    ringClass: "ring-amber-200 dark:ring-amber-900/50",
   },
   in_progress: {
     label: "Đang xử lý",
-    badgeClass: "bg-sky-100 text-sky-700 border border-sky-200",
+    badgeClass: "bg-sky-100 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
     icon: Sparkles,
-    accentClass: "border-sky-200 bg-sky-50/60",
-    chipClass: "bg-sky-100 text-sky-700",
-    ringClass: "ring-sky-200",
+    accentClass: "border-sky-200 bg-sky-50/60 dark:border-sky-900/40 dark:bg-sky-950/20",
+    chipClass: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
+    ringClass: "ring-sky-200 dark:ring-sky-900/50",
   },
   resolved: {
     label: "Đã giải quyết",
-    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200",
+    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
     icon: CheckCircle2,
-    accentClass: "border-emerald-200 bg-emerald-50/60",
-    chipClass: "bg-emerald-100 text-emerald-700",
-    ringClass: "ring-emerald-200",
+    accentClass: "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20",
+    chipClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+    ringClass: "ring-emerald-200 dark:ring-emerald-900/50",
   },
   rejected: {
     label: "Từ chối",
-    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200",
+    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
     icon: XCircle,
-    accentClass: "border-rose-200 bg-rose-50/60",
-    chipClass: "bg-rose-100 text-rose-700",
-    ringClass: "ring-rose-200",
+    accentClass: "border-rose-200 bg-rose-50/60 dark:border-rose-900/40 dark:bg-rose-950/20",
+    chipClass: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
+    ringClass: "ring-rose-200 dark:ring-rose-900/50",
   },
 };
 
 const fallbackMeta: StatusMeta = {
   label: "Khác",
-  badgeClass: "bg-slate-100 text-slate-700 border border-slate-200",
+  badgeClass: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
   icon: AlertTriangle,
-  accentClass: "border-slate-200 bg-slate-50/60",
-  chipClass: "bg-slate-100 text-slate-700",
-  ringClass: "ring-slate-200",
+  accentClass: "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50",
+  chipClass: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+  ringClass: "ring-slate-200 dark:ring-slate-800",
 };
 
 const getStatusMeta = (status: string | null | undefined): StatusMeta => {
@@ -187,18 +187,18 @@ const MyComplaints = () => {
 
   return (
     <div className="space-y-5">
-      <Card className="overflow-hidden border-primary/15 py-0">
-        <CardHeader className="space-y-4 border-b border-slate-100 bg-gradient-to-r from-primary/5 via-white to-amber-50/40 px-5 py-5">
+      <Card className="overflow-hidden border-primary/15 py-0 dark:border-slate-800/80 dark:bg-slate-900">
+        <CardHeader className="space-y-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-primary/5 via-white to-amber-50/40 dark:from-primary/10 dark:via-slate-900 dark:to-amber-950/10 px-5 py-5">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div className="space-y-1">
-                <CardTitle className="text-lg font-bold text-slate-900">
+                <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
                   Góp ý & khiếu nại
                 </CardTitle>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Gửi góp ý mới hoặc theo dõi trạng thái các phản hồi đã gửi.
                 </p>
               </div>
@@ -221,15 +221,15 @@ const MyComplaints = () => {
                 <div
                   key={key}
                   className={cn(
-                    "flex items-center justify-between rounded-xl border bg-white px-3 py-2.5",
+                    "flex items-center justify-between rounded-xl border bg-white px-3 py-2.5 dark:bg-slate-900/90",
                     meta.accentClass,
                   )}
                 >
                   <div>
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       {meta.label}
                     </p>
-                    <p className="mt-0.5 text-xl font-bold text-slate-900">
+                    <p className="mt-0.5 text-xl font-bold text-slate-900 dark:text-slate-100">
                       {counts[key]}
                     </p>
                   </div>
@@ -267,7 +267,7 @@ const MyComplaints = () => {
                     "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all",
                     active
                       ? "border-primary bg-primary text-white shadow-sm"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary",
+                      : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:border-slate-700 dark:hover:text-primary",
                   )}
                 >
                   {tab.label}
@@ -277,7 +277,7 @@ const MyComplaints = () => {
                         "rounded-full px-1.5 text-[10px] font-bold",
                         active
                           ? "bg-white/20 text-white"
-                          : "bg-slate-100 text-slate-600",
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
                       )}
                     >
                       {counts[tab.key as ComplaintStatus] ?? 0}
@@ -295,12 +295,12 @@ const MyComplaints = () => {
               minHeight="min-h-56"
             />
           ) : complaints.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center">
-              <MessageSquare className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-              <p className="text-sm font-semibold text-slate-700">
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
+              <MessageSquare className="mx-auto mb-3 h-10 w-10 text-slate-400 dark:text-slate-500" />
+              <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                 Chưa có góp ý nào
               </p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Bấm "Gửi góp ý mới" để gửi phản hồi đầu tiên cho chúng tôi.
               </p>
               <Button
@@ -331,7 +331,7 @@ const MyComplaints = () => {
                         setSelectedComplaint(c);
                       }
                     }}
-                    className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm outline-none transition-all hover:border-primary/30 hover:shadow-md focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20"
+                    className="group cursor-pointer rounded-2xl border border-slate-200 bg-white p-4 shadow-sm outline-none transition-all hover:border-primary/30 hover:shadow-md focus-visible:border-primary/40 focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-primary/40 dark:hover:bg-slate-900"
                   >
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div className="flex flex-1 gap-3">
@@ -345,23 +345,23 @@ const MyComplaints = () => {
                         </span>
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="line-clamp-1 text-sm font-bold text-slate-900">
+                            <p className="line-clamp-1 text-sm font-bold text-slate-900 dark:text-slate-100">
                               {c.title as string}
                             </p>
-                            <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500">
+                            <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                               #{c.id as number}
                             </span>
                           </div>
-                          <p className="line-clamp-2 text-sm text-slate-600">
+                          <p className="line-clamp-2 text-sm text-slate-600 dark:text-slate-300">
                             {c.description as string}
                           </p>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-slate-500">
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-slate-500 dark:text-slate-400">
                             <span className="inline-flex items-center gap-1">
                               <CalendarClock className="h-3.5 w-3.5" />
                               {formatDate(c.created_at as string | null)}
                             </span>
                             {hasResponse ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800/50">
                                 <MessageCircleReply className="h-3 w-3" />
                                 Đã có phản hồi
                               </span>
@@ -387,7 +387,7 @@ const MyComplaints = () => {
                   >
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-slate-600 dark:text-slate-400">
                     Trang {page} / {totalPages}
                   </span>
                   <Button

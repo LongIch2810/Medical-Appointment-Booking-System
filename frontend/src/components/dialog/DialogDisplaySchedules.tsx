@@ -80,8 +80,8 @@ const DialogDisplaySchedules = ({
                 <CalendarComponent />
               </div>
 
-              <Separator className="md:hidden w-full my-1" />
-              <Separator orientation="vertical" className="hidden md:block self-stretch h-auto" />
+              <Separator className="md:hidden w-full my-1 dark:bg-slate-800" />
+              <Separator orientation="vertical" className="hidden md:block self-stretch h-auto dark:bg-slate-800" />
 
               <div className="flex-1 min-w-0 w-full space-y-4">
                 <div className="flex items-center justify-between">
@@ -89,7 +89,7 @@ const DialogDisplaySchedules = ({
                     Khung giờ khám ({getWeekday(selectedDate)})
                   </h4>
                   {tempTime && (
-                    <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full">
+                    <span className="text-xs font-semibold text-primary bg-primary/10 dark:bg-primary/20 dark:text-teal-300 px-2.5 py-1 rounded-full">
                       Đã chọn: {tempTime.start_time} - {tempTime.end_time}
                     </span>
                   )}

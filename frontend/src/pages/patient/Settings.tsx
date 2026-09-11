@@ -329,10 +329,10 @@ const Settings: React.FC = () => {
                 "flex items-center gap-2.5 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold transition-all cursor-pointer",
                 isActive
                   ? "bg-primary text-white shadow-sm"
-                  : "bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/70",
+                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-200/70 dark:border-slate-800",
               )}
             >
-              <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-primary")} />
+              <Icon className={cn("h-4 w-4", isActive ? "text-white" : "text-primary dark:text-sky-400")} />
               <span>{tab.label}</span>
             </button>
           );
@@ -342,18 +342,18 @@ const Settings: React.FC = () => {
       {/* TAB 1: THÔNG BÁO & LỊCH HẸN */}
       {activeTab === "notifications" && (
         <div className="space-y-5">
-          <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-slate-100 bg-slate-50/50 px-6 py-4.5">
+          <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-xs overflow-hidden">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4.5">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     <Bell className="h-5 w-5" />
                   </div>
                   <div>
-                    <CardTitle className="text-base font-bold text-slate-900">
+                    <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                       Cấu hình kênh thông báo
                     </CardTitle>
-                    <CardDescription className="text-xs text-slate-500">
+                    <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                       Chọn cách bạn muốn nhận tin nhắn cập nhật về lịch hẹn và kết quả khám
                     </CardDescription>
                   </div>
@@ -364,7 +364,7 @@ const Settings: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={handleTestNotification}
-                  className="rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-primary/5 hover:text-primary hover:border-primary/30 gap-1.5"
+                  className="rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-primary/5 hover:text-primary hover:border-primary/30 gap-1.5"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-primary" />
                   Thử thông báo ngay
@@ -378,26 +378,26 @@ const Settings: React.FC = () => {
                 className={cn(
                   "flex items-start justify-between gap-4 rounded-2xl border p-4.5 transition-all",
                   settings.emailNotifications
-                    ? "border-sky-200 bg-sky-50/40 shadow-xs"
-                    : "border-slate-200/80 bg-white hover:border-slate-300",
+                    ? "border-sky-200 bg-sky-50/40 dark:border-sky-800/50 dark:bg-sky-950/20 shadow-xs"
+                    : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                 )}
               >
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-600 shadow-2xs">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-300 shadow-2xs">
                     <MessageSquare className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                         Thông báo qua Email
                       </p>
                       {settings.emailNotifications && (
-                        <Badge className="bg-sky-100 text-sky-700 hover:bg-sky-100 border-none text-[10px] font-semibold px-2 py-0.5">
+                        <Badge className="bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-none text-[10px] font-semibold px-2 py-0.5">
                           Đang bật
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Gửi thư xác nhận khi đặt lịch thành công, phiếu kết quả khám và các tài liệu chỉ định của bác sĩ.
                     </p>
                   </div>
@@ -413,26 +413,26 @@ const Settings: React.FC = () => {
                 className={cn(
                   "flex items-start justify-between gap-4 rounded-2xl border p-4.5 transition-all",
                   settings.smsNotifications
-                    ? "border-violet-200 bg-violet-50/40 shadow-xs"
-                    : "border-slate-200/80 bg-white hover:border-slate-300",
+                    ? "border-violet-200 bg-violet-50/40 dark:border-violet-800/50 dark:bg-violet-950/20 shadow-xs"
+                    : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                 )}
               >
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-600 shadow-2xs">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-300 shadow-2xs">
                     <Smartphone className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                         Toast thông báo tức thì (Realtime)
                       </p>
                       {settings.smsNotifications && (
-                        <Badge className="bg-violet-100 text-violet-700 hover:bg-violet-100 border-none text-[10px] font-semibold px-2 py-0.5">
+                        <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300 border-none text-[10px] font-semibold px-2 py-0.5">
                           Tức thì
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Bật thông báo nổi ngay trên góc màn hình khi bác sĩ tiếp nhận yêu cầu khám hoặc có tin nhắn phản hồi mới.
                     </p>
                   </div>
@@ -448,26 +448,26 @@ const Settings: React.FC = () => {
                 className={cn(
                   "flex items-start justify-between gap-4 rounded-2xl border p-4.5 transition-all",
                   settings.reminderNotifications
-                    ? "border-amber-200 bg-amber-50/40 shadow-xs"
-                    : "border-slate-200/80 bg-white hover:border-slate-300",
+                    ? "border-amber-200 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/20 shadow-xs"
+                    : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                 )}
               >
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-600 shadow-2xs">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 shadow-2xs">
                     <CalendarClock className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900">
+                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                         Tự động nhắc lịch hẹn trước giờ khám
                       </p>
                       {settings.reminderNotifications && (
-                        <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-none text-[10px] font-semibold px-2 py-0.5">
+                        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-none text-[10px] font-semibold px-2 py-0.5">
                           Tự động
                         </Badge>
                       )}
                     </div>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Hệ thống tự động gửi lời nhắc trước {reminderHours} giờ ({reminderMinutes} phút) để bạn kịp chuẩn bị và đến phòng khám đúng giờ.
                     </p>
                   </div>
@@ -481,11 +481,11 @@ const Settings: React.FC = () => {
               </div>
 
               {/* System Reminder Info Box */}
-              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-slate-200/70 p-4 text-xs text-slate-600">
+              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/70 dark:border-slate-800 p-4 text-xs text-slate-600 dark:text-slate-400">
                 <Clock className="h-4.5 w-4.5 text-primary shrink-0" />
                 <p>
-                  <strong className="font-semibold text-slate-800">Thời gian nhắc lịch mặc định:</strong> Trước{" "}
-                  <span className="font-bold text-primary">{reminderHours} giờ</span> theo quy định hệ thống LifeHealth. Bạn có thể kiểm tra danh sách lịch tại mục "Lịch khám".
+                  <strong className="font-semibold text-slate-800 dark:text-slate-200">Thời gian nhắc lịch mặc định:</strong> Trước{" "}
+                  <span className="font-bold text-primary dark:text-sky-400">{reminderHours} giờ</span> theo quy định hệ thống LifeHealth. Bạn có thể kiểm tra danh sách lịch tại mục "Lịch khám".
                 </p>
               </div>
             </CardContent>
@@ -498,28 +498,28 @@ const Settings: React.FC = () => {
         <div className="space-y-5">
           <div className="grid gap-5 md:grid-cols-2">
             {/* Change Password Card */}
-            <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs p-6 flex flex-col justify-between">
+            <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-xs p-6 flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 shadow-2xs">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 shadow-2xs">
                     <KeyRound className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                       Mật khẩu tài khoản
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Cập nhật định kỳ để tăng cường an toàn
                     </p>
                   </div>
                 </div>
 
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   Để đảm bảo an toàn cho hồ sơ y tế số và thông tin người thân, bạn nên đặt mật khẩu có ít nhất 6 ký tự kết hợp chữ cái và chữ số.
                 </p>
 
-                <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50/70 border border-amber-200/60 p-3 text-xs text-amber-800">
-                  <Lock className="h-4 w-4 shrink-0 text-amber-600" />
+                <div className="mt-4 flex items-center gap-2 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 p-3 text-xs text-amber-800 dark:text-amber-300">
+                  <Lock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
                   <span>Khuyến nghị đổi mật khẩu ít nhất mỗi 90 ngày một lần.</span>
                 </div>
               </div>
@@ -540,56 +540,56 @@ const Settings: React.FC = () => {
             </Card>
 
             {/* Active Session & Device Security Card */}
-            <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs p-6 flex flex-col justify-between">
+            <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-xs p-6 flex flex-col justify-between">
               <div>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-2xs">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 shadow-2xs">
                     <Laptop className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-slate-900">
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
                       Phiên đăng nhập hiện tại
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Thông tin thiết bị và trạng thái bảo vệ
                     </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 border border-slate-200/60 p-3">
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800 p-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                       <div>
-                        <p className="text-xs font-bold text-slate-800">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
                           Trình duyệt Web hiện tại
                         </p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
                           Đang hoạt động (Trực tuyến)
                         </p>
                       </div>
                     </div>
-                    <Badge className="bg-emerald-100 text-emerald-800 border-none text-[10px]">
+                    <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-none text-[10px]">
                       An toàn
                     </Badge>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/60 p-3 text-xs space-y-1.5 text-slate-600">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-slate-800 p-3 text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Xác thực mã hóa:</span>
-                      <span className="font-semibold text-slate-800">JWT Token (Bearer)</span>
+                      <span className="text-slate-500 dark:text-slate-400">Xác thực mã hóa:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">JWT Token (Bearer)</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-500">Giao thức truyền tải:</span>
-                      <span className="font-semibold text-slate-800">HTTPS / TLS 1.3</span>
+                      <span className="text-slate-500 dark:text-slate-400">Giao thức truyền tải:</span>
+                      <span className="font-semibold text-slate-800 dark:text-slate-200">HTTPS / TLS 1.3</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div className="pt-6">
-                <div className="flex items-center gap-2 text-xs text-emerald-700 font-semibold bg-emerald-50 rounded-xl p-3 border border-emerald-200">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
+                <div className="flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-300 font-semibold bg-emerald-50 dark:bg-emerald-950/30 rounded-xl p-3 border border-emerald-200 dark:border-emerald-800/50">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span>Không phát hiện hoạt động đăng nhập bất thường nào.</span>
                 </div>
               </div>
@@ -601,17 +601,17 @@ const Settings: React.FC = () => {
       {/* TAB 3: GIAO DIỆN & TÙY CHỌN */}
       {activeTab === "appearance" && (
         <div className="space-y-5">
-          <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-slate-100 bg-slate-50/50 px-6 py-4.5">
+          <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-xs overflow-hidden">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4.5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <Palette className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base font-bold text-slate-900">
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                     Giao diện hiển thị (Theme)
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
+                  <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                     Tùy chỉnh tông màu hiển thị phù hợp với mắt và điều kiện ánh sáng
                   </CardDescription>
                 </div>
@@ -627,21 +627,21 @@ const Settings: React.FC = () => {
                   className={cn(
                     "group relative flex flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition-all cursor-pointer",
                     currentTheme === "LIGHT"
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-slate-200 bg-white hover:border-slate-300",
+                      ? "border-primary bg-primary/5 dark:bg-primary/20 shadow-md"
+                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                   )}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-600 mb-3 transition-transform group-hover:scale-105">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-300 mb-3 transition-transform group-hover:scale-105">
                     <Sun className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Giao diện Sáng</p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Giao diện Sáng</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Nền trắng tinh tế, độ tương phản rõ ràng
                     </p>
                   </div>
                   {currentTheme === "LIGHT" && (
-                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary">
+                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary dark:text-sky-400">
                       <CheckCircle2 className="h-4 w-4" /> Đang chọn
                     </div>
                   )}
@@ -654,21 +654,21 @@ const Settings: React.FC = () => {
                   className={cn(
                     "group relative flex flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition-all cursor-pointer",
                     currentTheme === "DARK"
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-slate-200 bg-white hover:border-slate-300",
+                      ? "border-primary bg-primary/5 dark:bg-primary/20 shadow-md"
+                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                   )}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 text-indigo-600 mb-3 transition-transform group-hover:scale-105">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 mb-3 transition-transform group-hover:scale-105">
                     <Moon className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Giao diện Tối</p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Giao diện Tối</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Êm dịu cho mắt khi sử dụng vào ban đêm
                     </p>
                   </div>
                   {currentTheme === "DARK" && (
-                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary">
+                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary dark:text-sky-400">
                       <CheckCircle2 className="h-4 w-4" /> Đang chọn
                     </div>
                   )}
@@ -681,21 +681,21 @@ const Settings: React.FC = () => {
                   className={cn(
                     "group relative flex flex-col items-center justify-between rounded-2xl border-2 p-5 text-center transition-all cursor-pointer",
                     currentTheme === "SYSTEM"
-                      ? "border-primary bg-primary/5 shadow-md"
-                      : "border-slate-200 bg-white hover:border-slate-300",
+                      ? "border-primary bg-primary/5 dark:bg-primary/20 shadow-md"
+                      : "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-slate-300 dark:hover:border-slate-700",
                   )}
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700 mb-3 transition-transform group-hover:scale-105">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 mb-3 transition-transform group-hover:scale-105">
                     <Tv className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-slate-900">Theo hệ thống</p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">Theo hệ thống</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       Tự động theo cài đặt hệ điều hành của bạn
                     </p>
                   </div>
                   {currentTheme === "SYSTEM" && (
-                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary">
+                    <div className="mt-3 flex items-center gap-1 text-xs font-bold text-primary dark:text-sky-400">
                       <CheckCircle2 className="h-4 w-4" /> Đang chọn
                     </div>
                   )}
@@ -703,26 +703,26 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Language & Regional Defaults */}
-              <div className="rounded-2xl border border-slate-200/80 p-4.5 bg-slate-50/50 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4.5 bg-slate-50/50 dark:bg-slate-950/50 space-y-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Cài đặt vùng & Định dạng
                 </p>
                 <div className="grid gap-4 sm:grid-cols-3 text-xs">
                   <div>
-                    <span className="text-slate-500 block">Ngôn ngữ hiển thị</span>
-                    <span className="font-bold text-slate-800 text-sm mt-0.5 block">
+                    <span className="text-slate-500 dark:text-slate-400 block">Ngôn ngữ hiển thị</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                       Tiếng Việt (Mặc định)
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block">Định dạng ngày tháng</span>
-                    <span className="font-bold text-slate-800 text-sm mt-0.5 block">
+                    <span className="text-slate-500 dark:text-slate-400 block">Định dạng ngày tháng</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                       DD/MM/YYYY (24 Giờ)
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 block">Múi giờ hệ thống</span>
-                    <span className="font-bold text-slate-800 text-sm mt-0.5 block">
+                    <span className="text-slate-500 dark:text-slate-400 block">Múi giờ hệ thống</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                       GMT+7 (Hà Nội, TP.HCM)
                     </span>
                   </div>
@@ -736,17 +736,17 @@ const Settings: React.FC = () => {
       {/* TAB 4: QUYỀN RIÊNG TƯ & DỮ LIỆU Y TẾ */}
       {activeTab === "privacy" && (
         <div className="space-y-5">
-          <Card className="rounded-3xl border-slate-200/80 bg-white shadow-xs overflow-hidden">
-            <CardHeader className="border-b border-slate-100 bg-slate-50/50 px-6 py-4.5">
+          <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-xs overflow-hidden">
+            <CardHeader className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-6 py-4.5">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                   <FileHeart className="h-5 w-5" />
                 </div>
                 <div>
-                  <CardTitle className="text-base font-bold text-slate-900">
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                     Quyền riêng tư hồ sơ sức khỏe
                   </CardTitle>
-                  <CardDescription className="text-xs text-slate-500">
+                  <CardDescription className="text-xs text-slate-500 dark:text-slate-400">
                     Kiểm soát ai có thể xem và chia sẻ thông tin bệnh án của bạn
                   </CardDescription>
                 </div>
@@ -755,16 +755,16 @@ const Settings: React.FC = () => {
 
             <CardContent className="p-6 space-y-4">
               {/* Doctor Sharing */}
-              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 p-4.5 hover:border-slate-300 transition-all">
+              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 dark:bg-slate-900/60 p-4.5 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 text-teal-700">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300">
                     <FileCheck className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       Chia sẻ lịch sử khám cho bác sĩ điều trị
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Cho phép bác sĩ được bạn đặt lịch khám xem trước kết quả xét nghiệm và lịch sử dùng thuốc để chẩn đoán chính xác hơn.
                     </p>
                   </div>
@@ -779,16 +779,16 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Auto Sync Reports */}
-              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 p-4.5 hover:border-slate-300 transition-all">
+              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 dark:bg-slate-900/60 p-4.5 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300">
                     <RefreshCw className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       Tự động đồng bộ hóa hồ sơ số
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Tự động lưu trữ và đồng bộ kết quả khám sau khi buổi khám hoàn tất vào mục "Hồ sơ sức khỏe" của bạn.
                     </p>
                   </div>
@@ -803,16 +803,16 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Anonymous Research */}
-              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 p-4.5 hover:border-slate-300 transition-all">
+              <div className="flex items-start justify-between gap-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 dark:bg-slate-900/60 p-4.5 hover:border-slate-300 dark:hover:border-slate-700 transition-all">
                 <div className="flex items-start gap-3.5">
-                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+                  <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300">
                     <Sparkles className="h-5 w-5" />
                   </span>
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-slate-900">
+                    <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       Đóng góp dữ liệu ẩn danh cho AI y tế
                     </p>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                       Cho phép hệ thống sử dụng dữ liệu triệu chứng đã ẩn danh hoàn toàn thông tin cá nhân để cải thiện độ chính xác của AI Coach Health.
                     </p>
                   </div>
@@ -831,15 +831,15 @@ const Settings: React.FC = () => {
       )}
 
       {/* Save Settings Action Bar */}
-      <Card className="rounded-3xl border-slate-200/80 bg-white shadow-sm p-4 sm:p-5">
+      <Card className="rounded-3xl border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 shadow-sm p-4 sm:p-5">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-2.5">
             {hasChanges ? (
               <span className="flex h-3 w-3 rounded-full bg-amber-500 animate-ping" />
             ) : (
-              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0" />
+              <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             )}
-            <p className="text-xs sm:text-sm font-semibold text-slate-700">
+            <p className="text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
               {hasChanges
                 ? "Có thay đổi chưa được lưu vào hệ thống."
                 : "Tất cả cấu hình cài đặt của bạn đã được cập nhật đồng bộ."}
@@ -891,7 +891,7 @@ const Settings: React.FC = () => {
             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
             {/* Mật khẩu cũ */}
             <div className="space-y-1.5">
-              <Label htmlFor="old_password" className="text-xs font-bold text-slate-800">
+              <Label htmlFor="old_password" className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Mật khẩu hiện tại <span className="text-rose-500">*</span>
               </Label>
               <div className="relative">
@@ -924,7 +924,7 @@ const Settings: React.FC = () => {
 
             {/* Mật khẩu mới */}
             <div className="space-y-1.5">
-              <Label htmlFor="new_password" className="text-xs font-bold text-slate-800">
+              <Label htmlFor="new_password" className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Mật khẩu mới <span className="text-rose-500">*</span>
               </Label>
               <div className="relative">
@@ -958,12 +958,12 @@ const Settings: React.FC = () => {
               {newPasswordValue.length > 0 && (
                 <div className="space-y-1 pt-1">
                   <div className="flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Độ mạnh mật khẩu:</span>
+                    <span className="text-slate-500 dark:text-slate-400">Độ mạnh mật khẩu:</span>
                     <span className={cn("font-bold", strengthMeta.text)}>
                       {strengthMeta.label}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className={cn("h-full transition-all duration-300", strengthMeta.color)}
                       style={{ width: `${passwordStrength}%` }}
@@ -975,7 +975,7 @@ const Settings: React.FC = () => {
 
             {/* Xác nhận mật khẩu mới */}
             <div className="space-y-1.5">
-              <Label htmlFor="confirm_password" className="text-xs font-bold text-slate-800">
+              <Label htmlFor="confirm_password" className="text-xs font-bold text-slate-800 dark:text-slate-200">
                 Xác nhận mật khẩu mới <span className="text-rose-500">*</span>
               </Label>
               <div className="relative">

@@ -154,22 +154,22 @@ const Appointments: React.FC = () => {
 
   return (
     <>
-      <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
-        <CardHeader className="flex flex-col gap-4 border-b border-slate-100 px-6 py-4.5 md:flex-row md:items-center md:justify-between">
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <CardHeader className="flex flex-col gap-4 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <CalendarClock className="h-4.5 w-4.5" />
             </span>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                 Lịch khám bệnh của bạn
               </CardTitle>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Theo dõi tiến độ, chi tiết và kết quả các lần khám đã đăng ký
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <Filter className="h-4 w-4 text-primary" />
             <span>Tổng cộng: {appointments.length} cuộc hẹn</span>
           </div>
@@ -186,7 +186,7 @@ const Appointments: React.FC = () => {
                   "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer",
                   activeFilter === tab.key
                     ? "border-primary bg-primary text-white shadow-xs"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary",
+                    : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300 dark:hover:bg-slate-800",
                 )}
               >
                 {tab.label}
@@ -195,7 +195,7 @@ const Appointments: React.FC = () => {
                     "rounded-full px-1.5 py-0.2 text-[10px] font-extrabold",
                     activeFilter === tab.key
                       ? "bg-white/25 text-white"
-                      : "bg-slate-100 text-slate-600",
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
                   )}
                 >
                   {counts[tab.key]}
@@ -217,14 +217,14 @@ const Appointments: React.FC = () => {
               onRetry={() => refetch()}
             />
           ) : filteredAppointments.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/60 p-10 text-center">
+            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-10 text-center">
               <CalendarClock className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-              <p className="text-sm font-bold text-slate-700">
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {activeFilter === "ALL"
                   ? "Bạn chưa có lịch khám nào trong hệ thống."
                   : "Không có lịch khám nào trong trạng thái đã chọn."}
               </p>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Khám phá danh sách bác sĩ chuyên khoa và đăng ký lịch khám mới dễ dàng.
               </p>
             </div>
@@ -240,7 +240,7 @@ const Appointments: React.FC = () => {
                 return (
                   <div
                     key={appointment.id}
-                    className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition-all hover:border-primary/40 hover:shadow-md"
+                    className="group rounded-2xl border border-slate-200/80 bg-white p-5 transition-all hover:border-primary/40 hover:shadow-md dark:border-slate-800 dark:bg-slate-900/90 dark:hover:border-slate-700"
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div className="flex flex-1 gap-4 min-w-0">
@@ -249,22 +249,22 @@ const Appointments: React.FC = () => {
                         </div>
                         <div className="min-w-0 space-y-1.5 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                            <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
                               BS. {appointment.doctor.user.fullname ?? "Chưa cập nhật"}
                             </p>
                             <StatusBadge status={appointment.status} />
                             {hasRating ? (
-                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
                                 <Star className="h-3 w-3 fill-current" />
                                 {appointment.satisfaction_rating?.rating_score}/5
                               </span>
                             ) : null}
                           </div>
-                          <p className="text-xs sm:text-sm text-slate-600">
+                          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
                             <span className="font-semibold text-primary">{getSpecialtyName(appointment)}</span> • {appointment.doctor.workplace}
                           </p>
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 pt-0.5">
-                            <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-slate-500 dark:text-slate-400 pt-0.5">
+                            <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
                               <CalendarClock className="h-3.5 w-3.5 text-primary" />
                               {appointment.appointment_date}
                             </span>
@@ -274,7 +274,7 @@ const Appointments: React.FC = () => {
                             </span>
                             <span className="inline-flex items-center gap-1">
                               <UserRound className="h-3.5 w-3.5 text-slate-400" />
-                              Bệnh nhân: <strong className="text-slate-700">{appointment.patient.fullname}</strong>
+                              Bệnh nhân: <strong className="text-slate-700 dark:text-slate-200">{appointment.patient.fullname}</strong>
                             </span>
                           </div>
                         </div>
@@ -284,7 +284,7 @@ const Appointments: React.FC = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8.5 justify-center gap-1.5 rounded-xl border-slate-200 px-3 text-xs font-bold text-slate-700 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                          className="h-8.5 justify-center gap-1.5 rounded-xl border-slate-200 px-3 text-xs font-bold text-slate-700 hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                           onClick={() => handleOpenDetail(appointment.id)}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -295,7 +295,7 @@ const Appointments: React.FC = () => {
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8.5 justify-center gap-1.5 rounded-xl border-sky-200 bg-sky-50 px-3 text-xs font-bold text-sky-700 hover:bg-sky-100"
+                            className="h-8.5 justify-center gap-1.5 rounded-xl border-sky-200 bg-sky-50 px-3 text-xs font-bold text-sky-700 hover:bg-sky-100 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-300 dark:hover:bg-sky-900/50"
                             onClick={() => setExamResultTarget(appointment)}
                           >
                             <FileText className="h-3.5 w-3.5" />
@@ -307,7 +307,7 @@ const Appointments: React.FC = () => {
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8.5 justify-center gap-1.5 rounded-xl border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-700 hover:bg-amber-100"
+                            className="h-8.5 justify-center gap-1.5 rounded-xl border-amber-200 bg-amber-50 px-3 text-xs font-bold text-amber-700 hover:bg-amber-100 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 dark:hover:bg-amber-900/50"
                             onClick={() => handleOpenRating(appointment)}
                           >
                             <Star className="h-3.5 w-3.5" />
@@ -319,7 +319,7 @@ const Appointments: React.FC = () => {
                             type="button"
                             size="sm"
                             variant="ghost"
-                            className="h-8.5 justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-700"
+                            className="h-8.5 justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50"
                             disabled={cancelMutation.isPending}
                             onClick={() => handleCancel(appointment.id)}
                             title="Hủy lịch khám"
@@ -345,7 +345,7 @@ const Appointments: React.FC = () => {
           if (!open) setRatingTarget(null);
         }}
       >
-        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden rounded-2xl">
+        <DialogContent className="max-w-md p-0 gap-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
           <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
@@ -360,7 +360,7 @@ const Appointments: React.FC = () => {
 
           <DialogBody className="space-y-4 p-5">
             <div className="flex flex-col items-center gap-2.5">
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Mức độ hài lòng của bạn
               </p>
               <div className="flex gap-2">
@@ -376,7 +376,7 @@ const Appointments: React.FC = () => {
                         "h-8 w-8",
                         score <= ratingScore
                           ? "fill-amber-400 text-amber-400"
-                          : "text-slate-200",
+                          : "text-slate-200 dark:text-slate-700",
                       )}
                     />
                   </button>
@@ -430,7 +430,7 @@ const Appointments: React.FC = () => {
           if (!open) setExamResultTarget(null);
         }}
       >
-        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl">
+        <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
           <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
@@ -497,7 +497,7 @@ const Appointments: React.FC = () => {
 
       {/* Modal Chi tiết Lịch khám */}
       <Dialog open={openDetail} onOpenChange={setOpenDetail}>
-        <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden rounded-2xl">
+        <DialogContent className="max-w-xl p-0 gap-0 overflow-hidden rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
           <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">

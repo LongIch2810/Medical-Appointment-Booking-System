@@ -418,7 +418,7 @@ const Messages: React.FC = () => {
 
   return (
     <>
-      <Card className="grid h-[calc(100vh-8rem)] min-h-[520px] grid-cols-1 overflow-hidden border-slate-200/80 bg-white py-0 shadow-xs lg:grid-cols-[340px_1fr] rounded-3xl">
+      <Card className="grid h-[calc(100vh-8rem)] min-h-[520px] grid-cols-1 overflow-hidden border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-xs lg:grid-cols-[340px_1fr] rounded-3xl">
         <ChannelList
           className={mobileDetailOpen ? "hidden lg:flex" : "flex"}
           channels={channels}

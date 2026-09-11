@@ -16,13 +16,13 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message, isMine, onRetry }) => 
         "max-w-[82%] sm:max-w-[75%] rounded-2xl px-4.5 py-3 text-xs sm:text-sm shadow-2xs",
         isMine
           ? "ml-auto rounded-br-xs bg-primary text-white"
-          : "rounded-bl-xs bg-white text-slate-800 border border-slate-200/70",
+          : "rounded-bl-xs bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200/70 dark:border-slate-700/80",
         message.isOptimistic && "opacity-70",
-        message.failed && "border border-rose-300 bg-rose-50 text-rose-700",
+        message.failed && "border border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
       )}
     >
       {!isMine && (
-        <p className="mb-1 text-xs font-bold text-primary">
+        <p className="mb-1 text-xs font-bold text-primary dark:text-sky-400">
           BS. {message.sender.fullname ?? message.sender.username ?? "Bác sĩ"}
         </p>
       )}
@@ -32,14 +32,14 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message, isMine, onRetry }) => 
       <div
         className={cn(
           "mt-1.5 flex items-center justify-end gap-2 text-[10px] font-medium",
-          isMine && !message.failed ? "text-white/75" : "text-slate-400",
+          isMine && !message.failed ? "text-white/75" : "text-slate-400 dark:text-slate-400",
         )}
       >
         {message.failed ? (
           <button
             type="button"
             onClick={() => onRetry?.(message)}
-            className="font-bold text-rose-600 underline decoration-dotted underline-offset-2"
+            className="font-bold text-rose-600 dark:text-rose-400 underline decoration-dotted underline-offset-2"
           >
             Gửi thất bại, nhấn để thử lại
           </button>

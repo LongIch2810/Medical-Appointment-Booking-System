@@ -116,8 +116,8 @@ const ChatPanel: FC<ChatPanelProps> = ({
   }, [isFetchingNextPage, messages]);
 
   return (
-    <div className={cn("flex flex-col bg-white", className)}>
-      <div className="flex items-center gap-3.5 border-b border-slate-100 p-4.5 bg-slate-50/30">
+    <div className={cn("flex flex-col bg-white dark:bg-slate-900", className)}>
+      <div className="flex items-center gap-3.5 border-b border-slate-100 dark:border-slate-800 p-4.5 bg-slate-50/30 dark:bg-slate-900/60">
         {onBack && (
           <Button
             type="button"
@@ -130,13 +130,13 @@ const ChatPanel: FC<ChatPanelProps> = ({
             <ChevronLeft className="h-5 w-5" />
           </Button>
         )}
-        <Avatar className="h-11 w-11 border-2 border-primary/20 shadow-2xs shrink-0">
+        <Avatar className="h-11 w-11 border-2 border-primary/20 dark:border-primary/40 shadow-2xs shrink-0">
           <AvatarImage
             src={getDoctorAvatar(channel, currentUserId) ?? ""}
             alt={getDoctorDisplayName(channel, currentUserId)}
             className="object-cover"
           />
-          <AvatarFallback className="bg-primary/10 text-sm font-bold text-primary">
+          <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-sm font-bold text-primary dark:text-sky-300">
             {channel ? (
               getDoctorInitial(channel, currentUserId)
             ) : (
@@ -145,7 +145,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-sm sm:text-base font-bold text-slate-900 truncate">
+          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
             {channel ? "BS. " : ""}
             {getDoctorDisplayName(channel, currentUserId)}
           </p>
@@ -154,7 +154,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
               className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"
               aria-hidden="true"
             />
-            <p className="text-xs font-semibold text-primary">
+            <p className="text-xs font-semibold text-primary dark:text-sky-400">
               {getDoctorSubtitle(channel)}
             </p>
           </div>
@@ -166,7 +166,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
         onScroll={handleScroll}
         aria-live="polite"
         aria-relevant="additions"
-        className="flex-1 space-y-3.5 overflow-y-auto bg-slate-50/70 p-5"
+        className="flex-1 space-y-3.5 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/60 p-5"
       >
         {isFetchingNextPage && (
           <div className="flex justify-center pb-2">
@@ -201,7 +201,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
       </div>
 
       <form
-        className="sticky bottom-0 border-t border-slate-100 bg-white p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))]"
+        className="sticky bottom-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))]"
         onSubmit={onSubmit}
       >
         <div className="flex items-center gap-2.5">
@@ -211,7 +211,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
             placeholder="Nhập câu hỏi hoặc tình trạng sức khỏe cần bác sĩ tư vấn..."
             aria-label="Nhập tin nhắn"
             disabled={!activeChannelId}
-            className="h-10.5 rounded-2xl border-slate-200 bg-slate-50/60 text-xs sm:text-sm shadow-none focus-visible:bg-white"
+            className="h-10.5 rounded-2xl border-slate-200 bg-slate-50/60 text-xs sm:text-sm shadow-none focus-visible:bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 dark:focus-visible:bg-slate-950"
           />
           <Button
             type="submit"

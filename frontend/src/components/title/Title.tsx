@@ -14,7 +14,7 @@ const Title = ({ text, className = "", align = "center" }: TitleProps) => {
 
       {/* Title text */}
       <h2
-        className={`text-lg md:text-2xl font-bold text-gray-800 ${className}`}
+        className={`text-lg md:text-2xl font-bold text-gray-800 dark:text-slate-100 ${className}`}
       >
         {text}
       </h2>

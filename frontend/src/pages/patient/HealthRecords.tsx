@@ -219,7 +219,7 @@ const HealthRecords: React.FC = () => {
               Không thể tải hồ sơ sức khỏe.
             </p>
           ) : healthProfiles.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">
+            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 text-sm text-slate-600 dark:text-slate-400">
               Chưa có hồ sơ sức khỏe nào.
             </div>
           ) : (
@@ -233,7 +233,7 @@ const HealthRecords: React.FC = () => {
                     "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
                     profile.patient.id === selectedRelativeId
                       ? "border-primary bg-primary text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-primary hover:text-primary",
+                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary",
                   )}
                 >
                   {profile.patient.fullname ?? "Bệnh nhân"} (
@@ -251,7 +251,7 @@ const HealthRecords: React.FC = () => {
             <CardTitle className="text-lg">Hồ sơ sức khỏe</CardTitle>
           </CardHeader>
           <CardContent className="px-5">
-            <div className="rounded-xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">
+            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 text-sm text-slate-600 dark:text-slate-400">
               Chọn một hồ sơ để xem chi tiết.
             </div>
           </CardContent>
@@ -261,8 +261,8 @@ const HealthRecords: React.FC = () => {
           <Card className="border-primary/15 py-5">
             <CardContent className="flex flex-col gap-3 px-5 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm text-slate-500">Hồ sơ đang chọn</p>
-                <p className="text-lg font-bold text-slate-900">
+                <p className="text-sm text-slate-500 dark:text-slate-400">Hồ sơ đang chọn</p>
+                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
                   {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"} -{" "}
                   {selectedHealthRecord.patient.relationship.relationship_name}
                 </p>
@@ -276,13 +276,13 @@ const HealthRecords: React.FC = () => {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Droplet className="h-4 w-4 text-rose-500" />
                   Nhóm máu
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary">
+                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
                   {formatValue(selectedHealthRecord.blood_type)}
                 </p>
               </CardContent>
@@ -290,13 +290,13 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Ruler className="h-4 w-4 text-sky-500" />
                   Chiều cao
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary">
+                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
                   {formatValue(selectedHealthRecord.height, " cm")}
                 </p>
               </CardContent>
@@ -304,13 +304,13 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <Scale className="h-4 w-4 text-emerald-500" />
                   Cân nặng
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary">
+                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
                   {formatValue(selectedHealthRecord.weight, " kg")}
                 </p>
               </CardContent>
@@ -318,13 +318,13 @@ const HealthRecords: React.FC = () => {
 
             <Card className="gap-2 border-primary/15 py-4">
               <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600">
+                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                   <CalendarCheck2 className="h-4 w-4 text-violet-500" />
                   Khám gần nhất
                 </CardTitle>
               </CardHeader>
               <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary">
+                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
                   {formatValue(selectedHealthRecord.last_checkup_date)}
                 </p>
               </CardContent>
@@ -369,11 +369,11 @@ const HealthRecords: React.FC = () => {
                 ].map((metric) => (
                   <div
                     key={metric.label}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 p-3"
+                    className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-950/40 p-3"
                   >
                     <div className="flex items-center gap-2">
                       {metric.icon}
-                      <p className="text-sm font-semibold text-slate-900">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {metric.label}
                       </p>
                     </div>
@@ -388,25 +388,25 @@ const HealthRecords: React.FC = () => {
                 <CardTitle className="text-lg">Thuốc và tiêm chủng</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 px-5">
-                <div className="rounded-lg border border-slate-200 p-3">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 p-3">
                   <div className="flex items-center gap-2">
                     <Pill className="h-4 w-4 text-cyan-500" />
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                       Thuốc đang sử dụng
                     </p>
                   </div>
-                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
                     {formatValue(selectedHealthRecord.medications)}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 p-3">
+                <div className="rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 p-3">
                   <div className="flex items-center gap-2">
                     <Syringe className="h-4 w-4 text-teal-500" />
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                       Vắc xin đã tiêm
                     </p>
                   </div>
-                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
                     {formatValue(selectedHealthRecord.vaccinations)}
                   </p>
                 </div>
@@ -421,52 +421,52 @@ const HealthRecords: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="grid gap-3 px-5 md:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <p className="text-sm font-semibold text-slate-900">Dị ứng</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Dị ứng</p>
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
                   {formatValue(selectedHealthRecord.allergies)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-4 w-4 text-rose-500" />
-                  <p className="text-sm font-semibold text-slate-900">Bệnh nền</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Bệnh nền</p>
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
                   {formatValue(selectedHealthRecord.medical_history)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
                 <div className="flex items-center gap-2">
                   <CigaretteOff className="h-4 w-4 text-slate-500" />
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Hút thuốc
                   </p>
                 </div>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {formatValue(selectedHealthRecord.smoking)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
                 <div className="flex items-center gap-2">
                   <Wine className="h-4 w-4 text-purple-500" />
-                  <p className="text-sm font-semibold text-slate-900">Rượu bia</p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Rượu bia</p>
                 </div>
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                   {formatValue(selectedHealthRecord.alcohol_consumption)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white p-3 md:col-span-2">
+              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3 md:col-span-2">
                 <div className="flex items-center gap-2">
                   <Stethoscope className="h-4 w-4 text-emerald-500" />
-                  <p className="text-sm font-semibold text-slate-900">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                     Tần suất vận động
                   </p>
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 p-2 text-sm text-slate-600">
+                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
                   {formatValue(selectedHealthRecord.exercise_frequency)}
                 </p>
               </div>

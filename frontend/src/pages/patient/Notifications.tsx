@@ -44,8 +44,8 @@ export default function Notifications() {
     <div className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900">Thông báo</h2>
-          <p className="text-sm text-slate-500">
+          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Thông báo</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
             Bạn có {unreadQuery.data?.data.count ?? 0} thông báo chưa đọc.
           </p>
         </div>
@@ -107,26 +107,26 @@ export default function Notifications() {
               onClick={() => void openNotification(notification)}
               className={`cursor-pointer rounded-2xl border transition-colors hover:border-primary/30 ${
                 notification.isRead
-                  ? "border-slate-200 bg-white"
-                  : "border-primary/20 bg-primary/5"
+                  ? "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+                  : "border-primary/20 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
               }`}
             >
               <CardContent className="flex gap-3 p-4 sm:p-5">
                 <span
                   className={`mt-2 h-2.5 w-2.5 shrink-0 rounded-full ${
-                    notification.isRead ? "bg-slate-200" : "bg-primary"
+                    notification.isRead ? "bg-slate-200 dark:bg-slate-700" : "bg-primary"
                   }`}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="font-bold text-slate-900">
+                    <h3 className="font-bold text-slate-900 dark:text-slate-100">
                       {notification.title}
                     </h3>
-                    <span className="text-xs text-slate-400">
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
                       {notification.createdAt}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
                     {notification.content}
                   </p>
                 </div>
@@ -147,7 +147,7 @@ export default function Notifications() {
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs font-semibold text-slate-600">
+          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
             Trang {page}/{data?.totalPages}
           </span>
           <Button

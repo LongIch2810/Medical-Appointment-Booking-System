@@ -91,8 +91,8 @@ const Dashboard: React.FC = () => {
       detail: "Đang chờ hoặc đã xác nhận",
       icon: CalendarCheck2,
       accent: "from-sky-500/10 via-sky-500/5 to-transparent",
-      iconBg: "bg-sky-100",
-      iconText: "text-sky-600",
+      iconBg: "bg-sky-100 dark:bg-sky-950/50",
+      iconText: "text-sky-600 dark:text-sky-400",
     },
     {
       label: "Hồ sơ sức khỏe",
@@ -100,8 +100,8 @@ const Dashboard: React.FC = () => {
       detail: "Hồ sơ trong tài khoản",
       icon: HeartPulse,
       accent: "from-rose-500/10 via-rose-500/5 to-transparent",
-      iconBg: "bg-rose-100",
-      iconText: "text-rose-600",
+      iconBg: "bg-rose-100 dark:bg-rose-950/50",
+      iconText: "text-rose-600 dark:text-rose-400",
     },
     {
       label: "Kết quả khám",
@@ -109,8 +109,8 @@ const Dashboard: React.FC = () => {
       detail: "Bệnh án & Đơn thuốc đã lưu",
       icon: FileSearch,
       accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
-      iconBg: "bg-emerald-100",
-      iconText: "text-emerald-600",
+      iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
+      iconText: "text-emerald-600 dark:text-emerald-400",
     },
     {
       label: "Người thân liên kết",
@@ -118,8 +118,8 @@ const Dashboard: React.FC = () => {
       detail: "Thành viên gia đình quản lý",
       icon: UsersRound,
       accent: "from-violet-500/10 via-violet-500/5 to-transparent",
-      iconBg: "bg-violet-100",
-      iconText: "text-violet-600",
+      iconBg: "bg-violet-100 dark:bg-violet-950/50",
+      iconText: "text-violet-600 dark:text-violet-400",
     },
   ];
 
@@ -150,7 +150,7 @@ const Dashboard: React.FC = () => {
         {stats.map((item) => (
           <Card
             key={item.label}
-            className="relative overflow-hidden border-slate-200/80 bg-white py-0 shadow-xs transition-all hover:shadow-md hover:border-slate-300"
+            className="relative overflow-hidden border-slate-200/80 bg-white py-0 shadow-xs transition-all hover:shadow-md hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
           >
             <div
               className={cn(
@@ -160,7 +160,7 @@ const Dashboard: React.FC = () => {
             />
             <div className="relative flex flex-col gap-3 p-5">
               <div className="flex items-center justify-between">
-                <p className="text-xs sm:text-sm font-bold text-slate-700">
+                <p className="text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-300">
                   {item.label}
                 </p>
                 <span
@@ -172,10 +172,10 @@ const Dashboard: React.FC = () => {
                   <item.icon className={cn("h-5 w-5", item.iconText)} />
                 </span>
               </div>
-              <p className="text-3xl font-extrabold tracking-tight text-slate-900">
+              <p className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
                 {item.value}
               </p>
-              <p className="text-xs font-medium text-slate-500">{item.detail}</p>
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{item.detail}</p>
             </div>
           </Card>
         ))}
@@ -185,20 +185,20 @@ const Dashboard: React.FC = () => {
       <UpcomingAppointmentsCard />
 
       {/* Personal Health Profile Card */}
-      <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-4.5">
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <ScrollText className="h-4.5 w-4.5" />
             </span>
             <div>
-              <CardTitle className="text-base font-bold text-slate-900">
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                 Hồ sơ sức khỏe cá nhân
               </CardTitle>
-              <p className="text-xs text-slate-500">Chỉ số sinh trắc học và tiền sử y tế cơ bản</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Chỉ số sinh trắc học và tiền sử y tế cơ bản</p>
             </div>
           </div>
-          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-semibold gap-1">
+          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-semibold gap-1">
             <Sparkles className="h-3 w-3" />
             Chủ tài khoản
           </Badge>
@@ -244,24 +244,24 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="grid gap-3.5 md:grid-cols-2 pt-1">
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4.5">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/30 p-4.5">
               <div className="mb-2 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <p className="text-sm font-bold text-amber-900">Dị ứng ghi nhận</p>
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-300">Dị ứng ghi nhận</p>
               </div>
               <Badge
                 variant="outline"
-                className="border-amber-300 bg-white text-amber-800 font-medium"
+                className="border-amber-300 bg-white text-amber-800 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300 font-medium"
               >
                 {formatValue(healthProfile?.allergies)}
               </Badge>
             </div>
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4.5">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 dark:border-rose-900/50 dark:bg-rose-950/30 p-4.5">
               <div className="mb-2 flex items-center gap-2">
-                <ClipboardList className="h-4 w-4 text-rose-600" />
-                <p className="text-sm font-bold text-rose-900">Bệnh nền & Tiền sử</p>
+                <ClipboardList className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Bệnh nền & Tiền sử</p>
               </div>
-              <Badge className="bg-rose-600 hover:bg-rose-700 text-white font-medium">
+              <Badge className="bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 text-white font-medium">
                 {formatValue(healthProfile?.medical_history)}
               </Badge>
             </div>
@@ -270,16 +270,16 @@ const Dashboard: React.FC = () => {
       </Card>
 
       {/* Lifestyle Tracking Card */}
-      <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
-        <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 px-6 py-4.5">
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Activity className="h-4.5 w-4.5" />
           </span>
           <div>
-            <CardTitle className="text-base font-bold text-slate-900">
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
               Lối sống &amp; Thói quen vận động
             </CardTitle>
-            <p className="text-xs text-slate-500">Các yếu tố ảnh hưởng trực tiếp đến thể trạng sức khỏe</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Các yếu tố ảnh hưởng trực tiếp đến thể trạng sức khỏe</p>
           </div>
         </CardHeader>
         <CardContent className="grid gap-3.5 px-6 py-5 md:grid-cols-3">
