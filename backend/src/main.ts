@@ -4,7 +4,7 @@ import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
-import { ValidationPipe } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RemoveFieldPasswordInterceptor } from './common/interceptors/removeFieldPassword.interceptor';
 import { DateFormatInterceptor } from './common/interceptors/dateFormatInterceptor.interceptor';
@@ -49,7 +49,12 @@ async function bootstrap() {
     exposedHeaders: [...RATE_LIMIT_RESPONSE_HEADERS],
   });
   app.use(cookieParser());
-  app.setGlobalPrefix('api/v1');
+  app.setGlobalPrefix('api/v1', {
+    exclude: [
+      { path: '/', method: RequestMethod.GET },
+      { path: 'healthy', method: RequestMethod.GET },
+    ],
+  });
   app.useGlobalInterceptors(
     new RemoveFieldPasswordInterceptor(),
     new DateFormatInterceptor(),

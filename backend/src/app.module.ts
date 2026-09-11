@@ -38,6 +38,7 @@ import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
@@ -87,5 +88,6 @@ import { RateLimitModule } from './common/rate-limit/rate-limit.module';
       useClass: WriteAuditLogInterceptor,
     },
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
