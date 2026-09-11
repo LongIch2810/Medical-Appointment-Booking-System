@@ -12,13 +12,19 @@ import { Repository } from 'typeorm';
 import { UsersService } from '../users/users.service';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { MedicalRecordUpload } from './medical-record-upload';
 
 // Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu chatbot
 // không phản hồi.
-const CHATBOT_REQUEST_TIMEOUT_MS = 30_000;
+// Chatbot service (Render free plan) tự spin-down sau ~15 phút không có
+// traffic; cold-start phải load xong Qdrant/LangChain trước khi bind port,
+// đo thực tế mất ~80-90s. 30s cũ luôn timeout ngay lần chat đầu sau khi
+// service ngủ — nới lên 100s để chờ hết cold-start thay vì báo lỗi giả.
+const CHATBOT_REQUEST_TIMEOUT_MS = 100_000;
 const CHATBOT_SUMMARY_REQUEST_TIMEOUT_MS = 120_000;
+const CHATBOT_KEEP_ALIVE_TIMEOUT_MS = 5_000;
 
 @Injectable()
 export class ChatHistoryService {
@@ -28,6 +34,25 @@ export class ChatHistoryService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
   ) {}
+
+  // Chatbot service (Render free plan) tự spin-down sau ~15 phút không
+  // traffic và cold-start mất ~80-90s, khiến tin nhắn chat đầu tiên sau
+  // thời gian nghỉ luôn bị chờ lâu/timeout. Ping /healthy định kỳ để giữ
+  // service "ấm" trong lúc site còn có người dùng hoạt động.
+  @Cron(CronExpression.EVERY_10_MINUTES)
+  async pingChatbotKeepAlive() {
+    try {
+      await axios.get(
+        `${this.configService.get<string>('CHATBOT_URL')}/healthy`,
+        { timeout: CHATBOT_KEEP_ALIVE_TIMEOUT_MS },
+      );
+    } catch (error: any) {
+      console.error('Chatbot keep-alive ping failed:', {
+        status: error?.response?.status,
+        code: error?.code,
+      });
+    }
+  }
 
   async saveMessage(userId: number, role: RoleMessage, content: string) {
     const user = await this.usersService.findByUserId(userId);

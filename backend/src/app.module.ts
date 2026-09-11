@@ -39,6 +39,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { SettingsModule } from './modules/settings/settings.module';
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { HealthController } from './health/health.controller';
+import { HealthService } from './health/health.service';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { HealthController } from './health/health.controller';
       provide: APP_INTERCEPTOR,
       useClass: WriteAuditLogInterceptor,
     },
+    HealthService,
   ],
   controllers: [HealthController],
 })

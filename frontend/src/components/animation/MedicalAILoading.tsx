@@ -9,6 +9,13 @@ const LOADING_MESSAGES = [
   "Sắp có kết quả, bạn chờ chút nhé...",
 ];
 
+// Chatbot service backend chạy trên free-tier tự "ngủ" sau thời gian dài
+// không ai chat, cold-start có thể mất tới ~1 phút — hiện thêm 1 dòng giải
+// thích sau ngưỡng này để người dùng không tưởng nhầm là app bị treo/lỗi.
+const COLD_START_HINT_THRESHOLD_SECONDS = 12;
+const COLD_START_HINT =
+  "Hệ thống AI có thể đang khởi động lại sau thời gian nghỉ, việc này đôi khi mất đến 1 phút...";
+
 // Hiệu ứng loading "máy y tế đang phân tích" — SVG thuần + CSS @keyframes
 // (mrx-ecg-scroll/mrx-scan-sweep/mrx-cross-glow, xem frontend/src/index.css),
 // không dùng Framer Motion để animation chạy hoàn toàn bằng CSS. 3 hiệu ứng
@@ -17,7 +24,9 @@ const LOADING_MESSAGES = [
 export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
   const clipId = useId();
   const message =
-    LOADING_MESSAGES[Math.floor(elapsed / 3) % LOADING_MESSAGES.length];
+    elapsed >= COLD_START_HINT_THRESHOLD_SECONDS
+      ? COLD_START_HINT
+      : LOADING_MESSAGES[Math.floor(elapsed / 3) % LOADING_MESSAGES.length];
 
   return (
     <div className="flex items-center gap-3 py-0.5">
