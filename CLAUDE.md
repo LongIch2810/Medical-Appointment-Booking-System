@@ -25,7 +25,7 @@ Claude Code MUST use Codebase Memory MCP before searching source code directly. 
 - `npm run start:dev` — watch mode (nest, port from `PORT` env, default 3000), API prefixed at `/api/v1`, Swagger at `/api-docs`
 - `npm run build` — `nest build --builder swc`
 - `npm run lint` — eslint --fix
-- `npm run test` / `npm run test:cov` — Jest unit tests (spec files colocated under `src`, one Jest run per file: `npm run test -- path/to/file.spec.ts`)
+- `npm run test` / `npm run test:cov` — Jest tests under `backend/test/unit/` (mirroring `src/`) and `backend/test/integration/`, one Jest run per file: `npm run test -- path/to/file.spec.ts`
 - `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`)
 - `npm run migration:run` / `migration:revert` / `migration:generate` / `migration:create` — TypeORM CLI against `src/database/data-source.ts`
 
@@ -59,7 +59,7 @@ Real-time features (messages/channels, notifications) go through `backend/src/we
 
 ### Frontend / Admin (React + Vite)
 
-`admin/` mirrors `frontend/`'s architecture and is meant to converge on the same patterns as it migrates off mock data — check `frontend/` for the reference implementation of anything not yet built in `admin/`.
+`admin/` mirrors `frontend/`'s architecture — check `frontend/` for the reference implementation of anything not yet built in `admin/`.
 
 Every server interaction flows through exactly these layers, in order — pages/components never call axios/fetch directly:
 
@@ -76,13 +76,13 @@ component / page  →  hook (src/hooks/, TanStack Query)  →  api module (src/a
 
 Pages must render loading / error / empty states for every async view (see `admin/docs/rules.md` §7) and disable submit controls while a mutation is pending. `frontend/` has a shared visual pattern for this in `src/components/notification/` — `StateCard.tsx` is the generic building block, with `ErrorState.tsx` (retry action) and `NotFoundResult.tsx` (empty/no-results, reset action) as ready-made wrappers around it. `admin/` has its own parallel (differently-named) set in `src/components/app/`: `LoadingState.tsx`, `ErrorState.tsx` (retry action), and `EmptyState.tsx` (title/description, no built-in reset action) — reuse the set that matches whichever app you're in instead of hand-rolling ad hoc loading/error markup.
 
-`admin/` currently has `src/services/mockApi.ts` powering screens not yet wired to the backend — do not remove or relocate it; migrate one page at a time following `admin/docs/workflow.md` §7.10.
+`admin/` still has `src/services/mockApi.ts`, but only one screen (`EnterpriseReportsDashboardPage`, via `getEnterpriseReportGroups`) actually reads from it now — the other four exported methods have no callers. Do not remove or relocate the file; if migrating that last screen, follow `admin/docs/workflow.md` §7.10.
 
 Both apps use the `@/` alias for `src/`, Tailwind CSS 4 + shadcn/ui primitives (`src/components/ui/`) with composed app components in `src/components/app/`, React Router 7 (`src/routes/AppRoutes.tsx`), and react-hook-form + zod for forms.
 
 ### Chatbot (LangChain/LangGraph)
 
-Express server (`src/server.ts`) exposing routes in `src/routes/` → `src/controllers/` → `src/services/`. Conversational flows are LangGraph state graphs in `src/langgraph/*.graph.ts` (booking, diagnosis, report generation, health roadmap, medical-record summary), composed from tools in `src/tools/` (RAG lookup, SQL QA over read-only DB views in `src/entities_view/`, booking, OCR, PDF/report generation). RAG indexing/embedding lives in `src/rag/` and `src/utils/loadDocuments.ts` / `splitDocuments.ts`, backed by Qdrant (`src/configs/vectordb.ts`). PDF/report rendering uses `pdfkit` + `chartjs-node-canvas` (`src/utils/generatePdfReport.ts`, `renderChartToImage.ts`).
+Express server (`src/server.ts`) exposing routes in `src/routes/` → `src/controllers/` → `src/services/`. Conversational flows are LangGraph state graphs in `src/langgraph/*.graph.ts` (booking, diagnosis, report generation, health roadmap, medical-record summary), composed from tools in `src/tools/` (RAG lookup, SQL QA over read-only DB views in `src/entities_view/`, booking, OCR, PDF/report generation). RAG indexing/embedding lives in `src/rag/` and `src/utils/loadDocuments.ts` / `splitDocuments.ts`, backed by Qdrant (`src/configs/vectordb.ts`). PDF/report rendering uses `pdfkit` + `chartjs-node-canvas` (`src/utils/generatePdfReport.ts`, `renderChartToImage.ts`). Note: the `diagnosis` graph is fully implemented but `src/routes/chatbot.route.ts` never registers a route for it — it is currently unreachable via HTTP (confirmed by `test/integration/chatbot.route.integration.spec.ts`, which mocks it to throw if called). Only `chat`, `create-report`, `build-health-roadmap`, and `upload/summary-medical-record` are live endpoints.
 
 ## Conventions (apply repo-wide unless a service's own doc says otherwise)
 
