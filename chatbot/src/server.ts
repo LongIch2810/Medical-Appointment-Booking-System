@@ -64,11 +64,21 @@ async function startServer(): Promise<void> {
       import("./configs/vectordb.js"),
     ]);
 
-  if (process.env.NODE_ENV === "production") {
-    await initVectorDB();
-  } else {
-    await buildKnowLedgeBase();
-  }
+  const vectorDbReady =
+    process.env.NODE_ENV === "production" ? initVectorDB() : buildKnowLedgeBase();
+
+  // getChatbotRouter() was previously only invoked lazily on the first
+  // real "/chatbot/*" request. That import chain pulls in qa_sql.ts /
+  // admin_qa_sql.ts, which run a top-level `await initializeWithRetry(...)`
+  // opening the read-only Postgres DataSources (up to 60 retries * 5s each
+  // — worst case 5 minutes). Deferring that to the first live chat message
+  // made every post-deploy/post-restart message pay for it silently (no
+  // request-scoped log runs until this import resolves), looking like an
+  // unexplained hang. Warm it up here, alongside the vector DB, so Render's
+  // own deploy-readiness wait absorbs this cost instead of a user's message.
+  const routerReady = getChatbotRouter();
+
+  await Promise.all([vectorDbReady, routerReady]);
 
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
