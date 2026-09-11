@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { SpecialtiesController } from './specialties.controller';
 import { SpecialtiesService } from './specialties.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,7 +10,7 @@ import { CloudinaryModule } from 'src/uploads/cloudinary.module';
   imports: [
     TypeOrmModule.forFeature([Specialty]),
     RedisCacheModule,
-    CloudinaryModule,
+    forwardRef(() => CloudinaryModule),
   ],
   controllers: [SpecialtiesController],
   providers: [SpecialtiesService],
