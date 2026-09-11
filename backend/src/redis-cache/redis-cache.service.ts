@@ -11,6 +11,10 @@ export class RedisCacheService {
       host: configService.get<string>('REDIS_HOST'),
       port: configService.get<number>('REDIS_PORT'),
       password: configService.get<string>('REDIS_PASSWORD'),
+      tls:
+        configService.get<string>('REDIS_TLS') === 'true'
+          ? {}
+          : undefined,
     });
   }
 

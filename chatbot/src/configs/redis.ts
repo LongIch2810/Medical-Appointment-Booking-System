@@ -15,6 +15,7 @@ export function getRedisClient(): Redis {
       host: process.env.REDIS_HOST ?? "127.0.0.1",
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD || undefined,
+      tls: process.env.REDIS_TLS === "true" ? {} : undefined,
       db: Number(process.env.REDIS_DB ?? 2),
       maxRetriesPerRequest: 1,
       lazyConnect: true,
