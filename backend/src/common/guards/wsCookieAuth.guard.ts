@@ -1,37 +1,38 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
-import { AuthGuard } from '@nestjs/passport';
-import { config } from 'dotenv';
-import { Observable } from 'rxjs';
-import 'dotenv/config';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { SessionAuthService } from 'src/modules/auth/session-auth.service';
+
+/**
+ * Guard dùng lại được cho mọi @SubscribeMessage — re-verify token + session
+ * revocation (session_version/blacklist) trên MỖI event, không chỉ lúc
+ * connect. Đây là cơ chế "reject event tiếp theo nếu session bị thu hồi khi
+ * socket đang mở" (logout/logout-all/reset password khi socket vẫn mở).
+ */
 @Injectable()
 export class WsCookieAuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(private readonly sessionAuthService: SessionAuthService) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const client = context.switchToWs().getClient();
     const token = this._extractTokenFromCookie(client);
-    console.log('>>> token: ', token);
     if (!token) {
       client.emit('ws-error', { code: 401, message: 'Invalid token' });
       return false;
     }
 
     try {
-      const payload = this.jwtService.verify(token, {
-        secret: process.env.ACCESS_TOKEN_SECRET || 'secret',
-      });
+      const validated =
+        await this.sessionAuthService.validateAccessToken(token);
 
-      client.data.user = payload;
+      client.data.user = {
+        sub: validated.userId,
+        roles: validated.roles,
+        tokenId: validated.tokenId,
+        sessionVersion: validated.sessionVersion,
+      };
       client.data.token = token;
 
       return true;
-    } catch (err) {
+    } catch {
       client.emit('ws-error', { code: 401, message: 'Invalid token' });
       return false;
     }
@@ -41,17 +42,14 @@ export class WsCookieAuthGuard implements CanActivate {
     try {
       const cookies = client?.handshake?.headers?.cookie;
       if (!cookies) return null;
-      console.log('>>> cookies : ', cookies);
       const cookieArray = cookies.split('; ');
-      console.log('>>> cookieArray : ', cookieArray);
       const cookieMap = cookieArray.reduce((acc: any, cookie: string) => {
         const [key, value] = cookie.split('=');
         if (key && value) acc[key.trim()] = decodeURIComponent(value);
         return acc;
       }, {});
-      console.log('>>> cookieMap : ', cookieMap);
       return cookieMap['accessToken'] || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   };

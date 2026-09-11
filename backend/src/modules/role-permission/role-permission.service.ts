@@ -1,15 +1,10 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Permission from 'src/entities/permission.entity';
 import Role from 'src/entities/role.entity';
 import RolePermission from 'src/entities/rolePermission.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { In, Repository } from 'typeorm';
-import { BodyAssignRolePermissionsDto } from './dto/bodyAssignRolePermissions.dto';
+import { Repository } from 'typeorm';
 import { RolePermissionMatrixResponseDto } from './dto/response/rolePermissionMatrixResponse.dto';
 import { RolePermissionMapper } from './role-permission.mapper';
 

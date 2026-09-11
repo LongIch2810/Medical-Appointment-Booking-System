@@ -7,6 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import { BodyUpdateHealthProfileDto } from './dto/request/bodyUpdateHealthProfile.dto';
+import { Brackets } from 'typeorm';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { RelativesService } from '../relatives/relatives.service';
 import { UsersService } from '../users/users.service';
@@ -141,15 +142,19 @@ export class HealthProfileService {
       .take(limit);
 
     if (search) {
-      query.where('LOWER(relative.fullname) LIKE LOWER(:search)', {
-        search: `%${search}%`,
-      });
-      query.orWhere('relative.phone LIKE :search', {
-        search: `%${search}%`,
-      });
-      query.orWhere('LOWER(user.fullname) LIKE LOWER(:search)', {
-        search: `%${search}%`,
-      });
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(relative.fullname) LIKE LOWER(:search)', {
+            search: `%${search}%`,
+          })
+            .orWhere('relative.phone LIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('LOWER(user.fullname) LIKE LOWER(:search)', {
+              search: `%${search}%`,
+            });
+        }),
+      );
     }
 
     const [healthProfiles, total] = await query

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   forwardRef,
   Inject,
   Injectable,
@@ -13,6 +14,8 @@ import User from 'src/entities/user.entity';
 import { BodyUpdateArticleDto } from './dto/request/bodyUpdateArticle.dto';
 import { generateSlug } from 'src/utils/generateSlug';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import { RolePermissionService } from '../role-permission/role-permission.service';
+import { PERMISSIONS } from 'src/utils/constants';
 
 import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
 import Topic from 'src/entities/topic.entity';
@@ -20,6 +23,8 @@ import ArticleTag from 'src/entities/articleTag.entity';
 import Tag from 'src/entities/tag.entity';
 import { UploadFileResponse } from 'src/shared/interfaces/uploadFileResponse';
 import { UploadFileProducer } from 'src/bullmq/queues/uploadFile/uploadFile.producer';
+import { CloudinaryService } from 'src/uploads/cloudinary.service';
+import { mapCloudinaryUploadResults } from 'src/uploads/cloudinaryUploadMapper';
 import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { ArticleResponseDto } from './dto/response/articleResponse.dto';
@@ -35,7 +40,42 @@ export class ArticlesService {
     @Inject(forwardRef(() => UploadFileProducer))
     private readonly uploadFileProducer: UploadFileProducer,
     private readonly dataSource: DataSource,
+    private readonly rolePermissionService: RolePermissionService,
+    @Inject(forwardRef(() => CloudinaryService))
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
+
+  /**
+   * Patient/doctor thường chỉ được đính kèm file cho bài viết do chính họ
+   * viết; người có article:manage (vd. đội ngũ nội dung) không bị giới hạn
+   * ownership — chặn IDOR khi client truyền article_id của tác giả khác lên
+   * endpoint upload.
+   */
+  async assertArticleUploadAccess(
+    userId: number,
+    roles: string[],
+    articleId: number,
+  ): Promise<void> {
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      relations: ['author'],
+    });
+    if (!article) {
+      throw new NotFoundException('Bài viết không tồn tại.');
+    }
+
+    const permissions = await this.rolePermissionService.getPermissionsByRoles(
+      userId,
+      roles,
+    );
+    if (permissions.includes(PERMISSIONS.ARTICLE_MANAGE)) return;
+
+    if (article.author?.id !== userId) {
+      throw new ForbiddenException(
+        'Bạn không có quyền đính kèm tệp cho bài viết này.',
+      );
+    }
+  }
 
   async create(
     userId: number,
@@ -73,10 +113,24 @@ export class ArticlesService {
       return newArticle;
     });
 
-    await this.uploadFileProducer.uploadFilesArticle({
-      articleId: newArticle.id,
-      files,
-    });
+    // Article vừa được tạo bởi chính userId này (author === uploader) —
+    // không cần ownership check lại, chỉ upload lên Cloudinary rồi enqueue
+    // metadata giống hệt uploads.controller.ts.
+    const uploaded = await this.cloudinaryService.uploadMultipleFiles(files);
+    const filesData = mapCloudinaryUploadResults(uploaded);
+    try {
+      await this.uploadFileProducer.uploadFilesArticle({
+        articleId: newArticle.id,
+        files: filesData,
+      });
+    } catch (error) {
+      await Promise.all(
+        filesData.map((file) =>
+          this.cloudinaryService.deleteFile(file.public_id),
+        ),
+      );
+      throw error;
+    }
 
     await this.redisCacheService.delByPrefix('articles:');
 

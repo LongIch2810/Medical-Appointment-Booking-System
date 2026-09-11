@@ -1,4 +1,4 @@
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 
 export class BodyCreateComplaintDto {
   @IsString()
@@ -6,8 +6,4 @@ export class BodyCreateComplaintDto {
 
   @IsString()
   description!: string;
-
-  @IsNumber()
-  @IsOptional()
-  userId?: number;
 }

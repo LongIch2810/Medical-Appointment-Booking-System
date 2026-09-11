@@ -1,5 +1,5 @@
 import { create } from "zustand";
 
-type MainLayoutStore = {};
+type MainLayoutStore = Record<string, never>;
 
-export const useFilterDoctorsStore = create<MainLayoutStore>()((set) => ({}));
+export const useFilterDoctorsStore = create<MainLayoutStore>()(() => ({}));

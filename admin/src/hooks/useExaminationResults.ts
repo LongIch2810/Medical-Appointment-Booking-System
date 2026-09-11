@@ -26,10 +26,16 @@ export const examinationResultQueryKeys = {
     ["examination-result-detail", resultId] as const,
 };
 
-export function useExaminationResults(filters: ExaminationResultListPayload) {
+type ExaminationResultQueryOptions = { enabled?: boolean };
+
+export function useExaminationResults(
+  filters: ExaminationResultListPayload,
+  options?: ExaminationResultQueryOptions,
+) {
   return useQuery({
     queryKey: examinationResultQueryKeys.admin(filters),
     queryFn: () => fetchExaminationResults(filters),
+    enabled: options?.enabled,
   });
 }
 
@@ -44,10 +50,12 @@ export function usePersonalExaminationResults(
 
 export function useDoctorExaminationResults(
   filters: ExaminationResultListPayload,
+  options?: ExaminationResultQueryOptions,
 ) {
   return useQuery({
     queryKey: examinationResultQueryKeys.doctor(filters),
     queryFn: () => fetchDoctorExaminationResults(filters),
+    enabled: options?.enabled,
   });
 }
 

@@ -34,7 +34,7 @@ export class ComplaintsController {
   @ApiOperation({ summary: 'Danh sách góp ý/khiếu nại (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.COMPLAINT_READ)
+  @Permissions(PERMISSIONS.COMPLAINT_MANAGE)
   @AuditLogAction({ action: 'READ', entityName: 'complaints' })
   filterAndPagination(@Body() objectFilters: BodyFilterComplaintsDto) {
     return this.complaintsService.filterAndPagination(objectFilters);
@@ -59,18 +59,25 @@ export class ComplaintsController {
   @AuditLogAction({ action: 'CREATE', entityName: 'complaints' })
   create(@Request() req, @Body() body: BodyCreateComplaintDto) {
     const { userId } = req.user as RequestPaylaod;
-    return this.complaintsService.create({
-      ...body,
-      userId: body.userId ?? userId,
-    });
+    // userId luôn lấy từ principal đã xác thực — không bao giờ tin giá trị
+    // client tự khai báo trong body (IDOR: tạo khiếu nại thay người khác).
+    return this.complaintsService.create(userId, body);
   }
 
   @ApiOperation({ summary: 'Chi tiết góp ý/khiếu nại' })
   @Get(':complaintId')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.COMPLAINT_READ)
-  findById(@Param('complaintId', ParseIntPipe) complaintId: number) {
-    return this.complaintsService.findById(complaintId);
+  findById(
+    @Request() req,
+    @Param('complaintId', ParseIntPipe) complaintId: number,
+  ) {
+    const { userId, roles } = req.user as RequestPaylaod;
+    return this.complaintsService.findByIdForRequester(
+      complaintId,
+      userId,
+      roles,
+    );
   }
 
   @ApiOperation({ summary: 'Phản hồi/cập nhật góp ý/khiếu nại' })

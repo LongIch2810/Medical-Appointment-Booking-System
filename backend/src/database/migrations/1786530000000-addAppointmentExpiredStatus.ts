@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddAppointmentExpiredStatus1786530000000
-  implements MigrationInterface
-{
+export class AddAppointmentExpiredStatus1786530000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(
       `ALTER TYPE "public"."appointment_status" ADD VALUE IF NOT EXISTS 'EXPIRED'`,

@@ -16,7 +16,7 @@ import {
 import { useMyComplaints } from "@/hooks/useMyComplaints";
 import { useComplaint } from "@/hooks/useComplaint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -136,7 +135,10 @@ const MyComplaints = () => {
   const { mutate: submitComplaint, isPending: isSubmitting } = useComplaint();
 
   const response = data?.data;
-  const complaints = (response?.complaints ?? []) as Record<string, unknown>[];
+  const complaints = useMemo(
+    () => (response?.complaints ?? []) as Record<string, unknown>[],
+    [response?.complaints],
+  );
   const total = response?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
@@ -287,11 +289,11 @@ const MyComplaints = () => {
           </div>
 
           {isLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-32 w-full rounded-2xl" />
-              ))}
-            </div>
+            <MedicalAiLoading
+              label="Đang tải danh sách góp ý & khiếu nại..."
+              description="Hệ thống đang truy xuất thông tin phản hồi của bạn"
+              minHeight="min-h-56"
+            />
           ) : complaints.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center">
               <MessageSquare className="mx-auto mb-3 h-10 w-10 text-slate-400" />
@@ -409,61 +411,63 @@ const MyComplaints = () => {
           if (!open) setSelectedComplaint(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 pr-6 text-lg font-bold">
-              <span
-                className={cn(
-                  "flex h-9 w-9 items-center justify-center rounded-xl",
-                  selectedMeta.chipClass,
-                )}
-              >
-                <selectedMeta.icon className="h-4 w-4" />
-              </span>
-              <span className="line-clamp-1">
-                {selectedComplaint?.title as string}
-              </span>
-            </DialogTitle>
-            <DialogDescription className="flex flex-wrap items-center gap-2">
-              <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                #{selectedComplaint?.id as number}
-              </span>
-              <StatusBadge status={selectedStatus} />
-              <span className="inline-flex items-center gap-1 text-xs text-slate-500">
-                <CalendarClock className="h-3.5 w-3.5" />
-                {formatDate(selectedComplaint?.created_at as string | null)}
-              </span>
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden rounded-2xl">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                <span
+                  className={cn(
+                    "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
+                    selectedMeta.chipClass,
+                  )}
+                >
+                  <selectedMeta.icon className="h-4 w-4" />
+                </span>
+                <span className="break-words">
+                  {selectedComplaint?.title as string}
+                </span>
+              </DialogTitle>
+              <DialogDescription className="flex flex-wrap items-center gap-2 mt-1.5">
+                <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  #{selectedComplaint?.id as number}
+                </span>
+                <StatusBadge status={selectedStatus} />
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                  <CalendarClock className="h-3.5 w-3.5" />
+                  {formatDate(selectedComplaint?.created_at as string | null)}
+                </span>
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          <div className="space-y-4">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/50">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                 Nội dung góp ý
               </p>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                 {selectedComplaint?.description as string}
               </p>
             </div>
 
             {selectedComplaint?.response ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-800/80 dark:bg-emerald-950/40">
                 <div className="flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300">
                     <MessageCircleReply className="h-3.5 w-3.5" />
                   </span>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Phản hồi từ admin
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
+                    Phản hồi từ ban quản trị
                   </p>
                 </div>
-                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+                <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                   {selectedComplaint?.response as string}
                 </p>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center">
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
                 <MessageCircleReply className="mx-auto mb-2 h-6 w-6 text-slate-400" />
-                <p className="text-sm font-medium text-slate-600">
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   Chưa có phản hồi
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
@@ -480,6 +484,17 @@ const MyComplaints = () => {
               </p>
             ) : null}
           </div>
+
+          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSelectedComplaint(null)}
+              className="rounded-xl"
+            >
+              Đóng
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -490,64 +505,71 @@ const MyComplaints = () => {
           if (!open) setForm({ title: "", description: "" });
         }}
       >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Send className="h-5 w-5 text-primary" />
-              Gửi góp ý mới
-            </DialogTitle>
-            <DialogDescription>
-              Chia sẻ góp ý hoặc khiếu nại để chúng tôi cải thiện dịch vụ tốt
-              hơn.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden rounded-2xl">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Send className="h-5 w-5 text-primary" />
+                Gửi góp ý mới
+              </DialogTitle>
+              <DialogDescription>
+                Chia sẻ góp ý hoặc khiếu nại để chúng tôi cải thiện dịch vụ tốt
+                hơn.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="complaint-title">Tiêu đề</Label>
-              <Input
-                id="complaint-title"
-                value={form.title}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="Tóm tắt ngắn gọn vấn đề..."
-                required
-                maxLength={150}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="complaint-description">Nội dung</Label>
-              <Textarea
-                id="complaint-description"
-                rows={5}
-                value={form.description}
-                onChange={(e) =>
-                  setForm((prev) => ({ ...prev, description: e.target.value }))
-                }
-                placeholder="Mô tả chi tiết góp ý hoặc khiếu nại của bạn..."
-                required
-                maxLength={1000}
-              />
-              <p className="text-right text-xs text-slate-400">
-                {form.description.length}/1000
-              </p>
+          <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
+              <div className="space-y-2">
+                <Label htmlFor="complaint-title">Tiêu đề</Label>
+                <Input
+                  id="complaint-title"
+                  value={form.title}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, title: e.target.value }))
+                  }
+                  placeholder="Tóm tắt ngắn gọn vấn đề..."
+                  required
+                  maxLength={150}
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="complaint-description">Nội dung</Label>
+                <Textarea
+                  id="complaint-description"
+                  rows={5}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="Mô tả chi tiết góp ý hoặc khiếu nại của bạn..."
+                  required
+                  maxLength={1000}
+                  className="rounded-xl resize-none"
+                />
+                <p className="text-right text-xs text-slate-400">
+                  {form.description.length}/1000
+                </p>
+              </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-2">
+            <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setOpenCreate(false)}
                 disabled={isSubmitting}
+                className="rounded-xl"
               >
                 Hủy
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="gap-1.5">
+              <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold !bg-primary text-white gap-1.5">
                 <Send className="h-4 w-4" />
                 {isSubmitting ? "Đang gửi..." : "Gửi góp ý"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </DialogContent>
       </Dialog>

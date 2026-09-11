@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -16,10 +15,8 @@ import {
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SpecialtiesService } from './specialties.service';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
-import { diskStorage } from 'multer';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
 import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';

@@ -47,25 +47,29 @@ const DialogChooseSpecialty = ({ className = "" }: { className: string }) => {
   };
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <FilterItem
-          label="Chuyên khoa"
-          activeValue={selectedSpecialty?.name}
-          icon={<Stethoscope size={16} />}
-          className={cn("w-full md:w-auto", className)}
-        />
+      <DialogTrigger asChild>
+        <div>
+          <FilterItem
+            label="Chuyên khoa"
+            activeValue={selectedSpecialty?.name}
+            icon={<Stethoscope size={16} />}
+            className={cn("w-full md:w-auto", className)}
+          />
+        </div>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Chọn chuyên khoa</DialogTitle>
-        </DialogHeader>
-        <Command>
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
+        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
+          <DialogHeader>
+            <DialogTitle>Chọn chuyên khoa</DialogTitle>
+          </DialogHeader>
+        </div>
+        <Command className="flex-1 min-h-0">
           <CommandInput placeholder="Tìm kiếm chuyên khoa ..." />
-          <CommandList>
+          <CommandList className="max-h-[50dvh] sm:max-h-[350px] overflow-y-auto overscroll-contain">
             {(isLoading || isError) && <Loading />}
             <CommandEmpty>Không tìm thấy chuyên khoa.</CommandEmpty>
             <CommandGroup>
-              {specialties.map((specialty: any) => (
+              {specialties.map((specialty) => (
                 <CommandItem
                   key={specialty.id}
                   onSelect={() => handleSelect(specialty.id)}

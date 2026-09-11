@@ -23,8 +23,14 @@ import {
   PERMISSIONS,
   REFRESH_TOKEN_EXPIRE_TIME,
 } from 'src/utils/constants';
+import {
+  getAuthCookieOptions,
+  getClearAuthCookieOptions,
+} from 'src/utils/cookieOptions';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT_POLICIES } from 'src/common/rate-limit/rate-limit.constants';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -34,7 +40,21 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  private setAuthCookies(res, accessToken: string, refreshToken: string): void {
+    res.cookie(
+      'accessToken',
+      accessToken,
+      getAuthCookieOptions(this.configService, ACCESS_TOKEN_EXPIRE_TIME),
+    );
+    res.cookie(
+      'refreshToken',
+      refreshToken,
+      getAuthCookieOptions(this.configService, REFRESH_TOKEN_EXPIRE_TIME),
+    );
+  }
+
   @ApiOperation({ summary: 'Đăng ký tài khoản' })
+  @Throttle(RATE_LIMIT_POLICIES.accountChange)
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @AuditLogAction({ action: 'CREATE', entityName: 'auth.register' })
@@ -44,6 +64,7 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: 'Đăng nhập' })
+  @Throttle(RATE_LIMIT_POLICIES.login)
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -51,29 +72,20 @@ export class AuthController {
   async login(@Request() req, @Response() res) {
     const { accessToken, refreshToken } = await this.authService.login(req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN_EXPIRE_TIME,
-    });
+    this.setAuthCookies(res, accessToken, refreshToken);
 
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN_EXPIRE_TIME,
-    });
-
+    // Token đã ở HttpOnly cookie — không trả lại trong body để tránh lộ ra
+    // nơi client-side JS có thể đọc được (XSS) hoặc bị log lại.
     return res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
-      data: { accessToken, refreshToken },
+      data: { message: 'Đăng nhập thành công.' },
       error: null,
     });
   }
 
   @ApiOperation({ summary: 'Đăng nhập cho admin/bác sĩ' })
+  @Throttle(RATE_LIMIT_POLICIES.login)
   @Post('/admin/login')
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
@@ -82,24 +94,12 @@ export class AuthController {
     const { accessToken, refreshToken } =
       await this.authService.loginAdministrator(req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN_EXPIRE_TIME,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN_EXPIRE_TIME,
-    });
+    this.setAuthCookies(res, accessToken, refreshToken);
 
     return res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
-      data: { accessToken, refreshToken },
+      data: { message: 'Đăng nhập thành công.' },
       error: null,
     });
   }
@@ -107,6 +107,7 @@ export class AuthController {
   @UseGuards(JwtRefreshAuthGuard)
   @ApiCookieAuth()
   @ApiOperation({ summary: 'Làm mới access token' })
+  @Throttle(RATE_LIMIT_POLICIES.refresh)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.refresh' })
@@ -116,19 +117,7 @@ export class AuthController {
       req,
       payload,
     );
-    res.cookie('accessToken', newAccessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN_EXPIRE_TIME,
-    });
-
-    res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN_EXPIRE_TIME,
-    });
+    this.setAuthCookies(res, newAccessToken, newRefreshToken);
 
     return res.status(HttpStatus.OK).json({
       statusCode: 200,
@@ -147,8 +136,9 @@ export class AuthController {
   @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout' })
   async logout(@Request() req, @Response() res) {
     const { message } = await this.authService.logout(req);
-    res.clearCookie('accessToken');
-    res.clearCookie('refreshToken');
+    const clearOptions = getClearAuthCookieOptions(this.configService);
+    res.clearCookie('accessToken', clearOptions);
+    res.clearCookie('refreshToken', clearOptions);
     return res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
@@ -181,35 +171,26 @@ export class AuthController {
   async googleAuthRedirect(@Request() req, @Response() res) {
     const { accessToken, refreshToken } = await this.authService.login(req);
 
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: ACCESS_TOKEN_EXPIRE_TIME,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'strict',
-      maxAge: REFRESH_TOKEN_EXPIRE_TIME,
-    });
+    this.setAuthCookies(res, accessToken, refreshToken);
 
     return res.redirect(
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173',
     );
   }
 
-  @ApiOperation({ summary: 'Đặt lại mật khẩu mới' })
+  @ApiOperation({
+    summary: 'Đặt lại mật khẩu mới (yêu cầu reset token từ /otps/verify-otp)',
+  })
+  @Throttle(RATE_LIMIT_POLICIES.accountChange)
   @Post('set-new-password')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'UPDATE', entityName: 'auth.password' })
   async setNewPassword(
-    @Body('email') email: string,
+    @Body('resetToken') resetToken: string,
     @Body('newPassword') newPassword: string,
   ) {
     const { message } = await this.authService.setNewPassword(
-      email,
+      resetToken,
       newPassword,
     );
     return message;

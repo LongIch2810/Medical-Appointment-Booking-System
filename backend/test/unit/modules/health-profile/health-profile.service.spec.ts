@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Brackets } from 'typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import HealthProfile from 'src/entities/healthProfile.entity';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import { RelativesService } from '../relatives/relatives.service';
-import { UsersService } from '../users/users.service';
-import { HealthProfileService } from './health-profile.service';
+import { RelativesService } from 'src/modules/relatives/relatives.service';
+import { UsersService } from 'src/modules/users/users.service';
+import { HealthProfileService } from 'src/modules/health-profile/health-profile.service';
 
 function makeQb(overrides: Partial<Record<string, any>> = {}) {
   return {
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
     orWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
@@ -74,6 +76,27 @@ describe('HealthProfileService', () => {
 
       expect(result).toBe(cached);
       expect(healthProfileRepo.createQueryBuilder).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listHealthProfilesByUserId', () => {
+    it('keeps the ownership filter as a single top-level where and puts search in an andWhere(Brackets)', async () => {
+      const query = makeQb();
+      healthProfileRepo.createQueryBuilder.mockReturnValue(query);
+
+      await service.listHealthProfilesByUserId(9, {
+        page: 1,
+        limit: 10,
+        arrange: 'desc',
+        search: 'anything',
+      } as any);
+
+      expect(query.where).toHaveBeenCalledTimes(1);
+      expect(query.where).toHaveBeenCalledWith('user.id = :userId', {
+        userId: 9,
+      });
+      expect(query.orWhere).not.toHaveBeenCalled();
+      expect(query.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
     });
   });
 

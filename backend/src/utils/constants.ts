@@ -110,6 +110,9 @@ export const PERMISSIONS = {
   HEALTH_PROFILE_UPDATE: 'health-profile:update',
   HEALTH_PROFILE_DELETE: 'health-profile:delete',
   HEALTH_PROFILE_MANAGE: 'health-profile:manage',
+  COACH_PROFILE_MANAGE: 'coach-profile:manage',
+  AI_COACH_REPORT_READ: 'ai-coach-report:read',
+  ENTERPRISE_REPORT_READ: 'enterprise-report:read',
   EXAMINATION_RESULT_CREATE: 'examination-result:create',
   EXAMINATION_RESULT_READ: 'examination-result:read',
   EXAMINATION_RESULT_UPDATE: 'examination-result:update',
@@ -146,3 +149,4 @@ export const PERMISSIONS = {
 export const ACCESS_TOKEN_EXPIRE_TIME = 15 * 60 * 1000;
 export const REFRESH_TOKEN_EXPIRE_TIME = 7 * 24 * 60 * 60 * 1000;
 export const thresholdOustanding = 0.8;
+export const MAX_UPLOAD_FILE_SIZE_BYTES = 20 * 1024 * 1024;

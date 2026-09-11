@@ -8,10 +8,28 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RemoveFieldPasswordInterceptor } from './common/interceptors/removeFieldPassword.interceptor';
 import { DateFormatInterceptor } from './common/interceptors/dateFormatInterceptor.interceptor';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { RATE_LIMIT_RESPONSE_HEADERS } from './common/rate-limit/rate-limit.constants';
+import { parseTrustProxyHops } from './common/rate-limit/trust-proxy';
+import { validateRequiredEnv } from './config/validateEnv';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Fail-fast trước khi bootstrap Nest — không đặt vào
+  // ConfigModule.forRoot({validate}) vì việc đó biến giá trị đã validate
+  // thành một snapshot có độ ưu tiên CAO HƠN process.env sống trong
+  // ConfigService.get() (xem @nestjs/config ConfigService.get: internalConfig
+  // -> validatedEnv -> process.env), phá vỡ các chỗ cố tình override
+  // process.env lúc runtime (vd. test trỏ CHATBOT_URL sang mock server).
+  validateRequiredEnv(process.env);
+
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const configService = app.get(ConfigService);
+  const trustProxyHops = parseTrustProxyHops(
+    configService.get<string>('TRUST_PROXY_HOPS'),
+  );
+  if (trustProxyHops > 0) {
+    app.set('trust proxy', trustProxyHops);
+  }
   app.enableCors({
     origin: [
       'http://localhost:5173',
@@ -28,6 +46,7 @@ async function bootstrap() {
       'http://127.0.0.1:4183',
     ],
     credentials: true,
+    exposedHeaders: [...RATE_LIMIT_RESPONSE_HEADERS],
   });
   app.use(cookieParser());
   app.setGlobalPrefix('api/v1');
@@ -57,4 +76,4 @@ async function bootstrap() {
   SwaggerModule.setup('api-docs', app, documentFactory);
   await app.listen(configService.get<number>('PORT') ?? 3000);
 }
-bootstrap();
+void bootstrap();

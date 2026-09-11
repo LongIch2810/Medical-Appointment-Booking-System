@@ -59,8 +59,11 @@ export class ExaminationResultService {
       const newExaminationResult = await this.examinationResultRepo.save(
         createdExaminationResult,
       );
+      const hydratedExaminationResult = await this.findExaminationResultById(
+        newExaminationResult.id,
+      );
       return ExaminationResultMapper.toExaminationResultResponseDto(
-        newExaminationResult,
+        hydratedExaminationResult,
       );
     } catch (error) {
       if (
@@ -98,9 +101,10 @@ export class ExaminationResultService {
 
     this.checkDoctorOwnsExaminationResult(userId, examinationResult);
 
-    await this.examinationResultRepo.softDelete(examinationResult);
-    const deletedExaminationResult = await this.getExaminationResultDetail(id);
-    return deletedExaminationResult;
+    const response =
+      ExaminationResultMapper.toExaminationResultResponseDto(examinationResult);
+    await this.examinationResultRepo.softDelete(examinationResult.id);
+    return response;
   }
 
   async findExaminationResultsByDoctorUserId(

@@ -1,9 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import { SessionAuthService } from './session-auth.service';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -12,34 +12,27 @@ export class JwtRefreshStrategy extends PassportStrategy(
 ) {
   constructor(
     configService: ConfigService,
-    private redisService: RedisCacheService,
+    private readonly sessionAuthService: SessionAuthService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (req: Request) => req?.cookies?.refreshToken,
       ]),
       ignoreExpiration: false,
-      secretOrKey:
-        configService.get<string>('REFRESH_TOKEN_SECRET') || 'your_secret',
+      // Không có fallback string — thiếu REFRESH_TOKEN_SECRET phải fail-fast
+      // ở startup (xem AppModule ConfigModule.forRoot validate).
+      secretOrKey: configService.getOrThrow<string>('REFRESH_TOKEN_SECRET'),
     });
   }
 
   async validate(payload: any) {
     const { sub: userId, tokenId, sessionVersion, roles } = payload;
-    const currentVersion = await this.redisService.getData(
-      `session_version:${userId}`,
-    );
-    if (sessionVersion !== currentVersion) {
-      throw new UnauthorizedException('Phiên đăng nhập không hợp lệ !');
-    }
 
-    const isBlacklisted = await this.redisService.getData(
-      `blacklist:${tokenId}`,
-    );
-
-    if (isBlacklisted) {
-      throw new UnauthorizedException('Token đã bị thu hồi !');
-    }
+    await this.sessionAuthService.assertSessionValid({
+      sub: userId,
+      tokenId,
+      sessionVersion,
+    });
 
     return { userId, tokenId, sessionVersion, roles };
   }

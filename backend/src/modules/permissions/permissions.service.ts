@@ -14,7 +14,8 @@ export class PermissionsService {
   ) {}
 
   async filterAndPagination(objectFilters: BodyFilterPermissionsDto) {
-    let { page, limit, search, arrange, role_id } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, arrange, role_id } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;

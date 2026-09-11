@@ -13,7 +13,6 @@ import {
 } from 'typeorm';
 import Specialty from './specialty.entity';
 import User from './user.entity';
-import Appointment from './appointment.entity';
 import DoctorSchedule from './doctorSchedule.entity';
 import { DoctorLevel } from 'src/shared/enums/doctorLevel';
 

@@ -11,9 +11,13 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useSocket } from "@/hooks/useSocket";
 import { MessageType } from "@/utils/constants";
 import { useUploadFilesMessage } from "@/hooks/useUploadFilesMessage";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { Skeleton } from "../ui/skeleton";
-import { registerHandler, safeEmit } from "@/utils/socket";
+import { cancelPendingEvent, safeEmit } from "@/utils/socket";
+import type {
+  ChatMessage,
+  MessagesPageResponse,
+} from "@/api/messageApi";
 interface ChatBoxProps {
   channel: Channel;
   title: string;
@@ -26,6 +30,8 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const uploadingFilesRef = useRef<File[]>([]);
+  const uploadingMessageIdRef = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const { userInfo } = useUserStore();
   const { setChannels, setChatBoxChannels } = useChannelStore();
@@ -35,9 +41,9 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
 
   useEffect(() => {
     if (isError) {
-      toast.error(error.message);
+      toast.error(error?.message ?? "Không thể tải tệp đính kèm");
     }
-  }, [isError]);
+  }, [error?.message, isError]);
 
   useEffect(() => {
     requestAnimationFrame(scrollToBottom);
@@ -59,19 +65,32 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
     }
   };
 
-  const socket = useSocket(userInfo?.id);
+  const socket = useSocket();
 
   useEffect(() => {
     if (!socket) return;
-    const handleReceiveMessage = (data: any) => {
+    let pendingJoinEventId: number | undefined;
+
+    const joinChannel = () => {
+      if (pendingJoinEventId !== undefined) {
+        cancelPendingEvent(pendingJoinEventId);
+      }
+      pendingJoinEventId = safeEmit("channel:join", {
+        channel_id: channel.channel_id,
+      });
+    };
+
+    const handleReceiveMessage = (data: ChatMessage) => {
+      if (Number(data.channel?.id) !== Number(channel.channel_id)) return;
+
       console.log(">>> receiveMessage data : ", data);
       queryClient.setQueryData(
         ["messages", channel.channel_id],
-        (oldData: any) => {
+        (oldData: InfiniteData<MessagesPageResponse, number> | undefined) => {
           if (!oldData) return oldData;
 
-          const exists = oldData.pages.some((page: any) =>
-            page.data.messages.some((m: any) => m.id === data.id)
+          const exists = oldData.pages.some((page) =>
+            page.data.messages.some((message) => message.id === data.id)
           );
 
           if (exists) return oldData;
@@ -87,27 +106,31 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
           return { ...oldData, pages: newPages };
         }
       );
-      if (uploadingFiles.length > 0 && data?.id) {
+      const isOwnMessage = Number(data.sender?.id) === Number(userInfo?.id);
+      if (isOwnMessage && uploadingFilesRef.current.length > 0 && data?.id) {
+        uploadingMessageIdRef.current = Number(data.id);
         const formData = new FormData();
         formData.append("message_id", data.id.toString());
-        uploadingFiles.forEach((file) => {
+        uploadingFilesRef.current.forEach((file) => {
           formData.append("files", file);
         });
         mutate(formData);
       }
     };
 
-    const handleUpdateFiles = (data: any) => {
+    const handleUpdateFiles = (data: ChatMessage) => {
+      if (Number(data.channel?.id) !== Number(channel.channel_id)) return;
+
       console.log(">>> newMessage with attachments : ", data);
       queryClient.setQueryData(
         ["messages", channel.channel_id],
-        (oldData: any) => {
+        (oldData: InfiniteData<MessagesPageResponse, number> | undefined) => {
           if (!oldData) return oldData;
-          const newPages = oldData.pages.map((page: any) => ({
+          const newPages = oldData.pages.map((page) => ({
             ...page,
             data: {
               ...page.data,
-              messages: page.data.messages.map((msg: any) =>
+              messages: page.data.messages.map((msg) =>
                 msg.id === data.id ? { ...msg, ...data } : msg
               ),
             },
@@ -116,20 +139,32 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
           return { ...oldData, pages: newPages };
         }
       );
-      setUploadingFiles([]);
+      if (Number(data.id) === uploadingMessageIdRef.current) {
+        uploadingMessageIdRef.current = null;
+        uploadingFilesRef.current = [];
+        setUploadingFiles([]);
+      }
     };
-    safeEmit("channel:join", { channel_id: channel.channel_id });
 
-    registerHandler("receive:message", handleReceiveMessage);
-
-    registerHandler("updated:message:files", handleUpdateFiles);
+    socket.on("connect", joinChannel);
+    socket.on("receive:message", handleReceiveMessage);
+    socket.on("updated:message:files", handleUpdateFiles);
+    if (socket.connected) {
+      joinChannel();
+    }
 
     return () => {
-      socket?.off("receive:message", handleReceiveMessage);
-
-      socket?.off("updated:message:files", handleUpdateFiles);
+      socket.off("connect", joinChannel);
+      socket.off("receive:message", handleReceiveMessage);
+      socket.off("updated:message:files", handleUpdateFiles);
+      if (pendingJoinEventId !== undefined) {
+        cancelPendingEvent(pendingJoinEventId);
+      }
+      if (socket.connected) {
+        socket.emit("channel:leave", { channel_id: channel.channel_id });
+      }
     };
-  }, [uploadingFiles]);
+  }, [channel.channel_id, mutate, queryClient, socket, userInfo?.id]);
 
   const handleInputContent = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.currentTarget.value);
@@ -143,6 +178,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
       message_type: MessageType.Regular,
     });
     console.log(">>>send: ", input);
+    uploadingFilesRef.current = selectedFiles;
     setUploadingFiles(selectedFiles);
     setSelectedFiles([]);
     setInput("");
@@ -297,7 +333,7 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
         className="flex-1 p-2 overflow-y-auto space-y-2 bg-muted/20"
       >
         {messages?.length > 0 &&
-          messages.map((msg: any) => {
+          messages.map((msg: ChatMessage) => {
             const isMe = msg.sender?.id === userInfo?.id;
 
             return (
@@ -308,14 +344,14 @@ export function ChatBox({ channel, title, icon, avatar }: ChatBoxProps) {
                 }`}
               >
                 {/* Ảnh đính kèm - nằm ngoài bubble */}
-                {msg.message_attachments?.length > 0 && (
+                {(msg.message_attachments?.length ?? 0) > 0 && (
                   <div
                     className={`grid grid-cols-1 gap-1 ${
                       isMe ? "justify-end" : "justify-start"
                     }`}
                   >
                     {!isPending &&
-                      msg.message_attachments.map((att: any, i: number) => (
+                      msg.message_attachments?.map((att, i) => (
                         <div
                           key={i}
                           className="relative w-32 h-32 rounded overflow-hidden"

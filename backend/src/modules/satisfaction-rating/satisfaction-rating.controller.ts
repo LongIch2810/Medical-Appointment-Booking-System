@@ -34,7 +34,7 @@ export class SatisfactionRatingController {
   @ApiOperation({ summary: 'Danh sách đánh giá mức độ hài lòng' })
   @Post()
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
+  @Permissions(PERMISSIONS.SATISFACTION_RATING_MANAGE)
   async getSatisfactionRatings(
     @Body() bodyFilterSatisfactionRatings: BodyFilterSatisfactionRatingsDto,
   ) {
@@ -64,9 +64,11 @@ export class SatisfactionRatingController {
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.SATISFACTION_RATING_READ)
   async getSatisfactionRatingDetail(
+    @Request() req,
     @Param('ratingId', ParseIntPipe) ratingId: number,
   ) {
-    return this.satisfactionRatingService.findById(ratingId);
+    const { userId, roles } = req.user;
+    return this.satisfactionRatingService.findById(ratingId, userId, roles);
   }
 
   @ApiOperation({ summary: 'Cập nhật đánh giá mức độ hài lòng' })
@@ -75,12 +77,16 @@ export class SatisfactionRatingController {
   @Permissions(PERMISSIONS.SATISFACTION_RATING_UPDATE)
   @AuditLogAction({ action: 'UPDATE', entityName: 'satisfaction-rating' })
   async updateSatisfactionRating(
+    @Request() req,
     @Param('ratingId', ParseIntPipe) ratingId: number,
     @Body() bodyUpdateSatisfactionRating: BodyUpdateSatisfactionRatingDto,
   ) {
+    const { userId, roles } = req.user;
     return this.satisfactionRatingService.update(
       ratingId,
       bodyUpdateSatisfactionRating,
+      userId,
+      roles,
     );
   }
 }

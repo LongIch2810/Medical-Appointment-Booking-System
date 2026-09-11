@@ -13,6 +13,8 @@ import { ChatHistoryModule } from './modules/chat-history/chat-history.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { DoctorsModule } from './modules/doctors/doctors.module';
 import { HealthProfileModule } from './modules/health-profile/health-profile.module';
+import { CoachProfileModule } from './modules/coach-profile/coach-profile.module';
+import { AdminReportsModule } from './modules/admin-reports/admin-reports.module';
 import { ArticlesModule } from './modules/articles/articles.module';
 import { DoctorSchedulesModule } from './modules/doctor-schedules/doctor-schedules.module';
 import { TopicsModule } from './modules/topics/topics.module';
@@ -34,6 +36,8 @@ import { RelationshipsModule } from './modules/relationships/relationships.modul
 import { WriteAuditLogInterceptor } from './common/interceptors/writeAuditLog.interceptor';
 import { ComplaintsModule } from './modules/complaints/complaints.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { SettingsModule } from './modules/settings/settings.module';
+import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 
 @Module({
   imports: [
@@ -42,6 +46,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     }),
     ScheduleModule.forRoot(),
     RedisCacheModule,
+    RateLimitModule,
     AuthModule,
     DatabaseModule,
     UsersModule,
@@ -53,6 +58,8 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     AppointmentsModule,
     DoctorsModule,
     HealthProfileModule,
+    CoachProfileModule,
+    AdminReportsModule,
     ArticlesModule,
     DoctorSchedulesModule,
     TopicsModule,
@@ -72,6 +79,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     RelationshipsModule,
     ComplaintsModule,
     NotificationsModule,
+    SettingsModule,
   ],
   providers: [
     {

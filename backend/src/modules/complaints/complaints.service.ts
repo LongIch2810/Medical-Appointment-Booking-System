@@ -1,8 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import Complaint, { ComplaintStatus } from 'src/entities/complaint.entity';
 import { Repository } from 'typeorm';
+import { RolePermissionService } from '../role-permission/role-permission.service';
+import { PERMISSIONS } from 'src/utils/constants';
 import { BodyCreateComplaintDto } from './dto/request/bodyCreateComplaint.dto';
 import { BodyFilterComplaintsDto } from './dto/request/bodyFilterComplaints.dto';
 import { BodyUpdateComplaintDto } from './dto/request/bodyUpdateComplaint.dto';
@@ -12,14 +18,15 @@ export class ComplaintsService {
   constructor(
     @InjectRepository(Complaint)
     private readonly complaintRepo: Repository<Complaint>,
+    private readonly rolePermissionService: RolePermissionService,
   ) {}
 
-  async create(body: BodyCreateComplaintDto) {
+  async create(userId: number, body: BodyCreateComplaintDto) {
     const complaint = this.complaintRepo.create({
       title: body.title,
       description: body.description,
       complaint_status: ComplaintStatus.PENDING,
-      user: body.userId ? { id: body.userId } : null,
+      user: { id: userId },
     });
 
     return this.complaintRepo.save(complaint);
@@ -86,6 +93,28 @@ export class ComplaintsService {
       throw new NotFoundException('Phản hồi không tồn tại.');
     }
 
+    return complaint;
+  }
+
+  /**
+   * Dùng cho endpoint chi tiết mà patient cũng có quyền gọi: chỉ chủ sở hữu
+   * hoặc người có complaint:manage mới xem được, tránh IDOR khi patient đoán
+   * complaintId của người khác.
+   */
+  async findByIdForRequester(
+    complaintId: number,
+    requesterId: number,
+    requesterRoles: string[],
+  ) {
+    const complaint = await this.findById(complaintId);
+    const permissions = await this.rolePermissionService.getPermissionsByRoles(
+      requesterId,
+      requesterRoles,
+    );
+    const isOwner = complaint.user?.id === requesterId;
+    if (!permissions.includes(PERMISSIONS.COMPLAINT_MANAGE) && !isOwner) {
+      throw new ForbiddenException('Bạn không có quyền xem phản hồi này.');
+    }
     return complaint;
   }
 

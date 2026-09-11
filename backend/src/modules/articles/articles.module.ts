@@ -5,12 +5,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import Article from 'src/entities/article.entity';
 import { RedisCacheModule } from 'src/redis-cache/redis-cache.module';
 import { BullmqModule } from 'src/bullmq/bullmq.module';
+import { CloudinaryModule } from 'src/uploads/cloudinary.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Article]),
     RedisCacheModule,
     forwardRef(() => BullmqModule),
+    forwardRef(() => CloudinaryModule),
   ],
 
   controllers: [ArticlesController],

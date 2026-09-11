@@ -26,7 +26,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -131,7 +131,10 @@ const HealthRecords: React.FC = () => {
     limit: 50,
   });
   const updateHealthProfileMutation = useUpdatePatientHealthProfile();
-  const healthProfiles = data?.data.healthProfiles ?? [];
+  const healthProfiles = useMemo(
+    () => data?.data.healthProfiles ?? [],
+    [data?.data.healthProfiles],
+  );
   const [selectedRelativeId, setSelectedRelativeId] = useState<number | null>(
     null,
   );
@@ -471,15 +474,23 @@ const HealthRecords: React.FC = () => {
           </Card>
 
           <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-              <DialogHeader>
-                <DialogTitle>Cập nhật hồ sơ sức khỏe</DialogTitle>
-              </DialogHeader>
+            <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl">
+              <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+                <DialogHeader>
+                  <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    Cập nhật hồ sơ sức khỏe: {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"}
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+                    Cập nhật các chỉ số sinh tồn và tiền sử y khoa để đội ngũ bác sĩ theo dõi chính xác.
+                  </DialogDescription>
+                </DialogHeader>
+              </div>
 
               <form
-                className="grid gap-4 md:grid-cols-2"
+                className="flex flex-col flex-1 min-h-0 overflow-hidden"
                 onSubmit={handleSubmit(handleUpdate)}
               >
+                <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 grid gap-4 md:grid-cols-2 scrollbar-soft">
                 <div className="space-y-2">
                   <Label htmlFor="bloodType">Nhóm máu</Label>
                   <Controller
@@ -670,23 +681,27 @@ const HealthRecords: React.FC = () => {
                   )}
                 </div>
 
-                <DialogFooter className="md:col-span-2">
+                </div>
+
+                <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsUpdateOpen(false)}
+                    className="rounded-xl"
                   >
                     Hủy
                   </Button>
                   <Button
                     type="submit"
                     disabled={updateHealthProfileMutation.isPending}
+                    className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 !text-white"
                   >
                     {updateHealthProfileMutation.isPending
                       ? "Đang lưu..."
                       : "Lưu thay đổi"}
                   </Button>
-                </DialogFooter>
+                </div>
               </form>
             </DialogContent>
           </Dialog>

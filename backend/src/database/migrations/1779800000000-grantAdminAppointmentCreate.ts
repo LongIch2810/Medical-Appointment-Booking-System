@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class GrantAdminAppointmentCreate1779800000000
-  implements MigrationInterface
-{
+export class GrantAdminAppointmentCreate1779800000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       INSERT INTO "role_permissions" ("role_id", "permission_id")

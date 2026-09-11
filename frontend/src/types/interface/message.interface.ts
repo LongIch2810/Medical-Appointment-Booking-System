@@ -1,1 +1,1 @@
-export interface Message {}
+export type Message = Record<string, never>;

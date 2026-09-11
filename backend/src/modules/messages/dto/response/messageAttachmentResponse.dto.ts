@@ -1,5 +1,4 @@
-import { Exclude, Expose, Type } from 'class-transformer';
-import { MessageResponseDto } from './messageResponse.dto';
+import { Exclude, Expose } from 'class-transformer';
 import { FileType } from 'src/shared/enums/FileType';
 
 @Exclude()

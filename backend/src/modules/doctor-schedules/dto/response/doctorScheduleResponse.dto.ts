@@ -1,7 +1,5 @@
 import { Exclude, Expose, Transform } from 'class-transformer';
-import { formatHHMM } from 'src/utils/formatHHMM';
 import { toHHMM } from 'src/utils/toMinutes';
-import { Column } from 'typeorm';
 
 @Exclude()
 export class DoctorScheduleResponseDto {

@@ -3,7 +3,6 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
@@ -15,13 +14,14 @@ import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { v4 as uuidv4 } from 'uuid';
 import { Request } from 'express';
 import { EmailProducer } from 'src/bullmq/queues/email/email.producer';
-import Relative from 'src/entities/relative.entity';
 import { DataSource } from 'typeorm';
-import HealthProfile from 'src/entities/healthProfile.entity';
-import Relationship from 'src/entities/relationship.entity';
 import { UsersMapper } from '../users/users.mapper';
 import { RequestPaylaod } from '../../shared/types/global.type';
 import { RoleName } from '../../shared/enums/roleName';
+import User from 'src/entities/user.entity';
+import ResetToken from 'src/entities/resetToken.entity';
+import { OtpPurpose } from 'src/shared/enums/otpPurpose';
+import { hashSecret } from 'src/utils/hashSecret';
 
 @Injectable()
 export class AuthService {
@@ -36,11 +36,24 @@ export class AuthService {
 
   async validateUser(usernameOrEmail: string, password: string): Promise<any> {
     const user = await this.usersService.findByUsernameOrEmail(usernameOrEmail);
-    if (user && (await bcrypt.compare(password, user.password!))) {
-      const roles = user.roles.map((r) => r.role.role_name);
-      return { userId: user.id, roles };
+
+    if (!user) {
+      return null;
     }
-    return null;
+
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Tài khoản này được tạo bằng Google. Vui lòng đăng nhập bằng Google hoặc dùng "Quên mật khẩu" để tạo mật khẩu.',
+      );
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return null;
+    }
+
+    const roles = user.roles.map((r) => r.role.role_name);
+    return { userId: user.id, roles };
   }
 
   async login(req: Request) {
@@ -66,11 +79,11 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE') as any,
     });
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE') as any,
     });
 
     const refreshTokenDecoded = this.jwtService.decode(refreshToken);
@@ -132,11 +145,11 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE') as any,
     });
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE') as any,
     });
 
     const refreshTokenDecoded = this.jwtService.decode(refreshToken);
@@ -180,33 +193,13 @@ export class AuthService {
         const { username, email, password, fullname } = dataRegister;
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await this.usersService.createUser(
+        const newUser = await this.usersService.createUserWithDefaultProfile(
           manager,
           username,
           email,
           fullname,
           hashedPassword,
         );
-
-        const relationship = await manager.findOne(Relationship, {
-          where: { relationship_code: 'ban_than' },
-        });
-
-        if (!relationship) {
-          throw new NotFoundException('Mối quan hệ mặc định không tồn tại.');
-        }
-
-        const newRelative = manager.create(Relative, {
-          user: newUser,
-          fullname,
-          relationship,
-        });
-        await manager.save(Relative, newRelative);
-
-        const newHealth = manager.create(HealthProfile, {
-          patient: newRelative,
-        });
-        await manager.save(HealthProfile, newHealth);
 
         await this.emailProducer.sendWelcome(email, username);
 
@@ -283,11 +276,11 @@ export class AuthService {
 
     const newAccessToken = this.jwtService.sign(newPayload, {
       secret: this.configService.get<string>('ACCESS_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('ACCESS_TOKEN_EXPIRE') as any,
     });
     const newRefreshToken = this.jwtService.sign(newPayload, {
       secret: this.configService.get<string>('REFRESH_TOKEN_SECRET'),
-      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE'),
+      expiresIn: this.configService.get<string>('REFRESH_TOKEN_EXPIRE') as any,
     });
     const newDecoded = this.jwtService.decode(newRefreshToken);
 
@@ -305,19 +298,63 @@ export class AuthService {
     return { newAccessToken, newRefreshToken };
   }
 
-  async setNewPassword(email: string, newPassword: string) {
-    const user = await this.usersService.findByUsernameOrEmail(email);
-    if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại!');
+  /**
+   * Bắt buộc reset token hợp lệ (phát hành bởi OtpsService.verifyOtp) —
+   * không được chỉ dựa trên email. Token được consume một cách atomic
+   * (UPDATE ... WHERE id = ? AND consumed_at IS NULL, kiểm tra affected)
+   * để hai request cùng dùng một token không thể cùng thành công (chống
+   * replay). Sau khi đổi mật khẩu, thu hồi mọi session/refresh token hiện
+   * tại của user (giống hệt logoutAll).
+   */
+  async setNewPassword(resetToken: string, newPassword: string) {
+    const genericError = () =>
+      new UnauthorizedException(
+        'Token đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.',
+      );
+
+    if (!resetToken) {
+      throw genericError();
     }
+
+    const tokenHash = hashSecret(resetToken);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await this.usersService.updateUserField(
-      user.id,
-      'password',
-      hashedPassword,
-    );
-    await this.redisService.incr(`session_version:${user.id}`);
-    await this.redisService.delData(`refresh_tokens:${user.id}`);
+
+    const userId = await this.dataSource.transaction(async (manager) => {
+      const resetTokenRepo = manager.getRepository(ResetToken);
+      const tokenRow = await resetTokenRepo.findOne({
+        where: { tokenHash },
+        relations: ['user'],
+      });
+
+      if (
+        !tokenRow ||
+        tokenRow.purpose !== OtpPurpose.PASSWORD_RESET ||
+        tokenRow.expiresAt.getTime() < Date.now()
+      ) {
+        throw genericError();
+      }
+
+      const updateResult = await resetTokenRepo
+        .createQueryBuilder()
+        .update(ResetToken)
+        .set({ consumedAt: new Date() })
+        .where('id = :id AND consumed_at IS NULL', { id: tokenRow.id })
+        .execute();
+
+      if (!updateResult.affected) {
+        // Token đã bị dùng bởi một request khác (race) — không reset lần 2.
+        throw genericError();
+      }
+
+      await manager
+        .getRepository(User)
+        .update(tokenRow.user.id, { password: hashedPassword });
+
+      return tokenRow.user.id;
+    });
+
+    await this.redisService.incr(`session_version:${userId}`);
+    await this.redisService.delData(`refresh_tokens:${userId}`);
 
     return { message: 'Đặt lại mật khẩu thành công.' };
   }

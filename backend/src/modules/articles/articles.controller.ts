@@ -27,7 +27,7 @@ import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto'
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
-import { PERMISSIONS } from 'src/utils/constants';
+import { MAX_UPLOAD_FILE_SIZE_BYTES, PERMISSIONS } from 'src/utils/constants';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('articles')
@@ -45,7 +45,7 @@ export class ArticlesController {
   @AuditLogAction({ action: 'CREATE', entityName: 'articles' })
   @UseInterceptors(
     FilesInterceptor('files', 4, {
-      limits: { files: 4 },
+      limits: { files: 4, fileSize: MAX_UPLOAD_FILE_SIZE_BYTES },
     }),
     new FileRequiredInterceptor(),
   )

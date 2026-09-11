@@ -129,7 +129,8 @@ export class SpecialtiesService {
   }
 
   async filterAndPagination(objectFilter: BodyFilterSpecialtiesDto) {
-    let { page, limit, search, arrange } = objectFilter;
+    let { page, limit } = objectFilter;
+    const { search, arrange } = objectFilter;
     const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${JSON.stringify(objectFilter || {})}`;
     const cachedData = await this.redisCacheService.getData(cacheKey);
     if (cachedData) {
@@ -148,9 +149,9 @@ export class SpecialtiesService {
       .skip(skip);
 
     if (search) {
-      query.where(
+      query.andWhere(
         'UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:search))',
-        { search: search },
+        { search: `%${search}%` },
       );
     }
 

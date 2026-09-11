@@ -101,7 +101,8 @@ export class RelationshipsService {
   }
 
   async filterAndPagination(objectFilters: BodyFilterRelationshipsDto) {
-    let { search, arrange, page, limit } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, arrange } = objectFilters;
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;

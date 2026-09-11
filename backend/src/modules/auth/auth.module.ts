@@ -8,6 +8,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtRefreshStrategy } from './refresh.strategy';
+import { SessionAuthModule } from './session-auth.module';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { GoogleStrategy } from './google.strategy';
 import { BullmqModule } from 'src/bullmq/bullmq.module';
@@ -22,12 +23,15 @@ import Relationship from 'src/entities/relationship.entity';
     BullmqModule,
     UsersModule,
     PassportModule,
+    SessionAuthModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES') },
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES') as any,
+        },
       }),
     }),
   ],

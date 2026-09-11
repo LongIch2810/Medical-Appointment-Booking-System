@@ -1,1 +1,1 @@
-export interface AIMessage {}
+export type AIMessage = Record<string, never>;

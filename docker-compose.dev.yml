@@ -20,8 +20,22 @@ services:
       - ./backend:/app
       - /app/node_modules
     depends_on:
-      - redis
-      - postgres
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:3000/api/v1', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 10s
 
   frontend:
     build:
@@ -62,22 +76,24 @@ services:
       context: ./chatbot
       dockerfile: Dockerfile.dev
     container_name: chatbot-app
-    ports:
-      - "5000:5000"
+    expose:
+      - "5000"
     env_file:
       - ./chatbot/.env
     environment:
       - DB_HOST=postgres
       - BACKEND_URL=http://backend:3000
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - REDIS_HOST=redis
     volumes:
       - ./chatbot:/app
       - /app/node_modules
     depends_on:
-      - postgres
-      - backend
+      postgres:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_started
 
   redis:
     image: redis
@@ -99,6 +115,11 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d booking_doctor_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   redisinsight:
     image: redislabs/redisinsight:latest

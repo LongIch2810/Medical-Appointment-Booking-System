@@ -18,5 +18,5 @@ export class UpdateSequenceId1779638832258 implements MigrationInterface {
             `);
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(): Promise<void> {}
 }

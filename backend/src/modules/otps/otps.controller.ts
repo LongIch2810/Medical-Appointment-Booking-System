@@ -2,6 +2,8 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { OtpsService } from './otps.service';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT_POLICIES } from 'src/common/rate-limit/rate-limit.constants';
 
 @ApiTags('otps')
 @Controller('otps')
@@ -9,6 +11,7 @@ export class OtpsController {
   constructor(private otpsService: OtpsService) {}
 
   @ApiOperation({ summary: 'Gửi mã OTP' })
+  @Throttle(RATE_LIMIT_POLICIES.accountChange)
   @Post('send-otp')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'CREATE', entityName: 'otps.send' })
@@ -18,6 +21,7 @@ export class OtpsController {
   }
 
   @ApiOperation({ summary: 'Xác thực mã OTP' })
+  @Throttle(RATE_LIMIT_POLICIES.otpVerification)
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGIN', entityName: 'otps.verify' })
@@ -25,7 +29,10 @@ export class OtpsController {
     @Body('otpCode') otpCode: string,
     @Body('email') email: string,
   ) {
-    const { message } = await this.otpsService.verifyOtp(otpCode, email);
-    return message;
+    const { message, resetToken } = await this.otpsService.verifyOtp(
+      otpCode,
+      email,
+    );
+    return { message, resetToken };
   }
 }

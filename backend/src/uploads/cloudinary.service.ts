@@ -10,7 +10,11 @@ export class CloudinaryService {
       const stream = this.cdn.uploader.upload_stream(
         { resource_type: 'auto', folder: 'uploads' },
         (err, result) => {
-          if (err || !result) return reject(err || new Error('Upload failed'));
+          if (err || !result) {
+            return reject(
+              err instanceof Error ? err : new Error('Upload failed'),
+            );
+          }
           resolve(result);
         },
       );

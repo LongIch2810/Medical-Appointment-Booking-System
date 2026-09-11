@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import {
+  Brackets,
   DataSource,
   EntityManager,
   ILike,
@@ -21,6 +22,7 @@ import { BodyUpdateRelativeDto } from './dto/request/bodyUpdateRelative.dto';
 import { RelativesMapper } from './relatives.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { RelationshipsService } from '../relationships/relationships.service';
+import { isPgDriverError } from '../../utils/isPgDriverError';
 
 @Injectable()
 export class RelativesService {
@@ -35,8 +37,7 @@ export class RelativesService {
   async create(userId: number, createRelativeDto: BodyCreateRelativeDto) {
     try {
       return await this.dataSource.transaction(async (manager) => {
-        const { relationship_code, phone, fullname, ...rest } =
-          createRelativeDto;
+        const { relationship_code, phone, fullname } = createRelativeDto;
         const relationship = await manager.findOne(Relationship, {
           where: { relationship_code: relationship_code },
         });
@@ -60,19 +61,11 @@ export class RelativesService {
           }
         }
 
-        const createdRelative = manager.create(Relative, {
-          ...rest,
-          fullname,
-          phone: phone ?? null,
-          user: { id: userId },
-          relationship: { relationship_code: relationship_code },
-        });
-        const saved = await manager.save(Relative, createdRelative);
-
-        const newHealthProfile = manager.create(HealthProfile, {
-          patient: { id: createdRelative.id },
-        });
-        await manager.save(HealthProfile, newHealthProfile);
+        const saved = await this.insertRelativeWithHealthProfile(
+          manager,
+          userId,
+          createRelativeDto,
+        );
         const relative = await this.findOwnedByUserIdTransaction(
           manager,
           userId,
@@ -83,7 +76,8 @@ export class RelativesService {
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
-        error.driverError?.code === '23505'
+        isPgDriverError(error.driverError) &&
+        error.driverError.code === '23505'
       ) {
         throw new ConflictException('Người thân đã tồn tại trong hệ thống!');
       }
@@ -158,17 +152,21 @@ export class RelativesService {
       .orderBy('relative.created_at', arrange.toUpperCase() as 'ASC' | 'DESC')
       .where('user.id = :userId', { userId });
     if (search) {
-      query.andWhere('lower(relative.fullname) LIKE lower(:search)', {
-        search: `%${search}%`,
-      });
-      query.orWhere('relative.phone LIKE :search', {
-        search: `%${search}%`,
-      });
-      query.orWhere(
-        'lower(relationship.relationship_name) LIKE lower(:search)',
-        {
-          search: `%${search}%`,
-        },
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('lower(relative.fullname) LIKE lower(:search)', {
+            search: `%${search}%`,
+          })
+            .orWhere('relative.phone LIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere(
+              'lower(relationship.relationship_name) LIKE lower(:search)',
+              {
+                search: `%${search}%`,
+              },
+            );
+        }),
       );
     }
     if (relationshipCode) {
@@ -235,7 +233,8 @@ export class RelativesService {
     } catch (error) {
       if (
         error instanceof QueryFailedError &&
-        error.driverError?.code === '23505'
+        isPgDriverError(error.driverError) &&
+        error.driverError.code === '23505'
       ) {
         throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống!');
       }
@@ -289,6 +288,94 @@ export class RelativesService {
       },
     });
     return count;
+  }
+
+  /**
+   * Dùng cho luồng đặt lịch: tái sử dụng thân nhân đã tồn tại nếu khớp
+   * (fullname + relationship_code + phone), ngược lại tạo mới (Relative +
+   * HealthProfile rỗng đi kèm). Nhận `manager` từ transaction của caller
+   * (không tự mở transaction riêng) để việc tạo thân nhân và đặt lịch cùng
+   * commit/rollback với nhau.
+   */
+  async findOrCreateForBooking(
+    manager: EntityManager,
+    userId: number,
+    dto: BodyCreateRelativeDto,
+  ): Promise<Relative> {
+    const { relationship_code, phone, fullname } = dto;
+
+    const relationship = await manager.findOne(Relationship, {
+      where: { relationship_code },
+    });
+    if (!relationship) {
+      throw new NotFoundException('Mã mối quan hệ không tồn tại');
+    }
+
+    if (phone) {
+      // pessimistic_write khóa row trùng khớp (nếu có) trong transaction của
+      // caller, để hai request đặt lịch đồng thời với cùng new_relative_profile
+      // không thể cùng resolve ra một Relative chưa được lock, gây double-booking.
+      //
+      // KHÔNG được join thêm relationship/health_profile (leftJoinAndSelect)
+      // vào cùng câu query có setLock('pessimistic_write') — Postgres từ chối
+      // "FOR UPDATE" khi có LEFT JOIN vì bảng phía ngoài join có thể ra NULL
+      // ("FOR UPDATE cannot be applied to the nullable side of an outer
+      // join"), lỗi này chỉ lộ ra khi chạy trên Postgres thật, không phát
+      // hiện được qua unit test mock query builder. relationship_code đã là
+      // cột thật ngay trên bảng relatives (xem @JoinColumn trên
+      // Relative.relationship) nên lọc trực tiếp không cần join. Không cần
+      // eager-load relationship/health_profile ở đây vì giá trị trả về chỉ
+      // dùng làm `patient` (FK theo id) khi tạo Appointment — giống hệt
+      // nhánh "tạo mới" bên dưới cũng không eager-load 2 quan hệ này.
+      const existing = await manager
+        .getRepository(Relative)
+        .createQueryBuilder('relative')
+        .setLock('pessimistic_write')
+        .where('relative.user.id = :userId', { userId })
+        .andWhere('relative.fullname ILIKE :fullname', { fullname })
+        .andWhere('relative.relationship_code = :relationship_code', {
+          relationship_code,
+        })
+        .andWhere('relative.phone = :phone', { phone })
+        .getOne();
+      if (existing) return existing;
+    }
+
+    try {
+      return await this.insertRelativeWithHealthProfile(manager, userId, dto);
+    } catch (error) {
+      if (
+        error instanceof QueryFailedError &&
+        isPgDriverError(error.driverError) &&
+        error.driverError.code === '23505'
+      ) {
+        throw new ConflictException('Số điện thoại đã tồn tại trong hệ thống.');
+      }
+      throw error;
+    }
+  }
+
+  private async insertRelativeWithHealthProfile(
+    manager: EntityManager,
+    userId: number,
+    dto: BodyCreateRelativeDto,
+  ): Promise<Relative> {
+    const { relationship_code, phone, fullname, ...rest } = dto;
+    const createdRelative = manager.create(Relative, {
+      ...rest,
+      fullname,
+      phone: phone ?? null,
+      user: { id: userId },
+      relationship: { relationship_code },
+    });
+    const saved = await manager.save(Relative, createdRelative);
+
+    const newHealthProfile = manager.create(HealthProfile, {
+      patient: { id: saved.id },
+    });
+    await manager.save(HealthProfile, newHealthProfile);
+
+    return saved;
   }
 
   private async findOwnedByUserIdTransaction(

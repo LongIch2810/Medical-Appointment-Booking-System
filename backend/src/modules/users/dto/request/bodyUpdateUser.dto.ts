@@ -1,11 +1,4 @@
-import {
-  IsString,
-  IsEmail,
-  IsOptional,
-  IsBoolean,
-  IsDate,
-  IsPhoneNumber,
-} from 'class-validator';
+import { IsString, IsBoolean, IsDate, IsPhoneNumber } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class BodyUpdateUserDto {

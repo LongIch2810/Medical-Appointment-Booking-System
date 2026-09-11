@@ -6,6 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from 'src/utils/constants';
 
 @Injectable()
 export class FileRequiredInterceptor implements NestInterceptor {
@@ -35,13 +36,12 @@ export class FileRequiredInterceptor implements NestInterceptor {
       'application/vnd.openxmlformats-officedocument.presentationml.presentation',
       'text/plain',
     ],
-    private readonly maxFileSize: number = 20 * 1024 * 1024, // 20MB
+    private readonly maxFileSize: number = MAX_UPLOAD_FILE_SIZE_BYTES,
   ) {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
     const file = request.file;
     const files = request.files;
-    console.log('>>> files : ', files);
     if (!file && (!files || files.length === 0)) {
       throw new BadRequestException('No file provided!');
     }

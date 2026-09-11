@@ -11,6 +11,19 @@ import {
   FileParams,
   summaryMedicalRecordGraph,
 } from "../langgraph/summary_medical_record.graph.js";
+import { randomUUID } from "node:crypto";
+import {
+  getHealthRoadmapErrorType,
+  logHealthRoadmapEvent,
+} from "../utils/healthRoadmapRuntime.js";
+import { normalizeChatbotError, withRetry } from "../utils/retry.js";
+import { logSafeError } from "../utils/safeLog.js";
+
+// Mọi call ra backend đều phải có timeout rõ ràng — trước đây axios dùng
+// default (không timeout), request có thể treo vô thời hạn nếu backend
+// không phản hồi.
+const BACKEND_REQUEST_TIMEOUT_MS =
+  Number(process.env.BACKEND_REQUEST_TIMEOUT_MS) || 10_000;
 
 const handleChatService = async ({ question, userId, token }: ChatInput) => {
   try {
@@ -25,20 +38,26 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+        timeout: BACKEND_REQUEST_TIMEOUT_MS,
+      },
     );
-    const { data: history } = await axios.get(
-      `${process.env.BACKEND_URL}/api/v1/chat-history/context/${userId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+    const { data: history } = await withRetry(
+      () =>
+        axios.get(
+          `${process.env.BACKEND_URL}/api/v1/chat-history/context/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            timeout: BACKEND_REQUEST_TIMEOUT_MS,
+          },
+        ),
+      { operation: "chat_history_context", totalTimeoutMs: 20_000 },
     );
     const chatHistory = history.data.map((item: any) =>
       item.role === "human"
         ? new HumanMessage(item.content)
-        : new AIMessage(item.content)
+        : new AIMessage(item.content),
     );
 
     const result = await agent.invoke({ messages: chatHistory }, {
@@ -48,51 +67,41 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
     } as any);
 
     const reply = result.messages[result.messages.length - 1] as AIMessage;
+    const bookingToolReply = [...result.messages]
+      .reverse()
+      .find(
+        (message: any) =>
+          message._getType?.() === "tool" &&
+          message.name === "booking_appointment_tool" &&
+          typeof message.content === "string",
+      );
+    const replyContent = bookingToolReply?.content ?? reply.content;
 
     await axios.post(
       `${process.env.BACKEND_URL}/api/v1/chat-history`,
       {
         userId,
         role: "ai",
-        content: reply.content,
+        content: replyContent,
       },
       {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
+        timeout: BACKEND_REQUEST_TIMEOUT_MS,
+      },
     );
 
-    return { answer: reply.content };
+    return { answer: replyContent };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.error("Chat service backend error:", {
         method: error.config?.method,
-        url: error.config?.url,
         status: error.response?.status,
-        data: error.response?.data,
+        code: error.code,
       });
     }
-    if (axios.isAxiosError(error) && error.response?.status === 401) {
-      const err = new Error("Unauthorized");
-      (err as any).status = 401;
-      throw err;
-    }
-    if (axios.isAxiosError(error) && error.response?.status) {
-      const err = new Error(
-        (error.response.data as any)?.message ||
-          error.message ||
-          "Backend request failed"
-      );
-      (err as any).status = error.response.status;
-      (err as any).details = error.response.data;
-      throw err;
-    }
-    const err = error as Error;
-    console.log(err);
-    const e = new Error(err.message || "Internal Server Error");
-    (e as any).status = 500;
-    throw e;
+    throw normalizeChatbotError(error);
   }
 };
 
@@ -103,7 +112,7 @@ const handleCreateReportService = async ({
 }) => {
   try {
     const result: any = await createReportGraph.invoke({ question });
-    const { pdfUrl } = result || {};
+    const { pdf_url: pdfUrl } = result || {};
 
     const errorKeys = [
       "errorAnalyzeData",
@@ -117,32 +126,31 @@ const handleCreateReportService = async ({
     const finalResult = result?.final_result;
 
     if ((finalResult && finalResult.success === false) || errors.length > 0) {
-      console.error(
-        "createReportGraph returned errors or final_result failure:",
-        errors,
-        finalResult
-      );
+      console.error("createReportGraph returned a failure", {
+        status: finalResult?.status || errors[0]?.status || 500,
+        code: finalResult?.code || errors[0]?.code,
+      });
       const msg = finalResult?.message || "Create report failed";
       const status =
         finalResult?.status || (errors[0] && errors[0].status) || 500;
       const e = new Error(msg);
       (e as any).status = status;
-      (e as any).details = errors.length > 0 ? errors : finalResult ?? null;
+      (e as any).code = finalResult?.code ?? errors[0]?.code;
+      (e as any).details = errors.length > 0 ? errors : (finalResult ?? null);
       throw e;
     }
 
     return {
       pdfUrl: pdfUrl ?? null,
-      raw: result,
+      raw: {
+        result: result?.result ?? null,
+        report: result?.report ?? null,
+        chartConfig: result?.chartConfig ?? null,
+      },
     };
   } catch (error) {
-    console.log(error);
-    if (axios.isAxiosError(error) && (error as any).response?.status === 401) {
-      const e = new Error("Unauthorized");
-      (e as any).status = 401;
-      throw e;
-    }
-    throw error;
+    logSafeError("Create report failed", error);
+    throw normalizeChatbotError(error);
   }
 };
 
@@ -153,8 +161,17 @@ const handleBuildHealthRoadMapService = async ({
   relative_id: number;
   token: string;
 }) => {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  logHealthRoadmapEvent({
+    requestId,
+    relativeId: relative_id,
+    event: "roadmap_started",
+  });
+
   try {
     const result: any = await buildHealthRoadmapGraph.invoke({
+      request_id: requestId,
       relative_id,
       token,
     });
@@ -179,22 +196,43 @@ const handleBuildHealthRoadMapService = async ({
         finalResult?.status || (errors[0] && errors[0].status) || 500;
       const e = new Error(msg);
       (e as any).status = status;
-      (e as any).details = errors.length > 0 ? errors : finalResult ?? null;
+      (e as any).code = finalResult?.code ?? errors[0]?.code;
+      (e as any).details = errors.length > 0 ? errors : (finalResult ?? null);
       throw e;
     }
 
-    return {
-      pdfUrl: result?.pdf_url ?? null,
-      raw: result,
-    };
-  } catch (error) {
-    console.log(error);
-    if (axios.isAxiosError(error) && (error as any).response?.status === 401) {
-      const e = new Error("Unauthorized");
-      (e as any).status = 401;
+    if (!result?.pdf_url) {
+      const e = new Error("Không nhận được đường dẫn PDF từ chatbot.");
+      (e as any).status = 500;
       throw e;
     }
-    throw error;
+
+    logHealthRoadmapEvent({
+      requestId,
+      relativeId: relative_id,
+      event: "roadmap_succeeded",
+      durationMs: Date.now() - startedAt,
+      status: 200,
+    });
+
+    return {
+      pdfUrl: result.pdf_url,
+    };
+  } catch (error: unknown) {
+    const status =
+      typeof error === "object" && error
+        ? ((error as { status?: number }).status ?? 500)
+        : 500;
+    logHealthRoadmapEvent({
+      requestId,
+      relativeId: relative_id,
+      event: "roadmap_request_failed",
+      durationMs: Date.now() - startedAt,
+      status,
+      errorType: getHealthRoadmapErrorType(error),
+    });
+
+    throw normalizeChatbotError(error);
   }
 };
 
@@ -232,33 +270,28 @@ const handleDiagnosisService = async ({
         finalResult?.status || (errors[0] && errors[0].status) || 500;
       const e = new Error(msg);
       (e as any).status = status;
-      (e as any).details = errors.length > 0 ? errors : finalResult ?? null;
+      (e as any).code = finalResult?.code ?? errors[0]?.code;
+      (e as any).details = errors.length > 0 ? errors : (finalResult ?? null);
       throw e;
     }
 
     return {
       answer: result?.answer ?? null,
-      raw: result,
     };
   } catch (error) {
-    console.log(error);
-    if (axios.isAxiosError(error) && (error as any).response?.status === 401) {
-      const e = new Error("Unauthorized");
-      (e as any).status = 401;
-      throw e;
-    }
-    throw error;
+    logSafeError("Diagnosis failed", error);
+    throw normalizeChatbotError(error);
   }
 };
 
 const handleSummaryMedicalRecordService = async (
-  fileParams: FileParams
+  fileParams: FileParams,
 ): Promise<string> => {
   try {
     const result = await summaryMedicalRecordGraph.invoke({ fileParams });
     return result.summary.answer;
   } catch (error) {
-    throw error;
+    throw normalizeChatbotError(error);
   }
 };
 

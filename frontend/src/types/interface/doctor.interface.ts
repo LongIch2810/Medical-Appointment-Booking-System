@@ -1,1 +1,1 @@
-export interface Doctor {}
+export type Doctor = Record<string, never>;

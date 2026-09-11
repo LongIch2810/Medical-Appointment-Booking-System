@@ -74,7 +74,8 @@ export class TagsService {
   }
 
   async filterAndPagination(objectFilters: BodyFilterTagsDto) {
-    let { page, limit, search, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const { search, arrange } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
