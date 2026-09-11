@@ -421,4 +421,4 @@ For deep client-side conventions:
 
 ## License
 
-This project is licensed under the MIT License for educational and portfolio demonstration purposes.
+This project is licensed under the [MIT License](LICENSE) for educational and portfolio demonstration purposes.
