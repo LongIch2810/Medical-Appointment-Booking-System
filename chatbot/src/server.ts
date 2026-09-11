@@ -21,6 +21,24 @@ const [
 app.disable("x-powered-by");
 app.use(express.json({ limit: "32kb" }));
 
+app.get("/", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    service: "medical-appointment-chatbot",
+    message: "Chatbot is running",
+    health: "/healthy",
+  });
+});
+
+app.get("/healthy", (_req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "medical-appointment-chatbot",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
+});
+
 app.use("/chatbot", chatRouter);
 
 app.use(errorHandler);
