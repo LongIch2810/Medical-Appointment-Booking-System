@@ -1,3 +1,4 @@
+import { enterpriseReportGroups } from "@/mock/enterpriseReports";
 import { messageThreads } from "@/mock/messages";
 import { moduleConfigs } from "@/mock/modules";
 import {
@@ -15,6 +16,7 @@ import type {
   RolePermissionMatrix,
   UserProfile,
 } from "@/types/app";
+import type { EnterpriseReportGroup } from "@/types/interface/enterpriseReport.interface";
 
 function withDelay<T>(value: T, ms = 220): Promise<T> {
   return new Promise((resolve) => {
@@ -28,6 +30,7 @@ export const queryKeys = {
   messages: ["messages"] as const,
   rolePermission: ["role-permission"] as const,
   profiles: ["profiles"] as const,
+  enterpriseReports: ["enterprise-reports"] as const,
 };
 
 export const mockApi = {
@@ -48,5 +51,8 @@ export const mockApi = {
     matrix: RolePermissionMatrix[];
   }> {
     return withDelay({ groups: permissionGroups, matrix: rolePermissionMatrix });
+  },
+  getEnterpriseReportGroups(): Promise<EnterpriseReportGroup[]> {
+    return withDelay(enterpriseReportGroups);
   },
 };

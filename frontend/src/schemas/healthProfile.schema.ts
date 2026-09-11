@@ -13,7 +13,7 @@ export const BLOOD_TYPE_OPTIONS = [
 
 export const UNSPECIFIED = "unspecified";
 
-const numericStringField = (label: string, min: number, max: number) =>
+export const numericStringField = (label: string, min: number, max: number) =>
   z
     .string()
     .optional()

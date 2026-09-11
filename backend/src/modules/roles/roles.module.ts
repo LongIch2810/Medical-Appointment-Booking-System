@@ -7,7 +7,11 @@ import { PermissionsModule } from '../permissions/permissions.module';
 import { RedisCacheModule } from 'src/redis-cache/redis-cache.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Role]), PermissionsModule, RedisCacheModule],
+  imports: [
+    TypeOrmModule.forFeature([Role]),
+    PermissionsModule,
+    RedisCacheModule,
+  ],
   controllers: [RolesController],
   providers: [RolesService],
   exports: [RolesService],
