@@ -1,26 +1,40 @@
 import axiosInstance, { backendOrigin } from "@/configs/axios";
+import { toast } from "react-toastify";
 import { io, Socket } from "socket.io-client";
 
 interface PendingEvent {
   id: number;
   event: string;
-  data: any;
+  data: unknown;
   isSuccess: boolean;
+}
+
+interface WsErrorPayload {
+  code?: number;
+  message?: string;
+  eventId?: number;
+  retryAfter?: number;
 }
 
 let socket: Socket | null = null;
 const pendingEvents: PendingEvent[] = [];
-const eventHandlers: { event: string; handler: (...args: any[]) => void }[] =
-  [];
+let nextEventId = Date.now();
 
-export const connectSocket = (userId: number) => {
-  socket = io(backendOrigin, {
+export const connectSocket = () => {
+  if (socket) {
+    if (!socket.connected) {
+      socket.connect();
+    }
+    return socket;
+  }
+
+  const newSocket = io(backendOrigin, {
     transports: ["websocket"],
     withCredentials: true,
   });
+  socket = newSocket;
 
-  socket.on("notify:event", (data) => {
-    console.log(">>> check");
+  newSocket.on("notify:event", (data) => {
     const index = pendingEvents.findIndex((e) => e.id === data.id);
     if (index !== -1) {
       if (data.isSuccess) {
@@ -31,67 +45,91 @@ export const connectSocket = (userId: number) => {
     }
   });
 
-  socket.on("connect", () => {
-    console.log("🔌 Socket connected:", socket?.id);
+  newSocket.on("connect", () => {
+    console.log("Socket connected:", newSocket.id);
 
-    eventHandlers.forEach((e) => socket?.on(e.event, e.handler));
-    if (pendingEvents.length > 0) {
-      pendingEvents.forEach((e) => {
-        if (!e.isSuccess) {
-          socket?.emit(e.event, e);
+    const eventsToReplay = new Set(
+      pendingEvents.filter((event) => !event.isSuccess).map((event) => event.id)
+    );
+
+    setTimeout(() => {
+      if (socket !== newSocket || !newSocket.connected) return;
+
+      pendingEvents.forEach((event) => {
+        if (eventsToReplay.has(event.id) && !event.isSuccess) {
+          newSocket.emit(event.event, event);
         }
       });
-    }
+    }, 0);
   });
 
-  socket.on("connect_error", (err) => {
+  newSocket.on("connect_error", (err) => {
     console.error("Socket connection error:", err.message);
   });
 
-  socket.on("ws-error", async (err) => {
+  let isRefreshingToken = false;
+  newSocket.on("ws-error", async (err: WsErrorPayload) => {
+    if (err.code === 429) {
+      if (typeof err.eventId === "number") {
+        const index = pendingEvents.findIndex((e) => e.id === err.eventId);
+        if (index !== -1) {
+          pendingEvents.splice(index, 1);
+        }
+      }
+
+      const retryAfter = Math.max(0, Number(err.retryAfter) || 0);
+      toast.error(
+        retryAfter > 0
+          ? `Bạn đang thao tác quá nhanh. Vui lòng thử lại sau ${retryAfter} giây.`
+          : "Bạn đang thao tác quá nhanh. Vui lòng thử lại sau.",
+        { toastId: "websocket-rate-limit" }
+      );
+      return;
+    }
+
     if (err.code === 401) {
+      if (isRefreshingToken) return;
+      isRefreshingToken = true;
       try {
-        console.log("⏳ Token expired, refreshing...");
         await axiosInstance.post("/auth/refresh", {});
 
-        socket?.removeAllListeners();
-        socket?.disconnect();
-        socket = connectSocket(userId);
-
-        console.log("✅ Token refreshed, reconnecting socket...");
-      } catch (error) {
+        if (socket === newSocket) {
+          newSocket.disconnect();
+          newSocket.connect();
+        }
+      } catch {
         const index = pendingEvents.findIndex((e) => e.id === err.eventId);
-        pendingEvents.splice(index, 1);
-        socket?.disconnect();
+        if (index !== -1) {
+          pendingEvents.splice(index, 1);
+        }
+        if (socket === newSocket) {
+          newSocket.disconnect();
+        }
+      } finally {
+        isRefreshingToken = false;
       }
     }
   });
 
-  return socket;
+  return newSocket;
 };
 
-export const safeEmit = (event: string, data: any) => {
-  const id = Date.now();
+export const safeEmit = (event: string, data: unknown) => {
+  const id = ++nextEventId;
   const newEvent: PendingEvent = { id, event, data, isSuccess: false };
   pendingEvents.push(newEvent);
   // Nếu socket đã kết nối → emit luôn và xóa khỏi queue
   if (socket?.connected) {
     socket.emit(event, newEvent);
   }
+
+  return id;
 };
 
-export const registerHandler = (
-  event: string,
-  handler: (...args: any[]) => void
-) => {
-  const exists = eventHandlers.some(
-    (e) => e.event === event && e.handler === handler
-  );
-  if (!exists) {
-    eventHandlers.push({ event, handler });
-    if (socket?.connected) {
-      socket.on(event, handler);
-    }
+export const cancelPendingEvent = (id: number) => {
+  const index = pendingEvents.findIndex((event) => event.id === id);
+  if (index !== -1) {
+    pendingEvents.splice(index, 1);
   }
 };
 
@@ -102,7 +140,7 @@ export const disconnectSocket = () => {
     socket.removeAllListeners();
     socket.disconnect();
     socket = null;
-    eventHandlers.length = 0;
-    console.log("🔌 Socket disconnected");
+    pendingEvents.length = 0;
+    console.log("Socket disconnected");
   }
 };

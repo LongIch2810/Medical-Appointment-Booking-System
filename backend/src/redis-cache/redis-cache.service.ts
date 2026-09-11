@@ -14,12 +14,18 @@ export class RedisCacheService {
     });
   }
 
+  getClient(): Redis {
+    return this.client;
+  }
+
   async setData<T>(key: string, value: T, ttl?: number): Promise<void> {
     const parseValue =
       typeof value === 'string' ? value : JSON.stringify(value);
-    ttl && ttl > 0
-      ? await this.client.set(key, parseValue, 'EX', ttl)
-      : await this.client.set(key, parseValue);
+    if (ttl && ttl > 0) {
+      await this.client.set(key, parseValue, 'EX', ttl);
+    } else {
+      await this.client.set(key, parseValue);
+    }
   }
 
   async getData<T>(key: string): Promise<T | null> {
@@ -48,7 +54,10 @@ export class RedisCacheService {
 
       stream.on('end', () => {
         if (hasKeys) {
-          pipeline.exec().then(() => resolve()).catch(reject);
+          pipeline
+            .exec()
+            .then(() => resolve())
+            .catch(reject);
         } else {
           resolve();
         }
