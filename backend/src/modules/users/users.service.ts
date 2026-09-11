@@ -89,8 +89,13 @@ export class UsersService {
       const isExistsUserByUsername =
         await this.isUserExistsByUsername(username);
       const isExistsUserByEmail = await this.isUserExistsByEmail(email);
-      if (isExistsUserByUsername || isExistsUserByEmail) {
-        throw new ConflictException('Người dùng đã tồn tại');
+      if (isExistsUserByEmail) {
+        throw new ConflictException(
+          'Email đã được sử dụng. Nếu tài khoản được tạo bằng Google, vui lòng đăng nhập bằng Google.',
+        );
+      }
+      if (isExistsUserByUsername) {
+        throw new ConflictException('Tên đăng nhập đã được sử dụng.');
       }
       const createdData = password
         ? {
@@ -118,10 +123,56 @@ export class UsersService {
         error instanceof QueryFailedError &&
         error.driverError?.code === '23505'
       ) {
-        throw new ConflictException('Người dùng đã tồn tại');
+        throw new ConflictException(
+          'Tên đăng nhập hoặc email đã được sử dụng.',
+        );
       }
       throw error;
     }
+  }
+
+  /**
+   * Tạo user + role PATIENT (qua createUser) kèm hồ sơ mặc định đi cùng: một
+   * Relative "bản thân" (relationship_code = ban_than) và HealthProfile rỗng.
+   * Đây là luồng đăng ký user mới dùng chung cho cả đăng ký local
+   * (AuthService.register) lẫn đăng ký qua Google (GoogleStrategy), để hai nơi
+   * không tự triển khai lại và lệch nhau theo thời gian.
+   */
+  async createUserWithDefaultProfile(
+    manager: EntityManager,
+    username: string,
+    email: string,
+    fullname: string,
+    password: string | null,
+  ): Promise<User> {
+    const newUser = await this.createUser(
+      manager,
+      username,
+      email,
+      fullname,
+      password,
+    );
+
+    const relationship = await manager.findOne(Relationship, {
+      where: { relationship_code: 'ban_than' },
+    });
+    if (!relationship) {
+      throw new NotFoundException('Mối quan hệ mặc định không tồn tại.');
+    }
+
+    const newRelative = manager.create(Relative, {
+      user: newUser,
+      fullname,
+      relationship,
+    });
+    await manager.save(Relative, newRelative);
+
+    const newHealth = manager.create(HealthProfile, {
+      patient: newRelative,
+    });
+    await manager.save(HealthProfile, newHealth);
+
+    return newUser;
   }
 
   async adminCreateUser(dto: BodyCreateUserDto) {

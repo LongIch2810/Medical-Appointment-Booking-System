@@ -48,7 +48,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Danh sách người dùng' })
   @Get()
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.USER_READ)
+  @Permissions(PERMISSIONS.USER_MANAGE)
   getUsers() {
     return this.userService.findAll();
   }
@@ -158,7 +158,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Danh sách người dùng (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.USER_READ)
+  @Permissions(PERMISSIONS.USER_MANAGE)
   getUsersFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
     return this.userService.filterAndPagination(objectFilters);
   }
@@ -183,7 +183,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Chi tiết người dùng dành cho admin' })
   @Get(':userId')
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.USER_READ)
+  @Permissions(PERMISSIONS.USER_MANAGE)
   getAdminUserDetail(@Param('userId', ParseIntPipe) userId: number) {
     return this.userService.getAdminUserDetail(userId);
   }
@@ -191,7 +191,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Admin cập nhật thông tin người dùng' })
   @Patch(':userId')
   @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.USER_UPDATE)
+  @Permissions(PERMISSIONS.USER_MANAGE)
   @AuditLogAction({ action: 'UPDATE', entityName: 'users' })
   async updateAdminUser(
     @Param('userId', ParseIntPipe) userId: number,

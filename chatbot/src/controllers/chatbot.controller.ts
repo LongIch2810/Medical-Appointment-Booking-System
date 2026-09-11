@@ -9,59 +9,82 @@ import {
 } from "../services/chatbot.service.js";
 import RequestWithFileParams from "../types/RequestWithFileParams.js";
 
+const MAX_CHAT_QUESTION_LENGTH = 4_000;
+const MAX_REPORT_QUESTION_LENGTH = 2_000;
+const MAX_TOKEN_LENGTH = 16_384;
+
+function isNonEmptyString(value: unknown, maxLength: number): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.length <= maxLength
+  );
+}
+
+function parsePositiveInteger(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
 const handleChatController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<any> => {
   const { question, userId, token }: ChatInput = req.body;
-  if (!question) {
+  if (!isNonEmptyString(question, MAX_CHAT_QUESTION_LENGTH)) {
     return res
       .status(400)
-      .json({ success: false, message: "Question is required." });
+      .json({ success: false, message: "Question is invalid or too long." });
   }
-  if (!Number.isFinite(Number(userId))) {
+  const parsedUserId = parsePositiveInteger(userId);
+  if (!parsedUserId) {
     return res
       .status(400)
       .json({ success: false, message: "A valid userId is required." });
   }
-  if (!token) {
+  if (!isNonEmptyString(token, MAX_TOKEN_LENGTH)) {
     return res
       .status(400)
-      .json({ success: false, message: "Token is required." });
+      .json({ success: false, message: "A valid token is required." });
   }
-  const result = await handleChatService({ question, userId, token });
+  const result = await handleChatService({
+    question: question.trim(),
+    userId: parsedUserId,
+    token,
+  });
   return res.status(200).json({ success: true, answer: result.answer });
 };
 
 const handleCreateReportController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<any> => {
   const { question } = req.body;
-  if (!question) {
+  if (!isNonEmptyString(question, MAX_REPORT_QUESTION_LENGTH)) {
     return res
       .status(400)
-      .json({ success: false, message: "Question is required." });
+      .json({ success: false, message: "Question is invalid or too long." });
   }
 
-  const result = await handleCreateReportService({ question });
+  const result = await handleCreateReportService({ question: question.trim() });
   return res.status(200).json({ success: true, data: result });
 };
 
 const handleBuildHealthRoadMapController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<any> => {
   const { relative_id, token } = req.body;
+  const relativeId = parsePositiveInteger(relative_id);
 
-  if (!relative_id || !token) {
+  if (!relativeId || !isNonEmptyString(token, MAX_TOKEN_LENGTH)) {
     return res
       .status(400)
       .json({ success: false, message: "relative_id and token are required." });
   }
 
   const result = await handleBuildHealthRoadMapService({
-    relative_id: Number(relative_id),
+    relative_id: relativeId,
     token,
   });
 
@@ -70,11 +93,16 @@ const handleBuildHealthRoadMapController = async (
 
 const handleDiagnosisController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<any> => {
   const { text_input, relative_id, token } = req.body;
+  const relativeId = parsePositiveInteger(relative_id);
 
-  if (!text_input || !relative_id || !token) {
+  if (
+    !isNonEmptyString(text_input, MAX_CHAT_QUESTION_LENGTH) ||
+    !relativeId ||
+    !isNonEmptyString(token, MAX_TOKEN_LENGTH)
+  ) {
     return res.status(400).json({
       success: false,
       message: "text_input, relative_id and token are required.",
@@ -82,8 +110,8 @@ const handleDiagnosisController = async (
   }
 
   const result = await handleDiagnosisService({
-    text_input,
-    relative_id: Number(relative_id),
+    text_input: text_input.trim(),
+    relative_id: relativeId,
     token,
   });
 
@@ -92,7 +120,7 @@ const handleDiagnosisController = async (
 
 const handleSummaryMedicalRecordController = async (
   req: Request,
-  res: Response
+  res: Response,
 ): Promise<any> => {
   const fileParams = (req as RequestWithFileParams).fileParams;
   const answer = await handleSummaryMedicalRecordService(fileParams);

@@ -7,7 +7,7 @@ export class GrantChatbotReadonly1779638820330 implements MigrationInterface {
               DO $$
               BEGIN
                   IF NOT EXISTS(SELECT 1 FROM pg_roles WHERE rolname = 'chatbot_readonly') THEN
-                      CREATE USER chatbot_readonly WITH PASSWORD '123456';
+                      CREATE USER chatbot_readonly;
                   END IF;
               END
               $$;

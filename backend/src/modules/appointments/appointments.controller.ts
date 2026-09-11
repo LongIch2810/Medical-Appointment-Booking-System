@@ -24,6 +24,7 @@ import { BodyUpdateAppointmentStatusDto } from './dto/request/bodyUpdateAppointm
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequestPaylaod } from 'src/shared/types/global.type';
 
 @ApiTags('appointments')
 @ApiCookieAuth()
@@ -136,9 +137,16 @@ export class AppointmentsController {
   @Permissions(PERMISSIONS.APPOINTMENT_UPDATE_STATUS)
   @AuditLogAction({ action: 'UPDATE', entityName: 'appointments.status' })
   async updateAppointmentStatus(
+    @Request() req,
     @Param('appointmentId', ParseIntPipe) appointmentId: number,
     @Body() body: BodyUpdateAppointmentStatusDto,
   ) {
-    return this.appointmentsService.updateStatus(appointmentId, body.status);
+    const { userId, roles } = req.user as RequestPaylaod;
+    return this.appointmentsService.updateStatus(
+      appointmentId,
+      body.status,
+      userId,
+      roles,
+    );
   }
 }

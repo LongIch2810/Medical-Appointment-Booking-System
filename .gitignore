@@ -50,8 +50,14 @@ coverage
 # Temp
 .temp
 .tmp
+chatbot/tmp/
 .agents
 .playwright-mcp/*
+
+# Playwright E2E (frontend/playwright.config.ts) — output đặt NGOÀI
+# frontend/ có chủ đích, để Vite dev server (chạy trong container Docker,
+# bind-mount toàn bộ frontend/) không watch/serve nhầm các file này.
+.playwright-output/
 
 # Runtime data
 pids

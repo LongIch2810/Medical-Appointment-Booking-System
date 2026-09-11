@@ -1,21 +1,35 @@
 import { ErrorRequestHandler } from "express";
-import axios from "axios";
+import { normalizeChatbotError } from "../utils/retry.js";
 
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  if (
-    axios.isAxiosError &&
-    axios.isAxiosError(err) &&
-    (err as any).response?.status === 401
-  ) {
-    res.status(401).json({ SC: 401, err: "Unauthorized" });
+  const uploadErrorCode =
+    err && typeof err === "object" && "code" in err
+      ? String((err as { code?: unknown }).code ?? "")
+      : "";
+  if (uploadErrorCode.startsWith("LIMIT_")) {
+    const status =
+      uploadErrorCode === "LIMIT_FILE_SIZE" ||
+      uploadErrorCode === "LIMIT_FILE_COUNT"
+        ? 413
+        : 400;
+    res.status(status).json({
+      SC: status,
+      code: uploadErrorCode,
+      err: "Upload does not satisfy the file limits.",
+    });
     return;
   }
 
-  const status = err?.status || err?.statusCode || 500;
-  const message = err?.message || "Internal Server Error";
-  const details = err?.details ?? null;
+  const normalized = normalizeChatbotError(err);
+  const isServerError = normalized.status >= 500;
 
-  res.status(status).json({ SC: status, err: message, details });
+  res.status(normalized.status).json({
+    SC: normalized.status,
+    code: normalized.code,
+    err: isServerError
+      ? "Chatbot service could not process the request."
+      : normalized.message,
+  });
 };
 
 export default errorHandler;

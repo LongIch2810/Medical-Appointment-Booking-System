@@ -1,6 +1,7 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import adminQaSqlGraph from "../qa_sql/admin_qa_sql.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 export const AdminQaSqlTool = tool(
   async ({ question }: { question: string }) => {
@@ -10,8 +11,8 @@ export const AdminQaSqlTool = tool(
       });
       return result.result;
     } catch (error: any) {
-      console.error("Lỗi khi chạy AdminQaSqlTool:", error);
-      return `Lỗi hệ thống: ${error.message}`;
+      logSafeError("AdminQaSqlTool failed", error);
+      return "Lỗi hệ thống khi phân tích báo cáo.";
     }
   },
   {
@@ -29,8 +30,8 @@ Ví dụ:
       question: z
         .string()
         .describe(
-          "Câu hỏi của người dùng bằng tiếng Việt, ví dụ: 'Thống kê số lượng bác sĩ theo độ tuổi.'"
+          "Câu hỏi của người dùng bằng tiếng Việt, ví dụ: 'Thống kê số lượng bác sĩ theo độ tuổi.'",
         ),
     }),
-  }
+  },
 );

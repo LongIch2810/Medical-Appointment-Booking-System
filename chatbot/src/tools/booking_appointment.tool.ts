@@ -2,8 +2,136 @@ import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import bookingGraph from "../langgraph/booking.graph.js";
+import { formatBookingFailure } from "../utils/bookingFailureMessage.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 dotenv.config();
+
+/**
+ * Định dạng kết quả trả về của bookingGraph thành chuỗi văn bản cuối cùng
+ * gửi cho người dùng. Tách riêng khỏi tool() (thay vì viết trực tiếp trong
+ * callback) để có thể unit test toàn bộ cây nhánh (ambiguous/lookup-error/
+ * missing-field/booking_error/success) mà không cần chạy graph LLM thật —
+ * cùng pattern với formatBookingFailure() trong bookingFailureMessage.ts.
+ */
+export function formatBookingResult(result: any): string {
+  if (!result) return "Không thể xử lý yêu cầu đặt lịch.";
+
+  if (result.ambiguous_relatives === true && Array.isArray(result.relatives)) {
+    const relativeNames = result.relatives
+      .map((r: any) => `${r.fullname} - ${r.dob}`)
+      .join(", ");
+    return `Tôi tìm thấy nhiều người thân phù hợp: ${relativeNames}. Bạn vui lòng chỉ định rõ bạn muốn đặt lịch cho ai?`;
+  }
+
+  // Lỗi tra cứu (API người thân / API chuyên khoa) khiến thông tin không
+  // resolve được — phải báo là lỗi hệ thống, không phải "thiếu thông tin",
+  // vì người dùng thực tế đã cung cấp đủ.
+  if (result.relative_lookup_error || result.specialty_resolve_error) {
+    const parts: string[] = [];
+    if (result.relative_lookup_error) parts.push("tra cứu người thân");
+    if (result.specialty_resolve_error) parts.push("tra cứu chuyên khoa");
+    return `Hệ thống đang gặp lỗi khi ${parts.join(" và ")}. Bạn vui lòng thử lại sau ít phút.`;
+  }
+
+  if (Array.isArray(result.missing) && result.missing.length > 0) {
+    const fieldLabels: any = {
+      selected_relative_id: "Người được đặt khám",
+      appointment_date: "ngày khám",
+      start_time: "giờ bắt đầu khám",
+      selected_specialty_name: "Chuyên khoa đặt khám",
+      new_relative_fullname: "Họ tên người thân",
+      new_relative_dob: "Ngày sinh người thân",
+      new_relative_gender: "Giới tính người thân",
+    };
+    const readable = result.missing
+      .map((f: string) => `- ${fieldLabels[f] || f}`)
+      .join("\n");
+    return `Thiếu thông tin để đặt lịch:\n${readable}\n.`;
+  }
+
+  // booking_error: mọi trường hợp đặt lịch THẤT BẠI (chưa đăng nhập, lỗi
+  // nghiệp vụ từ backend như trùng lịch, lỗi không xác định) — tách riêng
+  // khỏi booking_result để field đó chỉ còn mang object thành công, tránh
+  // lẫn lộn kiểu dữ liệu (xem BookingState trong booking.graph.ts).
+  if (result.booking_error) {
+    return formatBookingFailure(result.booking_error);
+  }
+
+  const br = result.booking_result;
+  if (br) {
+    if (br.doctor && br.doctor_schedule) {
+      const doctorName = br?.doctor?.user?.fullname || "Không xác định";
+      const specialty = br?.doctor?.specialty?.name || "Chưa rõ chuyên khoa";
+      const date = br?.appointment_date || "Không rõ ngày";
+      const startTime = br?.doctor_schedule?.start_time || "??:??";
+      const endTime = br?.doctor_schedule?.end_time || "??:??";
+      const address = br?.doctor?.user?.address || "Chưa cập nhật địa chỉ";
+      const phone = br?.doctor?.user?.phone || "Không có số điện thoại";
+      const email = br?.doctor?.user?.email || "Không có email";
+      // br.patient là nguồn đáng tin cậy nhất (lấy từ appointment vừa
+      // tạo) — đúng cho cả trường hợp relative_id có sẵn lẫn trường hợp
+      // vừa tự tạo hồ sơ mới qua new_relative_profile.
+      const patient =
+        br?.patient?.fullname ||
+        result.relatives?.find?.(
+          (r: any) => r.id === result.selected_relative_id,
+        )?.fullname ||
+        "bệnh nhân";
+
+      const bookingMode =
+        br?.booking_mode === "ai_select"
+          ? "Đặt lịch thông minh (AI hỗ trợ)"
+          : "Thủ công";
+
+      // Mỗi dòng nội dung PHẢI bắt đầu ở cột 0 (không thụt lề) — theo
+      // chuẩn CommonMark, một dòng thụt lề từ 4 dấu cách trở lên bị hiểu
+      // là code block (ReactMarkdown render nền tối, font monospace,
+      // không wrap chữ), khiến khối text này từng bị vỡ giao diện dù
+      // CSS phía frontend hoàn toàn đúng. 2 dấu cách cuối mỗi dòng field
+      // là cú pháp Markdown ép xuống dòng trong CÙNG một đoạn văn — thiếu
+      // nó, các dòng liền kề (không cách nhau dòng trống) sẽ bị gộp lại
+      // thành một câu duy nhất.
+      const line = (text: string) => `${text}  `; // 2 trailing space = <br> Markdown
+      return [
+        "ĐẶT LỊCH THÀNH CÔNG!",
+        "",
+        line(`Người khám: ${patient}`),
+        line(`Bác sĩ: ${doctorName}`),
+        line(`Chuyên khoa: ${specialty}`),
+        line(`Ngày khám: ${date}`),
+        line(`Thời gian: ${startTime} - ${endTime}`),
+        line(`Địa chỉ khám: ${address}`),
+        line(`Liên hệ: ${phone}`),
+        `Email: ${email}`,
+        "",
+        `Hình thức đặt lịch: ${bookingMode}`,
+        "",
+        "---",
+        "",
+        line("Cảm ơn bạn đã tin tưởng LifeHealth!"),
+        "Chúc bạn và gia đình nhiều sức khỏe.",
+      ].join("\n");
+    }
+
+    // br tồn tại nhưng không đúng shape mong đợi (thiếu doctor/doctor_schedule)
+    // — tránh rơi lặng lẽ vào fallback chung chung mất hết ngữ cảnh.
+    console.warn("booking_result không đúng định dạng mong đợi");
+    return "Đặt lịch có thể đã được ghi nhận nhưng không thể hiển thị chi tiết. Vui lòng kiểm tra lại trong lịch sử đặt lịch của bạn.";
+  }
+
+  // Fallback phòng hờ: về lý thuyết mọi trường hợp relative_not_found_label
+  // đều đã được checker_node dẫn qua nhánh missing (hỏi thêm fullname/dob/
+  // giới tính) hoặc qua booking_result (đặt lịch thành công với hồ sơ mới
+  // tạo) ở trên rồi, nên nhánh này gần như không bao giờ chạy tới trong
+  // thực tế — giữ lại chỉ để không im lặng rơi vào lỗi chung chung nếu
+  // logic phía trên có thay đổi ngoài dự kiến trong tương lai.
+  if (result.relative_not_found_label) {
+    return `Không tìm thấy hồ sơ "${result.relative_not_found_label}" trong danh sách người thân của bạn. Bạn vui lòng cho tôi biết thêm họ tên, ngày sinh và giới tính của người này, hoặc cho tôi biết muốn đặt lịch cho ai khác.`;
+  }
+
+  return "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại sau.";
+}
 
 export const bookingAppointmentTool = tool(
   async ({ full_text_input }, runManager) => {
@@ -17,80 +145,9 @@ export const bookingAppointmentTool = tool(
         token,
       });
 
-      console.log("🧩 bookingGraph result:", JSON.stringify(result, null, 2));
-
-      if (!result) return "Không thể xử lý yêu cầu đặt lịch.";
-
-      if (
-        result.ambiguous_relatives === true &&
-        Array.isArray(result.relatives)
-      ) {
-        const relativeNames = result.relatives
-          .map((r) => `${r.fullname} - ${r.dob}`)
-          .join(", ");
-        return `Tôi tìm thấy nhiều người thân phù hợp: ${relativeNames}. Bạn vui lòng chỉ định rõ bạn muốn đặt lịch cho ai?`;
-      }
-
-      if (Array.isArray(result.missing) && result.missing.length > 0) {
-        const fieldLabels: any = {
-          selected_relative_id: "Người được đặt khám",
-          appointment_date: "ngày khám",
-          start_time: "giờ bắt đầu khám",
-          end_time: "giờ kết thúc khám",
-          selected_specialty_name: "Chuyên khoa đặt khám",
-        };
-        const readable = result.missing
-          .map((f) => `- ${fieldLabels[f] || f}`)
-          .join("\n");
-        return `Thiếu thông tin để đặt lịch:\n${readable}\n.`;
-      }
-
-      const br = result.booking_result;
-      if (br) {
-        if (typeof br === "string") return br;
-        if (br && br.doctor && br.doctor_schedule) {
-          const doctorName = br?.doctor?.user?.fullname || "Không xác định";
-          const specialty =
-            br?.doctor?.specialty?.name || "Chưa rõ chuyên khoa";
-          const date = br?.appointment_date || "Không rõ ngày";
-          const startTime = br?.doctor_schedule?.start_time || "??:??";
-          const endTime = br?.doctor_schedule?.end_time || "??:??";
-          const address = br?.doctor?.user?.address || "Chưa cập nhật địa chỉ";
-          const phone = br?.doctor?.user?.phone || "Không có số điện thoại";
-          const email = br?.doctor?.user?.email || "Không có email";
-          const patient =
-            result.relatives?.find?.(
-              (r) => r.id === result.selected_relative_id
-            )?.fullname || "bệnh nhân";
-
-          const bookingMode =
-            br?.booking_mode === "ai_select"
-              ? "Đặt lịch thông minh (AI hỗ trợ)"
-              : "Thủ công";
-
-          return `
-                  ĐẶT LỊCH THÀNH CÔNG!
-
-                  Người khám: ${patient}  
-                  Bác sĩ: ${doctorName}  
-                  Chuyên khoa: ${specialty}  
-                  Ngày khám: ${date}  
-                  Thời gian: ${startTime} - ${endTime}  
-                  Địa chỉ khám: ${address}  
-                  Liên hệ: ${phone}  
-                  Email: ${email}  
-
-                  Hình thức đặt lịch: ${bookingMode}    
-                  ---------------------------------
-
-                  Cảm ơn bạn đã tin tưởng LifeHealth!   
-                  Chúc bạn và gia đình nhiều sức khỏe.                 .
-                `;
-        }
-      }
-      return "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại sau.";
+      return formatBookingResult(result);
     } catch (error) {
-      console.error("Lỗi trong bookingAppointmentTool:", error);
+      logSafeError("bookingAppointmentTool failed", error);
       return "Lỗi hệ thống khi đặt lịch. Vui lòng thử lại.";
     }
   },
@@ -139,8 +196,8 @@ Tool sẽ trả về một CHUỖI. Bạn (LLM) chỉ cần **LẶP LẠI Y HỆ
         .string()
         .describe(
           "Một chuỗi vĂN bẢN đầy đủ chứa tất cả thông tin đặt lịch " +
-            "mà bạn đã thu thập được từ toàn bộ lịch sử hội thoại. "
+            "mà bạn đã thu thập được từ toàn bộ lịch sử hội thoại. ",
         ),
     }),
-  }
+  },
 );

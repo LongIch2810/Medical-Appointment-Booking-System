@@ -1,12 +1,17 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import setupQASql from "../qa_sql/qa_sql.js";
+import qaSqlGraph from "../qa_sql/qa_sql.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 export const qaSqlTool = tool(
   async ({ question }) => {
-    const qaSqlGraph = await setupQASql();
-    const finalState = await qaSqlGraph.invoke({ question });
-    return finalState.answer;
+    try {
+      const finalState = await qaSqlGraph.invoke({ question });
+      return finalState.answer;
+    } catch (error: any) {
+      logSafeError("qaSqlTool failed", error);
+      return "Xin lỗi, hiện không thể truy vấn thông tin này. Vui lòng thử lại sau.";
+    }
   },
   {
     name: "qa_sql_tool",
@@ -28,5 +33,5 @@ Phản hồi phải giữ nguyên **ngôn ngữ gốc của câu hỏi người 
     schema: z.object({
       question: z.string(),
     }),
-  }
+  },
 );
