@@ -2,27 +2,28 @@ import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import axios from "axios";
+import { withRetry } from "../utils/retry.js";
 
 dotenv.config();
 
 const healthProfileSchema = z.object({
   fullname: z.string(),
   gender: z.string(),
-  weight: z.number(),
-  height: z.number(),
-  blood_type: z.string(),
-  medical_history: z.string(),
-  allergies: z.string(),
-  heart_rate: z.string(),
-  blood_pressure: z.string(),
-  glucose_level: z.string(),
-  cholesterol_level: z.string(),
-  medications: z.string(),
-  vaccinations: z.string(),
+  weight: z.number().nullable(),
+  height: z.number().nullable(),
+  blood_type: z.string().nullable(),
+  medical_history: z.string().nullable(),
+  allergies: z.string().nullable(),
+  heart_rate: z.number().nullable(),
+  blood_pressure: z.string().nullable(),
+  glucose_level: z.number().nullable(),
+  cholesterol_level: z.number().nullable(),
+  medications: z.string().nullable(),
+  vaccinations: z.string().nullable(),
   smoking: z.string(),
   alcohol_consumption: z.string(),
-  exercise_frequency: z.string(),
-  last_checkup_date: z.string(),
+  exercise_frequency: z.string().nullable(),
+  last_checkup_date: z.string().nullable(),
 });
 
 export type HealthProfile = z.infer<typeof healthProfileSchema>;
@@ -34,18 +35,32 @@ export const GetHealthProfileTool = tool(
         return "Lỗi: Người dùng chưa đăng nhập. Không thể lấy hồ sơ sức khỏe của bạn.";
       }
 
-      const response = await axios.get(
-        `${process.env.BACKEND_URL}/api/v1/health-profiles/info/${relative_id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      const response = await withRetry(
+        () => axios.get(
+          `${process.env.BACKEND_URL}/api/v1/health-profiles/${relative_id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        }
+        ),
+        { operation: "health_profile_get" },
       );
       const healthProfile = response.data?.data;
+
+      if (!healthProfile) {
+        return "Lỗi từ API khi lấy hồ sơ sức khỏe: Dữ liệu hồ sơ trống.";
+      }
+
+      const patient = healthProfile.patient;
       const formattedHealthProfile: HealthProfile = {
-        fullname: healthProfile.fullname,
-        gender: healthProfile.gender ? "Nam" : "Nữ",
+        fullname: patient?.fullname || "Chưa cập nhật",
+        gender:
+          patient?.gender === true
+            ? "Nam"
+            : patient?.gender === false
+              ? "Nữ"
+              : "Chưa cập nhật",
         weight: healthProfile.weight,
         height: healthProfile.height,
         blood_type: healthProfile.blood_type,
@@ -66,7 +81,17 @@ export const GetHealthProfileTool = tool(
       return formattedHealthProfile;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        const errMsg = error.response?.data?.message || "Không thể lấy hồ sơ.";
+        const responseData = error.response?.data as
+          | {
+              message?: string;
+              error?: { details?: string | string[] };
+            }
+          | undefined;
+        const details = responseData?.error?.details;
+        const errMsg =
+          responseData?.message ||
+          (typeof details === "string" ? details : details?.[0]) ||
+          "Không thể lấy hồ sơ.";
         return `Lỗi từ API khi lấy hồ sơ sức khỏe: ${errMsg}`;
       }
       return "Lỗi không xác định khi lấy hồ sơ sức khỏe.";

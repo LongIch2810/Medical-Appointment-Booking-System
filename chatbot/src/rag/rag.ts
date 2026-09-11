@@ -6,10 +6,10 @@ import { pull } from "langchain/hub";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { Document } from "@langchain/core/documents";
 import initVectorDB from "../configs/vectordb.js";
+import { withRetry } from "../utils/retry.js";
 
 async function setupRagGraph() {
   const llm = getChatModel({
-    profile: "fast",
     temperature: 0,
   });
 
@@ -23,10 +23,16 @@ async function setupRagGraph() {
     answer: Annotation<string>,
   });
   const db = await initVectorDB();
-  const prompt = await pull<ChatPromptTemplate>("rlm/rag-prompt");
+  const prompt = await withRetry(
+    () => pull<ChatPromptTemplate>("rlm/rag-prompt"),
+    { operation: "rag_prompt_pull" },
+  );
 
   const retrieve = async (state: typeof InputStateAnnotation.State) => {
-    const retrievedDocs = await db.similaritySearch(state.question, 3);
+    const retrievedDocs = await withRetry(
+      () => db.similaritySearch(state.question, 3),
+      { operation: "qdrant_similarity_search" },
+    );
     return { context: retrievedDocs };
   };
 
