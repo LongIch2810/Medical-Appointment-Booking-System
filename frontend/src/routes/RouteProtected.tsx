@@ -1,23 +1,13 @@
 import { useUserStore } from "@/store/useUserStore";
 import { ROLE_NAME } from "@/utils/constants";
 import { useProfile } from "@/hooks/useProfile";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
+import RouteLoadingFallback from "@/components/common/RouteLoadingFallback";
 
 const RouteProtected = () => {
   const { userInfo, setUserInfo } = useUserStore();
-  const [hasHydrated, setHasHydrated] = useState(
-    useUserStore.persist.hasHydrated(),
-  );
-  const { data, isLoading, isFetching } = useProfile(hasHydrated);
-
-  useEffect(() => {
-    const unsubscribe = useUserStore.persist.onFinishHydration(() => {
-      setHasHydrated(true);
-    });
-
-    return unsubscribe;
-  }, []);
+  const { data, isLoading, isFetching } = useProfile();
 
   useEffect(() => {
     if (data?.data) {
@@ -27,8 +17,8 @@ const RouteProtected = () => {
 
   const currentUser = data?.data ?? userInfo;
 
-  if (!hasHydrated || isLoading || (isFetching && !currentUser)) {
-    return null;
+  if (isLoading || (isFetching && !currentUser)) {
+    return <RouteLoadingFallback />;
   }
 
   if (!currentUser) {

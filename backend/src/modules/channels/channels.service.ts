@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -27,12 +28,23 @@ export class ChannelsService {
     private dataSource: DataSource,
   ) {}
 
-  async createChannel(member_ids: number[]) {
+  async createChannel(member_ids: number[], requesterId: number) {
     const memberIds = [...new Set(member_ids.map(Number))].filter(Boolean);
     if (memberIds.length < 2) {
       throw new BadRequestException(
         'Kênh trò chuyện cần ít nhất 2 người tham gia.',
       );
+    }
+    if (!memberIds.includes(requesterId)) {
+      throw new ForbiddenException(
+        'Bạn phải là một trong những thành viên của kênh trò chuyện.',
+      );
+    }
+    const existenceChecks = await Promise.all(
+      memberIds.map((id) => this.usersService.isUserExists(id)),
+    );
+    if (existenceChecks.some((exists) => !exists)) {
+      throw new BadRequestException('Một hoặc nhiều người dùng không tồn tại.');
     }
 
     try {
@@ -76,88 +88,80 @@ export class ChannelsService {
     userId: number,
     objectFilters: BodyFilterChannelsDto,
   ) {
-    try {
-      const { search, arrange } = objectFilters;
-      let { page, limit } = objectFilters;
-      const isUserExists = await this.usersService.isUserExists(userId);
-      if (!isUserExists) {
-        throw new BadRequestException('Người dùng không tồn tại');
-      }
-      page = Math.max(page, 1);
-      limit = Math.max(limit, 1);
-      const skip = (page - 1) * limit;
-      const arrangeOrder = (arrange ?? 'desc').toUpperCase() as 'ASC' | 'DESC';
-
-      const query = this.baseChannelsQuery(userId)
-        .where((qb) => {
-          const subQuery = qb
-            .subQuery()
-            .select('cm.channel_id')
-            .from('channel_members', 'cm')
-            .where('cm.participant_id = :userId');
-
-          return `channel.id IN ${subQuery.getQuery()}`;
-        })
-        .setParameter('userId', userId)
-        .orderBy('last_message_created_at', arrangeOrder, 'NULLS LAST')
-        .addOrderBy('channel.created_at', arrangeOrder)
-        .skip(skip)
-        .take(limit)
-        .distinct(true);
-
-      if (search) {
-        query.andWhere((qb) => {
-          const searchSubQuery = qb
-            .subQuery()
-            .select('1')
-            .from('channel_members', 'cm_search')
-            .innerJoin(
-              'users',
-              'u_search',
-              'u_search.id = cm_search.participant_id',
-            )
-            .where('cm_search.channel_id = channel.id')
-            .andWhere('u_search.id != :userId')
-            .andWhere(
-              '(u_search.username ILIKE :search OR u_search.fullname ILIKE :search)',
-            )
-            .getQuery();
-
-          return `EXISTS ${searchSubQuery}`;
-        });
-        query.setParameter('search', `%${search}%`);
-      }
-
-      const { entities, raw } = await query.getRawAndEntities();
-      const total = await this.buildTotalChannelsQuery(
-        userId,
-        search,
-      ).getCount();
-
-      const enriched = entities.map((channel) => {
-        const row = raw.find(
-          (r: Record<string, unknown>) =>
-            Number(r.channel_id ?? r['channel_id']) === channel.id,
-        );
-        return Object.assign(channel, {
-          last_message_content: row?.last_message_content ?? null,
-          last_message_created_at: row?.last_message_created_at ?? null,
-          last_message_sender_id: row?.last_message_sender_id ?? null,
-          unread_count: Number(row?.unread_count ?? 0),
-        });
-      });
-
-      return new PaginationResultDto(
-        'channels',
-        ChannelsMapper.toChannelResponseDtoList(enriched),
-        total,
-        page,
-        limit,
-      );
-    } catch (error) {
-      console.log(error);
-      throw error;
+    const { search, arrange } = objectFilters;
+    let { page, limit } = objectFilters;
+    const isUserExists = await this.usersService.isUserExists(userId);
+    if (!isUserExists) {
+      throw new BadRequestException('Người dùng không tồn tại');
     }
+    page = Math.max(page, 1);
+    limit = Math.max(limit, 1);
+    const skip = (page - 1) * limit;
+    const arrangeOrder = (arrange ?? 'desc').toUpperCase() as 'ASC' | 'DESC';
+
+    const query = this.baseChannelsQuery(userId)
+      .where((qb) => {
+        const subQuery = qb
+          .subQuery()
+          .select('cm.channel_id')
+          .from('channel_members', 'cm')
+          .where('cm.participant_id = :userId');
+
+        return `channel.id IN ${subQuery.getQuery()}`;
+      })
+      .setParameter('userId', userId)
+      .orderBy('last_message_created_at', arrangeOrder, 'NULLS LAST')
+      .addOrderBy('channel.created_at', arrangeOrder)
+      .skip(skip)
+      .take(limit)
+      .distinct(true);
+
+    if (search) {
+      query.andWhere((qb) => {
+        const searchSubQuery = qb
+          .subQuery()
+          .select('1')
+          .from('channel_members', 'cm_search')
+          .innerJoin(
+            'users',
+            'u_search',
+            'u_search.id = cm_search.participant_id',
+          )
+          .where('cm_search.channel_id = channel.id')
+          .andWhere('u_search.id != :userId')
+          .andWhere(
+            '(u_search.username ILIKE :search OR u_search.fullname ILIKE :search)',
+          )
+          .getQuery();
+
+        return `EXISTS ${searchSubQuery}`;
+      });
+      query.setParameter('search', `%${search}%`);
+    }
+
+    const { entities, raw } = await query.getRawAndEntities();
+    const total = await this.buildTotalChannelsQuery(userId, search).getCount();
+
+    const enriched = entities.map((channel) => {
+      const row = raw.find(
+        (r: Record<string, unknown>) =>
+          Number(r.channel_id ?? r['channel_id']) === channel.id,
+      );
+      return Object.assign(channel, {
+        last_message_content: row?.last_message_content ?? null,
+        last_message_created_at: row?.last_message_created_at ?? null,
+        last_message_sender_id: row?.last_message_sender_id ?? null,
+        unread_count: Number(row?.unread_count ?? 0),
+      });
+    });
+
+    return new PaginationResultDto(
+      'channels',
+      ChannelsMapper.toChannelResponseDtoList(enriched),
+      total,
+      page,
+      limit,
+    );
   }
 
   async getChannel(channelId: number, currentUserId?: number) {
@@ -170,6 +174,18 @@ export class ChannelsService {
       'channel.id = :channelId',
       { channelId },
     );
+
+    if (currentUserId) {
+      query
+        .andWhere(
+          `EXISTS (
+            SELECT 1 FROM channel_members cm_current
+            WHERE cm_current.channel_id = channel.id
+              AND cm_current.participant_id = :currentUserId
+          )`,
+        )
+        .setParameter('currentUserId', currentUserId);
+    }
 
     const { entities, raw } = await query.getRawAndEntities();
     const channel = entities[0];

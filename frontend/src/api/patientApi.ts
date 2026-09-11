@@ -185,3 +185,10 @@ export const sendPatientMessage = async (data: SendMessagePayload) => {
   const res = await axiosInstance.post<ApiResponse<Message>>("/messages", data);
   return res.data;
 };
+
+export const markPatientChannelRead = async (channelId: number) => {
+  const res = await axiosInstance.patch<ApiResponse<{ updated: number }>>(
+    `/messages/${channelId}/read`,
+  );
+  return res.data;
+};

@@ -15,8 +15,8 @@ export function EmptyState({
         <div className="rounded-full bg-primary/10 p-4 text-primary">
           <Inbox className="size-6" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <p className="max-w-md text-sm text-slate-500">{description}</p>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+        <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">{description}</p>
       </CardContent>
     </Card>
   );

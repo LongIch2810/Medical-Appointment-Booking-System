@@ -1,17 +1,27 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Send } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 import { EmptyState } from "@/components/app/EmptyState";
 import { ErrorState } from "@/components/app/ErrorState";
 import { LoadingState } from "@/components/app/LoadingState";
 import { PageHeader } from "@/components/app/PageHeader";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import ChannelListPanel from "@/components/app/messages/ChannelListPanel";
+import ConversationPanel from "@/components/app/messages/ConversationPanel";
 import { usePersonalChannels } from "@/hooks/useChannels";
-import { useCreateMessage, useMessagesByChannel } from "@/hooks/useMessages";
+import {
+  messageQueryKeys,
+  useCreateMessage,
+  useMarkChannelRead,
+  useMessagesByChannel,
+} from "@/hooks/useMessages";
+import { useSocket } from "@/hooks/useSocket";
 import { useAuthStore } from "@/store/useAuthStore";
-import type { Channel } from "@/types/interface/channel.interface";
+import { cn } from "@/lib/utils";
+import type { Message } from "@/types/interface/message.interface";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
+import type { ApiResponse } from "@/types/interface/api.interface";
+import type { MessageListResponse } from "@/api/messageApi";
+
+type MessagesCache = InfiniteData<ApiResponse<MessageListResponse>>;
 
 export function MessagesPage() {
   const [page] = useState(1);
@@ -20,24 +30,48 @@ export function MessagesPage() {
   );
   const [messageText, setMessageText] = useState("");
   const currentUser = useAuthStore((s) => s.currentUser);
+  const queryClient = useQueryClient();
+  const socket = useSocket();
+  const markedReadChannelRef = useRef<number>(0);
 
   const { data: channelsData, isLoading, isError, refetch } =
     usePersonalChannels({ page, limit: 50 });
 
-  const { data: messagesData, isLoading: messagesLoading } =
-    useMessagesByChannel(selectedChannelId ?? 0);
+  const {
+    data: messagesData,
+    isLoading: messagesLoading,
+    isError: messagesError,
+    refetch: refetchMessages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMessagesByChannel(selectedChannelId ?? 0);
 
-  const createMessage = useCreateMessage();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const createMessage = useCreateMessage(selectedChannelId ?? 0);
+  const markChannelRead = useMarkChannelRead(selectedChannelId ?? 0);
 
   const channels = useMemo(
     () => channelsData?.data?.channels ?? [],
     [channelsData],
   );
   const messages = useMemo(
-    () => messagesData?.data?.messages ?? [],
+    () =>
+      (messagesData?.pages.flatMap((p) => p.data.messages) ?? [])
+        .slice()
+        .reverse(),
     [messagesData],
   );
+  const selectedChannel = useMemo(
+    () =>
+      channels.find((channel) => channel.channel_id === selectedChannelId) ??
+      null,
+    [channels, selectedChannelId],
+  );
+  const selectedChannelName = useMemo(() => {
+    if (!selectedChannel) return null;
+    const others = selectedChannel.participants.filter((p) => p.id !== 0);
+    return others.map((p) => p.fullname).join(", ") || null;
+  }, [selectedChannel]);
 
   useEffect(() => {
     if (channels.length > 0 && !selectedChannelId) {
@@ -45,24 +79,105 @@ export function MessagesPage() {
     }
   }, [channels, selectedChannelId]);
 
+  // Đánh dấu đã đọc mỗi khi mở một hội thoại.
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    if (!selectedChannelId || markedReadChannelRef.current === selectedChannelId) {
+      return;
+    }
+    markedReadChannelRef.current = selectedChannelId;
+    markChannelRead.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedChannelId]);
 
-  const handleSend = () => {
+  // Realtime: tham gia room hội thoại đang mở, nhận tin mới, dedupe theo id,
+  // dọn dẹp khi đổi hội thoại/unmount.
+  useEffect(() => {
+    if (!socket || !selectedChannelId) return;
+
+    const joinChannel = () =>
+      socket.emit("channel:join", { channel_id: selectedChannelId });
+
+    const handleReceiveMessage = (
+      data: Message & { channel?: { id: number } },
+    ) => {
+      if (Number(data.channel?.id) !== selectedChannelId) return;
+
+      queryClient.setQueryData<MessagesCache>(
+        messageQueryKeys.list(selectedChannelId),
+        (old) => {
+          if (!old) return old;
+          const exists = old.pages.some((page) =>
+            page.data.messages.some((message) => message.id === data.id),
+          );
+          if (exists) return old;
+
+          const pages = [...old.pages];
+          const lastIndex = pages.length - 1;
+          pages[lastIndex] = {
+            ...pages[lastIndex],
+            data: {
+              ...pages[lastIndex].data,
+              messages: [...pages[lastIndex].data.messages, data],
+            },
+          };
+          return { ...old, pages };
+        },
+      );
+      queryClient.invalidateQueries({ queryKey: ["channels"] });
+    };
+
+    socket.on("connect", joinChannel);
+    socket.on("receive:message", handleReceiveMessage);
+    if (socket.connected) joinChannel();
+
+    return () => {
+      socket.off("connect", joinChannel);
+      socket.off("receive:message", handleReceiveMessage);
+      if (socket.connected) {
+        socket.emit("channel:leave", { channel_id: selectedChannelId });
+      }
+    };
+  }, [socket, selectedChannelId, queryClient]);
+
+  const sendMessage = (content: string) => {
+    if (!content || !selectedChannelId || !currentUser) return;
+    createMessage.mutate({
+      message_type: "regular",
+      content,
+      sender_id: currentUser.id,
+      channel_id: selectedChannelId,
+    });
+  };
+
+  const handleSend = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     const trimmed = messageText.trim();
-    if (!trimmed || !selectedChannelId || createMessage.isPending || !currentUser) return;
-    createMessage
-      .mutateAsync({
-        message_type: "TEXT",
-        content: trimmed,
-        sender_id: currentUser.id,
-        channel_id: selectedChannelId,
-      })
-      .then(() => {
-        setMessageText("");
-      })
-      .catch(() => {});
+    if (!trimmed || !selectedChannelId || createMessage.isPending || !currentUser) {
+      return;
+    }
+    sendMessage(trimmed);
+    setMessageText("");
+  };
+
+  const handleRetryMessage = (message: Message) => {
+    if (!selectedChannelId || !message.content) return;
+    queryClient.setQueryData<MessagesCache>(
+      messageQueryKeys.list(selectedChannelId),
+      (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: {
+              ...page.data,
+              messages: page.data.messages.filter((m) => m.id !== message.id),
+            },
+          })),
+        };
+      },
+    );
+    sendMessage(message.content);
   };
 
   if (isLoading) {
@@ -107,135 +222,38 @@ export function MessagesPage() {
     );
   }
 
+  const mobileDetailOpen = Boolean(selectedChannelId);
+
   return (
-    <div className="flex h-[calc(100vh-8rem)] gap-4">
-      <div className="flex w-80 shrink-0 flex-col rounded-lg border border-[#d9d9dd] bg-white">
-        <div className="border-b border-[#d9d9dd] px-4 py-3">
-          <h2 className="text-sm font-semibold text-[#212121]">Hội thoại</h2>
-        </div>
-        <div className="flex-1 overflow-y-auto">
-          {channels.map((channel: Channel) => {
-            const otherParticipants = channel.participants.filter(
-              (p) => p.id !== 0,
-            );
-            const displayName =
-              otherParticipants.map((p) => p.fullname).join(", ") ||
-              `#${channel.channel_id}`;
-            const lastMsg = channel.last_message;
-
-            return (
-              <button
-                key={channel.channel_id}
-                type="button"
-                onClick={() => setSelectedChannelId(channel.channel_id)}
-                className={`w-full border-b border-[#f0f0f0] px-4 py-3 text-left transition-colors hover:bg-[#f7f6f2] ${
-                  selectedChannelId === channel.channel_id
-                    ? "bg-[#f7f6f2]"
-                    : ""
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="truncate text-sm font-medium text-[#212121]">
-                    {displayName}
-                  </span>
-                  {channel.unread_count > 0 ? (
-                    <Badge variant="danger" className="ml-2 shrink-0">
-                      {channel.unread_count}
-                    </Badge>
-                  ) : null}
-                </div>
-                {lastMsg ? (
-                  <p className="mt-1 truncate text-xs text-[#75758a]">
-                    {lastMsg.content}
-                  </p>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col rounded-lg border border-[#d9d9dd] bg-white">
-        {selectedChannelId ? (
-          <>
-            <div className="flex-1 overflow-y-auto p-4">
-              {messagesLoading ? (
-                <LoadingState />
-              ) : messages.length === 0 ? (
-                <div className="flex h-full items-center justify-center">
-                  <p className="text-sm text-[#75758a]">
-                    Chưa có tin nhắn nào.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {messages.map((msg) => {
-                    const isMine = msg.sender.id === currentUser?.id;
-                    return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isMine ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                            isMine
-                              ? "bg-[#212121] text-white"
-                              : "bg-[#f7f6f2] text-[#212121]"
-                          }`}
-                        >
-                          {!isMine ? (
-                            <p className="mb-1 text-[10px] font-medium text-[#75758a]">
-                              {msg.sender.fullname}
-                            </p>
-                          ) : null}
-                          <p className="whitespace-pre-wrap break-words">
-                            {msg.content}
-                          </p>
-                          <p
-                            className={`mt-1 text-[10px] ${
-                              isMine ? "text-[#b0b0b0]" : "text-[#75758a]"
-                            }`}
-                          >
-                            {msg.created_at}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  <div ref={messagesEndRef} />
-                </div>
-              )}
-            </div>
-            <div className="border-t border-[#d9d9dd] p-3">
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleSend();
-                }}
-                className="flex gap-2"
-              >
-                <Input
-                  placeholder="Nhập tin nhắn..."
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={!messageText.trim() || createMessage.isPending}
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
-            </div>
-          </>
-        ) : (
-          <div className="flex h-full items-center justify-center">
-            <p className="text-sm text-[#75758a]">Chọn một hội thoại</p>
-          </div>
+    <div className="flex h-[calc(100vh-10rem)] flex-col gap-4 lg:flex-row">
+      <ChannelListPanel
+        className={cn(
+          "w-full lg:w-80 lg:shrink-0",
+          mobileDetailOpen ? "hidden lg:flex" : "flex",
         )}
-      </div>
+        channels={channels}
+        activeChannelId={selectedChannelId}
+        onSelect={setSelectedChannelId}
+      />
+      <ConversationPanel
+        className={cn("flex-1", mobileDetailOpen ? "flex" : "hidden lg:flex")}
+        channelId={selectedChannelId}
+        channelName={selectedChannelName}
+        currentUserId={currentUser?.id}
+        messages={messages}
+        isLoadingMessages={messagesLoading}
+        isErrorMessages={messagesError}
+        onRetryMessages={() => refetchMessages()}
+        hasNextPage={hasNextPage}
+        isFetchingNextPage={isFetchingNextPage}
+        onLoadOlder={() => fetchNextPage()}
+        messageText={messageText}
+        onMessageTextChange={setMessageText}
+        onSubmit={handleSend}
+        isSending={createMessage.isPending}
+        onRetryMessage={handleRetryMessage}
+        onBack={() => setSelectedChannelId(null)}
+      />
     </div>
   );
 }

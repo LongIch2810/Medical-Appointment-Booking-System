@@ -70,18 +70,21 @@ export function FormDialog({
             <DialogDescription>{description}</DialogDescription>
           ) : null}
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 max-h-[55vh] overflow-y-auto pr-1">{children}</div>
-          <div className="flex justify-end gap-2 pt-2">
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 gap-4 pt-2">
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1.5 scrollbar-soft flex flex-col gap-3.5">
+            {children}
+          </div>
+          <div className="flex shrink-0 justify-end gap-2.5 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
+              className="rounded-xl font-semibold"
             >
               {cancelLabel}
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold shadow-xs">
               {isSubmitting ? "Đang lưu..." : submitLabel}
             </Button>
           </div>
@@ -110,13 +113,14 @@ export function FormField({
     <div className="flex flex-col gap-1.5">
       <label
         htmlFor={htmlFor}
-        className="text-xs font-medium text-[#212121]"
+        className="text-xs font-bold text-slate-700 dark:text-slate-300"
       >
         {label}
         {required ? <span className="ml-0.5 text-rose-500">*</span> : null}
       </label>
       {children}
-      {hint ? <span className="text-[11px] text-[#75758a]">{hint}</span> : null}
+      {hint ? <span className="text-[11px] text-slate-500 dark:text-slate-400">{hint}</span> : null}
     </div>
   );
 }
+

@@ -7,7 +7,6 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { PERMISSIONS_KEY } from 'src/utils/constants';
-import { RedisCacheService } from '../../redis-cache/redis-cache.service';
 import { RolePermissionService } from 'src/modules/role-permission/role-permission.service';
 
 @Injectable()
@@ -32,10 +31,8 @@ export class PermissionsGuard implements CanActivate {
       );
     }
     const { userId, roles } = req.user;
-    console.log('req.user', req.user);
     const userPermissions: string[] =
       await this.rolePermissionService.getPermissionsByRoles(userId, roles);
-    console.log('userPermissions', userPermissions);
     const hasPermission = requiredPermissions.every((permission) =>
       userPermissions.includes(permission),
     );

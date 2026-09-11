@@ -63,7 +63,10 @@ export function InspireAndShareLoveSection() {
               <img
                 src={it.img}
                 alt={it.title}
+                width={400}
+                height={224}
                 loading="lazy"
+                decoding="async"
                 className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
 
@@ -86,3 +89,5 @@ export function InspireAndShareLoveSection() {
     </FadeInView>
   );
 }
+
+export default InspireAndShareLoveSection;

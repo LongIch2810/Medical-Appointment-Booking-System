@@ -21,7 +21,7 @@ const DOCTOR_LEVEL_OPTIONS: { value: DoctorLevel; label: string }[] = [
 ];
 
 const inputClass =
-  "flex h-10 w-full rounded-sm border border-border bg-white px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-[#9b60aa] focus-visible:ring-2 focus-visible:ring-[#9b60aa]/20";
+  "flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100";
 
 type FormState = {
   username: string;
@@ -73,7 +73,10 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
     search: "",
     arrange: "asc",
   });
-  const rawRoles = rolesQuery.data?.data?.roles ?? [];
+  const rawRoles = useMemo(
+    () => rolesQuery.data?.data?.roles ?? [],
+    [rolesQuery.data?.data?.roles],
+  );
   const roles = useMemo(() => {
     return rawRoles.filter((r) => r.role_name?.toUpperCase() !== "PATIENT");
   }, [rawRoles]);
@@ -162,25 +165,25 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
     <FormDialog
       trigger={trigger}
       title="Tạo người dùng mới"
-      description="Tạo tài khoản với vai trò tùy chỉnh"
-      submitLabel="Tạo người dùng"
+      description="Tạo tài khoản quản trị hoặc bác sĩ với vai trò tùy chỉnh theo chuẩn hệ thống"
+      submitLabel="Tạo tài khoản"
       isSubmitting={createUser.isPending}
       onSubmit={handleSubmit}
       dialogClassName="max-w-3xl"
     >
       <div className="flex flex-col gap-1">
-        <span className="text-xs font-medium text-[#212121]">
-          Thông tin tài khoản
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          1. Thông tin đăng nhập
         </span>
-        <Separator />
+        <Separator className="bg-slate-100 dark:bg-slate-800" />
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-        <FormField label="Username" htmlFor="create-username" required>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <FormField label="Tên đăng nhập (Username)" htmlFor="create-username" required>
           <Input
             id="create-username"
             value={form.username}
             onChange={(e) => update("username", e.target.value)}
-            placeholder="username"
+            placeholder="vd: doctor.an"
           />
         </FormField>
         <FormField label="Email" htmlFor="create-email" required>
@@ -189,7 +192,7 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
             type="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
-            placeholder="email@example.com"
+            placeholder="doctor.an@lifehealth.vn"
           />
         </FormField>
         <FormField label="Mật khẩu" htmlFor="create-password" required>
@@ -212,19 +215,19 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
         </FormField>
       </div>
 
-      <div className="flex flex-col gap-1 pt-1">
-        <span className="text-xs font-medium text-[#212121]">
-          Thông tin cá nhân
+      <div className="flex flex-col gap-1 pt-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          2. Thông tin cá nhân
         </span>
-        <Separator />
+        <Separator className="bg-slate-100 dark:bg-slate-800" />
       </div>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-        <FormField label="Họ tên" htmlFor="create-fullname" required>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+        <FormField label="Họ và tên" htmlFor="create-fullname" required>
           <Input
             id="create-fullname"
             value={form.fullname}
             onChange={(e) => update("fullname", e.target.value)}
-            placeholder="Nguyễn Văn A"
+            placeholder="BS. Nguyễn Văn An"
           />
         </FormField>
         <FormField label="Số điện thoại" htmlFor="create-phone">
@@ -236,26 +239,26 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
           />
         </FormField>
         <FormField label="Giới tính">
-          <div className="flex gap-4 h-10 items-center">
-            <label className="flex items-center gap-2 text-sm">
+          <div className="flex gap-5 h-10 items-center">
+            <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
               <input
                 type="radio"
                 name="create-gender"
                 value="male"
                 checked={form.gender === "male"}
                 onChange={() => update("gender", "male")}
-                className="accent-[#9b60aa]"
+                className="accent-primary"
               />
               Nam
             </label>
-            <label className="flex items-center gap-2 text-sm">
+            <label className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer">
               <input
                 type="radio"
                 name="create-gender"
                 value="female"
                 checked={form.gender === "female"}
                 onChange={() => update("gender", "female")}
-                className="accent-[#9b60aa]"
+                className="accent-primary"
               />
               Nữ
             </label>
@@ -276,36 +279,36 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
               id="create-address"
               value={form.address}
               onChange={(e) => update("address", e.target.value)}
-              placeholder="Địa chỉ"
+              placeholder="Quận 1, TP. Hồ Chí Minh"
             />
           </FormField>
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 pt-1">
-        <span className="text-xs font-medium text-[#212121]">
-          Trạng thái & Vai trò
+      <div className="flex flex-col gap-1 pt-2">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          3. Trạng thái &amp; Vai trò (RBAC)
         </span>
-        <Separator />
+        <Separator className="bg-slate-100 dark:border-slate-800" />
       </div>
       <div className="flex items-center gap-6">
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
           <input
             type="checkbox"
             checked={form.is_active}
             onChange={(e) => update("is_active", e.target.checked)}
-            className="accent-[#9b60aa]"
+            className="accent-primary size-4"
           />
-          Kích hoạt
+          Kích hoạt ngay
         </label>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
           <input
             type="checkbox"
             checked={form.is_locking}
             onChange={(e) => update("is_locking", e.target.checked)}
-            className="accent-[#9b60aa]"
+            className="accent-rose-600 size-4"
           />
-          Khóa
+          Khóa tài khoản
         </label>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -316,10 +319,10 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
               key={role.id}
               type="button"
               onClick={() => toggleRole(role.id)}
-              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-sm border px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all ${
                 selected
-                  ? "border-[#9b60aa] bg-[#9b60aa] text-white"
-                  : "border-[#d9d9dd] bg-white text-[#75758a] hover:border-[#9b60aa] hover:text-[#9b60aa]"
+                  ? "!bg-primary !text-primary-foreground !border-primary shadow-xs"
+                  : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
               }`}
             >
               {role.role_name}
@@ -328,9 +331,9 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
         })}
       </div>
       {selectedRoleNames.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1.5">
           {selectedRoleNames.map((name) => (
-            <Badge key={name} variant="outline" className="text-[10px]">
+            <Badge key={name} variant="outline" className="text-[10px] font-bold">
               {name}
             </Badge>
           ))}
@@ -339,13 +342,13 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
 
       {hasDoctorRole && (
         <>
-          <div className="flex flex-col gap-1 pt-1">
-            <span className="text-xs font-medium text-[#212121]">
-              Thông tin bác sĩ
+          <div className="flex flex-col gap-1 pt-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              4. Thông tin chuyên môn bác sĩ
             </span>
-            <Separator />
+            <Separator className="bg-slate-100 dark:bg-slate-800" />
           </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3">
             <FormField label="Chuyên khoa" htmlFor="create-doctor-specialty" required>
               <select
                 id="create-doctor-specialty"
@@ -353,7 +356,7 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
                 onChange={(e) => update("doctor_specialty_id", e.target.value)}
                 className={inputClass}
               >
-                <option value="">-- Chọn --</option>
+                <option value="">-- Chọn chuyên khoa --</option>
                 {specialties.map((spec) => (
                   <option key={spec.id} value={spec.id}>
                     {spec.name}
@@ -361,14 +364,14 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
                 ))}
               </select>
             </FormField>
-            <FormField label="Cấp bậc" htmlFor="create-doctor-level" required>
+            <FormField label="Cấp bậc / Danh hiệu" htmlFor="create-doctor-level" required>
               <select
                 id="create-doctor-level"
                 value={form.doctor_level}
                 onChange={(e) => update("doctor_level", e.target.value)}
                 className={inputClass}
               >
-                <option value="">-- Chọn --</option>
+                <option value="">-- Chọn danh hiệu --</option>
                 {DOCTOR_LEVEL_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
@@ -383,7 +386,7 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
                 min={0}
                 value={form.doctor_experience}
                 onChange={(e) => update("doctor_experience", e.target.value)}
-                placeholder="0"
+                placeholder="vd: 10"
               />
             </FormField>
             <FormField label="Nơi công tác" htmlFor="create-doctor-workplace" required>
@@ -391,16 +394,17 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
                 id="create-doctor-workplace"
                 value={form.doctor_workplace}
                 onChange={(e) => update("doctor_workplace", e.target.value)}
-                placeholder="Bệnh viện / Phòng khám"
+                placeholder="Bệnh viện Chợ Rẫy / Phòng khám LifeHealth"
               />
             </FormField>
             <div className="col-span-2">
-              <FormField label="Giới thiệu" htmlFor="create-doctor-about">
+              <FormField label="Giới thiệu chuyên môn" htmlFor="create-doctor-about">
                 <Textarea
                   id="create-doctor-about"
                   value={form.doctor_about_me}
                   onChange={(e) => update("doctor_about_me", e.target.value)}
-                  placeholder="Thông tin giới thiệu về bác sĩ"
+                  placeholder="Mô tả quá trình đào tạo và chuyên môn lâm sàng..."
+                  className="rounded-xl border-slate-200 dark:border-slate-800"
                 />
               </FormField>
             </div>
@@ -409,8 +413,8 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
       )}
 
       {hasError && (
-        <span className="text-xs text-rose-500">
-          Có lỗi xảy ra khi tạo người dùng
+        <span className="text-xs font-semibold text-rose-500">
+          ⚠️ Có lỗi xảy ra khi tạo người dùng. Vui lòng kiểm tra lại.
         </span>
       )}
     </FormDialog>

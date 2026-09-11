@@ -1,6 +1,6 @@
 import type { ChannelMember } from "./channel.interface";
 
-export type MessageType = "TEXT" | "IMAGE" | "VIDEO" | "FILE" | "CALL";
+export type MessageType = "regular" | "call";
 
 export interface MessageAttachment {
   id: number;
@@ -21,4 +21,6 @@ export interface Message {
   sender: ChannelMember;
   created_at: string;
   updated_at: string;
+  isOptimistic?: boolean;
+  failed?: boolean;
 }

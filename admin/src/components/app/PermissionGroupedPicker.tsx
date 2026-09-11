@@ -94,13 +94,14 @@ export function PermissionGroupedPicker({
   return (
     <div className="flex flex-col gap-3">
       <Input
-        placeholder="Tìm quyền..."
+        placeholder="Tìm quyền theo tên..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
+        className="h-10 rounded-xl"
       />
 
       {grouped.length === 0 && (
-        <p className="text-sm text-[#75758a]">Không có quyền nào khớp.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic p-2">Không có quyền nào khớp với từ khóa tìm kiếm.</p>
       )}
 
       {grouped.map(([domain, items]) => {
@@ -109,9 +110,9 @@ export function PermissionGroupedPicker({
         const domainLabel = DOMAIN_LABELS[domain] ?? domain;
 
         return (
-          <details key={domain} open className="rounded-sm border border-[#d9d9dd]">
-            <summary className="flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium text-[#212121] cursor-pointer hover:bg-[#f7f6f2]">
-              <span className="flex items-center gap-2">
+          <details key={domain} open className="rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+            <summary className="flex items-center justify-between gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 cursor-pointer bg-slate-50/60 dark:bg-slate-950/40 hover:bg-slate-100/70 dark:hover:bg-slate-800/70">
+              <span className="flex items-center gap-2.5">
                 <input
                   type="checkbox"
                   checked={allSelected}
@@ -120,28 +121,29 @@ export function PermissionGroupedPicker({
                   }}
                   onChange={() => toggleDomain(items.map((p) => p.id), !allSelected)}
                   onClick={(e) => e.stopPropagation()}
-                  className="accent-[#9b60aa]"
+                  className="accent-primary size-4 rounded cursor-pointer"
                 />
-                {domainLabel}
+                <span>{domainLabel}</span>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">({domain})</span>
               </span>
-              <Badge variant="outline" className="text-[10px]">
+              <Badge variant="outline" className="text-[10px] font-bold">
                 {items.filter((p) => value.has(p.id)).length}/{items.length}
               </Badge>
             </summary>
-            <div className="border-t border-[#d9d9dd] px-3 py-2">
-              <div className="grid gap-1 sm:grid-cols-2">
+            <div className="border-t border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-slate-900">
+              <div className="grid gap-1.5 sm:grid-cols-2">
                 {items.map((p) => (
                   <label
                     key={p.id}
-                    className="flex items-center gap-2 text-sm cursor-pointer py-0.5"
+                    className="flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
                   >
                     <input
                       type="checkbox"
                       checked={value.has(p.id)}
                       onChange={() => togglePermission(p.id)}
-                      className="accent-[#9b60aa]"
+                      className="accent-primary size-3.5 rounded cursor-pointer"
                     />
-                    {p.name}
+                    <span className="truncate">{p.name}</span>
                   </label>
                 ))}
               </div>
@@ -152,3 +154,4 @@ export function PermissionGroupedPicker({
     </div>
   );
 }
+

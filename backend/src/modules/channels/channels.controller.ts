@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 import {
   Body,
   Controller,
@@ -15,11 +13,13 @@ import {
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { ChannelsService } from './channels.service';
 import { BodyFilterChannelsDto } from './dto/request/bodyFilterChannels.dto';
+import { CreateChannelDto } from './dto/request/createChannel.dto';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RequestPaylaod } from 'src/shared/types/global.type';
 
 @ApiTags('channels')
 @ApiCookieAuth()
@@ -33,8 +33,9 @@ export class ChannelsController {
   @HttpCode(HttpStatus.CREATED)
   @Permissions(PERMISSIONS.CHANNEL_CREATE)
   @AuditLogAction({ action: 'CREATE', entityName: 'channels' })
-  createChannel(@Body() member_ids: number[]) {
-    return this.channelsService.createChannel(member_ids);
+  createChannel(@Request() req: any, @Body() body: CreateChannelDto) {
+    const { userId } = req.user as RequestPaylaod;
+    return this.channelsService.createChannel(body.member_ids, userId);
   }
 
   @ApiOperation({

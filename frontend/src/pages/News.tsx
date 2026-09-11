@@ -160,8 +160,11 @@ const News = () => {
                   <img
                     src={getArticleImage(article)}
                     alt={article.title}
-                    className="w-full h-48 object-cover"
+                    width={400}
+                    height={192}
                     loading="lazy"
+                    decoding="async"
+                    className="w-full h-48 object-cover"
                   />
                   <CardContent className="flex flex-col flex-grow">
                     <Link

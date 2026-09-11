@@ -26,7 +26,7 @@ export function SegmentedStatusBar({
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-[#f0eee9]">
+      <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         {total === 0
           ? null
           : segments.map((segment) => {
@@ -46,9 +46,9 @@ export function SegmentedStatusBar({
             })}
       </div>
       {total === 0 ? (
-        <p className="text-xs text-[#75758a]">{emptyLabel}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{emptyLabel}</p>
       ) : (
-        <ul className="grid grid-cols-2 gap-2 text-xs text-[#212121]">
+        <ul className="grid grid-cols-2 gap-2 text-xs text-slate-800 dark:text-slate-200">
           {segments.map((segment) => {
             const percent = total
               ? Math.round((segment.value / total) * 100)
@@ -56,7 +56,7 @@ export function SegmentedStatusBar({
             return (
               <li
                 key={segment.key}
-                className="flex items-center justify-between gap-2 rounded-lg border border-[#e5e7eb] bg-white px-3 py-2"
+                className="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900"
               >
                 <span className="flex items-center gap-2">
                   <span
@@ -65,8 +65,8 @@ export function SegmentedStatusBar({
                   />
                   <span>{segment.label}</span>
                 </span>
-                <span className="text-[#75758a]">
-                  <span className="font-medium text-[#212121]">
+                <span className="text-slate-500 dark:text-slate-400">
+                  <span className="font-semibold text-slate-900 dark:text-slate-100">
                     {segment.value}
                   </span>
                   <span className="ml-1">({percent}%)</span>

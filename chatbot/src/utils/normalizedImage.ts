@@ -1,8 +1,8 @@
 import sharp from "sharp";
 
 export const normalizedImage = async (
-  file: Express.Multer.File
-): Promise<{ mimetype: string; buffer: Buffer }> => {
+  file: Express.Multer.File,
+): Promise<{ mimetype: "image/png"; buffer: Buffer }> => {
   const img = sharp(file.buffer, { failOnError: false }).rotate();
   const meta = await img.metadata();
 
@@ -21,7 +21,9 @@ export const normalizedImage = async (
   const resizeH = h ? Math.round(h * scale) : undefined;
 
   return {
-    mimetype: file.mimetype,
+    // Sharp always encodes the normalized output as PNG. The MIME type must
+    // describe that output rather than the original JPEG/WebP input.
+    mimetype: "image/png",
     buffer: await img
       .resize(resizeW, resizeH, { kernel: sharp.kernel.lanczos3 })
       .grayscale()

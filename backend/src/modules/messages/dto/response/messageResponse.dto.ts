@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import { MemberResponseDto } from 'src/modules/users/dto/response/memberResonse.dto';
 import { MessageType } from 'src/shared/enums/messageType';
-import { formatDateDDMMYYYY } from 'src/utils/formatDate';
+import { formatDateTimeDDMMYYYYHHmm } from 'src/utils/formatDate';
 import { MessageAttachmentResponseDto } from './messageAttachmentResponse.dto';
 import { ChannelResponseDto } from 'src/modules/channels/dto/response/channelResponse.dto';
 
@@ -32,10 +32,10 @@ export class MessageResponseDto {
   channel!: ChannelResponseDto;
 
   @Expose()
-  @Transform(({ value }) => formatDateDDMMYYYY(value))
+  @Transform(({ value }) => formatDateTimeDDMMYYYYHHmm(value))
   created_at!: Date;
 
   @Expose()
-  @Transform(({ value }) => formatDateDDMMYYYY(value))
+  @Transform(({ value }) => formatDateTimeDDMMYYYYHHmm(value))
   updated_at!: Date;
 }

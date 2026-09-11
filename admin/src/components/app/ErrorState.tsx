@@ -17,11 +17,11 @@ export function ErrorState({
   return (
     <Card className="border-dashed">
       <CardContent className="flex min-h-64 flex-col items-center justify-center gap-3 text-center">
-        <div className="rounded-full bg-rose-50 p-4 text-rose-600">
+        <div className="rounded-full bg-rose-50 p-4 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400">
           <AlertCircle className="size-6" />
         </div>
-        <h3 className="text-lg font-semibold text-slate-900">{title}</h3>
-        <p className="max-w-md text-sm text-slate-500">{description}</p>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{title}</h3>
+        <p className="max-w-md text-sm text-slate-500 dark:text-slate-400">{description}</p>
         {onRetry ? (
           <Button variant="outline" onClick={onRetry}>
             Thử lại

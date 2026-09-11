@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import { InjectRepository } from '@nestjs/typeorm';
 import Message from 'src/entities/message.entity';
 import MessageAttachments from 'src/entities/messageAttachments.entity';
@@ -10,6 +15,23 @@ import { MessagesMapper } from './messages.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { ChannelsService } from '../channels/channels.service';
 import { UsersService } from '../users/users.service';
+import { WEBSOCKET_GATEWAY } from 'src/websockets/websocket-gateway.token';
+
+/**
+ * Structural shape of WebsocketGateway used here — deliberately NOT importing
+ * the concrete class. messages.service.ts and websocket.gateway.ts already
+ * reference each other's services; importing the real WebsocketGateway class
+ * here would recreate that file-level circular import and corrupt the OTHER
+ * file's `design:paramtypes` decorator metadata under some bundlers/loaders
+ * (webpack's Nest dev builder), throwing "Cannot access 'X' before
+ * initialization" or leaving a DI param type unresolved. Resolving the
+ * gateway lazily via ModuleRef + a plain injection token sidesteps this.
+ */
+interface RealtimeMessageGateway {
+  server: {
+    to(room: string): { emit(event: string, payload: unknown): void };
+  };
+}
 
 @Injectable()
 export class MessagesService {
@@ -20,18 +42,66 @@ export class MessagesService {
     private readonly messageAttachmentRepo: Repository<MessageAttachments>,
     private readonly channelsService: ChannelsService,
     private readonly usersService: UsersService,
+    private readonly moduleRef: ModuleRef,
   ) {}
-  async saveMessage(bodyCreateMessage: BodyCreateMessageDto) {
-    if (bodyCreateMessage?.content) {
-      bodyCreateMessage.content = encrypt(bodyCreateMessage.content);
+
+  async assertChannelMember(userId: number, channelId: number): Promise<void> {
+    const isChannelMember = await this.channelsService.isChannelExists(
+      userId,
+      channelId,
+    );
+    if (!isChannelMember) {
+      throw new NotFoundException(
+        'Kênh trò chuyện không tồn tại hoặc bạn không thuộc về kênh này !',
+      );
     }
+  }
+
+  /**
+   * Chỉ chính người gửi tin nhắn mới được đính kèm file cho nó — chặn IDOR
+   * khi client truyền message_id của người khác lên endpoint upload.
+   */
+  async assertMessageSender(userId: number, messageId: number): Promise<void> {
+    const message = await this.messageRepo.findOne({
+      where: { id: messageId },
+      relations: ['sender'],
+    });
+    if (!message) {
+      throw new NotFoundException('Tin nhắn không tồn tại !');
+    }
+    if (message.sender?.id !== userId) {
+      throw new ForbiddenException(
+        'Bạn không có quyền đính kèm tệp cho tin nhắn này.',
+      );
+    }
+  }
+
+  async saveMessage(
+    bodyCreateMessage: BodyCreateMessageDto,
+    authenticatedUserId: number,
+  ) {
+    await this.assertChannelMember(
+      authenticatedUserId,
+      bodyCreateMessage.channel_id,
+    );
     const createdMessage = this.messageRepo.create({
-      ...bodyCreateMessage,
-      sender: { id: bodyCreateMessage.sender_id },
+      message_type: bodyCreateMessage.message_type,
+      content: bodyCreateMessage.content
+        ? encrypt(bodyCreateMessage.content)
+        : null,
+      sender: { id: authenticatedUserId },
       channel: { id: bodyCreateMessage.channel_id },
     });
     const newMessage = await this.messageRepo.save(createdMessage);
-    return this.getMessageByMessageId(newMessage.id);
+    const message = await this.getMessageByMessageId(newMessage.id);
+    const websocketGateway = this.moduleRef.get<RealtimeMessageGateway>(
+      WEBSOCKET_GATEWAY,
+      { strict: false },
+    );
+    websocketGateway.server
+      .to(`room:${message.channel.id}`)
+      .emit('receive:message', message);
+    return message;
   }
 
   async updateFilesMessage(messageId: number, files: UploadFileResponse[]) {
@@ -66,11 +136,26 @@ export class MessagesService {
     return MessagesMapper.toMessageResponseDto(message);
   }
 
+  async markChannelMessagesAsRead(channelId: number, userId: number) {
+    await this.assertChannelMember(userId, channelId);
+    const result = await this.messageRepo
+      .createQueryBuilder()
+      .update(Message)
+      .set({ is_read: true })
+      .where('channel_id = :channelId', { channelId })
+      .andWhere('sender_id != :userId', { userId })
+      .andWhere('is_read = false')
+      .execute();
+    return { updated: result.affected ?? 0 };
+  }
+
   async getMessageByChannelId(
     channelId: number,
+    authenticatedUserId: number,
     page: number = 1,
-    limit: number = 7,
+    limit: number = 20,
   ) {
+    await this.assertChannelMember(authenticatedUserId, channelId);
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;

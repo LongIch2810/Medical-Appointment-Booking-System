@@ -45,7 +45,7 @@ export const createChannel = async (memberIds: number[]) => {
   const res =
     await axiosInstance.post<ApiResponse<PatientChannel & { channel_id?: number }>>(
       "/channels/create",
-      memberIds,
+      { member_ids: memberIds },
     );
 
   return {

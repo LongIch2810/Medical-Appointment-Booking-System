@@ -2,17 +2,21 @@ import * as dotenv from "dotenv";
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { normalizedImage } from "../utils/normalizedImage.js";
-import { BenhAn, ocrTool } from "../tools/ocr.tool.js";
+import { BenhAn, BenhAnSchema, ocrTool } from "../tools/ocr.tool.js";
 import {
   BanGhiTomTat,
+  SummaryMedicalRecordSchema,
   summarizeMedicalRecordTool,
 } from "../tools/summary_medical_record.tool.js";
+import {
+  NormalizedMedicalRecordFile,
+  renderMedicalRecordPdf,
+} from "../utils/renderMedicalRecordPdf.js";
 
 dotenv.config();
 
 export type FileParams =
-  | { imageFiles: Express.Multer.File[] }
-  | { pdfFile: Express.Multer.File };
+  { imageFiles: Express.Multer.File[] } | { pdfFile: Express.Multer.File };
 
 const SummaryMedicalRecordState = Annotation.Root({
   fileParams: Annotation<FileParams>(),
@@ -25,44 +29,27 @@ function logNode(node: string, msg: string) {
   console.log(`[SummaryGraph][${node}] ${msg}`);
 }
 
-function preview(s: string, max = 300) {
-  return s.length <= max
-    ? s
-    : s.slice(0, max) + `... (truncated ${s.length - max} chars)`;
-}
-
-function safeJson(obj: any, max = 1200) {
-  try {
-    return preview(JSON.stringify(obj, null, 2), max);
-  } catch {
-    return "[cannot stringify]";
-  }
-}
-
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
-  args: Record<string, any>
+  args: Record<string, any>,
 ) {
   const result = await tool.invoke(args);
   return result;
 }
 
 async function NormalizeInputNode(
-  state: typeof SummaryMedicalRecordState.State
+  state: typeof SummaryMedicalRecordState.State,
 ) {
   logNode("normalize_input_node", "START");
 
-  const objFileArr =
+  const objFileArr: NormalizedMedicalRecordFile[] =
     "imageFiles" in state.fileParams
       ? await Promise.all(
-          state.fileParams.imageFiles.map((imgFile) => normalizedImage(imgFile))
+          state.fileParams.imageFiles.map((imgFile) =>
+            normalizedImage(imgFile),
+          ),
         )
-      : [
-          {
-            mimetype: state.fileParams.pdfFile.mimetype,
-            buffer: state.fileParams.pdfFile.buffer,
-          },
-        ];
+      : await renderMedicalRecordPdf(state.fileParams.pdfFile);
 
   const normalizedInput = objFileArr.map((i) => ({
     mimetype: i.mimetype,
@@ -74,17 +61,8 @@ async function NormalizeInputNode(
     "normalize_input_node",
     `DONE -> normalizedInput.length=${
       normalizedInput.length
-    }, mimetypes=${normalizedInput.map((x) => x.mimetype).join(", ")}`
+    }, mimetypes=${normalizedInput.map((x) => x.mimetype).join(", ")}`,
   );
-
-  normalizedInput.forEach((x, idx) => {
-    logNode(
-      "normalize_input_node",
-      `item#${idx + 1}: mimetype=${x.mimetype}, base64Len=${
-        x.base64.length
-      }, base64Preview="${preview(x.base64, 40)}"`
-    );
-  });
 
   return { normalizedInput };
 }
@@ -92,14 +70,12 @@ async function NormalizeInputNode(
 async function OcrNode(state: typeof SummaryMedicalRecordState.State) {
   logNode(
     "ocr_node",
-    `START -> normalizedInput.length=${state.normalizedInput.length}`
+    `START -> normalizedInput.length=${state.normalizedInput.length}`,
   );
 
-  const ocr = await runTool(ocrTool, state.normalizedInput);
+  const ocr = BenhAnSchema.parse(await runTool(ocrTool, state.normalizedInput));
 
-  // ✅ log OCR output (preview)
-  logNode("ocr_node", "DONE -> OCR result preview:");
-  logNode("ocr_node", safeJson(ocr, 2000));
+  logNode("ocr_node", "DONE");
 
   return { ocr };
 }
@@ -110,16 +86,17 @@ async function SummaryNode(state: typeof SummaryMedicalRecordState.State) {
   const benh_an_json = JSON.stringify(state.ocr);
   logNode("summary_node", `inputJsonLen=${benh_an_json.length}`);
 
-  const result = await runTool(summarizeMedicalRecordTool, { benh_an_json });
-
-  // ✅ tuỳ tool bạn trả ra field gì
-  const answer =
-    (result as any)?.answer ?? (result as any)?.summary ?? String(result ?? "");
+  const result = SummaryMedicalRecordSchema.parse(
+    await runTool(summarizeMedicalRecordTool, { benh_an_json }),
+  );
+  const answer = result.answer.trim();
+  if (!answer) {
+    throw new Error("Medical record summary was empty.");
+  }
 
   logNode("summary_node", `DONE -> answerLen=${answer.length}`);
-  logNode("summary_node", `answerPreview:\n${preview(answer, 1200)}`);
 
-  return { summary: result as any };
+  return { summary: { answer } };
 }
 
 const workflow = new StateGraph(SummaryMedicalRecordState)

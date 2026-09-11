@@ -1,0 +1,1 @@
+export const WEBSOCKET_GATEWAY = Symbol('WEBSOCKET_GATEWAY');

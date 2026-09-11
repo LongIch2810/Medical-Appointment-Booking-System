@@ -1,0 +1,56 @@
+import type { FC } from "react";
+
+import { cn } from "@/lib/utils";
+import type { Message } from "@/types/interface/patient.interface";
+
+interface MessageBubbleProps {
+  message: Message;
+  isMine: boolean;
+  onRetry?: (message: Message) => void;
+}
+
+const MessageBubble: FC<MessageBubbleProps> = ({ message, isMine, onRetry }) => {
+  return (
+    <div
+      className={cn(
+        "max-w-[82%] sm:max-w-[75%] rounded-2xl px-4.5 py-3 text-xs sm:text-sm shadow-2xs",
+        isMine
+          ? "ml-auto rounded-br-xs bg-primary text-white"
+          : "rounded-bl-xs bg-white text-slate-800 border border-slate-200/70",
+        message.isOptimistic && "opacity-70",
+        message.failed && "border border-rose-300 bg-rose-50 text-rose-700",
+      )}
+    >
+      {!isMine && (
+        <p className="mb-1 text-xs font-bold text-primary">
+          BS. {message.sender.fullname ?? message.sender.username ?? "Bác sĩ"}
+        </p>
+      )}
+      <p className="leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+        {message.content}
+      </p>
+      <div
+        className={cn(
+          "mt-1.5 flex items-center justify-end gap-2 text-[10px] font-medium",
+          isMine && !message.failed ? "text-white/75" : "text-slate-400",
+        )}
+      >
+        {message.failed ? (
+          <button
+            type="button"
+            onClick={() => onRetry?.(message)}
+            className="font-bold text-rose-600 underline decoration-dotted underline-offset-2"
+          >
+            Gửi thất bại, nhấn để thử lại
+          </button>
+        ) : message.isOptimistic ? (
+          <span>Đang gửi...</span>
+        ) : (
+          <span>{message.created_at}</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MessageBubble;

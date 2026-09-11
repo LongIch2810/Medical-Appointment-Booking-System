@@ -18,7 +18,7 @@ type MetricBarChartProps = {
   maxValue?: number;
 };
 
-const DEFAULT_COLOR = "#212121";
+const DEFAULT_COLOR = "#007664";
 
 /**
  * Bar chart dạng horizontal nhẹ, không cần dependency. Phù hợp so sánh
@@ -41,13 +41,13 @@ export function MetricBarChart({
         const widthPercent = `${ratio * 100}%`;
         return (
           <li key={item.key} className="flex flex-col gap-1.5">
-            <div className="flex items-center justify-between text-xs text-[#212121] dark:text-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-800 dark:text-slate-200">
               <span>{item.label}</span>
-              <span className="font-medium dark:text-slate-100">
+              <span className="font-medium text-slate-900 dark:text-slate-100">
                 {item.value.toLocaleString()}
               </span>
             </div>
-            <div className="h-2.5 overflow-hidden rounded-full bg-[#f0eee9] dark:bg-slate-800">
+            <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
               <div
                 className="h-full rounded-full transition-all"
                 style={{
@@ -57,7 +57,7 @@ export function MetricBarChart({
               />
             </div>
             {item.helper ? (
-              <span className="text-[11px] text-[#75758a] dark:text-slate-400">{item.helper}</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">{item.helper}</span>
             ) : null}
           </li>
         );

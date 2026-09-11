@@ -24,7 +24,7 @@ export const fetchChannelDetail = async (channelId: number) => {
 export const createChannel = async (memberIds: number[]) => {
   const res = await axiosInstance.post<ApiResponse<Channel>>(
     "/channels/create",
-    memberIds,
+    { member_ids: memberIds },
   );
   return res.data;
 };

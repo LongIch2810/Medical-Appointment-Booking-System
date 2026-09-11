@@ -49,29 +49,29 @@ export function Pagination({
   const pageList = buildPageList(safePage, totalPages);
 
   const baseBtn =
-    "inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-[#d9d9dd] bg-white px-2 text-xs font-medium text-[#212121] transition-colors hover:bg-[#f7f6f2] disabled:cursor-not-allowed disabled:opacity-40";
+    "inline-flex h-8 min-w-8 items-center justify-center rounded-xl border border-slate-200 bg-white px-2.5 text-xs font-semibold text-slate-700 transition-all hover:bg-slate-50 hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer shadow-2xs";
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 border-t border-[#e5e7eb] pt-4 text-xs text-[#75758a] sm:flex-row sm:items-center sm:justify-between",
+        "flex flex-col gap-3 text-xs text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between",
         className,
       )}
     >
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <span>
-          Hiển thị <span className="font-semibold text-[#212121]">{start}</span>
-          {"-"}
-          <span className="font-semibold text-[#212121]">{end}</span> trên{" "}
-          <span className="font-semibold text-[#212121]">{total}</span> bản ghi
+          Hiển thị <span className="font-bold text-slate-900 dark:text-slate-100">{start}</span>
+          {" - "}
+          <span className="font-bold text-slate-900 dark:text-slate-100">{end}</span> trên{" "}
+          <span className="font-bold text-slate-900 dark:text-slate-100">{total}</span> bản ghi
         </span>
         {onLimitChange ? (
           <label className="flex items-center gap-2">
-            <span>Số dòng</span>
+            <span className="text-[11px] font-medium">Số dòng/trang:</span>
             <select
               value={limit}
               onChange={(event) => onLimitChange(Number(event.target.value))}
-              className="h-8 rounded-full border border-[#d9d9dd] bg-white px-2 text-xs text-[#212121] outline-none focus-visible:border-[#9b60aa]"
+              className="h-8 rounded-xl border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-800 shadow-2xs outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
             >
               {pageSizeOptions.map((option) => (
                 <option key={option} value={option}>
@@ -83,7 +83,7 @@ export function Pagination({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => onPageChange(1)}
@@ -104,7 +104,7 @@ export function Pagination({
         </button>
         {pageList.map((entry, index) =>
           entry === "..." ? (
-            <span key={`ellipsis-${index}`} className="px-1 text-[#75758a]">
+            <span key={`ellipsis-${index}`} className="px-1 text-slate-400">
               …
             </span>
           ) : (
@@ -116,7 +116,7 @@ export function Pagination({
               className={cn(
                 baseBtn,
                 entry === safePage &&
-                  "border-[#212121] bg-[#212121] text-white hover:bg-[#212121]",
+                  "!bg-primary !text-primary-foreground !border-primary shadow-xs font-bold hover:!bg-primary/90",
               )}
             >
               {entry}
@@ -145,3 +145,4 @@ export function Pagination({
     </div>
   );
 }
+

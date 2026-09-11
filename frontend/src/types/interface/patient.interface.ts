@@ -177,6 +177,8 @@ export interface Message {
   sender: ChannelParticipant;
   created_at: string;
   updated_at: string;
+  isOptimistic?: boolean;
+  failed?: boolean;
 }
 
 export interface LastMessage {
@@ -227,9 +229,9 @@ export type MessageListResponse = PaginationResponse<Message> & {
 export interface RelativePayload {
   fullname: string;
   relationship_code: string;
-  phone: string;
-  dob: string;
   gender: boolean;
+  phone?: string;
+  dob?: string;
 }
 
 export type UpdateRelativePayload = Partial<RelativePayload>;

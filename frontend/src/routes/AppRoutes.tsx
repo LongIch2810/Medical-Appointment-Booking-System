@@ -1,75 +1,84 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import Home from "../pages/Home";
-import Doctor from "@/pages/Doctor";
-import News from "@/pages/News";
-import NewsDetail from "@/pages/NewsDetail";
-import Contact from "@/pages/Contact";
-import Chatbot from "@/pages/Chatbot";
-import NotFound from "@/pages/NotFound";
-import SignIn from "@/pages/SignIn";
-import SignUp from "@/pages/SignUp";
-import FAQ from "@/pages/FAQ";
-import Terms from "@/pages/Terms";
-import Feedback from "@/pages/FeedBack";
-import Team from "@/pages/Team";
-import Careers from "@/pages/Careers";
-import ForgotPassword from "@/pages/ForgotPassword";
-import Test from "@/pages/Test";
-import DoctorDetail from "@/pages/DoctorDetail";
 import MainLayout from "@/layouts/MainLayout";
 import RouteProtected from "./RouteProtected";
-import AICoachHealth from "@/pages/AICoachHealth";
 import PatientLayout from "@/layouts/PatientLayout";
-import Dashboard from "@/pages/patient/Dashboard";
-import Profile from "@/pages/patient/Profile";
-import Appointments from "@/pages/patient/Appointments";
-import Relatives from "@/pages/patient/Relatives";
-import Settings from "@/pages/patient/Settings";
-import Messages from "@/pages/patient/Messages";
-import HealthRecords from "@/pages/patient/HealthRecords";
-import VisitResults from "@/pages/patient/VisitResults";
-import MyComplaints from "@/pages/patient/Complaints";
-import Forbidden from "@/pages/Forbidden";
+import RouteLoadingFallback from "@/components/common/RouteLoadingFallback";
+
+// Route-level code-splitting: Dynamic imports via React.lazy
+const Doctor = lazy(() => import("@/pages/Doctor"));
+const DoctorDetail = lazy(() => import("@/pages/DoctorDetail"));
+const News = lazy(() => import("@/pages/News"));
+const NewsDetail = lazy(() => import("@/pages/NewsDetail"));
+const Contact = lazy(() => import("@/pages/Contact"));
+const Chatbot = lazy(() => import("@/pages/Chatbot"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const SignIn = lazy(() => import("@/pages/SignIn"));
+const SignUp = lazy(() => import("@/pages/SignUp"));
+const FAQ = lazy(() => import("@/pages/FAQ"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const Feedback = lazy(() => import("@/pages/FeedBack"));
+const Team = lazy(() => import("@/pages/Team"));
+const Careers = lazy(() => import("@/pages/Careers"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const Test = lazy(() => import("@/pages/Test"));
+const Forbidden = lazy(() => import("@/pages/Forbidden"));
+const AICoachHealth = lazy(() => import("@/pages/AICoachHealth"));
+
+// Patient Portal Pages (Code-split into dedicated patient bundle)
+const Dashboard = lazy(() => import("@/pages/patient/Dashboard"));
+const Profile = lazy(() => import("@/pages/patient/Profile"));
+const Appointments = lazy(() => import("@/pages/patient/Appointments"));
+const Notifications = lazy(() => import("@/pages/patient/Notifications"));
+const Relatives = lazy(() => import("@/pages/patient/Relatives"));
+const Settings = lazy(() => import("@/pages/patient/Settings"));
+const Messages = lazy(() => import("@/pages/patient/Messages"));
+const HealthRecords = lazy(() => import("@/pages/patient/HealthRecords"));
+const VisitResults = lazy(() => import("@/pages/patient/VisitResults"));
+const MyComplaints = lazy(() => import("@/pages/patient/Complaints"));
 
 const AppRoutes: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<MainLayout />}>
-        <Route path="/" element={<Home />}></Route>
-        <Route path="/doctors" element={<Doctor />}></Route>
-        <Route path="/contact" element={<Contact />}></Route>
-        <Route path="/faq" element={<FAQ />}></Route>
-        <Route path="/terms" element={<Terms />}></Route>
-        <Route path="/team" element={<Team />}></Route>
-        <Route path="/careers" element={<Careers />}></Route>
-        <Route path="/forgot-password" element={<ForgotPassword />}></Route>
-        <Route path="/test" element={<Test />}></Route>
-        <Route element={<RouteProtected />}>
-          <Route path="/doctors/:id" element={<DoctorDetail />}></Route>
-          <Route path="/feedback" element={<Feedback />}></Route>
-          <Route path="/chatbot" element={<Chatbot />}></Route>
-          <Route path="/patient" element={<PatientLayout />}>
-            <Route index element={<Dashboard />}></Route>
-            <Route path="profile" element={<Profile />}></Route>
-            <Route path="appointments" element={<Appointments />}></Route>
-            <Route path="relatives" element={<Relatives />}></Route>
-            <Route path="settings" element={<Settings />}></Route>
-            <Route path="messages" element={<Messages />}></Route>
-            <Route path="health-records" element={<HealthRecords />}></Route>
-            <Route path="visit-results" element={<VisitResults />}></Route>
-            <Route path="ai-coach-health" element={<AICoachHealth />}></Route>
-            <Route path="complaints" element={<MyComplaints />}></Route>
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
+        <Route path="/" element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/doctors" element={<Doctor />} />
+          <Route path="/contact" element={<Contact />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/team" element={<Team />} />
+          <Route path="/careers" element={<Careers />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/test" element={<Test />} />
+          <Route element={<RouteProtected />}>
+            <Route path="/doctors/:id" element={<DoctorDetail />} />
+            <Route path="/feedback" element={<Feedback />} />
+            <Route path="/chatbot" element={<Chatbot />} />
+            <Route path="/patient" element={<PatientLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="profile" element={<Profile />} />
+              <Route path="appointments" element={<Appointments />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route path="relatives" element={<Relatives />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="messages" element={<Messages />} />
+              <Route path="health-records" element={<HealthRecords />} />
+              <Route path="visit-results" element={<VisitResults />} />
+              <Route path="ai-coach-health" element={<AICoachHealth />} />
+              <Route path="complaints" element={<MyComplaints />} />
+            </Route>
           </Route>
         </Route>
-      </Route>
-      <Route path="/news" element={<News />}></Route>
-      <Route path="/news/:id" element={<NewsDetail />}></Route>
-      <Route path="/sign-up" element={<SignUp />}></Route>
-      <Route path="/sign-in" element={<SignIn />}></Route>
-      <Route path="/403" element={<Forbidden />}></Route>
-      <Route path="*" element={<NotFound />}></Route>
-    </Routes>
+        <Route path="/news" element={<News />} />
+        <Route path="/news/:id" element={<NewsDetail />} />
+        <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/sign-in" element={<SignIn />} />
+        <Route path="/403" element={<Forbidden />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 };
 

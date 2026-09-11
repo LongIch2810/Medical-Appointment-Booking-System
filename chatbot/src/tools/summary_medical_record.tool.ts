@@ -5,14 +5,14 @@ import * as dotenv from "dotenv";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 dotenv.config();
 
-const recordSchema = z.object({
+export const SummaryMedicalRecordSchema = z.object({
   answer: z.string().describe("Tóm tắt bệnh án"),
 });
 
-export type BanGhiTomTat = z.infer<typeof recordSchema>;
+export type BanGhiTomTat = z.infer<typeof SummaryMedicalRecordSchema>;
 
 const model = getChatModel({
-  profile: "fast",
+  profile: "quality",
   temperature: 0.2,
 });
 
@@ -80,7 +80,7 @@ const promptTemplate = ChatPromptTemplate.fromMessages([
   ["human", "Hãy tóm tắt bệnh án dựa trên dữ liệu JSON: {benh_an_json}"],
 ]);
 
-const structuredModel = model.withStructuredOutput(recordSchema);
+const structuredModel = model.withStructuredOutput(SummaryMedicalRecordSchema);
 
 const pipeline = promptTemplate.pipe(structuredModel);
 
@@ -96,5 +96,5 @@ export const summarizeMedicalRecordTool = tool(
     schema: z.object({
       benh_an_json: z.string().describe("Bệnh án của bệnh nhân có dạng JSON"),
     }),
-  }
+  },
 );

@@ -12,16 +12,24 @@ import {
   fetchPatientMessages,
   fetchPatientRelatives,
   fetchRelationships,
+  markPatientChannelRead,
   sendPatientMessage,
   updatePatientHealthProfile,
   updatePatientProfile,
   updatePatientRelative,
 } from "@/api/patientApi";
 import type {
+  ApiResponse,
+  Channel,
+  ChannelListResponse,
+  Message,
+  MessageListResponse,
   PatientListPayload,
   PersonalAppointmentsPayload,
+  SendMessagePayload,
 } from "@/types/interface/patient.interface";
 import {
+  type InfiniteData,
   useInfiniteQuery,
   useMutation,
   useQuery,
@@ -183,16 +191,113 @@ export function usePatientMessages(channelId: number) {
   });
 }
 
+type MessagesCache = InfiniteData<ApiResponse<MessageListResponse>>;
+
 export function useSendPatientMessage(channelId: number) {
   const queryClient = useQueryClient();
+  const messagesKey = patientQueryKeys.messages(channelId);
+
   return useMutation({
     mutationFn: sendPatientMessage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: patientQueryKeys.messages(channelId),
+    onMutate: async (payload: SendMessagePayload) => {
+      await queryClient.cancelQueries({ queryKey: messagesKey });
+      const previous = queryClient.getQueryData<MessagesCache>(messagesKey);
+      const tempId = -Date.now();
+
+      queryClient.setQueryData<MessagesCache>(messagesKey, (old) => {
+        if (!old) return old;
+        const optimisticMessage: Message = {
+          id: tempId,
+          message_type: payload.message_type,
+          content: payload.content,
+          is_read: false,
+          message_attachments: [],
+          sender: { id: payload.sender_id, fullname: null, picture: null },
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          isOptimistic: true,
+        };
+        const pages = [...old.pages];
+        const lastIndex = pages.length - 1;
+        pages[lastIndex] = {
+          ...pages[lastIndex],
+          data: {
+            ...pages[lastIndex].data,
+            messages: [...pages[lastIndex].data.messages, optimisticMessage],
+          },
+        };
+        return { ...old, pages };
       });
+
+      return { previous, tempId };
+    },
+    onError: (_error, _payload, context) => {
+      if (!context) return;
+      queryClient.setQueryData<MessagesCache>(messagesKey, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            data: {
+              ...page.data,
+              messages: page.data.messages.map((message) =>
+                message.id === context.tempId
+                  ? { ...message, isOptimistic: false, failed: true }
+                  : message,
+              ),
+            },
+          })),
+        };
+      });
+    },
+    onSuccess: (_response, _payload, context) => {
+      if (context) {
+        queryClient.setQueryData<MessagesCache>(messagesKey, (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            pages: old.pages.map((page) => ({
+              ...page,
+              data: {
+                ...page.data,
+                messages: page.data.messages.filter(
+                  (message) => message.id !== context.tempId,
+                ),
+              },
+            })),
+          };
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: messagesKey });
       queryClient.invalidateQueries({ queryKey: ["patient-channels"] });
       queryClient.invalidateQueries({ queryKey: patientQueryKeys.dashboard });
+    },
+  });
+}
+
+export function useMarkChannelRead(channelId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => markPatientChannelRead(channelId),
+    onSuccess: () => {
+      queryClient.setQueriesData<ApiResponse<ChannelListResponse>>(
+        { queryKey: ["patient-channels"] },
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            data: {
+              ...old.data,
+              channels: old.data.channels.map((channel: Channel) =>
+                channel.id === channelId
+                  ? { ...channel, unread_count: 0 }
+                  : channel,
+              ),
+            },
+          };
+        },
+      );
     },
   });
 }
