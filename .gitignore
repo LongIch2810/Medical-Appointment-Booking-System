@@ -51,7 +51,6 @@ coverage
 .temp
 .tmp
 chatbot/tmp/
-.agents
 .playwright-mcp/*
 
 # Playwright E2E (frontend/playwright.config.ts) — output đặt NGOÀI
