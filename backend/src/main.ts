@@ -1,4 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
@@ -77,10 +79,19 @@ async function bootstrap() {
     .setVersion('1.0')
     .addCookieAuth('accessToken')
     .build();
-  // Keep the generated metadata path static so Vercel's file tracer includes
-  // dist/src/metadata.js in the deployed serverless function.
-  const { default: swaggerMetadata } = require('./metadata.js');
-  await SwaggerModule.loadPluginMetadata(swaggerMetadata);
+  // The Swagger CLI plugin generates this file during local builds, but
+  // Vercel's serverless file tracer may omit it from the function bundle.
+  // Swagger can still run without the generated metadata, so do not prevent
+  // the API from starting when the optional file is unavailable.
+  const swaggerMetadataPath = join(__dirname, 'metadata.js');
+  if (existsSync(swaggerMetadataPath)) {
+    const { default: swaggerMetadata } = require('./metadata.js');
+    await SwaggerModule.loadPluginMetadata(swaggerMetadata);
+  } else {
+    console.warn(
+      '[startup] Swagger plugin metadata is unavailable; continuing without generated metadata.',
+    );
+  }
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, documentFactory);
   await app.listen(configService.get<number>('PORT') ?? 3000);
