@@ -26,7 +26,7 @@ Claude Code MUST use Codebase Memory MCP before searching source code directly. 
 - `npm run build` — `nest build --builder swc`
 - `npm run lint` — eslint --fix
 - `npm run test` / `npm run test:cov` — Jest unit tests (spec files colocated under `src`, one Jest run per file: `npm run test -- path/to/file.spec.ts`)
-- `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`) — note: `backend/test/jest-e2e.json` does not currently exist in this repo, so this script fails until that config is added
+- `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`)
 - `npm run migration:run` / `migration:revert` / `migration:generate` / `migration:create` — TypeORM CLI against `src/database/data-source.ts`
 
 ### frontend/ and admin/ (from each directory)
@@ -35,7 +35,7 @@ Claude Code MUST use Codebase Memory MCP before searching source code directly. 
 - `npm run lint` — eslint
 - `npm run preview`
 - `admin/` has no test runner configured; validate changes with `lint` + `build` + manual checks in `dev`.
-- `frontend/` has Playwright end-to-end specs under `frontend/e2e/` — `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive runner), config in `frontend/playwright.config.ts`.
+- `frontend/` has Playwright end-to-end specs under `frontend/test/e2e/` — `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive runner), config in `frontend/playwright.config.ts`.
 
 ### chatbot/ (from `chatbot/`)
 - `npm run dev` — nodemon (see `chatbot/nodemon.json`)

@@ -25,7 +25,7 @@ Use two-space indentation and TypeScript. Backend Prettier requires single quote
 
 ## Testing Guidelines
 
-Backend tests use Jest and Nest testing utilities. Co-locate `*.spec.ts` files with source and run `npm --prefix backend run test:cov`. `frontend/` has Playwright end-to-end specs under `frontend/e2e/` — run with `npm --prefix frontend run test:e2e` (or `test:e2e:ui` for the interactive runner). `admin/` and `chatbot/` still have no test runner, so lint and build affected clients. The backend e2e script requires the currently absent `backend/test/jest-e2e.json`.
+Backend tests use Jest and Nest testing utilities, under `backend/test/unit/` (mirroring `src/`) and `backend/test/integration/`; run with `npm --prefix backend run test:cov`. `frontend/` has Playwright end-to-end specs under `frontend/test/e2e/` — run with `npm --prefix frontend run test:e2e` (or `test:e2e:ui` for the interactive runner). `admin/` and `chatbot/` still have no test runner, so lint and build affected clients.
 
 ## Commit & Pull Request Guidelines
 
