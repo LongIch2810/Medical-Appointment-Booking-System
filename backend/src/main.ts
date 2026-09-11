@@ -69,8 +69,9 @@ async function bootstrap() {
     .setVersion('1.0')
     .addCookieAuth('accessToken')
     .build();
-  const swaggerMetadataPath = './metadata.js';
-  const { default: swaggerMetadata } = await import(swaggerMetadataPath);
+  // Keep the generated metadata path static so Vercel's file tracer includes
+  // dist/src/metadata.js in the deployed serverless function.
+  const { default: swaggerMetadata } = require('./metadata.js');
   await SwaggerModule.loadPluginMetadata(swaggerMetadata);
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, documentFactory);
