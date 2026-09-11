@@ -43,11 +43,17 @@ Nhiệm vụ của bạn:
 - Phải trả về đúng định dạng JSON theo schema.
 `;
 
+// Gộp system + human vào 1 message "human" duy nhất (không tách role
+// "system" riêng) — đã xác nhận qua khảo sát: với LLM proxy nội bộ đang
+// dùng, cặp system+human kèm withStructuredOutput cho tool này liên tục trả
+// về undefined (model không gọi function), trong khi gộp thành 1 human
+// message thì hoạt động ổn định. generate_chat_config.tool.ts vẫn tách
+// system/human bình thường vì không gặp vấn đề tương tự.
 const promptTemplate = ChatPromptTemplate.fromMessages([
-  ["system", systemPrompt],
   [
     "human",
-    `
+    `${systemPrompt}
+
 Câu hỏi yêu cầu phân tích: {question}
 Dữ liệu đầu vào (JSON): {data_json}
 
@@ -56,9 +62,17 @@ Hãy viết báo cáo phân tích chuyên nghiệp theo định dạng đã nêu
   ],
 ]);
 
-const model = getChatModel({ temperature: 0.3 });
+const model = getChatModel({
+  profile: "quality",
+  temperature: 0.3,
+  timeoutMs: 90_000,
+  totalTimeoutMs: 120_000,
+});
 
-const structuredModel = model.withStructuredOutput(ReportSchema);
+// method: "functionCalling" — xem giải thích ở generate_chat_config.tool.ts.
+const structuredModel = model.withStructuredOutput(ReportSchema, {
+  method: "functionCalling",
+});
 
 const pipeline = promptTemplate.pipe(structuredModel);
 

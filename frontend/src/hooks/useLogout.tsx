@@ -1,5 +1,6 @@
 import { logout } from "@/api/authApi";
 import { useUserStore } from "@/store/useUserStore";
+import { disconnectSocket } from "@/utils/socket";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -15,6 +16,7 @@ export function useLogout() {
       queryClient.clear();
       queryClient.removeQueries({ queryKey: ["profile"] });
       resetState();
+      disconnectSocket();
       navigate("sign-in");
     },
     onError: () => {

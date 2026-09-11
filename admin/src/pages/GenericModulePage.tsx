@@ -73,8 +73,8 @@ import { useAdminHealthProfiles } from "@/hooks/useHealthProfiles";
 import {
   useCreateNotification,
   useDeleteNotification,
+  useInfiniteNotificationRecipients,
   useNotifications,
-  useUpdateNotification,
 } from "@/hooks/useNotifications";
 import {
   useActivateUser,
@@ -142,6 +142,7 @@ import type { Topic } from "@/types/interface/topic.interface";
 import type { ExaminationResult } from "@/types/interface/examinationResult.interface";
 import type { Relationship } from "@/types/interface/relationship.interface";
 import type { Relative } from "@/types/interface/relative.interface";
+import type { User } from "@/types/interface/user.interface";
 
 type ModuleViewProps = {
   search: string;
@@ -187,29 +188,29 @@ const COMPLAINT_STATUS_META: Record<
     label: "Chờ xử lý",
     badgeVariant: "warning",
     icon: Clock,
-    accentClass: "border-amber-200 bg-amber-50",
-    chipClass: "bg-amber-100 text-amber-700",
+    accentClass: "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/40",
+    chipClass: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300",
   },
   in_progress: {
     label: "Đang xử lý",
     badgeVariant: "info",
     icon: AlertTriangle,
-    accentClass: "border-sky-200 bg-sky-50",
-    chipClass: "bg-sky-100 text-sky-700",
+    accentClass: "border-sky-200 bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/40",
+    chipClass: "bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300",
   },
   resolved: {
     label: "Đã giải quyết",
     badgeVariant: "success",
     icon: CheckCircle2,
-    accentClass: "border-emerald-200 bg-emerald-50",
-    chipClass: "bg-emerald-100 text-emerald-700",
+    accentClass: "border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40",
+    chipClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300",
   },
   rejected: {
     label: "Từ chối",
     badgeVariant: "danger",
     icon: XCircle,
-    accentClass: "border-rose-200 bg-rose-50",
-    chipClass: "bg-rose-100 text-rose-700",
+    accentClass: "border-rose-200 bg-rose-50 dark:border-rose-800/60 dark:bg-rose-950/40",
+    chipClass: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300",
   },
 };
 
@@ -218,8 +219,8 @@ function ComplaintStatusBadge({ status }: { status: ComplaintStatus }) {
     label: status,
     badgeVariant: "outline" as const,
     icon: AlertTriangle,
-    accentClass: "border-[#d9d9dd] bg-white",
-    chipClass: "bg-[#f7f6f2] text-[#75758a]",
+    accentClass: "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900",
+    chipClass: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
   };
   const Icon = meta.icon;
   return (
@@ -283,7 +284,10 @@ function UsersModule({
     search: search || undefined,
   });
   const { can } = usePermission();
-  const rawUsers = data?.data?.users ?? [];
+  const rawUsers = useMemo(
+    () => data?.data?.users ?? [],
+    [data?.data?.users],
+  );
   const rows = useMemo(() => {
     return rawUsers.filter(
       (user) =>
@@ -773,11 +777,11 @@ function DoctorsModule({
                   ]}
                   footer={
                     row.about_me ? (
-                      <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                        <div className="mono-label text-[10px] text-[#75758a]">
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                           Giới thiệu
                         </div>
-                        <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                        <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                           {row.about_me}
                         </p>
                       </div>
@@ -932,7 +936,7 @@ function AppointmentsModule({
   const hasActiveFilters = statusFilter || dateFilter || adminDoctorId;
 
   const filterInputClass =
-    "flex h-10 w-full rounded-sm border border-border bg-white px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-muted-foreground focus-visible:border-[#9b60aa] focus-visible:ring-2 focus-visible:ring-[#9b60aa]/20";
+    "flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-2xs outline-none transition placeholder:text-slate-400 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400";
 
   if (isDoctorScope && currentDoctorQuery.isLoading) {
     return <LoadingState />;
@@ -951,7 +955,7 @@ function AppointmentsModule({
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label className="mono-label text-[10px] text-[#75758a]">Trạng thái</label>
+          <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Trạng thái</label>
           <select
             value={statusFilter}
             onChange={(e) => handleStatusFilter(e.target.value)}
@@ -967,7 +971,7 @@ function AppointmentsModule({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="mono-label text-[10px] text-[#75758a]">Ngày khám</label>
+          <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Ngày khám</label>
           <input
             type="date"
             value={dateFilter}
@@ -978,7 +982,7 @@ function AppointmentsModule({
 
         {!isDoctorScope ? (
           <div className="flex flex-col gap-1">
-            <label className="mono-label text-[10px] text-[#75758a]">Bác sĩ</label>
+            <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Bác sĩ</label>
             <select
               value={adminDoctorId ?? ""}
               onChange={(e) => handleDoctorFilter(e.target.value)}
@@ -1114,21 +1118,21 @@ function AppointmentsModule({
                       row.symptoms || row.notes ? (
                         <div className="space-y-3">
                           {row.symptoms ? (
-                            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                              <div className="mono-label text-[10px] text-[#75758a]">
+                            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                              <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                                 Triệu chứng
                               </div>
-                              <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                              <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                                 {row.symptoms}
                               </p>
                             </div>
                           ) : null}
                           {row.notes ? (
-                            <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                              <div className="mono-label text-[10px] text-[#75758a]">
+                            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                              <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                                 Ghi chú
                               </div>
-                              <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                              <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                                 {row.notes}
                               </p>
                             </div>
@@ -1349,8 +1353,8 @@ function AuditLogsModule({
                   row.new_data ? (
                     <div className="space-y-3">
                       {row.error_message ? (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
-                          <div className="mono-label text-[10px] text-rose-600">
+                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                          <div className="mono-label text-[10px] text-rose-600 dark:text-rose-400">
                             Error message
                           </div>
                           <p className="mt-2 whitespace-pre-line">
@@ -1359,21 +1363,21 @@ function AuditLogsModule({
                         </div>
                       ) : null}
                       {row.old_data ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Old data
                           </div>
-                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-[#212121]">
+                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
                             {JSON.stringify(row.old_data, null, 2)}
                           </pre>
                         </div>
                       ) : null}
                       {row.new_data ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             New data
                           </div>
-                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-[#212121]">
+                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
                             {JSON.stringify(row.new_data, null, 2)}
                           </pre>
                         </div>
@@ -1409,7 +1413,10 @@ function ComplaintsModule({
     fromDate: fromDate || undefined,
     toDate: toDate || undefined,
   });
-  const rows = data?.data?.complaints ?? [];
+  const rows = useMemo(
+    () => data?.data?.complaints ?? [],
+    [data?.data?.complaints],
+  );
   const total = data?.data?.total ?? 0;
   const updateComplaint = useUpdateComplaint();
   const deleteComplaint = useDeleteComplaint();
@@ -1459,10 +1466,10 @@ function ComplaintsModule({
                 className={`flex items-center justify-between rounded-lg border ${meta.accentClass} px-4 py-3`}
               >
                 <div>
-                  <p className="mono-label text-[10px] text-[#75758a]">
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {meta.label}
                   </p>
-                  <p className="mt-1 text-2xl font-semibold text-[#212121]">
+                  <p className="mt-1 text-2xl font-bold text-slate-900 dark:text-slate-100">
                     {count}
                   </p>
                 </div>
@@ -1477,9 +1484,9 @@ function ComplaintsModule({
         )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#d9d9dd] bg-white p-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
         <select
-          className="h-10 rounded-sm border border-[#d9d9dd] bg-white px-3 text-sm text-[#212121]"
+          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
@@ -1494,7 +1501,7 @@ function ComplaintsModule({
         </select>
         <input
           type="date"
-          className="h-10 rounded-sm border border-[#d9d9dd] bg-white px-3 text-sm text-[#212121]"
+          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={fromDate}
           onChange={(e) => {
             setFromDate(e.target.value);
@@ -1504,7 +1511,7 @@ function ComplaintsModule({
         />
         <input
           type="date"
-          className="h-10 rounded-sm border border-[#d9d9dd] bg-white px-3 text-sm text-[#212121]"
+          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={toDate}
           onChange={(e) => {
             setToDate(e.target.value);
@@ -1557,7 +1564,7 @@ function ComplaintsModule({
             key: "id",
             label: "Mã KN",
             render: (row) => (
-              <span className="mono-label text-[11px] font-semibold text-[#75758a]">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                 #{row.id}
               </span>
             ),
@@ -1567,10 +1574,10 @@ function ComplaintsModule({
             label: "Tiêu đề & nội dung",
             render: (row) => (
               <div className="max-w-md space-y-1">
-                <p className="line-clamp-1 text-sm font-semibold text-[#212121]">
+                <p className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {row.title}
                 </p>
-                <p className="line-clamp-2 text-xs text-[#75758a]">
+                <p className="line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
                   {row.description}
                 </p>
               </div>
@@ -1581,15 +1588,15 @@ function ComplaintsModule({
             label: "Người gửi",
             render: (row) => (
               <div className="flex items-start gap-2">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#f7f6f2] text-[#75758a]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                   <UserRound className="h-4 w-4" />
                 </span>
                 <div className="min-w-0 space-y-0.5">
-                  <p className="line-clamp-1 text-sm font-medium text-[#212121]">
+                  <p className="line-clamp-1 text-sm font-medium text-slate-900 dark:text-slate-100">
                     {row.user?.fullname ?? "Khách"}
                   </p>
                   {row.user?.email ? (
-                    <p className="line-clamp-1 inline-flex items-center gap-1 text-xs text-[#75758a]">
+                    <p className="line-clamp-1 inline-flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
                       <Mail className="h-3 w-3" />
                       {row.user.email}
                     </p>
@@ -1609,7 +1616,7 @@ function ComplaintsModule({
             key: "created_at",
             label: "Gửi lúc",
             render: (row) => (
-              <span className="text-xs text-[#75758a]">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 {formatDate(row.created_at)}
               </span>
             ),
@@ -1646,31 +1653,31 @@ function ComplaintsModule({
                     footer={
                       <div className="space-y-4">
                         {row.description ? (
-                          <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                            <div className="mono-label text-[10px] text-[#75758a]">
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Nội dung
                             </div>
-                            <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                               {row.description}
                             </p>
                           </div>
                         ) : null}
                         {row.response ? (
-                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-                            <div className="mono-label text-[10px] text-emerald-700">
+                          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/40">
+                            <div className="mono-label text-[10px] text-emerald-700 dark:text-emerald-400">
                               Phản hồi từ admin
                             </div>
-                            <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                               {row.response}
                             </p>
                           </div>
                         ) : null}
                         {canUpdate &&
                         row.complaint_status === "in_progress" ? (
-                          <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/40 p-4">
+                          <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/40 p-4 dark:border-sky-900/60 dark:bg-sky-950/40">
                             <label
                               htmlFor={`response-${row.id}`}
-                              className="mono-label text-[10px] text-sky-700"
+                              className="mono-label text-[10px] text-sky-700 dark:text-sky-400"
                             >
                               Soạn phản hồi
                             </label>
@@ -1816,7 +1823,16 @@ function NotificationCreateDialog({
   const create = useCreateNotification();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [userId, setUserId] = useState("");
+  const [actionUrl, setActionUrl] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [recipientError, setRecipientError] = useState("");
+  const recipientsQuery = useInfiniteNotificationRecipients({
+    limit: 20,
+    search: userSearch || undefined,
+  });
+  const eligibleUsers =
+    recipientsQuery.data?.pages.flatMap((page) => page.data.users) ?? [];
 
   return (
     <FormDialog
@@ -1826,15 +1842,23 @@ function NotificationCreateDialog({
       onOpen={() => {
         setTitle("");
         setContent("");
-        setUserId("");
+        setActionUrl("");
+        setUserSearch("");
+        setSelectedUser(null);
+        setRecipientError("");
       }}
-      onSubmit={() =>
-        create.mutateAsync({
+      onSubmit={() => {
+        if (!selectedUser) {
+          setRecipientError("Vui lòng chọn người nhận.");
+          throw new Error("Missing notification recipient");
+        }
+        return create.mutateAsync({
           title,
           content,
-          userId: Number(userId),
-        })
-      }
+          userId: selectedUser.id,
+          actionUrl: actionUrl || undefined,
+        });
+      }}
     >
       <FormField label="Tiêu đề" htmlFor="notif-title" required>
         <Input
@@ -1853,14 +1877,100 @@ function NotificationCreateDialog({
           onChange={(e) => setContent(e.target.value)}
         />
       </FormField>
-      <FormField label="ID người nhận" htmlFor="notif-user" required>
+      <FormField
+        label="Người nhận"
+        htmlFor="notif-user-search"
+        required
+        hint="Hiển thị tài khoản đang hoạt động thuộc mọi vai trò."
+      >
         <Input
-          id="notif-user"
-          required
-          type="number"
-          min={1}
-          value={userId}
-          onChange={(e) => setUserId(e.target.value)}
+          id="notif-user-search"
+          type="search"
+          placeholder="Tìm theo tên hoặc email"
+          value={userSearch}
+          onChange={(event) => setUserSearch(event.target.value)}
+        />
+        <div
+          className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
+          onScroll={(event) => {
+            const { scrollTop, scrollHeight, clientHeight } =
+              event.currentTarget;
+            const isNearBottom =
+              scrollHeight - scrollTop - clientHeight < 48;
+            if (
+              isNearBottom &&
+              recipientsQuery.hasNextPage &&
+              !recipientsQuery.isFetchingNextPage
+            ) {
+              void recipientsQuery.fetchNextPage();
+            }
+          }}
+        >
+          {recipientsQuery.isLoading ? (
+            <p className="px-2 py-3 text-xs text-slate-500">
+              Đang tìm người dùng...
+            </p>
+          ) : eligibleUsers.length === 0 ? (
+            <p className="px-2 py-3 text-xs text-slate-500">
+              Không tìm thấy người nhận phù hợp.
+            </p>
+          ) : (
+            eligibleUsers.map((user) => (
+              <button
+                key={user.id}
+                type="button"
+                onClick={() => {
+                  setSelectedUser(user);
+                  setRecipientError("");
+                }}
+                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                  selectedUser?.id === user.id
+                    ? "bg-primary/10 text-primary"
+                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                }`}
+              >
+                <span className="min-w-0">
+                  <span className="block truncate font-bold">
+                    {user.fullname}
+                  </span>
+                  <span className="block truncate text-slate-500">
+                    {user.email}
+                  </span>
+                </span>
+                <Badge variant="outline">
+                  {user.roles.map(({ role_name }) => role_name).join(", ")}
+                </Badge>
+              </button>
+            ))
+          )}
+          {recipientsQuery.isFetchingNextPage ? (
+            <p className="px-2 py-2 text-center text-xs text-slate-500">
+              Đang tải thêm...
+            </p>
+          ) : null}
+        </div>
+        {selectedUser ? (
+          <p className="text-xs font-semibold text-emerald-600">
+            Đã chọn: {selectedUser.fullname} ({selectedUser.email})
+          </p>
+        ) : null}
+        {recipientError ? (
+          <p className="text-xs font-semibold text-rose-600">
+            {recipientError}
+          </p>
+        ) : null}
+      </FormField>
+      <FormField
+        label="Đường dẫn khi nhấn (tuỳ chọn)"
+        htmlFor="notif-action-url"
+        hint="Chỉ chấp nhận đường dẫn nội bộ bắt đầu bằng /."
+      >
+        <Input
+          id="notif-action-url"
+          placeholder="/admin/appointments"
+          pattern="^/(?!/).*"
+          value={actionUrl}
+          onChange={(event) => setActionUrl(event.target.value)}
         />
       </FormField>
     </FormDialog>
@@ -1881,15 +1991,10 @@ function NotificationsModule({
   });
   const rows = data?.data?.notifications ?? [];
   const total = data?.data?.total ?? 0;
-  const updateNotification = useUpdateNotification();
   const deleteNotification = useDeleteNotification();
   const { can } = usePermission();
   const canCreate = can(
     PERMISSIONS.NOTIFICATION_CREATE,
-    PERMISSIONS.NOTIFICATION_MANAGE,
-  );
-  const canUpdate = can(
-    PERMISSIONS.NOTIFICATION_UPDATE,
     PERMISSIONS.NOTIFICATION_MANAGE,
   );
   const canDelete = can(
@@ -1926,13 +2031,13 @@ function NotificationsModule({
           render: (row) => row.user?.fullname ?? "-",
         },
         {
-          key: "isNotified",
-          label: "Đã gửi",
+          key: "isRead",
+          label: "Trạng thái đọc",
           render: (row) =>
-            row.isNotified ? (
-              <Badge variant="success">Đã gửi</Badge>
+            row.isRead ? (
+              <Badge variant="success">Đã đọc</Badge>
             ) : (
-              <Badge variant="outline">Chờ gửi</Badge>
+              <Badge variant="warning">Chưa đọc</Badge>
             ),
         },
         {
@@ -1949,45 +2054,30 @@ function NotificationsModule({
                   { label: "Người nhận", value: row.user?.fullname ?? "-" },
                   { label: "Email", value: row.user?.email ?? "-" },
                   {
-                    label: "Đã gửi",
-                    value: row.isNotified ? (
-                      <Badge variant="success">Đã gửi</Badge>
+                    label: "Trạng thái đọc",
+                    value: row.isRead ? (
+                      <Badge variant="success">Đã đọc</Badge>
                     ) : (
-                      <Badge variant="outline">Chờ gửi</Badge>
+                      <Badge variant="warning">Chưa đọc</Badge>
                     ),
                   },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  { label: "Loại", value: row.type },
+                  { label: "Tạo lúc", value: formatDate(row.createdAt) },
+                  { label: "Cập nhật", value: formatDate(row.updatedAt) },
                 ]}
                 footer={
                   row.content ? (
-                    <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                      <div className="mono-label text-[10px] text-[#75758a]">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                         Nội dung
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                         {row.content}
                       </p>
                     </div>
                   ) : null
                 }
               />
-              {canUpdate && !row.isNotified ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={updateNotification.isPending}
-                  onClick={() =>
-                    updateNotification.mutate({
-                      notificationId: row.id,
-                      payload: { isNotified: true },
-                    })
-                  }
-                >
-                  Đánh dấu đã gửi
-                </Button>
-              ) : null}
               {canDelete ? (
                 <ConfirmDialog
                   trigger={
@@ -2136,11 +2226,11 @@ function SatisfactionRatingsModule({
                 ]}
                 footer={
                   row.comment ? (
-                    <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                      <div className="mono-label text-[10px] text-[#75758a]">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                         Nhận xét
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                         {row.comment}
                       </p>
                     </div>
@@ -2285,9 +2375,17 @@ function ExamResultsModule({
   scope,
 }: ModuleViewProps & { scope?: "admin" | "doctor" }) {
   const isDoctorScope = scope === "doctor";
+  const doctorResults = useDoctorExaminationResults(
+    { page, limit },
+    { enabled: isDoctorScope },
+  );
+  const adminResults = useExaminationResults(
+    { page, limit, search: search || undefined },
+    { enabled: !isDoctorScope },
+  );
   const { data, isLoading, isError, refetch } = isDoctorScope
-    ? useDoctorExaminationResults({ page, limit })
-    : useExaminationResults({ page, limit, search: search || undefined });
+    ? doctorResults
+    : adminResults;
   const rows = data?.data?.examinationResults ?? [];
   const total = data?.data?.total ?? 0;
   const deleteResult = useDeleteExaminationResult();
@@ -2375,41 +2473,41 @@ function ExamResultsModule({
                   row.notes ? (
                     <div className="space-y-3">
                       {row.symptoms ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Triệu chứng
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.symptoms}
                           </p>
                         </div>
                       ) : null}
                       {row.treatment ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Phác đồ
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.treatment}
                           </p>
                         </div>
                       ) : null}
                       {row.prescription ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Đơn thuốc
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.prescription}
                           </p>
                         </div>
                       ) : null}
                       {row.notes ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Ghi chú
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.notes}
                           </p>
                         </div>
@@ -2473,7 +2571,10 @@ function AppointmentCreateDialog({
     limit: PICKER_LIMIT,
     search: doctorSearch || undefined,
   });
-  const doctors: Doctor[] = doctorsQuery.data?.data?.doctors ?? [];
+  const doctors: Doctor[] = useMemo(
+    () => doctorsQuery.data?.data?.doctors ?? [],
+    [doctorsQuery.data?.data?.doctors],
+  );
   const doctorsTotal = doctorsQuery.data?.data?.total ?? 0;
   const doctorsTotalPages = Math.max(1, Math.ceil(doctorsTotal / PICKER_LIMIT));
   const selectedDoctor = useMemo(
@@ -2482,15 +2583,19 @@ function AppointmentCreateDialog({
   );
 
   const schedulesQuery = useDoctorSchedulesByDoctorId(doctorId ?? 0);
-  const groupedSchedules = (schedulesQuery.data?.data ?? {}) as Record<
-    string,
-    Array<{
-      id: number;
-      start_time?: string;
-      end_time?: string;
-      is_active?: boolean;
-    }>
-  >;
+  const groupedSchedules = useMemo(
+    () =>
+      (schedulesQuery.data?.data ?? {}) as Record<
+        string,
+        Array<{
+          id: number;
+          start_time?: string;
+          end_time?: string;
+          is_active?: boolean;
+        }>
+      >,
+    [schedulesQuery.data?.data],
+  );
   const flatSchedules = useMemo(() => {
     const list: Array<{
       id: number;
@@ -2542,7 +2647,10 @@ function AppointmentCreateDialog({
     limit: PICKER_LIMIT,
     search: relativeSearch || undefined,
   });
-  const relatives: Relative[] = relativesQuery.data?.data?.relatives ?? [];
+  const relatives: Relative[] = useMemo(
+    () => relativesQuery.data?.data?.relatives ?? [],
+    [relativesQuery.data?.data?.relatives],
+  );
   const relativesTotal = relativesQuery.data?.data?.total ?? 0;
   const relativesTotalPages = Math.max(
     1,
@@ -2811,39 +2919,39 @@ function SearchableSelect({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex h-11 w-full items-center justify-between gap-2 rounded-sm border border-border bg-white px-3 text-sm text-foreground outline-none transition focus-visible:border-[#9b60aa] focus-visible:ring-2 focus-visible:ring-[#9b60aa]/20 disabled:cursor-not-allowed disabled:bg-[#f7f6f2] disabled:text-[#a1a1a8] ${open ? "border-[#9b60aa] ring-2 ring-[#9b60aa]/20" : ""}`}
+        className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-600 ${open ? "border-primary ring-2 ring-primary/20" : ""}`}
       >
         <span
-          className={`truncate text-left ${selectedLabel ? "text-foreground" : "text-muted-foreground"}`}
+          className={`truncate text-left ${selectedLabel ? "text-slate-900 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"}`}
         >
           {triggerLabel}
         </span>
         <ChevronDown
-          className={`size-4 shrink-0 text-[#75758a] transition-transform ${open ? "rotate-180" : ""}`}
+          className={`size-4 shrink-0 text-slate-400 dark:text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
         />
       </button>
 
       {open && !disabled ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-sm border border-border bg-white shadow-lg">
-          <div className="flex items-center gap-2 border-b border-border bg-white px-3">
-            <Search className="size-4 text-[#75758a]" />
+        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
+            <Search className="size-4 text-slate-400" />
             <input
               ref={searchInputRef}
               type="text"
               placeholder={searchPlaceholder}
               value={search}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="h-10 flex-1 border-0 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0"
+              className="h-10 flex-1 border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:ring-0 dark:text-slate-100 dark:placeholder:text-slate-400"
             />
           </div>
 
           <div className="max-h-60 overflow-y-auto py-1">
             {isLoading ? (
-              <div className="px-3 py-3 text-xs text-[#75758a]">
+              <div className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
                 Đang tải...
               </div>
             ) : items.length === 0 ? (
-              <div className="px-3 py-3 text-xs text-[#75758a]">
+              <div className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
                 Không có kết quả.
               </div>
             ) : (
@@ -2857,18 +2965,18 @@ function SearchableSelect({
                       onSelect(item.value);
                       setOpen(false);
                     }}
-                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-[#f7f6f2] ${isSelected ? "bg-[#f3eaf6] text-[#5b2a72]" : "text-foreground"}`}
+                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 ${isSelected ? "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-emerald-400" : "text-slate-800 dark:text-slate-200"}`}
                   >
                     <span className="flex flex-col">
                       <span className="truncate">{item.label}</span>
                       {item.hint ? (
-                        <span className="text-[11px] text-[#75758a]">
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
                           {item.hint}
                         </span>
                       ) : null}
                     </span>
                     {isSelected ? (
-                      <Check className="size-4 shrink-0 text-[#9b60aa]" />
+                      <Check className="size-4 shrink-0 text-primary dark:text-emerald-400" />
                     ) : null}
                   </button>
                 );
@@ -2877,7 +2985,7 @@ function SearchableSelect({
           </div>
 
           {showPagination ? (
-            <div className="flex items-center justify-between gap-2 border-t border-border bg-white px-2 py-1.5">
+            <div className="flex items-center justify-between gap-2 border-t border-slate-200 bg-white px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900">
               <Button
                 type="button"
                 variant="outline"
@@ -2887,7 +2995,7 @@ function SearchableSelect({
               >
                 Trước
               </Button>
-              <span className="text-xs text-[#75758a]">
+              <span className="text-xs text-slate-500 dark:text-slate-400">
                 Trang {page}/{totalPages}
                 {isLoading ? " • đang tải..." : ""}
               </span>
@@ -2991,7 +3099,7 @@ function RelativeFormDialog({
           id="rel-gender"
           value={gender}
           onChange={(e) => setGender(e.target.value)}
-          className="flex h-11 w-full rounded-sm border border-border bg-white px-4 py-2 text-sm text-foreground outline-none transition focus-visible:border-[#9b60aa] focus-visible:ring-2 focus-visible:ring-[#9b60aa]/20"
+          className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
         >
           <option value="">Chưa chọn</option>
           <option value="male">Nam</option>
@@ -3214,21 +3322,21 @@ function HealthProfilesModule({
                   row.allergies || row.medical_history ? (
                     <div className="space-y-3">
                       {row.allergies ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Dị ứng
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.allergies}
                           </p>
                         </div>
                       ) : null}
                       {row.medical_history ? (
-                        <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                          <div className="mono-label text-[10px] text-[#75758a]">
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                             Tiền sử bệnh
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                             {row.medical_history}
                           </p>
                         </div>
@@ -3394,11 +3502,11 @@ function RelationshipsModule({
           label: "Tên hiển thị",
           render: (row) => (
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-[#212121]">
+              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
                 {row.relationship_name || row.name || row.relationship_code}
               </span>
               {row.relationship_name || row.name ? (
-                <span className="text-[11px] text-[#75758a]">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">
                   Mã: {row.relationship_code}
                 </span>
               ) : null}
@@ -3521,7 +3629,7 @@ function SpecialtyCreateDialog({ trigger }: { trigger: ReactNode }) {
               file: event.target.files?.[0] ?? null,
             }))
           }
-          className="text-xs text-[#212121]"
+          className="text-xs text-slate-900 dark:text-slate-200"
         />
       </FormField>
     </FormDialog>
@@ -3661,8 +3769,8 @@ function SpecialtiesModule({
                 ]}
                 footer={
                   row.img_url ? (
-                    <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                      <div className="mono-label text-[10px] text-[#75758a]">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                         Ảnh đại diện
                       </div>
                       <img
@@ -3970,11 +4078,11 @@ function TopicsModule({
                 ]}
                 footer={
                   row.description ? (
-                    <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                      <div className="mono-label text-[10px] text-[#75758a]">
+                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                         Mô tả
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                         {row.description}
                       </p>
                     </div>
@@ -4144,38 +4252,38 @@ function ArticlesModule({
                     row.summary || row.content || (row.files && row.files.length) ? (
                       <div className="space-y-3">
                         {row.summary ? (
-                          <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                            <div className="mono-label text-[10px] text-[#75758a]">
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Tóm tắt
                             </div>
-                            <p className="mt-2 whitespace-pre-line text-sm text-[#212121]">
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                               {row.summary}
                             </p>
                           </div>
                         ) : null}
                         {row.content ? (
-                          <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                            <div className="mono-label text-[10px] text-[#75758a]">
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Nội dung
                             </div>
-                            <p className="mt-2 max-h-72 overflow-auto whitespace-pre-line text-sm text-[#212121]">
+                            <p className="mt-2 max-h-72 overflow-auto whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                               {row.content}
                             </p>
                           </div>
                         ) : null}
                         {row.files && row.files.length ? (
-                          <div className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-                            <div className="mono-label text-[10px] text-[#75758a]">
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Tệp đính kèm
                             </div>
-                            <ul className="mt-2 space-y-1 text-sm text-[#212121]">
+                            <ul className="mt-2 space-y-1 text-sm text-slate-900 dark:text-slate-100">
                               {row.files.map((file) => (
                                 <li key={file.id}>
                                   <a
                                     href={file.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-[#9b60aa] underline"
+                                    className="text-primary underline hover:text-primary/80 dark:text-teal-400 dark:hover:text-teal-300"
                                   >
                                     {file.url}
                                   </a>
@@ -4369,7 +4477,7 @@ function DoctorSchedulesModule() {
   }));
 
   return (
-    <Card className="rounded-lg border-[#d9d9dd]">
+    <Card className="rounded-2xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
       <CardHeader>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle>Lịch khám cá nhân</CardTitle>
@@ -4395,8 +4503,8 @@ function DoctorSchedulesModule() {
                   className={
                     "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
                     (active
-                      ? "border-[#212121] bg-[#212121] text-white"
-                      : "border-[#d9d9dd] bg-white text-[#212121] hover:bg-[#f7f6f2]")
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
                   }
                 >
                   <span>{day.label}</span>
@@ -4404,8 +4512,8 @@ function DoctorSchedulesModule() {
                     className={
                       "rounded-full px-1.5 text-[10px] " +
                       (active
-                        ? "bg-white/20 text-white"
-                        : "bg-[#f7f6f2] text-[#75758a]")
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
                     }
                   >
                     {count}
@@ -4426,32 +4534,32 @@ function DoctorSchedulesModule() {
             }.`}
           />
         ) : (
-          <table className="min-w-full divide-y divide-[#d9d9dd] text-left">
+          <table className="min-w-full divide-y divide-slate-200 text-left dark:divide-slate-800">
             <thead>
               <tr>
-                <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   ID
                 </th>
-                <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Ngày
                 </th>
-                <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Giờ
                 </th>
-                <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Trạng thái
                 </th>
-                <th className="mono-label px-3 py-3 text-[10px] font-medium text-[#75758a]">
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
                   Thao tác
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#e5e7eb]">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {rows.map((row) => (
-                <tr key={row.id} className="align-top hover:bg-[#f7f6f2]">
-                  <td className="px-3 py-4 text-sm">{row.id}</td>
-                  <td className="px-3 py-4 text-sm">{row.day_of_week}</td>
-                  <td className="px-3 py-4 text-sm">
+                <tr key={row.id} className="align-top hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.id}</td>
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.day_of_week}</td>
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">
                     {row.start_time ?? "-"} - {row.end_time ?? "-"}
                   </td>
                   <td className="px-3 py-4 text-sm">
@@ -4763,22 +4871,36 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
       />
 
       {supportsSearch ? (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div className="relative w-full sm:max-w-md">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
                 setPage(1);
               }}
-              placeholder="Tìm kiếm..."
-              className="pl-9"
+              placeholder={`Tìm kiếm trong ${headerProps.title.toLowerCase()}...`}
+              className="pl-10 h-10 rounded-xl"
             />
+            {search ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setPage(1);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+              >
+                Xóa
+              </button>
+            ) : null}
           </div>
           {headerProps.permissionLevel ? (
             <ToolbarCreateButton>
-              <Badge variant="outline">{headerProps.permissionLevel}</Badge>
+              <Badge variant="outline" className="text-xs font-bold self-start sm:self-center">
+                🔒 Quyền: {headerProps.permissionLevel}
+              </Badge>
             </ToolbarCreateButton>
           ) : null}
         </div>

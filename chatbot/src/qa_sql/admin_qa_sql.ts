@@ -2,18 +2,42 @@ import * as dotenv from "dotenv";
 import { SqlDatabase } from "langchain/sql_db";
 import { Annotation, StateGraph } from "@langchain/langgraph";
 import { getChatModel } from "../configs/llm.js";
-import { QuerySqlTool } from "langchain/tools/sql";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import { DataSourceRoot } from "../database/data-source.js";
+import {
+  AdminReportDatasource,
+  initializeWithRetry,
+} from "../database/data-source.js";
+import { assertSelectOnlyQuery } from "../utils/assertSelectOnlyQuery.js";
+import { withRetry } from "../utils/retry.js";
 
 dotenv.config();
 
-await DataSourceRoot.initialize();
+await initializeWithRetry(AdminReportDatasource);
 
 const db = await SqlDatabase.fromDataSourceParams({
-  appDataSource: DataSourceRoot,
+  appDataSource: AdminReportDatasource,
+  includesTables: [
+    "chatbot_report_users_view",
+    "chatbot_report_coach_profiles_view",
+    "chatbot_report_audit_view",
+    "chatbot_report_appointments_view",
+    "chatbot_report_doctor_schedules_view",
+    "chatbot_report_doctors_view",
+    "chatbot_report_specialties_view",
+  ],
 });
+
+const ADMIN_REPORT_TABLES = [
+  "chatbot_report_users_view",
+  "chatbot_report_coach_profiles_view",
+  "chatbot_report_audit_view",
+  "chatbot_report_appointments_view",
+  "chatbot_report_doctor_schedules_view",
+  "chatbot_report_doctors_view",
+  "chatbot_report_specialties_view",
+] as const;
 
 const InputStateAnnotation = Annotation.Root({
   question: Annotation<string>,
@@ -36,7 +60,10 @@ Dưới đây là thông tin về cấu trúc các bảng trong cơ sở dữ li
 Yêu cầu:
 - Chỉ tạo câu SQL SELECT (không UPDATE, DELETE, INSERT, không thao tác làm hỏng DATABASE)
 với các trường cần thiết với cấu trúc cơ sở dữ liệu.
-- Không giới hạn kết quả bằng LIMIT trừ khi người dùng yêu cầu.
+- Chỉ truy vấn các view chatbot_report_* được cung cấp trong schema.
+- Luôn giới hạn kết quả ở mức tối đa 1000 dòng.
+- Nếu dùng hàm aggregate như SUM, COUNT hoặc AVG, mọi cột/biểu thức không aggregate trong SELECT bắt buộc phải nằm trong GROUP BY; không dùng SELECT * cùng aggregate.
+- Với tỷ lệ hoặc chỉ số dẫn xuất, dùng CTE/subquery để tính các tổng phụ trước rồi tính tỷ lệ ở query ngoài; bảo đảm mỗi query aggregate đều hợp lệ với PostgreSQL.
 - Trả về câu SQL hợp lệ duy nhất, không thêm lời giải thích.
     `;
 
@@ -50,11 +77,18 @@ Câu hỏi của người dùng: {input}
   ],
 ]);
 
-const queryOutput = z.object({
-  query: z.string().describe("Syntactically valid SQL query."),
+const extractSqlQueryTool = tool(async () => "", {
+  name: "extract_sql_query",
+  description:
+    "Return the syntactically valid SQL query that answers the question.",
+  schema: z.object({
+    query: z.string().describe("Syntactically valid SQL query."),
+  }),
 });
 
-const structuredSqlLLM = llm.withStructuredOutput(queryOutput);
+const llmWithQueryTool = llm.bindTools([extractSqlQueryTool], {
+  tool_choice: "extract_sql_query",
+});
 
 const writeQuery = async (state: typeof InputStateAnnotation.State) => {
   const promptValue = await queryPromptTemplate.invoke({
@@ -63,14 +97,22 @@ const writeQuery = async (state: typeof InputStateAnnotation.State) => {
     input: state.question,
   });
 
-  const result = await structuredSqlLLM.invoke(promptValue);
-  console.log("🧩 query:", result.query);
-  return { query: result.query };
+  const response = await llmWithQueryTool.invoke(promptValue);
+  const query = response.tool_calls?.[0]?.args?.query;
+  return { query };
 };
 
 const executeQuery = async (state: typeof StateAnnotation.State) => {
-  const executeQueryTool = new QuerySqlTool(db);
-  return { result: await executeQueryTool.invoke(state.query) };
+  const safeQuery = assertSelectOnlyQuery(state.query, {
+    allowedTables: ADMIN_REPORT_TABLES,
+    maxRows: 1_000,
+  });
+  const rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
+    operation: "admin_qa_sql_select",
+  });
+  return {
+    result: JSON.stringify(rows),
+  };
 };
 
 const workflow = new StateGraph({

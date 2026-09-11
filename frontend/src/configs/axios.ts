@@ -44,9 +44,12 @@ axiosInstance.interceptors.request.use(
 );
 
 let isRefreshing = false;
-let failedQueue: any[] = [];
+let failedQueue: Array<{
+  resolve: () => void;
+  reject: (err: unknown) => void;
+}> = [];
 
-function processorQueue(error: any = null) {
+function processorQueue(error: unknown = null) {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error);
@@ -101,7 +104,30 @@ axiosInstance.interceptors.response.use(
         // Ignore logout failures here; refresh failure is the auth source of truth.
       }
       useUserStore.getState().resetState();
-      window.location.href = "/sign-in";
+      import("@/utils/socket").then(({ disconnectSocket }) => {
+        disconnectSocket();
+      });
+      // Only redirect to /sign-in if the user is on a protected route.
+      // Guests browsing public pages (Home, Doctors, News, Contact, FAQ, etc.) should stay on the page.
+      const publicPaths = [
+        "/",
+        "/doctors",
+        "/news",
+        "/contact",
+        "/faq",
+        "/terms",
+        "/team",
+        "/careers",
+        "/sign-in",
+        "/sign-up",
+      ];
+      const currentPath = window.location?.pathname ?? "";
+      const isPublic =
+        publicPaths.includes(currentPath) ||
+        currentPath.startsWith("/news/");
+      if (!isPublic) {
+        window.location.href = "/sign-in";
+      }
       return Promise.reject(refreshErr);
     } finally {
       isRefreshing = false;

@@ -21,6 +21,11 @@ import { BodyUpdateDoctorDto } from './dto/request/bodyUpdateDoctor.dto';
 import User from 'src/entities/user.entity';
 import Specialty from 'src/entities/specialty.entity';
 
+const normalizeDoctorAvgRating = (value: unknown) => {
+  const avgRating = Number(value);
+  return Number.isFinite(avgRating) && avgRating > 0 ? avgRating : 5;
+};
+
 @Injectable()
 export class DoctorsService {
   constructor(
@@ -153,7 +158,7 @@ export class DoctorsService {
 
       return {
         ...doctor,
-        avg_rating: Number(row?.avg_rating ?? 0),
+        avg_rating: normalizeDoctorAvgRating(row?.avg_rating),
         appointments_completed: Number(row?.appointments_completed ?? 0),
       };
     });
@@ -185,10 +190,12 @@ export class DoctorsService {
     const row = raw.find((i) => Number(i.doctor_id) === doctorId);
     const doctor = {
       ...entities[0],
-      avg_rating: Number(row?.avg_rating ?? 0),
+      avg_rating: normalizeDoctorAvgRating(row?.avg_rating),
       appointments_completed: Number(row?.appointments_completed ?? 0),
     };
-    const result = DoctorsMapper.toDoctorResponseDto(setIsOutstandingDoctor(doctor));
+    const result = DoctorsMapper.toDoctorResponseDto(
+      setIsOutstandingDoctor(doctor),
+    );
     await this.redisCacheService.setData(cacheKey, result, 3600);
     return result;
   }
@@ -234,7 +241,8 @@ export class DoctorsService {
 
   async getOutstandingDoctors() {
     const cacheKey = `doctors:outstandingDoctors`;
-    const outstandingDoctorsCached = await this.redisCacheService.getData(cacheKey);
+    const outstandingDoctorsCached =
+      await this.redisCacheService.getData(cacheKey);
     if (outstandingDoctorsCached) return outstandingDoctorsCached;
     const query = this.baseDoctorQuery()
       .orderBy('avg_rating', 'DESC')
@@ -245,7 +253,7 @@ export class DoctorsService {
 
       return {
         ...doctor,
-        avg_rating: Number(row?.avg_rating ?? 0),
+        avg_rating: normalizeDoctorAvgRating(row?.avg_rating),
         appointments_completed: Number(row?.appointments_completed ?? 0),
       };
     });
@@ -265,7 +273,7 @@ export class DoctorsService {
       .subQuery()
       .select('ds.doctor_id', 'doctor_id')
       .addSelect('COUNT(ap.id)', 'appointments_completed')
-      .addSelect('COALESCE(AVG(rating.rating_score), 0)', 'avg_rating')
+      .addSelect('COALESCE(AVG(rating.rating_score), 5)', 'avg_rating')
       .from('doctor_schedules', 'ds')
       .leftJoin('ds.appointments', 'ap', 'ap.status = :status')
       .leftJoin('ap.satisfaction_rating', 'rating')
@@ -282,7 +290,7 @@ export class DoctorsService {
         'doctor_stats.doctor_id = doctor.id',
       )
       .setParameters({ status: AppointmentStatus.COMPLETED })
-      .addSelect('COALESCE(doctor_stats.avg_rating, 0)', 'avg_rating')
+      .addSelect('COALESCE(doctor_stats.avg_rating, 5)', 'avg_rating')
       .addSelect(
         'COALESCE(doctor_stats.appointments_completed, 0)',
         'appointments_completed',

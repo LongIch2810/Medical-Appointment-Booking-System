@@ -70,30 +70,30 @@ export function CommandPaletteDialog() {
 
   return (
     <Dialog open={isOpen} onOpenChange={setOpen}>
-      <DialogContent className="max-w-2xl border-[#d9d9dd] p-0 overflow-hidden dark:border-slate-800 dark:bg-slate-950">
+      <DialogContent className="max-w-2xl border-slate-200 p-0 overflow-hidden dark:border-slate-800 dark:bg-slate-950 rounded-2xl shadow-lg">
         <DialogTitle className="sr-only">Command Palette Search</DialogTitle>
         <DialogDescription className="sr-only">
           Tìm kiếm nhanh các trang quản lý và lối tắt hệ thống
         </DialogDescription>
-        <div className="flex items-center border-b border-[#d9d9dd] px-4 py-3 dark:border-slate-800">
-          <Search className="size-5 shrink-0 text-[#75758a] dark:text-slate-400" />
+        <div className="flex items-center border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+          <Search className="size-5 shrink-0 text-slate-400 dark:text-slate-400" />
           <input
             type="text"
             placeholder="Gõ tên trang hoặc module để tìm kiếm... (Vd: Quản lý người dùng, Dashboard)"
-            className="flex-1 bg-transparent px-3 text-sm outline-none text-[#212121] placeholder:text-[#75758a] dark:text-slate-100 dark:placeholder:text-slate-500"
+            className="flex-1 bg-transparent px-3 text-sm outline-none text-slate-900 placeholder:text-slate-400 dark:text-slate-100 dark:placeholder:text-slate-500"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleKeyDownInMenu}
             autoFocus
           />
-          <div className="flex items-center gap-1 rounded bg-[#eeece7] px-2 py-0.5 text-[11px] font-medium text-[#75758a] dark:bg-slate-800 dark:text-slate-400">
+          <div className="flex items-center gap-1 rounded-lg bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400 border border-slate-200/80 dark:border-slate-700">
             <Command className="size-3" /> K
           </div>
         </div>
 
-        <div className="scrollbar-soft max-h-[380px] overflow-y-auto p-2">
+        <div className="scrollbar-soft flex-1 min-h-0 max-h-[50dvh] overflow-y-auto overscroll-contain p-2">
           {filteredItems.length === 0 ? (
-            <div className="px-4 py-8 text-center text-sm text-[#75758a] dark:text-slate-400">
+            <div className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
               Không tìm thấy trang phù hợp với từ khóa &quot;{search}&quot;.
             </div>
           ) : (
@@ -106,29 +106,29 @@ export function CommandPaletteDialog() {
                     key={item.id}
                     onClick={() => handleSelect(item.path)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition ${
+                    className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-left text-sm transition-all cursor-pointer ${
                       isSelected
-                        ? "bg-[#17171c] text-white dark:bg-slate-800 dark:text-white"
-                        : "text-[#212121] hover:bg-[#f7f6f2] dark:text-slate-200 dark:hover:bg-slate-900"
+                        ? "bg-primary text-white shadow-xs font-semibold dark:bg-primary dark:text-white"
+                        : "text-slate-700 hover:bg-slate-100/80 dark:text-slate-200 dark:hover:bg-slate-900"
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
-                        className={`p-1.5 rounded-md ${
+                        className={`p-1.5 rounded-lg ${
                           isSelected
-                            ? "bg-white/10 text-white"
-                            : "bg-[#eeece7] text-[#75758a] dark:bg-slate-800 dark:text-slate-400"
+                            ? "bg-white/20 text-white"
+                            : "bg-primary/10 text-primary dark:bg-slate-800 dark:text-slate-300"
                         }`}
                       >
                         <Icon className="size-4" />
                       </span>
                       <div>
-                        <div className="font-medium">{item.label}</div>
+                        <div className="font-semibold">{item.label}</div>
                         <div
                           className={`text-[11px] ${
                             isSelected
-                              ? "text-white/70"
-                              : "text-[#75758a] dark:text-slate-400"
+                              ? "text-white/80"
+                              : "text-slate-500 dark:text-slate-400"
                           }`}
                         >
                           {item.section}
@@ -149,13 +149,13 @@ export function CommandPaletteDialog() {
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-[#d9d9dd] bg-[#f7f6f2] px-4 py-2 text-xs text-[#75758a] dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
           <div className="flex items-center gap-2">
-            <span>Dùng <kbd className="rounded border px-1 bg-white dark:bg-slate-800 dark:border-slate-700">↑</kbd> <kbd className="rounded border px-1 bg-white dark:bg-slate-800 dark:border-slate-700">↓</kbd> để di chuyển</span>
+            <span>Dùng <kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 font-bold text-[10px]">↑</kbd> <kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 font-bold text-[10px]">↓</kbd> để di chuyển</span>
             <span>·</span>
-            <span><kbd className="rounded border px-1 bg-white dark:bg-slate-800 dark:border-slate-700">Enter</kbd> chọn</span>
+            <span><kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 font-bold text-[10px]">Enter</kbd> chọn</span>
           </div>
-          <div><kbd className="rounded border px-1 bg-white dark:bg-slate-800 dark:border-slate-700">Esc</kbd> đóng</div>
+          <div><kbd className="rounded-md border border-slate-200 px-1.5 py-0.5 bg-white text-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700 font-bold text-[10px]">Esc</kbd> đóng</div>
         </div>
       </DialogContent>
     </Dialog>

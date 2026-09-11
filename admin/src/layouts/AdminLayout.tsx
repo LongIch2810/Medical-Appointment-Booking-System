@@ -1,15 +1,20 @@
-import { Command, Loader2, Menu, PanelLeftClose, PanelLeftOpen, Search } from "lucide-react";
+import { Command, Loader2, Menu, PanelLeftClose, PanelLeftOpen, Search, Shield, Stethoscope } from "lucide-react";
 import { useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CommandPaletteDialog } from "@/components/app/CommandPaletteDialog";
+import { NotificationBell } from "@/components/app/NotificationBell";
+import { NotificationRealtimeProvider } from "@/components/app/NotificationRealtimeProvider";
+import { SocketProvider } from "@/components/app/SocketProvider";
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { useLogout } from "@/hooks/useAuth";
 import { useCurrentUser } from "@/hooks/useUsers";
+import { useUserSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
 import {
   findMenuByPath,
@@ -34,28 +39,33 @@ function SidebarNav({ mobile = false }: { mobile?: boolean }) {
   const grouped = groupMenuBySection(items);
   const collapsed = useUiStore((state) => state.isSidebarCollapsed);
 
+  const isDoctor = currentRole === "doctor";
+
   return (
     <div
       className={cn(
-        "dark-product-field flex h-full min-h-0 flex-col gap-8 overflow-hidden px-4 py-6 text-white transition-all duration-300",
-        mobile ? "w-full" : collapsed ? "w-[92px]" : "w-[280px]"
+        "dark-product-field flex h-full min-h-0 flex-col gap-6 overflow-hidden px-4 py-5 text-white transition-all duration-300",
+        mobile ? "w-full" : collapsed ? "w-[88px]" : "w-[280px]"
       )}
     >
-      <div className="flex items-center gap-3 px-2">
-        <div className="flex size-12 items-center justify-center overflow-hidden rounded-lg bg-white p-1.5 shadow-sm">
+      <div className="flex items-center gap-3 px-2 border-b border-white/10 pb-4">
+        <div className="flex size-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-md shrink-0">
           <img
             src="/logo.jpg"
             alt="LifeHealth logo"
-            className="size-full rounded-sm object-cover"
+            className="size-full rounded-xl object-cover"
           />
         </div>
         {mobile || !collapsed ? (
-          <div>
-            <div className="font-display text-xl font-medium leading-none">
-              LifeHealth
+          <div className="min-w-0 flex-1">
+            <div className="font-display text-lg font-bold leading-tight tracking-tight flex items-center gap-1.5">
+              <span>LifeHealth</span>
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
-            <div className="mono-label mt-2 text-[10px] text-white/[0.55]">
-              admin console
+            <div className="mt-1 flex items-center gap-1.5">
+              <Badge className="bg-white/15 text-emerald-200 border-white/20 text-[10px] px-2 py-0 font-bold">
+                {isDoctor ? "Doctor Portal" : "Admin Console"}
+              </Badge>
             </div>
           </div>
         ) : null}
@@ -63,9 +73,9 @@ function SidebarNav({ mobile = false }: { mobile?: boolean }) {
 
       <div className="scrollbar-soft min-h-0 flex-1 space-y-6 overflow-y-auto pr-1">
         {Object.entries(grouped).map(([section, sectionItems]) => (
-          <div key={section} className="space-y-2">
+          <div key={section} className="space-y-1.5">
             {mobile || !collapsed ? (
-              <div className="mono-label px-3 text-[10px] text-white/40">
+              <div className="mono-label px-3 text-[10px] font-bold text-emerald-300/60 uppercase tracking-wider">
                 {section}
               </div>
             ) : null}
@@ -77,15 +87,15 @@ function SidebarNav({ mobile = false }: { mobile?: boolean }) {
                   title={!mobile && collapsed ? label : undefined}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-all duration-200",
+                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs sm:text-sm font-semibold transition-all duration-200",
                       isActive
-                        ? "bg-white text-[#003c33] shadow-sm font-semibold"
-                        : "text-white/70 hover:bg-white/10 hover:text-white"
+                        ? "bg-white text-emerald-950 shadow-md font-bold"
+                        : "text-white/75 hover:bg-white/10 hover:text-white"
                     )
                   }
                 >
                   <Icon className="size-4 shrink-0" />
-                  {mobile || !collapsed ? <span>{label}</span> : null}
+                  {mobile || !collapsed ? <span className="truncate">{label}</span> : null}
                 </NavLink>
               ))}
             </div>
@@ -101,14 +111,17 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const setSession = useAuthStore((state) => state.setSession);
   const currentUser = useAuthStore((state) => state.currentUser);
+  const currentRole = useAuthStore((state) => state.currentRole);
   const collapsed = useUiStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUiStore((state) => state.toggleSidebar);
+  const setTheme = useUiStore((state) => state.setTheme);
   const setCommandPaletteOpen = useUiStore(
     (state) => state.setCommandPaletteOpen
   );
   const activeMenu = findMenuByPath(location.pathname);
 
   const profileQuery = useCurrentUser();
+  const settingsQuery = useUserSettings(Boolean(currentUser));
   const logoutMutation = useLogout();
 
   useEffect(() => {
@@ -117,10 +130,15 @@ export function AdminLayout() {
     }
   }, [profileQuery.data, setSession]);
 
+  useEffect(() => {
+    const theme = settingsQuery.data?.data.theme;
+    if (theme) setTheme(theme.toLowerCase() as "light" | "dark" | "system");
+  }, [setTheme, settingsQuery.data?.data.theme]);
+
   if (profileQuery.isLoading && !currentUser) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-[#75758a] dark:bg-slate-950 dark:text-slate-400">
-        <Loader2 className="size-5 animate-spin text-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-white text-slate-500 dark:bg-slate-950 dark:text-slate-400">
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     );
   }
@@ -129,36 +147,41 @@ export function AdminLayout() {
   if (!displayUser) return null;
 
   const fullname = displayUser.fullname ?? displayUser.username ?? "Admin";
-  const titleHint = displayUser.email ?? displayUser.username ?? "Admin user";
+  const isDoctor = currentRole === "doctor";
 
   return (
-    <div className="min-h-screen bg-white transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
-      <CommandPaletteDialog />
-      <div className="flex min-h-screen">
-        <aside className="hidden h-screen shrink-0 border-r border-[#d9d9dd] transition-all duration-300 xl:sticky xl:top-0 xl:block dark:border-slate-800">
+    <SocketProvider userId={displayUser.id}>
+      <NotificationRealtimeProvider enabled>
+        <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+          <CommandPaletteDialog />
+          <div className="flex min-h-screen">
+        <aside className="hidden h-screen shrink-0 border-r border-slate-200 transition-all duration-300 xl:sticky xl:top-0 xl:block dark:border-slate-800">
           <SidebarNav />
         </aside>
 
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-[#d9d9dd] bg-white transition-colors duration-200 dark:border-slate-800 dark:bg-slate-950">
-            <div className="flex h-9 items-center justify-center bg-black px-4 text-center text-xs text-white">
-              <span className="hidden sm:inline">
-                LifeHealth command center
-              </span>
-              <span className="mx-2 hidden text-white/[0.35] sm:inline">/</span>
-              <span className="text-white/[0.72]">
-                Real-time data via secure backend APIs
-              </span>
+          <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-950/90">
+            {/* Top real-time ticker */}
+            <div className="flex h-8 items-center justify-between bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950 border-b border-slate-800">
+              <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>LifeHealth Command Center v2.5</span>
+              </div>
+              <div className="text-[11px] text-slate-400 hidden sm:block">
+                Hệ thống đồng bộ dữ liệu y tế trực tuyến &amp; Quản trị bảo mật RBAC
+              </div>
             </div>
+
+            {/* Main Header Bar */}
             <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-6">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <Sheet>
                   <SheetTrigger asChild>
-                    <Button variant="outline" size="icon" className="xl:hidden dark:border-slate-800 dark:bg-slate-900">
+                    <Button variant="outline" size="icon" className="xl:hidden rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900">
                       <Menu className="size-4" />
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="p-0">
+                  <SheetContent side="left" className="p-0 border-r border-slate-800 w-[280px]">
                     <SidebarNav mobile />
                   </SheetContent>
                 </Sheet>
@@ -166,23 +189,24 @@ export function AdminLayout() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="hidden xl:inline-flex dark:border-slate-800 dark:bg-slate-900"
+                  className="hidden xl:inline-flex rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 hover:border-primary/40"
                   onClick={toggleSidebar}
                   title={collapsed ? "Mở rộng menu" : "Thu gọn menu"}
                 >
                   {collapsed ? (
-                    <PanelLeftOpen className="size-4" />
+                    <PanelLeftOpen className="size-4 text-slate-600 dark:text-slate-300" />
                   ) : (
-                    <PanelLeftClose className="size-4" />
+                    <PanelLeftClose className="size-4 text-slate-600 dark:text-slate-300" />
                   )}
                 </Button>
 
                 <div>
-                  <div className="mono-label text-[10px] text-[#75758a] dark:text-slate-400">
+                  <div className="mono-label text-[10px] font-bold text-slate-400 dark:text-slate-400">
                     {activeMenu?.section ?? "Workspace"}
                   </div>
-                  <div className="text-sm font-medium text-[#212121] dark:text-slate-100">
-                    {activeMenu?.label ?? "LifeHealth Admin"}
+                  <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    {isDoctor ? <Stethoscope className="size-4 text-primary shrink-0" /> : <Shield className="size-4 text-primary shrink-0" />}
+                    <span>{activeMenu?.label ?? "LifeHealth Admin"}</span>
                   </div>
                 </div>
               </div>
@@ -190,61 +214,79 @@ export function AdminLayout() {
               {/* Quick Search Trigger Button */}
               <button
                 onClick={() => setCommandPaletteOpen(true)}
-                className="hidden md:flex items-center gap-3 rounded-full border border-[#d9d9dd] bg-[#f7f6f2] px-4 py-1.5 text-xs text-[#75758a] transition hover:border-[#17171c] hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800"
+                className="hidden md:flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs text-slate-500 transition-all hover:border-primary/40 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer shadow-2xs"
               >
-                <Search className="size-3.5" />
+                <Search className="size-3.5 text-slate-400" />
                 <span>Tìm kiếm nhanh trang hoặc câu lệnh...</span>
-                <kbd className="flex items-center gap-0.5 rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#212121] shadow-xs border border-[#d9d9dd] dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                <kbd className="flex items-center gap-0.5 rounded-lg bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 shadow-2xs border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                   <Command className="size-2.5" /> K
                 </kbd>
               </button>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <NotificationBell />
                 <ThemeToggle />
 
-                <Card className="hidden rounded-lg border-[#d9d9dd] px-4 py-2.5 md:flex md:flex-row md:items-center md:gap-3 dark:border-slate-800 dark:bg-slate-900">
-                  <Avatar className="size-9">
+                <Card
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate("/account/settings")}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      navigate("/account/settings");
+                    }
+                  }}
+                  className="hidden cursor-pointer rounded-2xl border-slate-200/80 px-3.5 py-1.5 md:flex md:flex-row md:items-center md:gap-3 dark:border-slate-800 dark:bg-slate-900 shadow-none"
+                >
+                  <Avatar className="size-8.5 border border-primary/30">
                     <AvatarImage
                       src={displayUser.picture ?? undefined}
                       alt={fullname}
+                      className="object-cover"
                     />
-                    <AvatarFallback className="dark:bg-slate-800 dark:text-slate-200">{getInitials(fullname)}</AvatarFallback>
+                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-xs dark:bg-slate-800 dark:text-emerald-400">
+                      {getInitials(fullname)}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
-                    <div className="truncate text-xs font-semibold text-[#212121] dark:text-slate-100">
+                    <div className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">
                       {fullname}
                     </div>
-                    <div className="truncate text-[11px] text-[#75758a] dark:text-slate-400">
-                      {titleHint}
+                    <div className="truncate text-[10px] text-slate-500 dark:text-slate-400">
+                      {isDoctor ? "Bác sĩ chuyên khoa" : "Quản trị viên"}
                     </div>
                   </div>
                 </Card>
 
                 <Button
                   variant="outline"
-                  className="hidden sm:inline-flex dark:border-slate-800 dark:bg-slate-900"
+                  size="sm"
+                  className="hidden sm:inline-flex rounded-xl border-slate-200 text-xs font-semibold dark:border-slate-800 dark:bg-slate-900"
                   onClick={() => navigate("/login")}
                 >
-                  Switch role
+                  Đổi vai trò
                 </Button>
+
                 <Button
                   variant="ghost"
+                  size="sm"
                   disabled={logoutMutation.isPending}
                   onClick={() => logoutMutation.mutate()}
-                  className="dark:text-slate-300 dark:hover:bg-slate-800"
+                  className="rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40"
                 >
-                  {logoutMutation.isPending ? "Đang đăng xuất..." : "Logout"}
+                  {logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}
                 </Button>
               </div>
             </div>
           </header>
 
-          <main className="flex-1 bg-white px-4 py-8 lg:px-8 lg:py-10 transition-colors duration-200 dark:bg-slate-950">
+          <main className="flex-1 bg-slate-50/70 px-4 py-6 lg:px-8 lg:py-8 transition-colors duration-200 dark:bg-slate-950">
             <Outlet />
           </main>
         </div>
-      </div>
-    </div>
+          </div>
+        </div>
+      </NotificationRealtimeProvider>
+    </SocketProvider>
   );
 }
-

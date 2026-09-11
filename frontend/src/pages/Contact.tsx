@@ -6,6 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import FadeInView from "@/components/view/FadeInView";
+import { toast } from "react-toastify";
+import {
+  Sparkles,
+  TrendingUp,
+  Stethoscope,
+  Globe,
+  ShieldCheck,
+  Building2,
+  Phone,
+  Mail,
+  Clock,
+  Send,
+  CheckCircle2,
+  Users,
+} from "lucide-react";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -25,58 +40,66 @@ const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Gửi liên hệ:", formData);
-    alert("Cảm ơn bạn đã liên hệ LifeHealth!");
+    toast.success("Cảm ơn bạn đã liên hệ LifeHealth! Chúng tôi sẽ phản hồi sớm nhất.");
+    setFormData({ name: "", email: "", phone: "", message: "" });
   };
 
   return (
-    <section className="mt-16 md:mt-28">
-      <div className="max-w-5xl mx-auto py-10 px-4 space-y-10">
+    <section className="mt-16 md:mt-24 pb-16">
+      <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 space-y-12">
         {/* Phần giới thiệu về LifeHealth */}
         <FadeInView>
-          <section className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-primary">
-              LifeHealth - Đặt lịch khám bác sĩ uy tín
+          <section className="text-center space-y-4 max-w-3xl mx-auto">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+              <Sparkles className="w-3.5 h-3.5" />
+              Nền tảng Y tế Số Thông Minh
+            </span>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+              LifeHealth - Đồng hành cùng sức khỏe của bạn
             </h1>
-            <p className="text-gray-700 text-lg">
-              LifeHealth là nền tảng chăm sóc sức khỏe trực tuyến hàng đầu tại
-              Việt Nam, giúp bạn dễ dàng đặt lịch khám với các bác sĩ và bệnh
-              viện uy tín chỉ với vài thao tác.
-            </p>
-            <p className="text-gray-600">
-              Với sứ mệnh "Chăm sóc sức khỏe cho mọi người, mọi lúc, mọi nơi",
-              LifeHealth đã và đang trở thành cầu nối tin cậy giữa người bệnh và
-              hệ thống y tế chất lượng cao.
+            <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
+              LifeHealth là nền tảng chăm sóc sức khỏe trực tuyến hàng đầu tại Việt Nam,
+              giúp bạn dễ dàng đặt lịch khám với các bác sĩ và bệnh viện uy tín chỉ với vài thao tác nhanh gọn.
             </p>
           </section>
         </FadeInView>
 
         {/* Dẫn chứng về uy tín */}
         <FadeInView>
-          <section className="grid md:grid-cols-3 gap-6 text-center">
-            <div className="bg-white rounded-xl shadow-md p-6 border">
-              <h2 className="text-xl font-semibold text-primary mb-2">
-                +500 bác sĩ chuyên khoa
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-teal-50 dark:bg-teal-950/50 text-primary flex items-center justify-center mx-auto mb-4">
+                <Stethoscope className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+                +500 bác sĩ
               </h2>
-              <p className="text-sm text-gray-600">
-                Hợp tác với các bác sĩ đầu ngành tại TP.HCM, Hà Nội, Đà Nẵng...
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Hợp tác với các bác sĩ đầu ngành chuyên khoa tại TP.HCM, Hà Nội, Đà Nẵng...
               </p>
             </div>
-            <div className="bg-white rounded-xl shadow-md p-6 border">
-              <h2 className="text-xl font-semibold text-primary mb-2">
-                +20 bệnh viện đối tác
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4">
+                <Building2 className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+                +20 bệnh viện
               </h2>
-              <p className="text-sm text-gray-600">
-                Liên kết với các cơ sở y tế lớn như Bệnh viện Đại học Y Dược,
-                Vinmec, Hoàn Mỹ...
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Liên kết với các cơ sở y tế lớn như Bệnh viện Đại học Y Dược, Vinmec, Hoàn Mỹ...
               </p>
             </div>
-            <div className="bg-white rounded-xl shadow-md p-6 border">
-              <h2 className="text-xl font-semibold text-primary mb-2">
-                Hơn 100.000 người dùng
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mx-auto mb-4">
+                <Users className="w-6 h-6" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+                +100.000 người dùng
               </h2>
-              <p className="text-sm text-gray-600">
-                Đã và đang sử dụng LifeHealth để đặt khám và theo dõi sức khỏe
-                định kỳ.
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Đã và đang sử dụng LifeHealth để đặt khám và theo dõi sức khỏe định kỳ tin cậy.
               </p>
             </div>
           </section>
@@ -85,66 +108,116 @@ const Contact = () => {
         {/* Thành tựu nổi bật và uy tín */}
         <FadeInView>
           <section className="space-y-6">
-            <h2 className="text-2xl font-semibold text-primary text-center">
-              🌟 Vì sao chọn LifeHealth?
-            </h2>
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+                Vì sao người bệnh tin chọn LifeHealth?
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Những giá trị cốt lõi tạo nên trải nghiệm y tế số an toàn và tiện lợi
+              </p>
+            </div>
+
             <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardContent className="p-6 space-y-2 text-gray-700 text-sm">
-                  <h3 className="text-lg font-bold text-primary">
-                    📈 Tăng trưởng ấn tượng
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>
-                      Hơn <strong>3 triệu người dùng</strong> trên toàn quốc
+              <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400">
+                      <TrendingUp className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                      Tăng trưởng ấn tượng
+                    </h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Hơn <strong className="text-slate-900 dark:text-slate-200">3 triệu người dùng</strong> trên toàn quốc</span>
                     </li>
-                    <li>
-                      Hơn <strong>1 triệu lượt đặt lịch mỗi năm</strong>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Hơn <strong className="text-slate-900 dark:text-slate-200">1 triệu lượt đặt lịch</strong> hàng năm</span>
                     </li>
-                    <li>
-                      Tỷ lệ hài lòng lên tới <strong>98%</strong>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6 space-y-2 text-gray-700 text-sm">
-                  <h3 className="text-lg font-bold text-primary">
-                    🩺 Mạng lưới y tế hàng đầu
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>+1.200 bác sĩ chuyên khoa giàu kinh nghiệm</li>
-                    <li>
-                      Hợp tác với hơn 40 bệnh viện lớn như Vinmec, Y Dược, Hoàn
-                      Mỹ...
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Tỷ lệ hài lòng đánh giá lên tới <strong className="text-slate-900 dark:text-slate-200">98%</strong></span>
                     </li>
                   </ul>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6 space-y-2 text-gray-700 text-sm">
-                  <h3 className="text-lg font-bold text-primary">
-                    🌐 Công nghệ hiện đại
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>AI hỗ trợ chẩn đoán sơ bộ, nhắc lịch tự động</li>
-                    <li>Hồ sơ y tế điện tử, đồng bộ trên nhiều thiết bị</li>
-                    <li>Ứng dụng đa nền tảng: iOS & Android</li>
+              <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-teal-50 dark:bg-teal-950/50 text-primary">
+                      <Stethoscope className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                      Mạng lưới y tế hàng đầu
+                    </h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>+1.200 bác sĩ chuyên khoa giàu kinh nghiệm</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Hợp tác với hơn 40 bệnh viện lớn như Vinmec, Y Dược, Hoàn Mỹ</span>
+                    </li>
                   </ul>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardContent className="p-6 space-y-2 text-gray-700 text-sm">
-                  <h3 className="text-lg font-bold text-primary">
-                    🛡️ Bảo mật & Uy tín
-                  </h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Đáp ứng tiêu chuẩn bảo mật: HIPAA, ISO 27001</li>
-                    <li>Được Bộ Y tế đánh giá cao trong chuyển đổi số</li>
-                    <li>Cam kết bảo mật tuyệt đối thông tin người dùng</li>
+              <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400">
+                      <Globe className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                      Công nghệ hiện đại
+                    </h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>AI hỗ trợ chẩn đoán sơ bộ, nhắc lịch khám tự động</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Hồ sơ y tế điện tử đồng bộ tức thì trên thiết bị</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Ứng dụng đa nền tảng phản hồi nhanh chóng</span>
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+
+              <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
+                <CardContent className="p-6 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-600 dark:text-purple-400">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                      Bảo mật & Chuẩn y tế
+                    </h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Tiêu chuẩn an toàn dữ liệu: HIPAA, ISO 27001</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Được đánh giá cao trong chuyển đổi số y tế</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Cam kết bảo mật dữ liệu hồ sơ bệnh án người dùng</span>
+                    </li>
                   </ul>
                 </CardContent>
               </Card>
@@ -153,75 +226,132 @@ const Contact = () => {
         </FadeInView>
 
         {/* Thông tin & form liên hệ */}
-        <section className="grid md:grid-cols-2 gap-8 mt-8">
+        <section className="grid md:grid-cols-2 gap-8 pt-4">
           {/* Thông tin liên hệ */}
-          <Card>
-            <CardContent className="p-6 space-y-4 text-sm">
-              <h2 className="text-xl font-semibold text-primary">
-                Thông tin liên hệ
-              </h2>
-              <p>
-                <strong>🏢 Trụ sở:</strong> 123 Lê Lợi, Quận 1, TP.HCM
-              </p>
-              <p>
-                <strong>📞 Hotline:</strong> 0909 123 456
-              </p>
-              <p>
-                <strong>📧 Email:</strong> support@lifehealth.vn
-              </p>
-              <p>
-                <strong>🕒 Giờ làm việc:</strong> Thứ 2 - Thứ 7: 8h - 17h
-              </p>
+          <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
+            <CardContent className="p-6 space-y-6">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                  Thông tin liên hệ
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Đội ngũ chăm sóc khách hàng LifeHealth luôn sẵn sàng lắng nghe và hỗ trợ bạn.
+                </p>
+              </div>
+
+              <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">Trụ sở chính</p>
+                    <p className="text-slate-500 dark:text-slate-400">123 Lê Lợi, Quận 1, TP. Hồ Chí Minh</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">Hotline hỗ trợ</p>
+                    <p className="text-slate-500 dark:text-slate-400">0909 123 456 (Cước phí thông thường)</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">Email tiếp nhận</p>
+                    <p className="text-slate-500 dark:text-slate-400">support@lifehealth.vn</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">Thời gian làm việc</p>
+                    <p className="text-slate-500 dark:text-slate-400">Thứ 2 - Thứ 7: 8:00 - 17:00</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 
           {/* Form liên hệ */}
-          <Card>
+          <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
             <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Gửi liên hệ</h2>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
+                Gửi phản hồi trực tuyến
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+                Nhập thắc mắc hoặc yêu cầu hợp tác để được hỗ trợ kịp thời.
+              </p>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="name">Họ tên</Label>
+                  <Label htmlFor="name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Họ và tên *
+                  </Label>
                   <Input
                     id="name"
                     name="name"
+                    placeholder="Nguyễn Văn A"
                     value={formData.name}
                     onChange={handleChange}
+                    className="mt-1 rounded-xl"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Địa chỉ Email *
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     name="email"
+                    placeholder="example@gmail.com"
                     value={formData.email}
                     onChange={handleChange}
+                    className="mt-1 rounded-xl"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="phone">Số điện thoại</Label>
+                  <Label htmlFor="phone" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Số điện thoại
+                  </Label>
                   <Input
                     id="phone"
                     name="phone"
+                    placeholder="0912 345 678"
                     value={formData.phone}
                     onChange={handleChange}
+                    className="mt-1 rounded-xl"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="message">Nội dung</Label>
+                  <Label htmlFor="message" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                    Nội dung lời nhắn *
+                  </Label>
                   <Textarea
                     id="message"
                     name="message"
                     rows={4}
+                    placeholder="Vui lòng chia sẻ thắc mắc hoặc thông tin bạn cần giải đáp..."
                     value={formData.message}
                     onChange={handleChange}
+                    className="mt-1 rounded-xl resize-none"
                     required
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full gap-2 rounded-xl">
+                  <Send className="w-4 h-4" />
                   Gửi liên hệ
                 </Button>
               </form>

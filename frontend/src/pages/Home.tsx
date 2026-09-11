@@ -1,49 +1,63 @@
-import React from "react";
+import React, { lazy } from "react";
+// Above-the-fold & light sections: Eager imports for instantaneous rendering and early query execution
+import HeroSection from "@/components/section/HeroSection";
+import TrustStripSection from "@/components/section/TrustStripSection";
 import SpecialtiesSection from "@/components/section/SpecialtiesSection";
-import { InspireAndShareLoveSection } from "@/components/section/InspireAndShareLoveSection";
 import OutstandingDoctorsSection from "@/components/section/OutstandingDoctorsSection";
-import BannerSection from "@/components/section/BannerSection";
-import SloganSection from "@/components/section/SloganSection";
-import FeelFreeFindAndBookDoctorSection from "@/components/section/FeelFreeFindAndBookDoctorSection";
-import { useUserStore } from "@/store/useUserStore";
-import FindAndBookDoctorSection from "../components/section/FindAndBookDoctorSection";
-import AiHealthcareAssistantSection from "../components/section/AiHealthcareAssistantSection";
-import DataSecuritySection from "../components/section/DataSecuritySection";
+import BookingProcessSection from "@/components/section/BookingProcessSection";
+import InspireAndShareLoveSection from "@/components/section/InspireAndShareLoveSection";
+import DataSecuritySection from "@/components/section/DataSecuritySection";
+
+import LazyViewport from "@/components/lazy/LazyViewport";
+import SectionSkeleton from "@/components/lazy/SectionSkeleton";
+
+// Heavy below-the-fold content: Isolates Lottie animation runtime until scrolled near viewport
+const AiHealthcareAssistantSection = lazy(
+  () => import("@/components/section/AiHealthcareAssistantSection")
+);
 
 const Home: React.FC = () => {
-  const { userInfo } = useUserStore();
-  console.log(">>> userInfo : ", userInfo);
   return (
-    <section className="mt-16 md:mt-28">
-      {/*Banner */}
-      <BannerSection />
+    <main className="mt-16 lg:mt-24 min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+      {/* 1. Hero with Asymmetric Layout, Care Path Heartbeat & Preview Card */}
+      <HeroSection />
 
-      {/*Slogan*/}
-      <SloganSection />
-      <div className="flex flex-col gap-y-10 md:gap-y-20">
-        {/*Inspire And Share Love */}
-        <InspireAndShareLoveSection />
+      {/* 2. Trust Strip with 3 Core Verified Commitments */}
+      <TrustStripSection />
 
-        {/*Carousel*/}
-        <OutstandingDoctorsSection />
+      {/* 3. Popular Specialties Grid */}
+      <SpecialtiesSection />
 
-        {/*Specialties*/}
-        <SpecialtiesSection />
+      {/* 4. Outstanding Doctors from Real API */}
+      <OutstandingDoctorsSection />
 
-        {/*Find and book doctor */}
-        <FindAndBookDoctorSection />
+      {/* 5. 3-Step Booking Process */}
+      <BookingProcessSection />
 
-        {/*AI Application in Health Care */}
+      {/* 6. AI Healthcare Assistant (Isolates Lottie & JSON bundle until near viewport) */}
+      <LazyViewport
+        minHeight={480}
+        rootMargin="150px 0px"
+        fallback={
+          <SectionSkeleton
+            minHeight={480}
+            title="Trợ lý y tế thông minh (AI Healthcare)"
+            description="Định hướng triệu chứng & Hỗ trợ chăm sóc sức khỏe 24/7."
+            type="simple"
+          />
+        }
+      >
         <AiHealthcareAssistantSection />
+      </LazyViewport>
 
-        {/*Feel free to search for and book a doctor.*/}
-        <FeelFreeFindAndBookDoctorSection />
+      {/* 7. Community Care & Charity Activities */}
+      <InspireAndShareLoveSection />
 
-        {/*Data security */}
-        <DataSecuritySection />
-      </div>
-    </section>
+      {/* 8. Data Security & Closing CTA */}
+      <DataSecuritySection />
+    </main>
   );
 };
 
 export default Home;
+

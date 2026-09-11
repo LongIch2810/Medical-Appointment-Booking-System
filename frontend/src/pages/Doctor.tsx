@@ -5,9 +5,10 @@ import DialogChooseSpecialty from "../components/dialog/DialogChooseSpecialty";
 import DialogChooseExperience from "../components/dialog/DialogChooseExperience";
 import DialogInputWorkplace from "../components/dialog/DialogInputWorkplace";
 import DialogChooseArea from "@/components/dialog/DialogChooseArea";
+import DialogAutoBooking from "@/components/dialog/DialogAutoBooking";
 import { useFilterDoctorsStore } from "@/store/filterDoctorsStore";
 import { useSearchParams } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useGetDoctorsInfinite } from "@/hooks/useGetDoctorsInfinite";
 import DoctorCardSkeleton from "@/components/skeleton/DoctorCardSkeleton";
 import DoctorCard from "@/components/card/DoctorCard";
@@ -33,16 +34,17 @@ const Doctor = () => {
     areaSelect,
     setAreaSelect,
   } = useFilterDoctorsStore();
+  const initialSearchParams = useRef(searchParams).current;
 
   const debouncedSearch = useDebounce(search, 500);
 
   useEffect(() => {
-    const urlSearch = searchParams.get("search") || "";
-    const urlSpecialty = Number(searchParams.get("specialtyId")) || 0;
-    const urlMinExp = Number(searchParams.get("minExp")) || 0;
-    const urlMaxExp = Number(searchParams.get("maxExp")) || 0;
-    const urlWorkplace = searchParams.get("workplace") || "";
-    const urlArea = searchParams.get("area") || "";
+    const urlSearch = initialSearchParams.get("search") || "";
+    const urlSpecialty = Number(initialSearchParams.get("specialtyId")) || 0;
+    const urlMinExp = Number(initialSearchParams.get("minExp")) || 0;
+    const urlMaxExp = Number(initialSearchParams.get("maxExp")) || 0;
+    const urlWorkplace = initialSearchParams.get("workplace") || "";
+    const urlArea = initialSearchParams.get("area") || "";
 
     setSearch(urlSearch);
     setSpecialtyIdSelect(urlSpecialty);
@@ -50,7 +52,15 @@ const Doctor = () => {
     setMaxExperienceSelect(urlMaxExp);
     setWorkplaceInput(urlWorkplace);
     setAreaSelect(urlArea);
-  }, []);
+  }, [
+    initialSearchParams,
+    setAreaSelect,
+    setMaxExperienceSelect,
+    setMinExperienceSelect,
+    setSearch,
+    setSpecialtyIdSelect,
+    setWorkplaceInput,
+  ]);
 
   useEffect(() => {
     const params: Record<string, string> = {};
@@ -69,6 +79,7 @@ const Doctor = () => {
     maxExperienceSelect,
     workplaceInput,
     areaSelect,
+    setSearchParams,
   ]);
 
   const filters = useMemo(
@@ -122,34 +133,36 @@ const Doctor = () => {
     setAreaSelect("");
     setSearchParams({});
   };
+
   return (
-    <section className="mt-16 md:mt-28">
-      <header className="container mx-auto max-w-[700px] lg:max-w-[900px]">
+    <section className="mt-16 md:mt-24 pb-16">
+      <header className="container mx-auto max-w-[700px] lg:max-w-[900px] mb-8 px-4">
         <Input
-          placeholder="Tìm kiếm bác sĩ..."
-          className="lg:text-lg rounded-full border-2 bg-white border-gray-300 placeholder:text-gray-400 shadow-md text-gray-800 italic"
-          icon={<Search />}
+          placeholder="Tìm kiếm theo tên bác sĩ, bệnh viện, chuyên khoa..."
+          className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
+          icon={<Search className="text-slate-400" size={18} />}
           value={search}
           onChange={handleSearch}
         />
-        <div className="flex flex-col md:flex-row md:flex-wrap gap-3 md:gap-5 mt-3 md:mt-5 md:justify-center">
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-2.5 md:gap-3.5 mt-3 md:mt-4 md:justify-center">
           <DialogChooseSpecialty className="w-full md:w-auto" />
           <DialogChooseExperience className="w-full md:w-auto" />
           <DialogInputWorkplace className="w-full md:w-auto" />
           <DialogChooseArea className="w-full md:w-auto" />
+          <DialogAutoBooking className="w-full md:w-auto" />
           <Button
             type="button"
             variant="outline"
             disabled={!hasActiveFilters}
             onClick={handleResetFilters}
-            className="w-full md:w-auto gap-2 rounded-full border-slate-300 bg-white text-slate-700 shadow-sm hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50"
+            className="w-full md:w-auto gap-2 rounded-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-2xs hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50 text-xs font-semibold"
           >
-            <RotateCcw className="h-4 w-4" />
+            <RotateCcw className="h-3.5 w-3.5" />
             Đặt lại bộ lọc
           </Button>
         </div>
       </header>
-      <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto">
+      <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto px-4">
         {isError ? (
           <ErrorState
             title="Không thể tải danh sách bác sĩ"
@@ -163,7 +176,7 @@ const Doctor = () => {
                 <NotFoundResult onReset={handleResetFilters} />
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
               {isLoading &&
                 Array.from({ length: 20 }).map((_, i) => (
                   <DoctorCardSkeleton key={i} />

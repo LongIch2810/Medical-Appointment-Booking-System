@@ -35,39 +35,38 @@ const SignUp = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-primary text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-linear-to-br from-primary via-teal-700 to-emerald-800 text-white">
       {/* Left branding */}
       <div className="flex flex-col items-center justify-center p-8 md:p-16 flex-1 text-center md:text-left">
         <img
-          src="../../public/logo.jpg"
-          alt="Logo"
-          className="mb-6 w-24 md:w-28 object-cover rounded-lg"
+          src="/logo.jpg"
+          alt="Logo LifeHealth"
+          className="mb-6 w-20 md:w-24 object-cover rounded-2xl shadow-md border-2 border-white/30"
         />
-        <div className="text-3xl md:text-5xl font-extrabold mb-4">
+        <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 leading-tight">
           <Typewriter
             words={["Chào mừng bạn đến với LifeHealth."]}
             loop={true}
             cursor
             cursorStyle="|"
-            typeSpeed={100} // Tốc độ gõ chậm hơn → mượt
-            deleteSpeed={60} // Tốc độ xoá chậm hơn → mượt
-            delaySpeed={2000} // Giữ lại chữ lâu hơn một chút
+            typeSpeed={100}
+            deleteSpeed={60}
+            delaySpeed={2000}
           />
         </div>
-        <p className="text-base md:text-lg opacity-90 leading-relaxed max-w-lg">
-          Đăng ký tài khoản để bắt đầu quản lý sức khỏe, đặt lịch khám và kết
-          nối với bác sĩ của bạn.
+        <p className="text-sm sm:text-base md:text-lg text-emerald-50/90 leading-relaxed max-w-lg">
+          Đăng ký tài khoản để bắt đầu quản lý sức khỏe, đặt lịch khám và kết nối với bác sĩ chuyên khoa.
         </p>
       </div>
 
       {/* Right form */}
-      <div className="bg-white text-gray-900 flex items-center justify-center p-6 md:p-12 rounded-t-3xl md:rounded-tl-3xl md:rounded-bl-3xl shadow-lg flex-1">
-        <Card className="w-full max-w-md shadow-none rounded-none">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl md:text-3xl font-extrabold mb-2">
-              Đăng ký
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 md:p-12 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl shadow-2xl flex-1 border-t md:border-t-0 md:border-l border-slate-200/50 dark:border-slate-800">
+        <Card className="w-full max-w-md shadow-none rounded-none border-0 bg-transparent">
+          <CardHeader className="text-center px-0 pt-0">
+            <CardTitle className="text-2xl md:text-3xl font-extrabold mb-2 text-slate-900 dark:text-slate-100">
+              Đăng ký tài khoản
             </CardTitle>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               Đã có tài khoản?{" "}
               <Link
                 to="/sign-in"
@@ -77,8 +76,8 @@ const SignUp = () => {
               </Link>
             </p>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <CardContent className="px-0 pb-0">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
               <Input
                 type="text"
                 icon={<UserCircle size={16} />}
@@ -98,7 +97,7 @@ const SignUp = () => {
               <Input
                 type="text"
                 icon={<User size={16} />}
-                placeholder="Họ tên"
+                placeholder="Họ và tên"
                 error={errors.fullname?.message}
                 {...register("fullname")}
               />
@@ -123,25 +122,32 @@ const SignUp = () => {
 
               <Button
                 type="submit"
-                className="w-full py-3 text-base"
+                className="w-full py-2.5 text-sm font-semibold rounded-xl mt-2"
                 disabled={isPending}
               >
-                {isPending ? <Loading /> : "Đăng ký"}
+                {isPending ? <Loading /> : "Tạo tài khoản"}
               </Button>
             </form>
 
-            <div className="mt-8">
-              <div className="flex items-center justify-center text-sm text-gray-400">
-                <span>hoặc đăng ký với</span>
+            <div className="mt-6">
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-slate-200 dark:border-slate-800" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-medium">
+                    Hoặc tiếp tục với
+                  </span>
+                </div>
               </div>
               <div className="mt-4">
                 <Button
                   type="button"
                   variant={"google"}
-                  className="flex items-center justify-center w-full px-4 py-2"
+                  className="flex items-center justify-center w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 font-medium hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors"
                   onClick={handleGoogleLogin}
                 >
-                  <FaGoogle className="mr-2" /> Google
+                  <FaGoogle className="mr-2 text-rose-500" /> Đăng ký với Google
                 </Button>
               </div>
             </div>

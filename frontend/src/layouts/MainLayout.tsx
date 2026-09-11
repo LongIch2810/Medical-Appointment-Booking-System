@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, Suspense } from "react";
 import Header from "../components/header/Header";
 import Footer from "@/components/footer/Footer";
 import { useProfile } from "@/hooks/useProfile";
@@ -7,13 +7,23 @@ import { useChannelStore } from "@/store/useChannelStore";
 import { useUserStore } from "@/store/useUserStore";
 import ChatBubbleAvatar from "@/components/avatar/ChatBubbleAvatar";
 import ChatBoxList from "@/components/list/ChatBoxList";
+import { cn } from "@/lib/utils";
+import EducationalDisclaimerModal from "@/components/dialog/EducationalDisclaimerModal";
+import RouteLoadingFallback from "@/components/common/RouteLoadingFallback";
 
 const MainLayout: React.FC = () => {
   const location = useLocation();
   const { channels } = useChannelStore();
-  const { userInfo } = useUserStore();
-  const { data } = useProfile(!!userInfo);
+  const { userInfo, setUserInfo } = useUserStore();
+  const { data } = useProfile(true);
   const currentUser = data?.data ?? userInfo;
+
+  useEffect(() => {
+    if (data?.data) {
+      setUserInfo(data.data);
+    }
+  }, [data?.data, setUserInfo]);
+
   const doctorChannels = useMemo(
     () =>
       channels.map((ch) => ({
@@ -22,13 +32,34 @@ const MainLayout: React.FC = () => {
       })),
     [channels, currentUser?.id]
   );
-  const shouldHideFloatingChat = location.pathname.startsWith("/patient");
+  const isChatbot = location.pathname.startsWith("/chatbot");
+  const isPatient = location.pathname.startsWith("/patient");
+  const shouldHideFloatingChat = isPatient || isChatbot;
+  // Trang Chatbot chiếm trọn khung nhìn màn hình — Footer được ẩn để không gây cuộn thừa
+  const shouldHideFooter = isChatbot;
 
   return (
-    <div className="relative min-h-screen">
+    <div
+      className={cn(
+        "relative w-full flex flex-col justify-between overflow-x-hidden",
+        isChatbot ? "h-screen max-h-screen overflow-hidden" : "min-h-screen",
+      )}
+    >
       <Header userInfo={currentUser} />
-      <main className="p-6">{<Outlet />}</main>
-      <Footer />
+      <main
+        className={cn(
+          "w-full",
+          isChatbot
+            ? "flex-1 h-[calc(100vh-72px)] lg:h-[calc(100vh-112px)] mt-[72px] lg:mt-[112px] p-2 sm:p-4 overflow-hidden flex flex-col items-center justify-center bg-slate-100/70"
+            : "flex-1 p-4 sm:p-6",
+        )}
+      >
+        <Suspense fallback={<RouteLoadingFallback />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      {!shouldHideFooter && <Footer />}
+      <EducationalDisclaimerModal autoOpenOnHome={location.pathname === "/"} />
       {!shouldHideFloatingChat && (
         <div className="fixed bottom-3 md:bottom-5 lg:bottom-10 right-4 md:flex flex-col items-center gap-3 z-50">
           {doctorChannels?.length > 0 && (

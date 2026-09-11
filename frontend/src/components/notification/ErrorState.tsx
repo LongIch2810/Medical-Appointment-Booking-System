@@ -19,7 +19,7 @@ export default function ErrorState({
       description={description}
       actionLabel={onRetry ? "Thử lại" : undefined}
       onAction={onRetry}
-      iconClassName="bg-error/10 text-error"
+      iconClassName="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900"
     />
   );
 }

@@ -51,7 +51,10 @@ export class DoctorResponseDto {
   user_id!: number;
 
   @Expose()
-  @Transform(({ value }) => Number(value ?? 0))
+  @Transform(({ value }) => {
+    const rating = Number(value);
+    return Number.isFinite(rating) && rating > 0 ? rating : 5;
+  })
   avg_rating!: number;
 
   @Expose()

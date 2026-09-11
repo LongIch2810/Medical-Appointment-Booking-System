@@ -39,30 +39,32 @@ function RowDialog({ row }: { row: ModuleRow }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="rounded-full border border-[#212121] px-4 py-1.5 text-left text-xs font-medium text-[#212121] hover:bg-[#17171c] hover:text-white dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white transition">
-          View details
+        <button className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary/40 dark:hover:bg-primary/10 transition-all cursor-pointer">
+          Xem chi tiết
         </button>
       </DialogTrigger>
       <DialogContent className="dark:border-slate-800 dark:bg-slate-950">
         <DialogHeader>
-          <DialogTitle className="dark:text-slate-100">{row.summary}</DialogTitle>
-          <DialogDescription className="dark:text-slate-400">
+          <DialogTitle className="dark:text-slate-100 font-bold text-slate-900">{row.summary}</DialogTitle>
+          <DialogDescription className="dark:text-slate-400 text-slate-500">
             Chi tiết bản ghi và tệp đính kèm trong hệ thống.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3 md:grid-cols-2">
-          {row.meta.map((item) => (
-            <div key={item.label} className="rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4 dark:border-slate-800 dark:bg-slate-900">
-              <div className="mono-label text-[10px] text-[#75758a] dark:text-slate-400">
-                {item.label}
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1 scrollbar-soft space-y-4 pt-2">
+          <div className="grid gap-3 md:grid-cols-2">
+            {row.meta.map((item) => (
+              <div key={item.label} className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  {item.label}
+                </div>
+                <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {item.value}
+                </div>
               </div>
-              <div className="mt-1 text-sm font-medium text-[#212121] dark:text-slate-100">
-                {item.value}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <FilePreviewList attachments={row.attachments} />
         </div>
-        <FilePreviewList attachments={row.attachments} />
       </DialogContent>
     </Dialog>
   );
@@ -81,12 +83,12 @@ export function DataTable({ module }: { module: ModuleConfig }) {
   }, [module.rows, query]);
 
   return (
-    <Card className="rounded-lg border-[#d9d9dd] dark:border-slate-800 dark:bg-slate-900">
-      <CardHeader className="space-y-4">
+    <Card className="rounded-2xl border-slate-200/80 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <CardHeader className="space-y-4 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base dark:text-slate-100">Danh sách dữ liệu</CardTitle>
-            <span className="rounded-full bg-[#eeece7] px-2.5 py-0.5 text-xs font-medium text-[#75758a] dark:bg-slate-800 dark:text-slate-300">
+            <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">Danh sách dữ liệu</CardTitle>
+            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
               {rows.length} / {module.rows.length} bản ghi
             </span>
           </div>
@@ -96,7 +98,7 @@ export function DataTable({ module }: { module: ModuleConfig }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={module.searchPlaceholder}
-              className="pl-9 pr-9 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
+              className="pl-9 pr-9 rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
             />
             {query ? (
               <button
@@ -119,25 +121,25 @@ export function DataTable({ module }: { module: ModuleConfig }) {
           </div>
         ) : (
           <div className="max-h-[600px] overflow-y-auto scrollbar-soft">
-            <table className="min-w-full divide-y divide-[#d9d9dd] text-left dark:divide-slate-800">
-              <thead className="sticky top-0 z-10 bg-[#f7f6f2] dark:bg-slate-950">
+            <table className="min-w-full divide-y divide-slate-100 text-left dark:divide-slate-800">
+              <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-xs dark:bg-slate-950 border-b border-slate-200/80 dark:border-slate-800">
                 <tr>
                   {module.columns.map((column) => (
                     <th
                       key={column.key}
-                      className="mono-label px-4 py-3 text-[10px] font-medium text-[#75758a] dark:text-slate-400"
+                      className="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300"
                     >
                       {column.label}
                     </th>
                   ))}
-                  <th className="mono-label px-4 py-3 text-[10px] font-medium text-[#75758a] dark:text-slate-400">
+                  <th className="px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-300">
                     Chi tiết
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#e5e7eb] dark:divide-slate-800">
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 {rows.map((row) => (
-                  <tr key={row.id} className="align-top transition-colors hover:bg-[#f7f6f2] dark:hover:bg-slate-800/60">
+                  <tr key={row.id} className="align-middle transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
                     {module.columns.map((column) => (
                       <td key={column.key} className="px-4 py-3.5">
                         {renderCell(row.cells[column.key])}

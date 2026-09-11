@@ -102,15 +102,15 @@ const ForgotPassword: React.FC = () => {
       : "Đặt lại mật khẩu";
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-primary text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-linear-to-br from-primary via-teal-700 to-emerald-800 text-white">
       {/* Left branding (matches SignIn/SignUp) */}
       <div className="flex flex-col items-center justify-center p-8 md:p-16 flex-1 text-center md:text-left">
         <img
-          src="../../public/logo.jpg"
-          alt="Logo"
-          className="mb-6 w-24 md:w-28 object-cover rounded-lg"
+          src="/logo.jpg"
+          alt="Logo LifeHealth"
+          className="mb-6 w-20 md:w-24 object-cover rounded-2xl shadow-md border-2 border-white/30"
         />
-        <div className="text-3xl md:text-5xl font-extrabold mb-4">
+        <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 leading-tight">
           <Typewriter
             words={["Khôi phục quyền truy cập LifeHealth."]}
             loop={true}
@@ -121,30 +121,29 @@ const ForgotPassword: React.FC = () => {
             delaySpeed={2000}
           />
         </div>
-        <p className="text-base md:text-lg opacity-90 leading-relaxed max-w-lg">
-          Xác minh email của bạn để đặt lại mật khẩu và tiếp tục sử dụng
-          LifeHealth.
+        <p className="text-sm sm:text-base md:text-lg text-emerald-50/90 leading-relaxed max-w-lg">
+          Xác minh email của bạn để đặt lại mật khẩu và tiếp tục quản lý chăm sóc sức khỏe.
         </p>
       </div>
 
       {/* Right form */}
-      <div className="bg-white text-gray-900 flex items-center justify-center p-6 md:p-12 rounded-t-3xl md:rounded-tl-3xl md:rounded-bl-3xl shadow-lg flex-1">
-        <Card className="w-full max-w-md shadow-none rounded-none">
-          <CardHeader>
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 md:p-12 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl shadow-2xl flex-1 border-t md:border-t-0 md:border-l border-slate-200/50 dark:border-slate-800">
+        <Card className="w-full max-w-md shadow-none rounded-none border-0 bg-transparent">
+          <CardHeader className="px-0 pt-0">
             {step !== "email" && (
               <button
                 type="button"
                 onClick={() => setStep(step === "reset" ? "otp" : "email")}
-                className="flex items-center gap-1 text-sm text-gray-500 hover:text-primary mb-2"
+                className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors mb-3"
               >
-                <ArrowLeft size={16} /> Quay lại
+                <ArrowLeft size={15} /> Quay lại bước trước
               </button>
             )}
-            <CardTitle className="text-center text-2xl md:text-3xl font-extrabold">
+            <CardTitle className="text-center text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
               {stepTitle}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="px-0 pb-0 space-y-4">
             {step === "email" && (
               <form
                 onSubmit={(e) => {
@@ -153,13 +152,18 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                  Nhập địa chỉ email liên kết với tài khoản của bạn để nhận mã xác thực một lần (OTP).
+                </p>
                 <Input
                   type="email"
-                  placeholder="Nhập email"
+                  placeholder="Nhập email của bạn"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  className="rounded-xl"
+                  required
                 />
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
                   {loading ? <Loading /> : "Gửi mã OTP"}
                 </Button>
               </form>
@@ -173,20 +177,20 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
-                <p className="text-sm text-center text-gray-500">
-                  Mã OTP đã được gửi đến <strong>{email}</strong>
+                <p className="text-xs text-center text-slate-500 dark:text-slate-400">
+                  Mã OTP 6 số đã được gửi đến <strong className="text-slate-800 dark:text-slate-200">{email}</strong>
                 </p>
                 <OtpInput value={otp} onChange={setOtp} />
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
                   {loading ? <Loading /> : "Xác minh mã OTP"}
                 </Button>
-                <p className="text-sm text-center text-gray-500">
+                <p className="text-xs text-center text-slate-500 dark:text-slate-400">
                   Không nhận được mã?{" "}
                   <button
                     type="button"
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || loading}
-                    className="text-primary font-medium hover:underline disabled:text-gray-400 disabled:no-underline disabled:cursor-not-allowed"
+                    className="text-primary font-semibold hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed"
                   >
                     {cooldown > 0 ? `Gửi lại (${cooldown}s)` : "Gửi lại"}
                   </button>
@@ -202,13 +206,18 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
+                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                  Nhập mật khẩu mới an toàn (tối thiểu 6 ký tự).
+                </p>
                 <Input
                   type="password"
                   placeholder="Nhập mật khẩu mới"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
+                  className="rounded-xl"
+                  required
                 />
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
                   {loading ? <Loading /> : "Đặt lại mật khẩu"}
                 </Button>
               </form>

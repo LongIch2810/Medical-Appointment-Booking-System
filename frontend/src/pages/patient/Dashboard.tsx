@@ -9,10 +9,10 @@ import {
   Droplet,
   FileSearch,
   HeartPulse,
-  MessageSquareMore,
   Ruler,
   Scale,
   ScrollText,
+  Sparkles,
   Stethoscope,
   Users,
   UsersRound,
@@ -21,8 +21,8 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import ErrorState from "@/components/notification/ErrorState";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import UpcomingAppointmentsCard from "@/components/dashboard/UpcomingAppointmentsCard";
 import { usePatientDashboard } from "@/hooks/usePatientPortalApi";
 import { useProfile } from "@/hooks/useProfile";
@@ -59,14 +59,14 @@ const InfoTile: React.FC<{
   value: React.ReactNode;
   icon?: React.ReactNode;
 }> = ({ label, value, icon }) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4 transition-shadow hover:shadow-sm">
+  <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs dark:border-slate-800 dark:bg-slate-900">
     <div className="flex items-center justify-between gap-2">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
         {label}
       </p>
       {icon}
     </div>
-    <p className="mt-1.5 text-base font-semibold text-slate-900">{value}</p>
+    <p className="mt-2 text-base font-bold text-slate-900 dark:text-slate-100">{value}</p>
   </div>
 );
 
@@ -90,7 +90,7 @@ const Dashboard: React.FC = () => {
       value: dashboard?.upcomingAppointmentsCount ?? 0,
       detail: "Đang chờ hoặc đã xác nhận",
       icon: CalendarCheck2,
-      accent: "from-sky-500/10 to-sky-500/0",
+      accent: "from-sky-500/10 via-sky-500/5 to-transparent",
       iconBg: "bg-sky-100",
       iconText: "text-sky-600",
     },
@@ -99,25 +99,25 @@ const Dashboard: React.FC = () => {
       value: dashboard?.healthProfilesCount ?? 0,
       detail: "Hồ sơ trong tài khoản",
       icon: HeartPulse,
-      accent: "from-rose-500/10 to-rose-500/0",
+      accent: "from-rose-500/10 via-rose-500/5 to-transparent",
       iconBg: "bg-rose-100",
       iconText: "text-rose-600",
     },
     {
       label: "Kết quả khám",
       value: dashboard?.examinationResultsCount ?? 0,
-      detail: "Kết quả đã lưu",
+      detail: "Bệnh án & Đơn thuốc đã lưu",
       icon: FileSearch,
-      accent: "from-emerald-500/10 to-emerald-500/0",
+      accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
       iconBg: "bg-emerald-100",
       iconText: "text-emerald-600",
     },
     {
-      label: "Người thân",
+      label: "Người thân liên kết",
       value: dashboard?.relativesCount ?? 0,
-      detail: "Bệnh nhân quản lý",
+      detail: "Thành viên gia đình quản lý",
       icon: UsersRound,
-      accent: "from-violet-500/10 to-violet-500/0",
+      accent: "from-violet-500/10 via-violet-500/5 to-transparent",
       iconBg: "bg-violet-100",
       iconText: "text-violet-600",
     },
@@ -125,15 +125,11 @@ const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, idx) => (
-            <Skeleton key={idx} className="h-28 rounded-2xl" />
-          ))}
-        </div>
-        <Skeleton className="h-56 rounded-2xl" />
-        <Skeleton className="h-32 rounded-2xl" />
-      </div>
+      <MedicalAiLoading
+        label="Đang tải dữ liệu tổng quan y tế..."
+        description="Hệ thống đang đồng bộ chỉ số sức khỏe và lịch khám của bạn"
+        minHeight="min-h-80"
+      />
     );
   }
 
@@ -148,14 +144,13 @@ const Dashboard: React.FC = () => {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      {/* 4 Stat Cards */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((item) => (
           <Card
             key={item.label}
-            className={cn(
-              "relative overflow-hidden border-slate-200 py-0 shadow-sm transition-shadow hover:shadow-md",
-            )}
+            className="relative overflow-hidden border-slate-200/80 bg-white py-0 shadow-xs transition-all hover:shadow-md hover:border-slate-300"
           >
             <div
               className={cn(
@@ -163,47 +158,53 @@ const Dashboard: React.FC = () => {
                 item.accent,
               )}
             />
-            <div className="relative flex flex-col gap-3 p-4">
+            <div className="relative flex flex-col gap-3 p-5">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-700">
+                <p className="text-xs sm:text-sm font-bold text-slate-700">
                   {item.label}
                 </p>
                 <span
                   className={cn(
-                    "flex h-9 w-9 items-center justify-center rounded-xl",
+                    "flex h-10 w-10 items-center justify-center rounded-xl shadow-2xs",
                     item.iconBg,
                   )}
                 >
-                  <item.icon className={cn("h-4 w-4", item.iconText)} />
+                  <item.icon className={cn("h-5 w-5", item.iconText)} />
                 </span>
               </div>
               <p className="text-3xl font-extrabold tracking-tight text-slate-900">
                 {item.value}
               </p>
-              <p className="text-xs text-slate-500">{item.detail}</p>
+              <p className="text-xs font-medium text-slate-500">{item.detail}</p>
             </div>
           </Card>
         ))}
       </div>
 
+      {/* Upcoming Appointments Card */}
       <UpcomingAppointmentsCard />
 
-      <Card className="border-slate-200 py-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="flex items-center gap-2">
+      {/* Personal Health Profile Card */}
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 px-6 py-4.5">
+          <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <ScrollText className="h-4 w-4" />
+              <ScrollText className="h-4.5 w-4.5" />
             </span>
-            <CardTitle className="text-base font-semibold text-slate-900">
-              Hồ sơ sức khỏe cá nhân
-            </CardTitle>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900">
+                Hồ sơ sức khỏe cá nhân
+              </CardTitle>
+              <p className="text-xs text-slate-500">Chỉ số sinh trắc học và tiền sử y tế cơ bản</p>
+            </div>
           </div>
-          <Badge variant="outline" className="text-xs font-medium">
-            Cá nhân
+          <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-semibold gap-1">
+            <Sparkles className="h-3 w-3" />
+            Chủ tài khoản
           </Badge>
         </CardHeader>
-        <CardContent className="space-y-4 px-5 py-5">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <CardContent className="space-y-4 px-6 py-5">
+          <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-3">
             <InfoTile
               label="Họ và tên"
               value={formatValue(profile?.fullname)}
@@ -228,39 +229,39 @@ const Dashboard: React.FC = () => {
             <InfoTile
               label="Nhóm máu"
               value={formatValue(healthProfile?.blood_type)}
-              icon={<Droplet className="h-4 w-4 text-rose-400" />}
+              icon={<Droplet className="h-4 w-4 text-rose-500" />}
             />
             <InfoTile
               label="Chiều cao"
               value={formatValue(healthProfile?.height, " cm")}
-              icon={<Ruler className="h-4 w-4 text-sky-400" />}
+              icon={<Ruler className="h-4 w-4 text-sky-500" />}
             />
             <InfoTile
               label="Cân nặng"
               value={formatValue(healthProfile?.weight, " kg")}
-              icon={<Scale className="h-4 w-4 text-emerald-400" />}
+              icon={<Scale className="h-4 w-4 text-emerald-500" />}
             />
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
+          <div className="grid gap-3.5 md:grid-cols-2 pt-1">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4.5">
               <div className="mb-2 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <p className="text-sm font-semibold text-amber-900">Dị ứng</p>
+                <p className="text-sm font-bold text-amber-900">Dị ứng ghi nhận</p>
               </div>
               <Badge
                 variant="outline"
-                className="border-amber-300 bg-white text-amber-800"
+                className="border-amber-300 bg-white text-amber-800 font-medium"
               >
                 {formatValue(healthProfile?.allergies)}
               </Badge>
             </div>
-            <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-4">
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-4.5">
               <div className="mb-2 flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-rose-600" />
-                <p className="text-sm font-semibold text-rose-900">Bệnh nền</p>
+                <p className="text-sm font-bold text-rose-900">Bệnh nền & Tiền sử</p>
               </div>
-              <Badge className="bg-rose-600 hover:bg-rose-600">
+              <Badge className="bg-rose-600 hover:bg-rose-700 text-white font-medium">
                 {formatValue(healthProfile?.medical_history)}
               </Badge>
             </div>
@@ -268,30 +269,34 @@ const Dashboard: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-200 py-0 shadow-sm">
-        <CardHeader className="flex flex-row items-center gap-2 border-b border-slate-100 px-5 py-4">
+      {/* Lifestyle Tracking Card */}
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs">
+        <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 px-6 py-4.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <MessageSquareMore className="h-4 w-4" />
+            <Activity className="h-4.5 w-4.5" />
           </span>
-          <CardTitle className="text-base font-semibold text-slate-900">
-            Thông tin theo dõi
-          </CardTitle>
+          <div>
+            <CardTitle className="text-base font-bold text-slate-900">
+              Lối sống &amp; Thói quen vận động
+            </CardTitle>
+            <p className="text-xs text-slate-500">Các yếu tố ảnh hưởng trực tiếp đến thể trạng sức khỏe</p>
+          </div>
         </CardHeader>
-        <CardContent className="grid gap-3 px-5 py-5 md:grid-cols-3">
+        <CardContent className="grid gap-3.5 px-6 py-5 md:grid-cols-3">
           <InfoTile
-            label="Hút thuốc"
+            label="Hút thuốc lá"
             value={formatBoolean(healthProfile?.smoking)}
             icon={<CigaretteOff className="h-4 w-4 text-slate-400" />}
           />
           <InfoTile
-            label="Rượu bia"
+            label="Rượu bia / Chất có cồn"
             value={formatBoolean(healthProfile?.alcohol_consumption)}
             icon={<Wine className="h-4 w-4 text-slate-400" />}
           />
           <InfoTile
-            label="Vận động"
+            label="Tần suất thể dục"
             value={formatValue(healthProfile?.exercise_frequency)}
-            icon={<Activity className="h-4 w-4 text-slate-400" />}
+            icon={<Activity className="h-4 w-4 text-emerald-500" />}
           />
         </CardContent>
       </Card>

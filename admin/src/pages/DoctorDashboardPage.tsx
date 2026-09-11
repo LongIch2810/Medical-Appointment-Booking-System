@@ -1,8 +1,10 @@
 import { useMemo } from "react";
+import { Link } from "react-router-dom";
 import {
   CalendarCheck2,
   CalendarClock,
   MessageCircleHeart,
+  Sparkles,
 } from "lucide-react";
 
 import { ErrorState } from "@/components/app/ErrorState";
@@ -17,6 +19,7 @@ import {
   type StatusSegment,
 } from "@/components/app/SegmentedStatusBar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -39,7 +42,7 @@ const STATUS_META: Record<
   CONFIRMED: { label: "Đã xác nhận", color: "#3b82f6" },
   COMPLETED: { label: "Hoàn tất", color: "#10b981" },
   CANCELLED: { label: "Đã hủy", color: "#ef4444" },
-  ABSENT: { label: "Vắng mặt", color: "#75758a" },
+  ABSENT: { label: "Vắng mặt", color: "#64748b" },
   EXPIRED: { label: "Quá hạn khám", color: "#a16207" },
 };
 
@@ -144,19 +147,19 @@ export function DoctorDashboardPage() {
       key: "today",
       label: "Lịch khám hôm nay",
       value: stats.totalAppointmentsToDayCount,
-      color: "#9b60aa",
+      color: "#007664",
     },
     {
       key: "upcoming",
       label: "Lịch sắp tới",
       value: upcomingCount,
-      color: "#3b82f6",
+      color: "#0284c7",
     },
     {
       key: "messages",
       label: "Tin nhắn chưa đọc",
       value: stats.totalMessagesUnreadInAllChannelsCount,
-      color: "#ff7759",
+      color: "#f59e0b",
     },
   ];
 
@@ -165,70 +168,109 @@ export function DoctorDashboardPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        eyebrow="Doctor dashboard"
-        title="Workspace dành cho bác sĩ"
-        description="Số liệu thời gian thực về lịch hẹn, lịch sắp tới và tin nhắn chưa đọc."
+        eyebrow="Doctor workspace"
+        title="Tổng quan công việc bác sĩ"
+        description="Số liệu thời gian thực về lịch hẹn khám trong ngày, danh sách sắp tới và tin nhắn cần phản hồi."
       />
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-lg border-[#d9d9dd]">
-          <CardContent className="space-y-4">
-            <div className="flex items-start justify-between">
-              <p className="text-sm text-[#75758a]">Lịch khám hôm nay</p>
-              <CalendarCheck2 className="size-5 text-primary" />
+      {/* Quick Action: AI Medical Record Summary */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-teal-200/80 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent p-5 dark:border-teal-900/60 dark:bg-slate-900 shadow-2xs">
+        <div className="flex items-center gap-3.5">
+          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-xs">
+            <Sparkles className="size-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
+                Tóm tắt bệnh án bằng AI
+              </h2>
+              <Badge variant="default" className="text-[10px] font-bold px-2 py-0.5">
+                AI hỗ trợ
+              </Badge>
             </div>
-            <div className="font-display text-4xl font-medium leading-none text-[#212121]">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+              Hỗ trợ tải lên ảnh hoặc file PDF bệnh án để AI phân tích tiền sử, triệu chứng và tổng hợp lâm sàng nhanh chóng.
+            </p>
+          </div>
+        </div>
+        <Button asChild size="sm" className="rounded-xl shrink-0 font-bold gap-1.5 self-stretch sm:self-center">
+          <Link to="/doctor/patient-records">
+            <Sparkles className="size-3.5" />
+            <span>Mở công cụ AI</span>
+          </Link>
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="rounded-3xl border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden relative group hover:border-primary/40 transition-all">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-teal-500/10 via-teal-500/5 to-transparent rounded-bl-full pointer-events-none" />
+          <CardContent className="space-y-4 p-0">
+            <div className="flex items-start justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Lịch khám hôm nay</p>
+              <span className="rounded-2xl bg-teal-50 p-2.5 text-teal-600 dark:bg-teal-950/60 dark:text-teal-400">
+                <CalendarCheck2 className="size-5" />
+              </span>
+            </div>
+            <div className="font-display text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               {stats.totalAppointmentsToDayCount}
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-lg border-[#d9d9dd]">
-          <CardContent className="space-y-4">
+
+        <Card className="rounded-3xl border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden relative group hover:border-primary/40 transition-all">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-sky-500/10 via-sky-500/5 to-transparent rounded-bl-full pointer-events-none" />
+          <CardContent className="space-y-4 p-0">
             <div className="flex items-start justify-between">
-              <p className="text-sm text-[#75758a]">Lịch sắp tới</p>
-              <CalendarClock className="size-5 text-primary" />
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Lịch khám sắp tới</p>
+              <span className="rounded-2xl bg-sky-50 p-2.5 text-sky-600 dark:bg-sky-950/60 dark:text-sky-400">
+                <CalendarClock className="size-5" />
+              </span>
             </div>
-            <div className="font-display text-4xl font-medium leading-none text-[#212121]">
+            <div className="font-display text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               {upcomingCount}
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-lg border-[#d9d9dd]">
-          <CardContent className="space-y-4">
+
+        <Card className="rounded-3xl border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden relative group hover:border-primary/40 transition-all">
+          <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-amber-500/10 via-amber-500/5 to-transparent rounded-bl-full pointer-events-none" />
+          <CardContent className="space-y-4 p-0">
             <div className="flex items-start justify-between">
-              <p className="text-sm text-[#75758a]">Tin nhắn chưa đọc</p>
-              <MessageCircleHeart className="size-5 text-primary" />
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tin nhắn chưa đọc</p>
+              <span className="rounded-2xl bg-amber-50 p-2.5 text-amber-600 dark:bg-amber-950/60 dark:text-amber-400">
+                <MessageCircleHeart className="size-5" />
+              </span>
             </div>
-            <div className="font-display text-4xl font-medium leading-none text-[#212121]">
+            <div className="font-display text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
               {stats.totalMessagesUnreadInAllChannelsCount}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card className="rounded-lg border-[#d9d9dd]">
-          <CardHeader>
-            <CardTitle className="text-base">Khối lượng công việc</CardTitle>
-            <p className="text-xs text-[#75758a]">
-              So sánh nhanh các đầu việc cần xử lý hôm nay.
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="rounded-3xl border-slate-200/80 dark:border-slate-800 dark:bg-slate-900 p-6">
+          <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="text-base font-bold dark:text-slate-100">Khối lượng công việc hôm nay</CardTitle>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              So sánh nhanh các đầu việc cần xử lý trong phiên làm việc.
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-4">
             <MetricBarChart items={workloadBars} />
           </CardContent>
         </Card>
 
-        <Card className="rounded-lg border-[#d9d9dd]">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Trạng thái lịch hẹn sắp tới
+        <Card className="rounded-3xl border-slate-200/80 dark:border-slate-800 dark:bg-slate-900 p-6">
+          <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+            <CardTitle className="text-base font-bold dark:text-slate-100">
+              Phân bổ trạng thái lịch hẹn
             </CardTitle>
-            <p className="text-xs text-[#75758a]">
-              Phân bổ trạng thái dựa trên 20 lịch hẹn gần nhất.
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Tỷ lệ các ca khám theo trạng thái (chờ xác nhận, hoàn tất, hủy).
             </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0 pt-4">
             <SegmentedStatusBar
               segments={statusSegments}
               emptyLabel="Chưa có lịch hẹn để thống kê."
@@ -237,68 +279,75 @@ export function DoctorDashboardPage() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Ca khám sớm nhất hôm nay</CardTitle>
+      {/* Early Appointment Alert */}
+      <Card className="rounded-3xl border-slate-200/80 dark:border-slate-800 dark:bg-slate-900 p-6">
+        <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <span>Ca khám sớm nhất hôm nay</span>
+            {earlyAppointment ? <Badge variant="success" className="text-[10px] font-bold">Ưu tiên</Badge> : null}
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-0 pt-4 space-y-4">
           {earlyAppointment ? (
-            <div className="flex items-start justify-between gap-4 rounded-lg border border-[#d9d9dd] bg-[#f7f6f2] p-4">
-              <div className="space-y-1">
-                <div className="text-sm font-medium text-[#212121]">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-teal-200/60 bg-teal-50/50 p-4.5 dark:border-teal-950 dark:bg-teal-950/30">
+              <div className="space-y-1.5">
+                <div className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   {earlyAppointment.patient?.fullname ??
                     `Lịch hẹn #${earlyAppointment.id}`}
                 </div>
-                <div className="text-sm text-[#75758a]">
-                  Ngày khám: {earlyAppointment.appointment_date}
+                <div className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  📅 Ngày khám: <span className="font-semibold text-slate-900 dark:text-slate-200">{earlyAppointment.appointment_date}</span>
                 </div>
                 {earlyAppointment.symptoms ? (
-                  <div className="text-sm text-[#75758a]">
-                    Triệu chứng: {earlyAppointment.symptoms}
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    🩺 Triệu chứng: <span className="italic">{earlyAppointment.symptoms}</span>
                   </div>
                 ) : null}
               </div>
-              <Badge variant="info">{earlyAppointment.appointment_status}</Badge>
+              <Badge variant="info" className="text-xs font-bold px-3 py-1 self-start sm:self-center">{earlyAppointment.appointment_status}</Badge>
             </div>
           ) : (
-            <p className="text-sm text-[#75758a]">
-              Hiện chưa có lịch khám nào trong hôm nay.
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">
+              Hiện chưa có ca khám nào được đặt trước trong ngày hôm nay.
             </p>
           )}
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Lịch hẹn sắp tới</CardTitle>
+      {/* Upcoming Appointments List */}
+      <Card className="rounded-3xl border-slate-200/80 dark:border-slate-800 dark:bg-slate-900 p-6">
+        <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+            Danh sách lịch hẹn sắp tới (Top 5)
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-0 pt-4 space-y-3">
           {upcomingQuery.isLoading ? (
             <LoadingState />
           ) : upcomingPreview.length === 0 ? (
-            <p className="text-sm text-[#75758a]">
-              Chưa có lịch hẹn nào được lên lịch.
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 italic">
+              Chưa có lịch hẹn nào được lên lịch trong thời gian tới.
             </p>
           ) : (
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {upcomingPreview.map((appointment) => {
                 const meta = STATUS_META[appointment.appointment_status];
                 return (
                   <li
                     key={appointment.id}
-                    className="flex items-center justify-between gap-4 rounded-lg border border-[#d9d9dd] bg-white p-3"
+                    className="flex items-center justify-between gap-4 rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 transition-all hover:bg-slate-100/70 hover:border-slate-200 dark:border-slate-800/80 dark:bg-slate-950/60 dark:hover:bg-slate-800/60"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className="size-2 rounded-full"
-                        style={{ backgroundColor: meta?.color ?? "#75758a" }}
+                        className="size-2.5 rounded-full shrink-0 shadow-2xs"
+                        style={{ backgroundColor: meta?.color ?? "#64748b" }}
                       />
-                      <div>
-                        <div className="text-sm font-medium text-[#212121]">
+                      <div className="min-w-0">
+                        <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                           {appointment.patient?.fullname ??
                             `Lịch hẹn #${appointment.id}`}
                         </div>
-                        <div className="text-xs text-[#75758a]">
+                        <div className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
                           {appointment.appointment_date}
                           {appointment.start_time
                             ? ` · ${appointment.start_time}`
@@ -309,7 +358,7 @@ export function DoctorDashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <Badge variant="outline">
+                    <Badge variant="outline" className="text-xs font-semibold shrink-0">
                       {meta?.label ?? appointment.appointment_status}
                     </Badge>
                   </li>
@@ -322,3 +371,4 @@ export function DoctorDashboardPage() {
     </div>
   );
 }
+
