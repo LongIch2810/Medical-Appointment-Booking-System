@@ -3,10 +3,12 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { useUiStore, type ThemeMode } from "@/store/useUiStore";
+import { useUpdateUserSettings } from "@/hooks/useSettings";
 
 export function ThemeToggle() {
   const theme = useUiStore((state) => state.theme);
   const setTheme = useUiStore((state) => state.setTheme);
+  const updateSettings = useUpdateUserSettings();
 
   useEffect(() => {
     const root = document.documentElement;
@@ -42,9 +44,12 @@ export function ThemeToggle() {
   }, [theme]);
 
   const cycleTheme = () => {
-    if (theme === "light") setTheme("dark");
-    else if (theme === "dark") setTheme("system");
-    else setTheme("light");
+    const nextTheme =
+      theme === "light" ? "dark" : theme === "dark" ? "system" : "light";
+    setTheme(nextTheme);
+    updateSettings.mutate({
+      theme: nextTheme.toUpperCase() as "LIGHT" | "DARK" | "SYSTEM",
+    });
   };
 
   const getIcon = () => {

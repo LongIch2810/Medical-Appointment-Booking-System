@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import User from './user.entity';
+import { UserTheme } from 'src/shared/enums/userTheme';
 
 @Entity('user_settings')
 export class UserSetting {
@@ -17,10 +18,16 @@ export class UserSetting {
   id: number;
 
   @Column({ type: 'boolean', default: true })
-  is_notification_email: boolean;
+  email_notifications_enabled: boolean;
 
   @Column({ type: 'boolean', default: true })
-  is_reminder_appoinments: boolean;
+  appointment_reminders_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  realtime_toasts_enabled: boolean;
+
+  @Column({ type: 'varchar', default: UserTheme.SYSTEM })
+  theme: UserTheme;
 
   @OneToOne(() => User, (u) => u.user_setting, {
     onDelete: 'CASCADE',

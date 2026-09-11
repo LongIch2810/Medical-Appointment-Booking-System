@@ -23,7 +23,12 @@ export function useLogin() {
       navigate("/");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Đăng nhập thất bại!"));
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Tên đăng nhập/email hoặc mật khẩu không đúng.",
+        ),
+      );
     },
   });
 }

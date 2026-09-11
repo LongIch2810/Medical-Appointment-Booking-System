@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Matches } from 'class-validator';
 
 export class BodyCreateNotificationDto {
   @IsString()
@@ -10,7 +10,10 @@ export class BodyCreateNotificationDto {
   @IsNumber()
   userId!: number;
 
-  @IsBoolean()
+  @IsString()
   @IsOptional()
-  isNotified?: boolean;
+  @Matches(/^\/(?!\/)/, {
+    message: 'actionUrl phải là đường dẫn nội bộ bắt đầu bằng /.',
+  })
+  actionUrl?: string;
 }

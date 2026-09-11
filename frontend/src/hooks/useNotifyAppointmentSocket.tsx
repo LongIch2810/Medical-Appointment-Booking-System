@@ -135,18 +135,6 @@ export function useNotifyAppointmentSocket(
       markSlotBooked(data);
       setIsPending(false);
 
-      const appointmentDate = parseAppointmentDate(data.appointment_date);
-      const startTime = data.doctor_schedule?.start_time ?? "";
-      const endTime = data.doctor_schedule?.end_time ?? "";
-      const doctorName =
-        data.doctor?.user?.fullname ?? data.doctor?.fullname ?? "bác sĩ";
-
-      toast.success(
-        `Đặt lịch khám thành công vào lúc ${startTime} - ${endTime} ${formatDate(
-          appointmentDate,
-          "vi-VN",
-        )} với BS.${doctorName}`,
-      );
       setDoctorScheduleId(0);
       setTempTime({ start_time: "", end_time: "" });
       setDoctorId(0);

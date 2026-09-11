@@ -12,6 +12,10 @@ import User from 'src/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 import { DoctorSchedulesModule } from '../doctor-schedules/doctor-schedules.module';
 import { RelativesModule } from '../relatives/relatives.module';
+import { SpecialtiesModule } from '../specialties/specialties.module';
+import { NotificationsModule } from '../notifications/notifications.module';
+import { SettingsModule } from '../settings/settings.module';
+import { BullmqModule } from 'src/bullmq/bullmq.module';
 
 @Module({
   imports: [
@@ -27,6 +31,10 @@ import { RelativesModule } from '../relatives/relatives.module';
     WebsocketModule,
     DoctorSchedulesModule,
     RelativesModule,
+    forwardRef(() => SpecialtiesModule),
+    NotificationsModule,
+    SettingsModule,
+    forwardRef(() => BullmqModule),
   ],
   controllers: [AppointmentsController],
   providers: [AppointmentsService],

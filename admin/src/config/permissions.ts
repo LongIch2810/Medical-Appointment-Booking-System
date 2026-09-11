@@ -129,6 +129,8 @@ export const PERMISSIONS = {
   PATIENT_RECORD_READ: "patient-record:read",
   PATIENT_RECORD_MANAGE: "patient-record:manage",
   CHATBOT_CHAT: "chatbot:chat",
+  AI_COACH_REPORT_READ: "ai-coach-report:read",
+  ENTERPRISE_REPORT_READ: "enterprise-report:read",
 } as const;
 
 export const permissions = {
@@ -157,7 +159,10 @@ export const permissions = {
   specialties: PERMISSIONS.SPECIALTY_MANAGE,
   complaints: PERMISSIONS.COMPLAINT_MANAGE,
   notifications: PERMISSIONS.NOTIFICATION_MANAGE,
+  notificationInbox: PERMISSIONS.NOTIFICATION_READ,
   settings: PERMISSIONS.SETTING_MANAGE,
+  aiCoachReport: PERMISSIONS.AI_COACH_REPORT_READ,
+  enterpriseReports: PERMISSIONS.ENTERPRISE_REPORT_READ,
 } as const;
 
 export const doctorPermissionSet = [
@@ -172,6 +177,7 @@ export const doctorPermissionSet = [
   permissions.patients,
   permissions.examResults,
   permissions.doctorSettings,
+  permissions.notificationInbox,
 ];
 
 export const adminPermissionSet = [
@@ -193,6 +199,9 @@ export const adminPermissionSet = [
   permissions.specialties,
   permissions.complaints,
   permissions.notifications,
+  permissions.notificationInbox,
   permissions.settings,
   permissions.doctorMessages,
+  permissions.aiCoachReport,
+  permissions.enterpriseReports,
 ];

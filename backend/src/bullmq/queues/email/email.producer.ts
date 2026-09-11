@@ -32,4 +32,20 @@ export class EmailProducer {
       },
     );
   }
+
+  async sendAppointment(params: {
+    notificationId: number;
+    email: string;
+    recipientName: string;
+    subject: string;
+    content: string;
+  }) {
+    await this.queue.add(jobEmailName.APPOINTMENT, params, {
+      jobId: `appointment-notification-${params.notificationId}`,
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 2000 },
+      removeOnComplete: true,
+      removeOnFail: false,
+    });
+  }
 }

@@ -1,6 +1,5 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import User from 'src/entities/user.entity';
 
 @Injectable()
 export class MailService {
@@ -43,5 +42,33 @@ export class MailService {
       console.error('❌ Lỗi gửi mail:', error);
       throw error;
     }
+  }
+
+  async sendAppointmentEmail(
+    to: string,
+    recipientName: string,
+    subject: string,
+    content: string,
+  ) {
+    await this.mailerService.sendMail({
+      to,
+      subject,
+      text: `${recipientName},\n\n${content}\n\nLifeHealth`,
+      html: `<p>Xin chào <strong>${this.escapeHtml(recipientName)}</strong>,</p><p>${this.escapeHtml(content)}</p><p>LifeHealth</p>`,
+    });
+  }
+
+  private escapeHtml(value: string) {
+    return value.replace(
+      /[&<>'"]/g,
+      (character) =>
+        ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          "'": '&#39;',
+          '"': '&quot;',
+        })[character]!,
+    );
   }
 }

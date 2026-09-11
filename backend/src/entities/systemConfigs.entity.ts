@@ -1,7 +1,6 @@
 import {
   Column,
   CreateDateColumn,
-  DeleteDateColumn,
   Entity,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
@@ -12,8 +11,23 @@ export class SystemConfig {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'int', default: 60 })
+  @Column({ type: 'int', default: 1440 })
   reminder_appointment_before_minutes: number;
+
+  @Column({ type: 'boolean', default: true })
+  appointment_reminders_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  appointment_emails_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  default_realtime_toasts_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  default_email_notifications_enabled: boolean;
+
+  @Column({ type: 'boolean', default: true })
+  default_appointment_reminders_enabled: boolean;
 
   @Column({ type: 'int', default: 60 })
   reminder_update_health_profile_after_minutes: number;

@@ -22,7 +22,7 @@ export class BodyFilterNotificationsDto extends PaginationDto {
   @Type(() => Boolean)
   @IsBoolean()
   @IsOptional()
-  isNotified?: boolean;
+  isRead?: boolean;
 
   @IsString()
   @IsOptional()

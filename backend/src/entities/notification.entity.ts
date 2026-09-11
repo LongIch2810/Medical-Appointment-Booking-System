@@ -10,6 +10,7 @@ import {
   ManyToOne,
 } from 'typeorm';
 import User from './user.entity';
+import { NotificationType } from 'src/shared/enums/notificationType';
 
 @Entity('notifications')
 export default class Notification {
@@ -22,8 +23,24 @@ export default class Notification {
   @Column({ type: 'text', nullable: false })
   title!: string;
 
-  @Column({ type: 'boolean', nullable: false })
-  is_notified!: boolean;
+  @Column({ type: 'boolean', nullable: false, default: false })
+  is_read!: boolean;
+
+  @Column({
+    type: 'varchar',
+    nullable: false,
+    default: NotificationType.MANUAL,
+  })
+  type!: NotificationType;
+
+  @Column({ type: 'text', nullable: true })
+  action_url!: string | null;
+
+  @Column({ type: 'jsonb', nullable: false, default: () => "'{}'::jsonb" })
+  metadata!: object;
+
+  @Column({ type: 'text', nullable: true, unique: true })
+  dedupe_key!: string | null;
 
   @ManyToOne(() => User, (u) => u.notifications, { nullable: false })
   @JoinColumn({ name: 'user_id' })

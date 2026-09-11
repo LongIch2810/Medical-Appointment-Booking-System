@@ -33,7 +33,9 @@ function normalizeUser(user: RawUser): User {
   };
 }
 
-function normalizeUserListResponse(data: UserListResponse): UserListResponse {
+export function normalizeUserListResponse(
+  data: UserListResponse,
+): UserListResponse {
   return {
     ...data,
     users: (data.users as RawUser[]).map(normalizeUser),

@@ -11,14 +11,15 @@ export class EmailProcessor extends WorkerHost {
     super();
   }
 
-  async process(job: Job, token?: string): Promise<any> {
-    if (job.name === jobEmailName.OTP) {
+  async process(job: Job): Promise<void> {
+    const jobName = job.name as jobEmailName;
+    if (jobName === jobEmailName.OTP) {
       const { email, otp, username } = job.data;
 
       console.log(`Gửi OTP đến ${email} - Lần thử: ${job.attemptsMade + 1}`);
 
       await this.mailService.sendOtpEmail(email, otp, username);
-    } else if (job.name === jobEmailName.WELCOME) {
+    } else if (jobName === jobEmailName.WELCOME) {
       const { email, username } = job.data;
 
       console.log(
@@ -26,6 +27,14 @@ export class EmailProcessor extends WorkerHost {
       );
 
       await this.mailService.sendWelcomeEmail(email, username);
+    } else if (jobName === jobEmailName.APPOINTMENT) {
+      const { email, recipientName, subject, content } = job.data;
+      await this.mailService.sendAppointmentEmail(
+        email,
+        recipientName,
+        subject,
+        content,
+      );
     }
   }
 }

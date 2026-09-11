@@ -13,7 +13,12 @@ export function useRegister() {
       navigate("/sign-in");
     },
     onError: (error) => {
-      toast.error(getApiErrorMessage(error, "Đăng ký thất bại!"));
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Không thể đăng ký. Vui lòng kiểm tra thông tin và thử lại.",
+        ),
+      );
     },
   });
 }
