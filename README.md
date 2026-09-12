@@ -93,12 +93,12 @@ Detailed doctor profile displaying medical qualifications, biography, consultati
 ---
 
 ### 5. Interactive Appointment Booking Workflows
-LifeHealth provides two seamless paths to schedule care: an accelerated quick booking dialog and a detailed doctor slot confirmation workflow.
+LifeHealth provides two seamless paths to schedule care: an accelerated quick booking dialog and a detailed doctor schedule with date and slot selection.
 
-| Quick Booking Modal ("Đặt lịch nhanh") | Slot Selection & Booking Confirmation |
+| Quick Booking Modal ("Đặt lịch nhanh") | Doctor Schedule & Booking Flow |
 | :---: | :---: |
-| ![Quick Booking Modal](docs/screenshots/patient/quick-booking.png) | ![Booking Confirmation Modal](docs/screenshots/patient/booking.png) |
-| *Rapid 10-second booking modal enabling instant relative selection, specialty filtering, and slot confirmation without leaving the page.* | *Selected consultation slot with patient notes, reason for visit, and booking confirmation dialog.* |
+| ![Quick Booking Modal](docs/screenshots/patient/quick-booking.png) | ![Doctor Schedule and Booking Flow](docs/screenshots/patient/booking.png) |
+| *Rapid booking modal for selecting a patient profile, specialty, and preferred date without leaving the doctor directory.* | *Doctor-specific calendar and live consultation-slot area used to continue the booking flow.* |
 
 ---
 
