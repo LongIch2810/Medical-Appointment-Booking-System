@@ -1,5 +1,6 @@
 import * as dotenv from "dotenv";
 
+import { z } from "zod";
 import { getChatModel } from "../configs/llm.js";
 import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
 import { AIMessage, SystemMessage } from "@langchain/core/messages";
@@ -46,6 +47,86 @@ Nguyên tắc bắt buộc:
 <khuyến cáo và/hoặc gợi ý hành động tiếp theo>
 
   Nếu một tool (RAG, SQL, tư vấn y tế, đặt lịch) đã trả về nội dung đúng theo cấu trúc này rồi, CHỈ LẶP LẠI Y HỆT nội dung đó, KHÔNG viết lại hay định dạng lại.`;
+
+/**
+ * Lớp chặn cứng câu hỏi ngoài lề — chạy TRƯỚC agent chính. Trước đây chỉ
+ * dựa vào 1 bullet trong AGENT_SYSTEM_PROMPT (giải pháp mềm), nhưng vẫn lọt
+ * câu hỏi ngoài lề trong thực tế, đặc biệt sau khi đổi OPENAI_MODEL sang
+ * gpt-4.1-mini (non-reasoning, tuân thủ prompt nhiều điều kiện kém tin cậy
+ * hơn). Dùng model rẻ (profile "fast" = gpt-4o-mini) + structured output để
+ * phân loại — cùng pattern đã dùng ở specialty_name_analyzer.tool.ts.
+ */
+const TOPIC_GUARD_SYSTEM_PROMPT = `Bạn là bộ phân loại chủ đề cho LifeHealth, một nền tảng đặt lịch khám bệnh.
+
+Nhiệm vụ: xem xét đoạn hội thoại (đặc biệt là tin nhắn CUỐI CÙNG của người dùng, trong ngữ cảnh các tin nhắn trước đó) và quyết định tin nhắn cuối có thuộc phạm vi hỗ trợ hay không.
+
+Thuộc phạm vi (in_scope = true) nếu tin nhắn liên quan đến:
+- Sức khỏe, triệu chứng, bệnh lý, thuốc men, tư vấn y tế.
+- Sử dụng nền tảng LifeHealth: đặt lịch khám, bác sĩ, chuyên khoa, cơ sở y tế, hồ sơ sức khỏe của bản thân/người thân.
+- Lời chào, cảm ơn, câu trả lời ngắn (có/không/ok/vâng), câu hỏi làm rõ, hoặc bất kỳ tin nhắn nào là phần tiếp nối tự nhiên của một hội thoại đang thuộc phạm vi trên.
+
+KHÔNG thuộc phạm vi (in_scope = false) nếu tin nhắn rõ ràng không liên quan, ví dụ: kiến thức tổng quát không liên quan y tế, lập trình, giải trí, thể thao, chính trị, tin tức, toán học/đố vui, yêu cầu viết code/văn bản không liên quan sức khỏe, v.v.
+
+Nếu không chắc chắn, hãy nghiêng về in_scope = true (chỉ từ chối khi rõ ràng lạc đề).`;
+
+const TOPIC_GUARD_REFUSAL_MESSAGE =
+  "Xin lỗi, mình là trợ lý ảo của LifeHealth nên chỉ có thể hỗ trợ các câu hỏi về sức khỏe, đặt lịch khám và các dịch vụ trên nền tảng LifeHealth. Bạn có câu hỏi nào liên quan đến sức khỏe hoặc việc đặt lịch khám không, mình sẵn sàng hỗ trợ nhé!";
+
+const topicGuardSchema = z.object({
+  in_scope: z
+    .boolean()
+    .describe("true nếu tin nhắn cuối cùng thuộc phạm vi y tế/nền tảng LifeHealth"),
+});
+
+// Chỉ N tin nhắn gần nhất — đủ ngữ cảnh để tránh false-positive với lời
+// chào/câu ngắn tiếp nối hội thoại y tế, không cần gửi toàn bộ lịch sử.
+const GUARD_HISTORY_WINDOW = 6;
+
+const guardModel = getChatModel({ profile: "fast", temperature: 0 });
+const structuredGuardModel = guardModel.withStructuredOutput(topicGuardSchema, {
+  method: "functionCalling",
+});
+
+async function classifyTopic(state: typeof MessagesAnnotation.State) {
+  if (state.messages.length === 0) return { messages: [] };
+
+  const recent = state.messages.slice(-GUARD_HISTORY_WINDOW);
+  let result: { in_scope: boolean } | undefined;
+  try {
+    result = await structuredGuardModel.invoke([
+      new SystemMessage(TOPIC_GUARD_SYSTEM_PROMPT),
+      ...recent,
+    ]);
+  } catch (error) {
+    console.error("[TopicGuard] classification failed, failing open:", error);
+    return { messages: [] };
+  }
+
+  // Gateway đôi khi không thực sự gọi function (invoke trả về undefined) —
+  // fail-open thay vì crash, cùng cách xử lý phòng thủ đã dùng ở
+  // specialty_name_analyzer.tool.ts.
+  if (result && result.in_scope === false) {
+    return {
+      messages: [
+        new AIMessage({
+          content: TOPIC_GUARD_REFUSAL_MESSAGE,
+          additional_kwargs: { topic_guard_refusal: true },
+        }),
+      ],
+    };
+  }
+  return { messages: [] };
+}
+
+function shouldProceedAfterGuard(state: typeof MessagesAnnotation.State) {
+  const last = state.messages[state.messages.length - 1] as
+    | AIMessage
+    | undefined;
+  if (last?.additional_kwargs?.topic_guard_refusal === true) {
+    return "__end__";
+  }
+  return "agent";
+}
 
 function shouldContinue({ messages }: typeof MessagesAnnotation.State) {
   const lastMessage = messages[messages.length - 1] as AIMessage;
@@ -99,9 +180,11 @@ async function callTools(state: typeof MessagesAnnotation.State) {
 }
 
 const workflow = new StateGraph(MessagesAnnotation)
+  .addNode("guard", classifyTopic)
   .addNode("agent", callModel)
-  .addEdge("__start__", "agent")
   .addNode("tools", callTools)
+  .addEdge("__start__", "guard")
+  .addConditionalEdges("guard", shouldProceedAfterGuard)
   .addEdge("tools", "agent")
   .addConditionalEdges("agent", shouldContinue);
 
