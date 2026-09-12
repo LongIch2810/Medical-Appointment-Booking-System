@@ -16,7 +16,9 @@ export function getRedisClient(): Redis {
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD || undefined,
       tls: process.env.REDIS_TLS === "true" ? {} : undefined,
-      db: Number(process.env.REDIS_DB ?? 2),
+      // Managed Redis providers such as Upstash commonly expose only DB 0.
+      // Use an explicit override when a self-hosted Redis has multiple DBs.
+      db: Number(process.env.REDIS_DB ?? 0),
       maxRetriesPerRequest: 1,
       lazyConnect: true,
     });
