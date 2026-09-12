@@ -63,6 +63,7 @@ Nhiệm vụ: xem xét đoạn hội thoại (đặc biệt là tin nhắn CUỐ
 Thuộc phạm vi (in_scope = true) nếu tin nhắn liên quan đến:
 - Sức khỏe, triệu chứng, bệnh lý, thuốc men, tư vấn y tế.
 - Sử dụng nền tảng LifeHealth: đặt lịch khám, bác sĩ, chuyên khoa, cơ sở y tế, hồ sơ sức khỏe của bản thân/người thân.
+- Số liệu/thống kê về nền tảng LifeHealth, ví dụ: hệ thống có bao nhiêu bác sĩ, có những chuyên khoa nào, danh sách bác sĩ/bài viết y tế — đây LUÔN thuộc phạm vi dù không nhắc "sức khỏe" hay "đặt lịch" trực tiếp.
 - Lời chào, cảm ơn, câu trả lời ngắn (có/không/ok/vâng), câu hỏi làm rõ, hoặc bất kỳ tin nhắn nào là phần tiếp nối tự nhiên của một hội thoại đang thuộc phạm vi trên.
 
 KHÔNG thuộc phạm vi (in_scope = false) nếu tin nhắn rõ ràng không liên quan, ví dụ: kiến thức tổng quát không liên quan y tế, lập trình, giải trí, thể thao, chính trị, tin tức, toán học/đố vui, yêu cầu viết code/văn bản không liên quan sức khỏe, v.v.

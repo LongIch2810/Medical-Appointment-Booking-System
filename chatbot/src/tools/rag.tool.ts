@@ -1,11 +1,17 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import ragGraph from "../rag/rag.js";
+import { logSafeError } from "../utils/safeLog.js";
 
 export const ragTool = tool(
   async ({ question }) => {
-    const result = await ragGraph.invoke({ question });
-    return result.answer;
+    try {
+      const result = await ragGraph.invoke({ question });
+      return result.answer;
+    } catch (error: any) {
+      logSafeError("ragTool failed", error);
+      return "Xin lỗi, hiện không thể truy xuất thông tin này. Vui lòng thử lại sau.";
+    }
   },
 
   {
