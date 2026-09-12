@@ -90,7 +90,6 @@ const structuredGuardModel = guardModel.withStructuredOutput(topicGuardSchema, {
 async function classifyTopic(state: typeof MessagesAnnotation.State) {
   if (state.messages.length === 0) return { messages: [] };
 
-  const startedAt = Date.now();
   const recent = state.messages.slice(-GUARD_HISTORY_WINDOW);
   let result: { in_scope: boolean } | undefined;
   try {
@@ -100,25 +99,8 @@ async function classifyTopic(state: typeof MessagesAnnotation.State) {
     ]);
   } catch (error) {
     console.error("[TopicGuard] classification failed, failing open:", error);
-    console.log(
-      JSON.stringify({
-        scope: "chatbot_agent_timing",
-        node: "guard",
-        durationMs: Date.now() - startedAt,
-        result: "error",
-      }),
-    );
     return { messages: [] };
   }
-
-  console.log(
-    JSON.stringify({
-      scope: "chatbot_agent_timing",
-      node: "guard",
-      durationMs: Date.now() - startedAt,
-      result: result ? (result.in_scope ? "in_scope" : "out_of_scope") : "undefined",
-    }),
-  );
 
   // Gateway đôi khi không thực sự gọi function (invoke trả về undefined) —
   // fail-open thay vì crash, cùng cách xử lý phòng thủ đã dùng ở
@@ -155,46 +137,17 @@ function shouldContinue({ messages }: typeof MessagesAnnotation.State) {
   return "__end__";
 }
 
-// Đo thời gian tạm thời — pipeline chat "agent" có thể lặp lại agent↔tools
-// nhiều lượt cho MỘT tin nhắn, mỗi lượt agent là 1 lần gọi LLM thật sự (qua
-// createRetryingFetch, ngân sách retry tới 60s/lượt). Log số lượt + thời
-// gian mỗi lượt để biết pipeline có đang gọi LLM/tool nhiều hơn cần thiết
-// (vd. với 1 câu chào đơn giản) hay 1 lượt LLM tự nó đã chậm.
-let callModelInvocationCount = 0;
-
 async function callModel(state: typeof MessagesAnnotation.State) {
-  callModelInvocationCount += 1;
-  const invocation = callModelInvocationCount;
-  const startedAt = Date.now();
   const response = await llm.invoke([
     new SystemMessage(AGENT_SYSTEM_PROMPT),
     ...state.messages,
   ]);
-  console.log(
-    JSON.stringify({
-      scope: "chatbot_agent_timing",
-      node: "agent",
-      invocation,
-      durationMs: Date.now() - startedAt,
-      hasToolCalls: Boolean((response as AIMessage).tool_calls?.length),
-      toolCallNames: (response as AIMessage).tool_calls?.map((tc) => tc.name),
-    }),
-  );
 
   return { messages: [response] };
 }
 
 async function callTools(state: typeof MessagesAnnotation.State) {
-  const startedAt = Date.now();
-  const result = await toolNode.invoke(state);
-  console.log(
-    JSON.stringify({
-      scope: "chatbot_agent_timing",
-      node: "tools",
-      durationMs: Date.now() - startedAt,
-    }),
-  );
-  return result;
+  return toolNode.invoke(state);
 }
 
 const workflow = new StateGraph(MessagesAnnotation)

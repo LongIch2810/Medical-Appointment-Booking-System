@@ -49,30 +49,3 @@ export const AnalyzeDoctorTool = tool(
     }),
   }
 );
-
-// async function runTests() {
-//   const testCases = [
-//     "Tôi muốn đặt lịch khám với bác sĩ Nguyễn Văn A.",
-//     "Cho tôi đặt lịch với bác sĩ Lan khoa nội tổng quát.",
-//     "Khám tim với bác sĩ Trần Quốc Khánh.",
-//     "Đặt lịch khám với bác sĩ Đỗ Thị Bích.",
-//     "Hẹn gặp bác sĩ Lê Văn Minh lúc 9h sáng mai.",
-//     "Khám với bác sĩ Ngọc.",
-//     "Tôi cần gặp lại bác sĩ điều trị trước, bác sĩ Nguyễn Hữu Đức.",
-//     "Tư vấn online với bác sĩ Phạm Thanh Hằng.",
-//     "Muốn gặp bác sĩ chuyên khoa tai mũi họng tên Tuấn.",
-//     "Tôi muốn gặp bác sĩ điều trị là Nguyễn Thị Mai.",
-//   ];
-
-//   for (const [index, text_input] of testCases.entries()) {
-//     console.log(`🧩 Test ${index + 1}: "${text_input}"`);
-//     try {
-//       const result = await AnalyzeDoctorTool.invoke({ text_input });
-//       console.log("✅ Kết quả:", result, "\n");
-//     } catch (err) {
-//       console.error("❌ Lỗi khi xử lý:", err);
-//     }
-//   }
-// }
-
-// runTests();

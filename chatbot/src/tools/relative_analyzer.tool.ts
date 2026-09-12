@@ -1,7 +1,6 @@
 import { getChatModel } from "../configs/llm.js";
 import { z } from "zod";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { StructuredOutputParser } from "langchain/output_parsers";
 
 import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
@@ -35,21 +34,6 @@ const relativeCodeSchema = z.object({
       "Giới tính người thân: true = Nam, false = Nữ, chỉ điền nếu người dùng nói rõ hoặc suy ra chắc chắn từ cách xưng hô (vd 'con trai' => true), null nếu không rõ",
     ),
 });
-
-//Có 2 cách ép kiểu trả về với LLM
-//cách 1: Ép kiểu theo từng bước
-//tạo cấu trúc output parser từ zod schema
-// const outputParser = StructuredOutputParser.fromZodSchema(relativeCodeSchema);
-
-// console.log("=== Output Parser ===");
-// console.log(outputParser);
-
-//tạo bản hướng dẫn định dạng để đưa vào prompt
-// const getFormatInstructions = outputParser.getFormatInstructions();
-
-// console.log("=== Format Instructions ===");
-// console.log(getFormatInstructions);
-// console.log("===========================");
 
 const systemPrompt = `
 Bạn là hệ thống phân tích mối quan hệ tiếng Việt.
@@ -212,9 +196,6 @@ export const AnalyzeRelativeTool = tool(
       );
       // Response được bọc bởi PaginationResultDto: { data: { relatives: [...], total, page, limit } }
       relatives = response.data?.data?.relatives || [];
-      console.log(
-        `[AnalyzeRelativeTool] API trả về ${relatives.length} người thân khớp.`,
-      );
     } catch (error) {
       lookup_error = true;
       logSafeError("[AnalyzeRelativeTool] Relatives lookup failed", error);

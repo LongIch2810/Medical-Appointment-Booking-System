@@ -123,10 +123,6 @@ export const AnalyzeSpecialtyTool = tool(
     }
 
     const candidateNames = extractedData.candidates || [];
-    console.log(
-      "[AnalyzeSpecialtyTool] Chuyên khoa LLM chẩn đoán:",
-      candidateNames,
-    );
 
     const byNormalizedName = new Map(
       specialties.map((s) => [normalize(s.name), s]),
@@ -134,11 +130,6 @@ export const AnalyzeSpecialtyTool = tool(
     const candidate_specialties = candidateNames
       .map((name) => byNormalizedName.get(normalize(name)))
       .filter((s): s is SpecialtyRow => Boolean(s));
-
-    console.log(
-      "[AnalyzeSpecialtyTool] Chuyên khoa đã map sang id:",
-      candidate_specialties,
-    );
 
     return { candidate_specialties };
   },

@@ -254,7 +254,6 @@ function checkerNode(state: typeof BookingState.State) {
   ) {
     if (state.relatives && state.relatives.length > 1) {
       ambiguous_relatives = true;
-      console.log("[Node] checker — Phát hiện nhiều người thân");
     } else if (state.new_relative_candidate) {
       // Không tìm thấy hồ sơ có sẵn nhưng đã xác định rõ mối quan hệ — kiểm
       // tra xem đã đủ thông tin để tự tạo hồ sơ mới chưa (fullname/gender bắt
@@ -267,10 +266,8 @@ function checkerNode(state: typeof BookingState.State) {
       const candidate = state.new_relative_candidate;
       if (!candidate.fullname) missing.push("new_relative_fullname");
       if (candidate.gender === null) missing.push("new_relative_gender");
-      console.log("[Node] checker — Hồ sơ người thân mới cần được xác nhận");
     } else {
       missing.push("selected_relative_id");
-      console.log("[Node] checker — Thiếu người thân");
     }
   }
 
@@ -279,7 +276,6 @@ function checkerNode(state: typeof BookingState.State) {
   // riêng: id đã biết ngay tại đây, chọn chuyên khoa phù hợp nhất (đầu mảng).
   if (!state.specialty_candidates || state.specialty_candidates.length === 0) {
     missing.push("selected_specialty_name");
-    console.log("[Node] checker — Thiếu chuyên khoa");
   }
 
   if (!state.time?.appointment_date) missing.push("appointment_date");
@@ -291,10 +287,6 @@ function checkerNode(state: typeof BookingState.State) {
   // nếu không booking_appointment sẽ chạy với selected_relative_id = null và
   // có thể đặt lịch nhầm người thay vì hỏi lại người dùng.
   const ready = missing.length === 0 && !ambiguous_relatives;
-  console.log(
-    "✅ [Node] checker — missing:",
-    missing.length ? missing.join(", ") : "Không thiếu gì",
-  );
 
   const selected_specialty_id = ready ? state.specialty_candidates[0].id : null;
 
@@ -339,13 +331,10 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     booking_mode: "ai_select",
   };
 
-  console.log("[booking_appointment] Sending validated booking request");
-
   try {
     const token = state?.token;
 
     if (!token) {
-      console.log("Thiếu token, không thể đặt lịch");
       return {
         booking_result: null,
         booking_error: {
@@ -431,15 +420,6 @@ const workflow = new StateGraph(BookingState)
 const bookingGraph = workflow.compile();
 
 export default bookingGraph;
-
-// async function runTests(text_input: string, token: string) {
-//   const result = await bookingGraph.invoke({
-//     text_input,
-//     token,
-//   });
-
-//   console.log(">>> KET QUA: ", result);
-// }
 
 // runTests(
 //   "Tôi muốn đặt lịch khám cho con trai tôi với bác sĩ Lê Văn Minh chuyên khoa nội tổng quát vào sáng ngày mai ?",

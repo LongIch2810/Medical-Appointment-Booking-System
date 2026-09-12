@@ -25,10 +25,6 @@ const SummaryMedicalRecordState = Annotation.Root({
   summary: Annotation<BanGhiTomTat>(),
 });
 
-function logNode(node: string, msg: string) {
-  console.log(`[SummaryGraph][${node}] ${msg}`);
-}
-
 async function runTool<T extends DynamicStructuredTool>(
   tool: T,
   args: Record<string, any>,
@@ -40,8 +36,6 @@ async function runTool<T extends DynamicStructuredTool>(
 async function NormalizeInputNode(
   state: typeof SummaryMedicalRecordState.State,
 ) {
-  logNode("normalize_input_node", "START");
-
   const objFileArr: NormalizedMedicalRecordFile[] =
     "imageFiles" in state.fileParams
       ? await Promise.all(
@@ -56,35 +50,17 @@ async function NormalizeInputNode(
     base64: i.buffer.toString("base64"),
   }));
 
-  // ✅ log kết quả node (không log full base64)
-  logNode(
-    "normalize_input_node",
-    `DONE -> normalizedInput.length=${
-      normalizedInput.length
-    }, mimetypes=${normalizedInput.map((x) => x.mimetype).join(", ")}`,
-  );
-
   return { normalizedInput };
 }
 
 async function OcrNode(state: typeof SummaryMedicalRecordState.State) {
-  logNode(
-    "ocr_node",
-    `START -> normalizedInput.length=${state.normalizedInput.length}`,
-  );
-
   const ocr = BenhAnSchema.parse(await runTool(ocrTool, state.normalizedInput));
-
-  logNode("ocr_node", "DONE");
 
   return { ocr };
 }
 
 async function SummaryNode(state: typeof SummaryMedicalRecordState.State) {
-  logNode("summary_node", "START");
-
   const benh_an_json = JSON.stringify(state.ocr);
-  logNode("summary_node", `inputJsonLen=${benh_an_json.length}`);
 
   const result = SummaryMedicalRecordSchema.parse(
     await runTool(summarizeMedicalRecordTool, { benh_an_json }),
@@ -93,8 +69,6 @@ async function SummaryNode(state: typeof SummaryMedicalRecordState.State) {
   if (!answer) {
     throw new Error("Medical record summary was empty.");
   }
-
-  logNode("summary_node", `DONE -> answerLen=${answer.length}`);
 
   return { summary: { answer } };
 }

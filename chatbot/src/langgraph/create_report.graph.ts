@@ -198,7 +198,6 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("🧩 [analyze_data_node] Analyzing data...");
     const res = await runTool(AdminQaSqlTool as DynamicStructuredTool, {
       question: state.question,
     });
@@ -215,7 +214,6 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("✅ [analyze_data_node] Data analyzed successfully.");
     const normalizedResult =
       typeof res === "string" ? normalizeNumericStrings(res) : res;
     return {
@@ -248,7 +246,6 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("🧩 [generate_chart_config_node] Generating chart config...");
     const res = await runTool(
       GenerateChartConfigTool as DynamicStructuredTool,
       {
@@ -268,7 +265,6 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("✅ [generate_chart_config_node] Chart config created.");
     return { chartConfig: res, nextNodeChartConfig: "generate_content_node" };
   } catch (error: any) {
     logSafeError("[generate_chart_config_node] failed", error);
@@ -296,7 +292,6 @@ async function generateContentNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("🧩 [generate_content_node] Generating professional report...");
     const res = await runTool(
       WriteProfessionalReportTool as DynamicStructuredTool,
       {
@@ -316,7 +311,6 @@ async function generateContentNode(state: typeof CreateReportState.State) {
       };
     }
 
-    console.log("✅ [generate_content_node] Report generated.");
     return { report: res, nextNodeReport: "create_file_pdf_node" };
   } catch (error: any) {
     logSafeError("[generate_content_node] failed", error);

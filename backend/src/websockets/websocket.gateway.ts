@@ -156,8 +156,6 @@ export class WebsocketGateway
   }
 
   notifyBookAppointmentSuccess(userId: number, data: any) {
-    console.log('userId: ', userId);
-    console.log('data: ', data);
     this.server.to(`user:${userId}`).emit('appointment:success', data);
 
     this.server.emit('appointment:slotBooked', {

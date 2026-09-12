@@ -33,27 +33,10 @@ const CHAT_HISTORY_CONTEXT_LIMIT = Math.max(
   Number(process.env.CHAT_HISTORY_CONTEXT_LIMIT) || 10,
 );
 
-// Đo thời gian tạm thời để xác định bước nào trong pipeline (lưu tin nhắn /
-// lấy lịch sử / agent LLM / lưu trả lời) chiếm phần lớn độ trễ — báo cáo
-// thực tế cho thấy 1 tin nhắn "hello" đơn giản vẫn có thể timeout dù chatbot
-// đã ấm sẵn (không phải cold-start), nên cần số đo thật thay vì đoán.
 const handleChatService = async ({ question, userId, token }: ChatInput) => {
   const requestId = randomUUID();
-  const startedAt = Date.now();
-  const logStep = (step: string, extra?: Record<string, unknown>) => {
-    console.log(
-      JSON.stringify({
-        scope: "chatbot_chat_timing",
-        requestId,
-        step,
-        elapsedMs: Date.now() - startedAt,
-        ...extra,
-      }),
-    );
-  };
 
   try {
-    let stepStartedAt = Date.now();
     await httpClient.post(
       `${process.env.BACKEND_URL}/api/v1/chat-history`,
       {
@@ -68,9 +51,7 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
         timeout: BACKEND_REQUEST_TIMEOUT_MS,
       },
     );
-    logStep("save_human_message", { durationMs: Date.now() - stepStartedAt });
 
-    stepStartedAt = Date.now();
     const { data: history } = await withRetry(
       () =>
         httpClient.get(
@@ -84,32 +65,19 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
         ),
       { operation: "chat_history_context", totalTimeoutMs: 20_000 },
     );
-    logStep("fetch_history_context", { durationMs: Date.now() - stepStartedAt });
     const recentHistory = history.data.slice(-CHAT_HISTORY_CONTEXT_LIMIT);
     const chatHistory = recentHistory.map((item: any) =>
       item.role === "human"
         ? new HumanMessage(item.content)
         : new AIMessage(item.content),
     );
-    logStep("prepare_history_context", {
-      messageCount: recentHistory.length,
-      historyLimit: CHAT_HISTORY_CONTEXT_LIMIT,
-    });
 
-    stepStartedAt = Date.now();
     const result = await agent.invoke({ messages: chatHistory }, {
       configurable: {
         token,
         requestId,
       },
     } as any);
-    logStep("agent_invoke", {
-      durationMs: Date.now() - stepStartedAt,
-      messageCount: result.messages.length,
-      toolCallNames: result.messages
-        .filter((m: any) => m._getType?.() === "tool")
-        .map((m: any) => m.name),
-    });
 
     const reply = result.messages[result.messages.length - 1] as AIMessage;
     const bookingToolReply = [...result.messages]
@@ -128,7 +96,6 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
     // thấy tin nhắn mới nên optimistic message bị xoá oan (tin nhắn "biến
     // mất" dù AI đã trả lời). Vẫn giữ nguyên tinh thần fix trước: lỗi lưu chỉ
     // log, không làm hỏng câu trả lời đã có sẵn cho người dùng.
-    const saveAiMessageStartedAt = Date.now();
     try {
       await httpClient.post(
         `${process.env.BACKEND_URL}/api/v1/chat-history`,
@@ -144,23 +111,15 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
           timeout: BACKEND_REQUEST_TIMEOUT_MS,
         },
       );
-      logStep("save_ai_message", {
-        durationMs: Date.now() - saveAiMessageStartedAt,
-      });
     } catch (error) {
-      logStep("save_ai_message_failed", {
-        durationMs: Date.now() - saveAiMessageStartedAt,
-      });
       console.error("Failed to persist AI reply:", {
         status: axios.isAxiosError(error) ? error.response?.status : undefined,
         code: axios.isAxiosError(error) ? error.code : undefined,
       });
     }
-    logStep("done");
 
     return { answer: replyContent };
   } catch (error) {
-    logStep("failed");
     if (axios.isAxiosError(error)) {
       console.error("Chat service backend error:", {
         method: error.config?.method,

@@ -51,7 +51,6 @@ export class DoctorsController {
   @Get('outstanding-doctors')
   @HttpCode(HttpStatus.OK)
   async getOutstandingDoctors() {
-    console.log('Fetching outstanding doctors...');
     const outstandingDoctors =
       await this.doctorsService.getOutstandingDoctors();
     return outstandingDoctors;
