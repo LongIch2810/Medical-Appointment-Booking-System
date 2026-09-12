@@ -894,6 +894,182 @@ describe('AppointmentsService', () => {
         BadRequestException,
       );
     });
+
+    describe('blocks today with an already-past start_time', () => {
+      const todayDateStr = '2026-09-01';
+      const todayWeekday =
+        dayNumberToEnum[new Date(`${todayDateStr}T00:00:00`).getDay()];
+
+      beforeEach(() => {
+        jest.useFakeTimers().setSystemTime(new Date(2026, 8, 1, 15, 0, 0));
+      });
+
+      afterEach(() => {
+        jest.useRealTimers();
+      });
+
+      it('specific-schedule mode rejects when the chosen schedule start_time already passed', async () => {
+        const chosenSchedule = {
+          id: 42,
+          day_of_week: todayWeekday,
+          start_time: '08:00:00',
+          end_time: '09:00:00',
+          is_active: true,
+        };
+        const relativeQb = makeManagerQb({
+          getOne: jest.fn().mockResolvedValue(patient),
+        });
+        const manager = makeMockManager({
+          relativeQb,
+          findOneResult: chosenSchedule,
+        });
+        wireTransaction(manager);
+
+        const body: BodyCreateAppointmentDto = {
+          appointment_date: todayDateStr,
+          doctor_schedule_id: 42,
+          relative_id: 5,
+          booking_mode: BookingMode.USER_SELECT,
+        };
+
+        await expect(service.create(9, body)).rejects.toThrow(
+          'Không thể đặt lịch cho khung giờ đã qua.',
+        );
+        expect(manager.save).not.toHaveBeenCalled();
+      });
+
+      it('auto-select mode rejects when the resolved schedule start_time already passed', async () => {
+        const candidate = {
+          id: 10,
+          day_of_week: todayWeekday,
+          start_time: '08:00:00',
+          end_time: '09:00:00',
+          is_active: true,
+        };
+        const relativeQb = makeManagerQb({
+          getOne: jest.fn().mockResolvedValue(patient),
+        });
+        const doctorScheduleQb = makeManagerQb({
+          getMany: jest.fn().mockResolvedValue([candidate]),
+        });
+        const manager = makeMockManager({ relativeQb, doctorScheduleQb });
+        wireTransaction(manager);
+
+        const body: BodyCreateAppointmentDto = {
+          appointment_date: todayDateStr,
+          specialty_id: 2,
+          start_time: '07:00',
+          relative_id: 5,
+          booking_mode: BookingMode.AI_SELECT,
+        };
+
+        await expect(service.create(9, body)).rejects.toThrow(
+          'Không thể đặt lịch cho khung giờ đã qua.',
+        );
+        expect(manager.save).not.toHaveBeenCalled();
+      });
+
+      it('rejects when start_time exactly equals the current time (boundary, inclusive)', async () => {
+        const chosenSchedule = {
+          id: 42,
+          day_of_week: todayWeekday,
+          start_time: '15:00:00',
+          end_time: '16:00:00',
+          is_active: true,
+        };
+        const relativeQb = makeManagerQb({
+          getOne: jest.fn().mockResolvedValue(patient),
+        });
+        const manager = makeMockManager({
+          relativeQb,
+          findOneResult: chosenSchedule,
+        });
+        wireTransaction(manager);
+
+        const body: BodyCreateAppointmentDto = {
+          appointment_date: todayDateStr,
+          doctor_schedule_id: 42,
+          relative_id: 5,
+          booking_mode: BookingMode.USER_SELECT,
+        };
+
+        await expect(service.create(9, body)).rejects.toThrow(
+          'Không thể đặt lịch cho khung giờ đã qua.',
+        );
+      });
+
+      it('does not reject today when the start_time is still in the future', async () => {
+        const chosenSchedule = {
+          id: 42,
+          day_of_week: todayWeekday,
+          start_time: '16:00:00',
+          end_time: '17:00:00',
+          is_active: true,
+        };
+        const relativeQb = makeManagerQb({
+          getOne: jest.fn().mockResolvedValue(patient),
+        });
+        const appointmentQb = makeManagerQb({
+          getOne: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(detailAppointment),
+        });
+        const manager = makeMockManager({
+          relativeQb,
+          appointmentQb,
+          findOneResult: chosenSchedule,
+        });
+        wireTransaction(manager);
+
+        const body: BodyCreateAppointmentDto = {
+          appointment_date: todayDateStr,
+          doctor_schedule_id: 42,
+          relative_id: 5,
+          booking_mode: BookingMode.USER_SELECT,
+        };
+
+        await service.create(9, body);
+
+        expect(manager.save).toHaveBeenCalled();
+      });
+
+      it('does not reject a genuinely future date even with an early start_time', async () => {
+        const chosenSchedule = {
+          id: 42,
+          day_of_week: weekday,
+          start_time: '00:01:00',
+          end_time: '01:00:00',
+          is_active: true,
+        };
+        const relativeQb = makeManagerQb({
+          getOne: jest.fn().mockResolvedValue(patient),
+        });
+        const appointmentQb = makeManagerQb({
+          getOne: jest
+            .fn()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(detailAppointment),
+        });
+        const manager = makeMockManager({
+          relativeQb,
+          appointmentQb,
+          findOneResult: chosenSchedule,
+        });
+        wireTransaction(manager);
+
+        const body: BodyCreateAppointmentDto = {
+          appointment_date: futureDate,
+          doctor_schedule_id: 42,
+          relative_id: 5,
+          booking_mode: BookingMode.USER_SELECT,
+        };
+
+        await service.create(9, body);
+
+        expect(manager.save).toHaveBeenCalled();
+      });
+    });
   });
 
   describe('createWithNotifications', () => {

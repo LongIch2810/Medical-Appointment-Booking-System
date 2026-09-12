@@ -33,6 +33,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 import { AppointmentsMapper } from './appointments.mapper';
 import { isPgDriverError } from '../../utils/isPgDriverError';
+import { toHHMM, toMinutes } from '../../utils/toMinutes';
 import Relative from '../../entities/relative.entity';
 import { AppointmentResponseDto } from './dto/response/appointmentResponse.dto';
 import { BodyFilterImproveDto } from './dto/request/bodyFilterImprove.dto';
@@ -307,6 +308,8 @@ export class AppointmentsService {
           });
         }
 
+        this.assertNotPastTimeSlot(appointmentDateOnly, chosenSchedule.start_time);
+
         await this.assertNoPatientConflict(
           manager,
           patient.id,
@@ -361,6 +364,20 @@ export class AppointmentsService {
     }
 
     return { appointmentDate, appointmentDateOnly };
+  }
+
+  private assertNotPastTimeSlot(
+    appointmentDateOnly: string,
+    startTime: string,
+  ): void {
+    const now = new Date();
+    if (appointmentDateOnly !== this.formatDateOnly(now)) return;
+
+    if (toMinutes(startTime) <= toMinutes(toHHMM(now))) {
+      throw new BadRequestException(
+        'Không thể đặt lịch cho khung giờ đã qua.',
+      );
+    }
   }
 
   /**

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import type { createAutoAppointmentData } from "@/api/appointmentApi";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+import { formatDateYYYYMMDD, getVietnamTimeHHmm } from "@/utils/formatDate";
 import { useAutoBookingAppointment } from "./useAutoBookingAppointment";
 
 const DEFAULT_BOOKING_ERROR_MESSAGE = "Đặt lịch khám thất bại!";
@@ -26,6 +27,12 @@ export function useAutoBooking() {
     if (!data.start_time) {
       toast.error("Vui lòng chọn giờ bắt đầu khám!");
       return;
+    }
+    if (data.appointment_date === formatDateYYYYMMDD(new Date())) {
+      if (data.start_time <= getVietnamTimeHHmm(new Date())) {
+        toast.error("Không thể đặt lịch cho khung giờ đã qua!");
+        return;
+      }
     }
     if (!data.relative_id && !data.new_relative_profile) {
       toast.error("Vui lòng chọn người thân cần đặt lịch khám!");
