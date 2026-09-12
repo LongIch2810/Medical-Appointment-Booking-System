@@ -122,13 +122,15 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
       );
     const replyContent = bookingToolReply?.content ?? reply.content;
 
-    // Không await — lưu lịch sử AI reply không cần chặn response cho người
-    // dùng chờ. Trước đây nếu POST này lỗi/timeout thì cả request thất bại
-    // dù LLM đã trả lời thành công (tốn chi phí LLM mà người dùng vẫn nhận
-    // lỗi). Giờ lỗi lưu chỉ được log, không ảnh hưởng câu trả lời đã có.
+    // Await lưu lịch sử AI reply (nhưng vẫn nuốt lỗi, không throw) — nếu
+    // không await, response có thể trả về cho frontend trước khi dòng AI
+    // được commit xong, và invalidateQueries phía frontend refetch không kịp
+    // thấy tin nhắn mới nên optimistic message bị xoá oan (tin nhắn "biến
+    // mất" dù AI đã trả lời). Vẫn giữ nguyên tinh thần fix trước: lỗi lưu chỉ
+    // log, không làm hỏng câu trả lời đã có sẵn cho người dùng.
     const saveAiMessageStartedAt = Date.now();
-    httpClient
-      .post(
+    try {
+      await httpClient.post(
         `${process.env.BACKEND_URL}/api/v1/chat-history`,
         {
           userId,
@@ -141,21 +143,19 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
           },
           timeout: BACKEND_REQUEST_TIMEOUT_MS,
         },
-      )
-      .then(() =>
-        logStep("save_ai_message", {
-          durationMs: Date.now() - saveAiMessageStartedAt,
-        }),
-      )
-      .catch((error) => {
-        logStep("save_ai_message_failed", {
-          durationMs: Date.now() - saveAiMessageStartedAt,
-        });
-        console.error("Failed to persist AI reply:", {
-          status: axios.isAxiosError(error) ? error.response?.status : undefined,
-          code: axios.isAxiosError(error) ? error.code : undefined,
-        });
+      );
+      logStep("save_ai_message", {
+        durationMs: Date.now() - saveAiMessageStartedAt,
       });
+    } catch (error) {
+      logStep("save_ai_message_failed", {
+        durationMs: Date.now() - saveAiMessageStartedAt,
+      });
+      console.error("Failed to persist AI reply:", {
+        status: axios.isAxiosError(error) ? error.response?.status : undefined,
+        code: axios.isAxiosError(error) ? error.code : undefined,
+      });
+    }
     logStep("done");
 
     return { answer: replyContent };
