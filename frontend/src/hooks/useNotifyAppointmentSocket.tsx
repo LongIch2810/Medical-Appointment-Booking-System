@@ -1,5 +1,5 @@
 import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
-import { formatDate, getWeekdayKey, toDate } from "@/utils/formatDate";
+import { formatDate, getWeekdayKey } from "@/utils/formatDate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
@@ -35,6 +35,24 @@ type ApiCacheResponse<T> = {
   data: T;
 };
 
+const parseAppointmentDate = (appointmentDate: string): Date | null => {
+  const isoDate = appointmentDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDate) {
+    const [, year, month, day] = isoDate;
+    return new Date(Number(year), Number(month) - 1, Number(day));
+  }
+
+  const displayDate = appointmentDate.match(
+    /^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/,
+  );
+  if (!displayDate) return null;
+
+  const [, day, month, year] = displayDate;
+  const parsedDate = new Date(Number(year), Number(month) - 1, Number(day));
+
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 export function useNotifyAppointmentSocket(
   socket: Socket | null,
   doctorId: number,
@@ -47,36 +65,29 @@ export function useNotifyAppointmentSocket(
   useEffect(() => {
     if (!socket || !doctorId) return;
 
-    const parseAppointmentDate = (appointmentDate: string) => {
-      if (/^\d{4}-\d{2}-\d{2}/.test(appointmentDate)) {
-        return new Date(appointmentDate);
-      }
-
-      return toDate(appointmentDate);
-    };
-
     const getDoctorScheduleId = (slot: AppointmentSlot) =>
       slot.doctor_schedule_id ?? slot.doctor_schedule?.id;
 
-    const normalizeSlot = (slot: AppointmentSlot): AppointmentSlot => ({
-      ...slot,
-      appointment_date: formatDate(
-        parseAppointmentDate(slot.appointment_date),
-        "vi-VN",
-        false,
-      ),
-      doctor_schedule_id: getDoctorScheduleId(slot),
-    });
-
     const markSlotBooked = (slot: AppointmentSlot) => {
-      const bookedSlot = normalizeSlot(slot);
+      const parsedAppointmentDate = parseAppointmentDate(
+        slot.appointment_date,
+      );
+      if (!parsedAppointmentDate) return;
+
+      const bookedSlot: AppointmentSlot = {
+        ...slot,
+        appointment_date: formatDate(
+          parsedAppointmentDate,
+          "vi-VN",
+          false,
+        ),
+        doctor_schedule_id: getDoctorScheduleId(slot),
+      };
       const doctorScheduleId = getDoctorScheduleId(bookedSlot);
       if (!doctorScheduleId || !bookedSlot.appointment_date) return;
 
       const patchSchedules = (schedules: GroupedSchedules | undefined) => {
-        const weekday = getWeekdayKey(
-          parseAppointmentDate(bookedSlot.appointment_date),
-        );
+        const weekday = getWeekdayKey(parsedAppointmentDate);
         if (!schedules?.[weekday]) return schedules;
 
         return {
