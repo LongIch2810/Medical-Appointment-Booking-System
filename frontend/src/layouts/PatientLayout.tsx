@@ -46,7 +46,7 @@ const PatientNavigation: React.FC = () => {
       icon: MessageCircleMore,
     },
     {
-      label: t("nav.aiCoach"),
+      label: t("nav.aiCoachHealth"),
       to: "/patient/ai-coach-health",
       icon: Sparkles,
     },

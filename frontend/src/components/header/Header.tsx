@@ -103,7 +103,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       icon: MessageSquare,
     },
     {
-      name: t("nav.aiCoach"),
+      name: t("nav.aiCoachHealth"),
       to: "/patient/ai-coach-health",
       icon: Sparkles,
       badge: t("common.new"),
