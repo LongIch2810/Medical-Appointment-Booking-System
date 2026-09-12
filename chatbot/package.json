@@ -26,7 +26,7 @@
     "@langchain/openai": "^0.5.18",
     "@langchain/qdrant": "^0.1.2",
     "@langchain/textsplitters": "^0.1.0",
-    "@qdrant/js-client-rest": "1.19.0",
+    "@qdrant/js-client-rest": "1.18.0",
     "axios": "^1.10.0",
     "canvas": "^3.2.0",
     "chartjs-node-canvas": "^5.0.0",
