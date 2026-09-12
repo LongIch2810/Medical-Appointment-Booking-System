@@ -11,9 +11,7 @@ export class RedisCacheService {
   constructor(configService: ConfigService) {
     this.configService = configService;
     const configuredRedisDb = Number(
-      configService.get<string>('REDIS_CACHE_DB') ??
-        configService.get<string>('REDIS_DB') ??
-        0,
+      configService.get<string>('REDIS_CACHE_DB') ?? 0,
     );
     const redisDb =
       Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
@@ -43,9 +41,7 @@ export class RedisCacheService {
   getRateLimitClient(): Redis {
     if (!this.rateLimitClient) {
       const configuredRedisDb = Number(
-        this.configService.get<string>('REDIS_RATE_LIMIT_DB') ??
-          this.configService.get<string>('REDIS_DB') ??
-          0,
+        this.configService.get<string>('REDIS_RATE_LIMIT_DB') ?? 0,
       );
       const redisDb =
         Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0

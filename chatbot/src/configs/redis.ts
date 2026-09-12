@@ -18,7 +18,7 @@ export function getRedisClient(): Redis {
       tls: process.env.REDIS_TLS === "true" ? {} : undefined,
       // Managed Redis providers such as Upstash commonly expose only DB 0.
       // Use an explicit override when a self-hosted Redis has multiple DBs.
-      db: Number(process.env.REDIS_RATE_LIMIT_DB ?? process.env.REDIS_DB ?? 0),
+      db: Number(process.env.REDIS_RATE_LIMIT_DB ?? 0),
       maxRetriesPerRequest: 1,
       lazyConnect: true,
     });
