@@ -10,7 +10,7 @@ import { useGetDoctorSchedules } from "@/hooks/useGetDoctorSchedules";
 import DoctorScheduleList from "../list/DoctorScheduleList";
 import DoctorScheduleListSkeleton from "../skeleton/DoctorScheduleListSkeleton";
 import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
-import { getWeekday } from "@/utils/formatDate";
+import { getWeekday, getWeekdayKey } from "@/utils/formatDate";
 import CalendarComponent from "../calendar/CalendarComponent";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
@@ -104,7 +104,7 @@ const DialogDisplaySchedules = ({
                   <DoctorScheduleListSkeleton />
                 ) : (
                   <DoctorScheduleList
-                    list={schedules[getWeekday(selectedDate)] || []}
+                    list={schedules[getWeekdayKey(selectedDate)] || []}
                     selectedDate={selectedDate}
                   />
                 )}

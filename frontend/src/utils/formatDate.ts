@@ -33,6 +33,20 @@ export const getWeekday = (date: Date, locale?: string): string => {
   return weekday;
 };
 
+const WEEKDAY_KEYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+export const getWeekdayKey = (date: Date): (typeof WEEKDAY_KEYS)[number] => {
+  return WEEKDAY_KEYS[date.getDay()];
+};
+
 export const checkSameDay = (d1: Date, d2: Date): boolean => {
   return (
     d1.getFullYear() === d2.getFullYear() &&

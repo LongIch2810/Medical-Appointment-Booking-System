@@ -20,7 +20,11 @@ import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
 import { useUserStore } from "@/store/useUserStore";
 import type { DoctorSchedule } from "@/types/interface/doctorSchedule.interface";
 import { checkSchedulesExpireOrBooked } from "@/utils/checkSchedulesExpire";
-import { formatDate, formatDateYYYYMMDD, getWeekday } from "@/utils/formatDate";
+import {
+  formatDate,
+  formatDateYYYYMMDD,
+  getWeekdayKey,
+} from "@/utils/formatDate";
 
 const DoctorDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -125,7 +129,7 @@ const DoctorDetail = () => {
   const schedules =
     (doctor.doctor_schedules as Record<string, DoctorSchedule[]> | undefined) ??
     {};
-  const selectedDaySchedules = schedules[getWeekday(selectedDate)] || [];
+  const selectedDaySchedules = schedules[getWeekdayKey(selectedDate)] || [];
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl mt-16 md:mt-24 space-y-8 pb-16">

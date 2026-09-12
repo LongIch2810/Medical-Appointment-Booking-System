@@ -1,5 +1,5 @@
 import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
-import { formatDate, getWeekday, toDate } from "@/utils/formatDate";
+import { formatDate, getWeekdayKey, toDate } from "@/utils/formatDate";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
@@ -74,7 +74,7 @@ export function useNotifyAppointmentSocket(
       if (!doctorScheduleId || !bookedSlot.appointment_date) return;
 
       const patchSchedules = (schedules: GroupedSchedules | undefined) => {
-        const weekday = getWeekday(
+        const weekday = getWeekdayKey(
           parseAppointmentDate(bookedSlot.appointment_date),
         );
         if (!schedules?.[weekday]) return schedules;
