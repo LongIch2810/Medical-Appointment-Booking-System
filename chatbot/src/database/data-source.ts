@@ -7,6 +7,7 @@ import { SpecialtiesView } from "../entities_view/specialties-view.entity.js";
 dotenv.config();
 
 const chatbotDbPassword = process.env.CHATBOT_DB_PASSWORD;
+const chatbotDbUser = process.env.DB_USER || "chatbot_readonly";
 if (!chatbotDbPassword || chatbotDbPassword.length < 16) {
   throw new Error(
     "CHATBOT_DB_PASSWORD must be configured with at least 16 characters.",
@@ -28,7 +29,7 @@ export const AppDatasource = new DataSource({
   type: "postgres",
   host: process.env.DB_HOST,
   port: parseInt(process.env.DB_PORT || "5432"),
-  username: "chatbot_readonly",
+  username: chatbotDbUser,
   password: chatbotDbPassword,
   database: process.env.DB_NAME,
   entities: [DoctorsView, ArticlesView, SpecialtiesView],
@@ -40,7 +41,7 @@ export const AdminReportDatasource = new DataSource({
   type: "postgres",
   host: process.env.DB_HOST,
   port: parseInt(process.env.DB_PORT || "5432"),
-  username: "chatbot_readonly",
+  username: chatbotDbUser,
   password: chatbotDbPassword,
   database: process.env.DB_NAME,
   extra: READ_ONLY_CONNECTION_OPTIONS,
