@@ -82,33 +82,33 @@ const Team = () => {
           {teamMembers.map((member, index) => (
             <Card
               key={index}
-              className="p-6 flex flex-col sm:flex-row gap-4 hover:shadow-lg transition-shadow duration-300"
+              className="p-6 flex flex-col sm:flex-row gap-5 rounded-2xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs hover:shadow-md transition-all duration-300"
             >
-              <Avatar className="w-20 h-20 flex-shrink-0">
+              <Avatar className="w-20 h-20 flex-shrink-0 border-2 border-primary/20 shadow-xs">
                 <AvatarImage src={member.avatarUrl} alt={member.name} />
-                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-lg">{member.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col flex-1">
                 <CardHeader className="p-0 mb-2">
-                  <CardTitle className="text-xl font-semibold">
+                  <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100">
                     {member.name}
                   </CardTitle>
-                  <p className="text-sm text-muted-foreground italic">
+                  <p className="text-sm font-medium text-primary">
                     {member.role}
                   </p>
                 </CardHeader>
-                <CardContent className="p-0 text-gray-700 space-y-2 text-sm">
+                <CardContent className="p-0 text-slate-600 dark:text-slate-300 space-y-2 text-sm">
                   <p>
-                    <strong>Học vấn:</strong> {member.education}
+                    <strong className="text-slate-900 dark:text-slate-200">Học vấn:</strong> {member.education}
                   </p>
                   <p>
-                    <strong>Chứng chỉ:</strong>{" "}
+                    <strong className="text-slate-900 dark:text-slate-200">Chứng chỉ:</strong>{" "}
                     {member.certifications.join(", ")}
                   </p>
                   <p>
-                    <strong>Kinh nghiệm:</strong> {member.experience}
+                    <strong className="text-slate-900 dark:text-slate-200">Kinh nghiệm:</strong> {member.experience}
                   </p>
-                  <div className="flex items-center gap-4 mt-3 text-sm text-primary">
+                  <div className="flex items-center gap-4 mt-3 text-sm text-primary font-semibold">
                     <a
                       href={`mailto:${member.email}`}
                       className="flex items-center gap-1 hover:underline"

@@ -165,41 +165,48 @@ const PatientPortalShell: React.FC = () => {
   return (
     <section className="mt-16 md:mt-24 pb-12">
       {/* Top Welcome Banner */}
-      <div className="mb-6 overflow-hidden rounded-3xl bg-gradient-to-r from-teal-700 via-primary to-emerald-600 p-6 text-white shadow-md md:p-7">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-teal-600/30 bg-gradient-to-br from-teal-800 via-teal-700 to-emerald-700 p-6 text-white shadow-md dark:border-teal-500/20 dark:from-slate-900 dark:via-teal-950 dark:to-slate-900 md:p-7">
+        {/* Subtle decorative glow */}
+        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-teal-300/10 blur-2xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4.5">
-            <Avatar className="h-16 w-16 border-3 border-white/40 shadow-sm shrink-0 md:h-18 md:w-18">
-              <AvatarImage
-                src={profile?.picture ?? ""}
-                alt={profile?.fullname ?? "User avatar"}
-                className="object-cover"
-              />
-              <AvatarFallback className="bg-white/20 text-xl font-bold text-white">
-                {initial}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative shrink-0">
+              <Avatar className="h-16 w-16 border-2 border-white/50 shadow-md ring-4 ring-white/15 md:h-18 md:w-18">
+                <AvatarImage
+                  src={profile?.picture ?? ""}
+                  alt={profile?.fullname ?? "User avatar"}
+                  className="object-cover"
+                />
+                <AvatarFallback className="bg-teal-900/60 text-xl font-extrabold text-white">
+                  {initial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-400 shadow-xs" />
+            </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-xs md:text-sm font-medium text-white/80">Xin chào,</p>
-                <Badge className="bg-white/20 hover:bg-white/25 text-white text-[11px] font-semibold border-none backdrop-blur-xs gap-1">
+                <Badge className="bg-white/20 hover:bg-white/25 text-white text-[11px] font-bold border-none backdrop-blur-xs gap-1">
                   <ShieldCheck className="h-3 w-3" />
                   Bệnh nhân LifeHealth
                 </Badge>
               </div>
-              <h1 className="text-xl font-extrabold tracking-tight md:text-2xl truncate mt-0.5">
+              <h1 className="text-xl font-extrabold tracking-tight md:text-2xl truncate mt-0.5 text-white font-heading">
                 {profile?.fullname ?? profile?.username ?? "Bệnh nhân LifeHealth"}
               </h1>
-              <p className="mt-1 max-w-xl text-xs md:text-sm text-white/85 line-clamp-1">
+              <p className="mt-1 max-w-xl text-xs md:text-sm text-teal-50/90 dark:text-slate-300 line-clamp-1">
                 Quản lý lịch khám, hồ sơ sức khỏe, trao đổi bác sĩ và trợ lý y tế AI.
               </p>
             </div>
           </div>
 
-          <div className="hidden rounded-2xl bg-white/10 px-4.5 py-3 text-right md:block border border-white/15 backdrop-blur-xs">
-            <p className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">
+          <div className="hidden rounded-2xl bg-white/10 dark:bg-slate-800/60 px-5 py-3 text-right md:block border border-white/15 dark:border-slate-700/50 backdrop-blur-xs shadow-2xs">
+            <p className="text-[10px] uppercase tracking-widest text-teal-100/75 dark:text-slate-400 font-bold">
               Tài khoản liên kết
             </p>
-            <p className="text-sm font-bold text-white truncate max-w-xs">
+            <p className="text-sm font-bold text-white truncate max-w-xs mt-0.5">
               {profile?.email ?? "Chưa cập nhật email"}
             </p>
           </div>

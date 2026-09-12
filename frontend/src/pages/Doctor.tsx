@@ -136,66 +136,86 @@ const Doctor = () => {
 
   return (
     <section className="mt-16 md:mt-24 pb-16">
-      <header className="container mx-auto max-w-[700px] lg:max-w-[900px] mb-8 px-4">
-        <Input
-          placeholder="Tìm kiếm theo tên bác sĩ, bệnh viện, chuyên khoa..."
-          className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
-          icon={<Search className="text-slate-400" size={18} />}
-          value={search}
-          onChange={handleSearch}
-        />
-        <div className="flex flex-col md:flex-row md:flex-wrap gap-2.5 md:gap-3.5 mt-3 md:mt-4 md:justify-center">
+      <header className="container mx-auto max-w-4xl mb-8 px-4 text-center space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 font-heading">
+            Đội ngũ Bác sĩ Chuyên khoa
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
+            Tìm kiếm bác sĩ theo chuyên khoa, kinh nghiệm, bệnh viện hoặc khu vực và đặt lịch khám nhanh chóng.
+          </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto">
+          <Input
+            placeholder="Tìm kiếm theo tên bác sĩ, bệnh viện, chuyên khoa..."
+            className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
+            icon={<Search className="text-slate-400" size={18} />}
+            value={search}
+            onChange={handleSearch}
+            aria-label="Tìm kiếm bác sĩ"
+          />
+        </div>
+
+        <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-3 mt-4 md:justify-center items-center">
           <DialogChooseSpecialty className="w-full md:w-auto" />
           <DialogChooseExperience className="w-full md:w-auto" />
           <DialogInputWorkplace className="w-full md:w-auto" />
           <DialogChooseArea className="w-full md:w-auto" />
           <DialogAutoBooking className="w-full md:w-auto" />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={!hasActiveFilters}
-            onClick={handleResetFilters}
-            className="w-full md:w-auto gap-2 rounded-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 shadow-2xs hover:border-primary/40 hover:bg-primary/5 hover:text-primary disabled:opacity-50 text-xs font-semibold"
-          >
-            <RotateCcw className="h-3.5 w-3.5" />
-            Đặt lại bộ lọc
-          </Button>
+          {hasActiveFilters && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleResetFilters}
+              className="w-full md:w-auto gap-2 rounded-full border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 shadow-2xs hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold h-9 cursor-pointer"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Đặt lại bộ lọc
+            </Button>
+          )}
         </div>
       </header>
+
       <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto px-4">
         {isError ? (
           <ErrorState
             title="Không thể tải danh sách bác sĩ"
-            description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+            description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng kiểm tra lại kết nối và thử lại."
             onRetry={() => refetch()}
           />
         ) : (
           <>
-            <div className="flex justify-center">
+            <div className="flex justify-center w-full">
               {!isLoading && doctors.length === 0 && (
-                <NotFoundResult onReset={handleResetFilters} />
+                <NotFoundResult
+                  title="Không tìm thấy bác sĩ phù hợp"
+                  description="Hãy thử đổi từ khóa tìm kiếm hoặc đặt lại các tiêu chí bộ lọc."
+                  onReset={handleResetFilters}
+                />
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
               {isLoading &&
-                Array.from({ length: 20 }).map((_, i) => (
+                Array.from({ length: 12 }).map((_, i) => (
                   <DoctorCardSkeleton key={i} />
                 ))}
               {doctors.map((item, index) => (
-                <DoctorCard key={index} item={item} />
+                <DoctorCard key={item.id ?? index} item={item} />
               ))}
               {isFetchingNextPage &&
-                Array.from({ length: 20 }).map((_, i) => (
-                  <DoctorCardSkeleton key={i} />
+                Array.from({ length: 4 }).map((_, i) => (
+                  <DoctorCardSkeleton key={`next-${i}`} />
                 ))}
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center pt-4">
               {hasNextPage && (
                 <Button
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
+                  className="rounded-xl px-6 py-2.5 font-bold shadow-xs hover:shadow-md cursor-pointer"
                 >
-                  {isFetchingNextPage ? <Loading /> : "Xem thêm"}
+                  {isFetchingNextPage ? <Loading /> : "Xem thêm bác sĩ"}
                 </Button>
               )}
             </div>

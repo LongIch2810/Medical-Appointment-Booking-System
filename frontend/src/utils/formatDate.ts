@@ -46,6 +46,15 @@ export const formatDateYYYYMMDD = (date: Date): string => {
     .replace(/-/g, "-");
 };
 
+export const getVietnamTimeHHmm = (date: Date): string => {
+  return new Intl.DateTimeFormat("sv-SE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(date);
+};
+
 export const toDate = (dateString: string) => {
   const [day, month, year] = dateString.split("-").map(Number);
   return new Date(year, month - 1, day);

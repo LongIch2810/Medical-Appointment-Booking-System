@@ -12,6 +12,7 @@ import type { AppNotification } from "@/types/interface/notification.interface";
 import { Bell, CheckCheck, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 function isInternalPath(path: string | null): path is string {
   return Boolean(path && /^\/(?!\/)/.test(path));
@@ -41,50 +42,88 @@ export default function Notifications() {
   }
 
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-xl font-extrabold text-slate-900 dark:text-slate-100">Thông báo</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Bạn có {unreadQuery.data?.data.count ?? 0} thông báo chưa đọc.
-          </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Bell className="h-5.5 w-5.5" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                Thông báo hệ thống
+              </h2>
+              {(unreadQuery.data?.data.count ?? 0) > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-extrabold text-white">
+                  {unreadQuery.data?.data.count} mới
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Cập nhật lịch khám, đơn thuốc và các khuyến nghị y tế mới nhất
+            </p>
+          </div>
         </div>
         <Button
           variant="outline"
+          size="sm"
           disabled={markAll.isPending || (unreadQuery.data?.data.count ?? 0) === 0}
           onClick={() => markAll.mutate()}
-          className="gap-2 rounded-xl"
+          className="gap-2 rounded-xl text-xs font-semibold cursor-pointer"
         >
-          <CheckCheck className="h-4 w-4" />
-          Đánh dấu tất cả đã đọc
+          <CheckCheck className="h-3.5 w-3.5 text-primary" />
+          <span>Đánh dấu tất cả đã đọc</span>
         </Button>
       </div>
 
-      <div className="flex gap-2">
-        <Button
-          size="sm"
-          variant={unreadOnly ? "outline" : "default"}
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
           onClick={() => {
             setUnreadOnly(false);
             setPage(1);
           }}
-          className="rounded-xl"
+          className={cn(
+            "rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer",
+            !unreadOnly
+              ? "border-primary bg-primary text-white shadow-xs"
+              : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
+          )}
         >
-          Tất cả
-        </Button>
-        <Button
-          size="sm"
-          variant={unreadOnly ? "default" : "outline"}
+          Tất cả thông báo
+        </button>
+        <button
+          type="button"
           onClick={() => {
             setUnreadOnly(true);
             setPage(1);
           }}
-          className="rounded-xl"
+          className={cn(
+            "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer",
+            unreadOnly
+              ? "border-primary bg-primary text-white shadow-xs"
+              : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
+          )}
         >
-          Chưa đọc
-        </Button>
+          <span>Chưa đọc</span>
+          {(unreadQuery.data?.data.count ?? 0) > 0 && (
+            <span
+              className={cn(
+                "rounded-full px-1.5 py-0.2 text-[10px] font-extrabold",
+                unreadOnly
+                  ? "bg-white/20 text-white"
+                  : "bg-primary/10 text-primary",
+              )}
+            >
+              {unreadQuery.data?.data.count}
+            </span>
+          )}
+        </button>
       </div>
 
+      {/* Notification List */}
       {query.isLoading ? (
         <div className="flex justify-center py-16">
           <Loader2 className="h-7 w-7 animate-spin text-primary" />
@@ -92,10 +131,10 @@ export default function Notifications() {
       ) : !data?.notifications.length ? (
         <StateCard
           icon={<Bell className="h-8 w-8" />}
-          title="Chưa có thông báo"
+          title="Chưa có thông báo nào"
           description={
             unreadOnly
-              ? "Bạn đã đọc tất cả thông báo."
+              ? "Bạn đã đọc tất cả thông báo trong hộp thư."
               : "Thông báo lịch hẹn và thông tin từ hệ thống sẽ xuất hiện tại đây."
           }
         />
@@ -105,28 +144,39 @@ export default function Notifications() {
             <Card
               key={notification.id}
               onClick={() => void openNotification(notification)}
-              className={`cursor-pointer rounded-2xl border transition-colors hover:border-primary/30 ${
+              className={cn(
+                "group cursor-pointer rounded-2xl border transition-all hover:shadow-sm py-0",
                 notification.isRead
-                  ? "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
-                  : "border-primary/20 bg-primary/5 dark:border-primary/40 dark:bg-primary/10"
-              }`}
+                  ? "border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
+                  : "border-primary/30 bg-primary/3 hover:border-primary/60 dark:border-primary/40 dark:bg-primary/10",
+              )}
             >
-              <CardContent className="flex gap-3 p-4 sm:p-5">
+              <CardContent className="flex items-start gap-4 p-4.5 sm:p-5">
                 <span
-                  className={`mt-2 h-2.5 w-2.5 shrink-0 rounded-full ${
-                    notification.isRead ? "bg-slate-200 dark:bg-slate-700" : "bg-primary"
-                  }`}
+                  className={cn(
+                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
+                    notification.isRead
+                      ? "bg-slate-200 dark:bg-slate-700"
+                      : "bg-primary ring-4 ring-primary/20",
+                  )}
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <h3 className="font-bold text-slate-900 dark:text-slate-100">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3
+                      className={cn(
+                        "text-sm font-bold",
+                        notification.isRead
+                          ? "text-slate-800 dark:text-slate-200"
+                          : "text-slate-900 dark:text-slate-100",
+                      )}
+                    >
                       {notification.title}
                     </h3>
-                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
                       {notification.createdAt}
                     </span>
                   </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
                     {notification.content}
                   </p>
                 </div>
@@ -136,14 +186,15 @@ export default function Notifications() {
         </div>
       )}
 
+      {/* Pagination */}
       {(data?.totalPages ?? 0) > 1 && (
-        <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2 pt-2">
           <Button
             variant="outline"
             size="icon"
             disabled={page <= 1}
             onClick={() => setPage((current) => current - 1)}
-            className="rounded-xl"
+            className="rounded-xl h-9 w-9 cursor-pointer"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -155,7 +206,7 @@ export default function Notifications() {
             size="icon"
             disabled={page >= (data?.totalPages ?? 1)}
             onClick={() => setPage((current) => current + 1)}
-            className="rounded-xl"
+            className="rounded-xl h-9 w-9 cursor-pointer"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

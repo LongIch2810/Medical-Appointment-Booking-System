@@ -18,7 +18,7 @@ import {
 } from "@/hooks/usePatientPortalApi";
 import { useGetSpecialtiesInfinite } from "@/hooks/useGetSpecialtiesInfinite";
 import { useAutoBooking } from "@/hooks/useAutoBooking";
-import { formatDateYYYYMMDD } from "@/utils/formatDate";
+import { formatDateYYYYMMDD, getVietnamTimeHHmm } from "@/utils/formatDate";
 import type { Specialty } from "@/types/interface/specialty.interface";
 
 // Sentinel cho lựa chọn "Thêm người thân mới" trong select — khác 0 (giá trị
@@ -63,6 +63,9 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
   const { isPending, handleAutoBooking } = useAutoBooking();
 
   const isAddingNewRelative = selectedRelativeId === NEW_RELATIVE_OPTION_VALUE;
+  const isSelectedDateToday =
+    !!selectedDate &&
+    formatDateYYYYMMDD(selectedDate) === formatDateYYYYMMDD(new Date());
 
   const closeAndReset = () => {
     setOpen(false);
@@ -282,6 +285,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                 required
                 value={startTime}
                 disabled={isPending}
+                min={isSelectedDateToday ? getVietnamTimeHHmm(new Date()) : undefined}
                 onChange={(e) => setStartTime(e.target.value)}
                 className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
               />

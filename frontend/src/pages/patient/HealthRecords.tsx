@@ -18,11 +18,15 @@ import {
   Stethoscope,
   Syringe,
   Wine,
+  FolderHeart,
+  Edit3,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
+import ErrorState from "@/components/notification/ErrorState";
 import {
   Dialog,
   DialogContent,
@@ -206,207 +210,285 @@ const HealthRecords: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="border-primary/15 py-5">
-        <CardHeader className="px-5">
-          <CardTitle className="text-lg">Danh sách hồ sơ sức khỏe</CardTitle>
+    <div className="space-y-6">
+      {/* Relative Selection Card */}
+      <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <FolderHeart className="h-4.5 w-4.5" />
+            </span>
+            <div>
+              <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                Hồ sơ sức khỏe cá nhân &amp; gia đình
+              </CardTitle>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Lựa chọn hồ sơ thành viên để theo dõi chỉ số sinh trắc học và tiền sử y khoa
+              </p>
+            </div>
+          </div>
+          <Badge variant="outline" className="w-fit text-xs font-semibold border-primary/20 text-primary bg-primary/5">
+            {healthProfiles.length} hồ sơ theo dõi
+          </Badge>
         </CardHeader>
-        <CardContent className="space-y-3 px-5">
+        <CardContent className="space-y-3 px-6 py-5">
           {isLoading ? (
-            <p className="text-sm text-slate-600">Đang tải hồ sơ sức khỏe...</p>
+            <MedicalAiLoading
+              label="Đang tải hồ sơ sức khỏe..."
+              description="Đang đồng bộ dữ liệu sinh trắc học và lịch sử y khoa"
+              minHeight="min-h-36"
+            />
           ) : isError ? (
-            <p className="text-sm text-red-600">
-              Không thể tải hồ sơ sức khỏe.
-            </p>
+            <ErrorState
+              title="Không thể tải hồ sơ sức khỏe"
+              description="Đã xảy ra lỗi trong quá trình tải dữ liệu. Vui lòng thử lại."
+            />
           ) : healthProfiles.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 text-sm text-slate-600 dark:text-slate-400">
-              Chưa có hồ sơ sức khỏe nào.
+            <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-8 text-center text-sm text-slate-500">
+              Chưa có hồ sơ sức khỏe nào trong hệ thống.
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {healthProfiles.map((profile) => (
-                <button
-                  key={profile.id}
-                  type="button"
-                  onClick={() => setSelectedRelativeId(profile.patient.id)}
-                  className={cn(
-                    "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-                    profile.patient.id === selectedRelativeId
-                      ? "border-primary bg-primary text-white"
-                      : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary",
-                  )}
-                >
-                  {profile.patient.fullname ?? "Bệnh nhân"} (
-                  {profile.patient.relationship.relationship_name})
-                </button>
-              ))}
+            <div className="flex flex-wrap gap-2.5">
+              {healthProfiles.map((profile) => {
+                const isSelected = profile.patient.id === selectedRelativeId;
+                return (
+                  <button
+                    key={profile.id}
+                    type="button"
+                    onClick={() => setSelectedRelativeId(profile.patient.id)}
+                    className={cn(
+                      "flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-bold transition-all cursor-pointer",
+                      isSelected
+                        ? "border-primary bg-primary text-white shadow-xs"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-primary/40 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-extrabold",
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-primary/10 text-primary",
+                      )}
+                    >
+                      {profile.patient.fullname?.charAt(0).toUpperCase() || "P"}
+                    </span>
+                    <span>{profile.patient.fullname ?? "Bệnh nhân"}</span>
+                    <span
+                      className={cn(
+                        "rounded-md px-1.5 py-0.5 text-[10px] font-medium",
+                        isSelected
+                          ? "bg-white/20 text-white"
+                          : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+                      )}
+                    >
+                      {profile.patient.relationship.relationship_name}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </CardContent>
       </Card>
 
       {!selectedHealthRecord ? (
-        <Card className="border-primary/15 py-5">
-          <CardHeader className="px-5">
-            <CardTitle className="text-lg">Hồ sơ sức khỏe</CardTitle>
-          </CardHeader>
-          <CardContent className="px-5">
-            <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 text-sm text-slate-600 dark:text-slate-400">
-              Chọn một hồ sơ để xem chi tiết.
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-10 text-center text-sm text-slate-500">
+          Vui lòng chọn một hồ sơ ở trên để xem chi tiết thông tin y tế.
+        </div>
       ) : (
         <>
-          <Card className="border-primary/15 py-5">
-            <CardContent className="flex flex-col gap-3 px-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="text-sm text-slate-500 dark:text-slate-400">Hồ sơ đang chọn</p>
-                <p className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"} -{" "}
-                  {selectedHealthRecord.patient.relationship.relationship_name}
-                </p>
+          {/* Active Record Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                <HeartPulse className="h-6 w-6" />
               </div>
-              <Button type="button" onClick={() => setIsUpdateOpen(true)}>
-                Cập nhật thông tin
-              </Button>
-            </CardContent>
-          </Card>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="gap-2 border-primary/15 py-4">
-              <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <Droplet className="h-4 w-4 text-rose-500" />
-                  Nhóm máu
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
-                  {formatValue(selectedHealthRecord.blood_type)}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  Hồ sơ đang hiển thị
                 </p>
-              </CardContent>
-            </Card>
-
-            <Card className="gap-2 border-primary/15 py-4">
-              <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <Ruler className="h-4 w-4 text-sky-500" />
-                  Chiều cao
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
-                  {formatValue(selectedHealthRecord.height, " cm")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="gap-2 border-primary/15 py-4">
-              <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <Scale className="h-4 w-4 text-emerald-500" />
-                  Cân nặng
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
-                  {formatValue(selectedHealthRecord.weight, " kg")}
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="gap-2 border-primary/15 py-4">
-              <CardHeader className="px-4 pb-0">
-                <CardTitle className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                  <CalendarCheck2 className="h-4 w-4 text-violet-500" />
-                  Khám gần nhất
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4">
-                <p className="text-xl font-extrabold text-primary dark:text-sky-400">
-                  {formatValue(selectedHealthRecord.last_checkup_date)}
-                </p>
-              </CardContent>
-            </Card>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"}
+                  </h3>
+                  <Badge variant="outline" className="border-primary/20 bg-primary/5 text-primary text-xs">
+                    {selectedHealthRecord.patient.relationship.relationship_name}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={() => setIsUpdateOpen(true)}
+              className="gap-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
+            >
+              <Edit3 className="h-3.5 w-3.5 text-white" />
+              <span>Cập nhật chỉ số</span>
+            </Button>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
-            <Card className="border-primary/15 py-5">
-              <CardHeader className="px-5">
-                <CardTitle className="text-lg">
-                  Chỉ số sức khỏe gần đây
-                </CardTitle>
+          {/* 4 Biometric Metric Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Nhóm máu
+                </span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-500">
+                  <Droplet className="h-4.5 w-4.5" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-black text-rose-600 dark:text-rose-400">
+                {formatValue(selectedHealthRecord.blood_type)}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Hệ nhóm máu ABO &amp; Rh</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Chiều cao
+                </span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-500">
+                  <Ruler className="h-4.5 w-4.5" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-black text-sky-600 dark:text-sky-400">
+                {formatValue(selectedHealthRecord.height, " cm")}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Đơn vị đo lường chuẩn</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Cân nặng
+                </span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500">
+                  <Scale className="h-4.5 w-4.5" />
+                </span>
+              </div>
+              <p className="mt-3 text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                {formatValue(selectedHealthRecord.weight, " kg")}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Trọng lượng cơ thể</p>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+                  Khám gần nhất
+                </span>
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-500">
+                  <CalendarCheck2 className="h-4.5 w-4.5" />
+                </span>
+              </div>
+              <p className="mt-3 text-xl font-black text-violet-600 dark:text-violet-400 truncate">
+                {formatValue(selectedHealthRecord.last_checkup_date)}
+              </p>
+              <p className="mt-1 text-xs text-slate-400">Thời gian kiểm tra y tế</p>
+            </div>
+          </div>
+
+          {/* Vitals and Medications Section */}
+          <div className="grid gap-6 xl:grid-cols-2">
+            {/* Vitals */}
+            <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600">
+                  <Activity className="h-4.5 w-4.5" />
+                </span>
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Chỉ số sinh tồn lâm sàng
+                  </CardTitle>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Dữ liệu từ đợt kiểm tra sức khỏe gần nhất</p>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3 px-5">
+              <CardContent className="space-y-3 px-6 py-5">
                 {[
                   {
-                    label: "Huyết áp",
+                    label: "Huyết áp tâm thu / tâm trương",
                     value: formatValue(selectedHealthRecord.blood_pressure),
+                    unit: "mmHg",
                     icon: <HeartPulse className="h-4 w-4 text-rose-500" />,
+                    bg: "bg-rose-50/60 dark:bg-rose-950/30",
                   },
                   {
-                    label: "Nhịp tim",
-                    value: formatValue(selectedHealthRecord.heart_rate, " bpm"),
+                    label: "Nhịp tim lúc nghỉ",
+                    value: formatValue(selectedHealthRecord.heart_rate),
+                    unit: "nhịp/phút (bpm)",
                     icon: <Activity className="h-4 w-4 text-pink-500" />,
+                    bg: "bg-pink-50/60 dark:bg-pink-950/30",
                   },
                   {
-                    label: "Đường huyết",
-                    value: formatValue(
-                      selectedHealthRecord.glucose_level,
-                      " mg/dL",
-                    ),
+                    label: "Nồng độ đường huyết (Glucose)",
+                    value: formatValue(selectedHealthRecord.glucose_level),
+                    unit: "mg/dL",
                     icon: <Droplets className="h-4 w-4 text-amber-500" />,
+                    bg: "bg-amber-50/60 dark:bg-amber-950/30",
                   },
                   {
-                    label: "Cholesterol",
-                    value: formatValue(
-                      selectedHealthRecord.cholesterol_level,
-                      " mg/dL",
-                    ),
+                    label: "Chỉ số Cholesterol toàn phần",
+                    value: formatValue(selectedHealthRecord.cholesterol_level),
+                    unit: "mg/dL",
                     icon: <Dna className="h-4 w-4 text-indigo-500" />,
+                    bg: "bg-indigo-50/60 dark:bg-indigo-950/30",
                   },
                 ].map((metric) => (
                   <div
                     key={metric.label}
-                    className="flex items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-950/40 p-3"
+                    className="flex items-center justify-between rounded-xl border border-slate-200/70 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-3.5 transition-colors hover:border-primary/40"
                   >
-                    <div className="flex items-center gap-2">
-                      {metric.icon}
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                        {metric.label}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", metric.bg)}>
+                        {metric.icon}
+                      </span>
+                      <div>
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                          {metric.label}
+                        </p>
+                        <p className="text-[11px] text-slate-400">{metric.unit}</p>
+                      </div>
                     </div>
-                    <Badge variant="secondary">{metric.value}</Badge>
+                    <span className="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-mono">
+                      {metric.value}
+                    </span>
                   </div>
                 ))}
               </CardContent>
             </Card>
 
-            <Card className="border-primary/15 py-5">
-              <CardHeader className="px-5">
-                <CardTitle className="text-lg">Thuốc và tiêm chủng</CardTitle>
+            {/* Medications & Vaccines */}
+            <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+              <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-50 dark:bg-cyan-950/50 text-cyan-600">
+                  <Pill className="h-4.5 w-4.5" />
+                </span>
+                <div>
+                  <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Thuốc điều trị &amp; Tiêm chủng
+                  </CardTitle>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Phác đồ thuốc kê đơn và lịch sử tiêm phòng</p>
+                </div>
               </CardHeader>
-              <CardContent className="space-y-3 px-5">
-                <div className="rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                  <div className="flex items-center gap-2">
-                    <Pill className="h-4 w-4 text-cyan-500" />
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Thuốc đang sử dụng
-                    </p>
+              <CardContent className="space-y-3.5 px-6 py-5">
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-400">
+                    <Pill className="h-4 w-4" />
+                    Thuốc đang sử dụng thường xuyên
                   </div>
-                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
+                  <p className="mt-2 min-h-16 whitespace-pre-line text-xs font-medium text-slate-700 dark:text-slate-300">
                     {formatValue(selectedHealthRecord.medications)}
                   </p>
                 </div>
-                <div className="rounded-lg border border-slate-200 dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                  <div className="flex items-center gap-2">
-                    <Syringe className="h-4 w-4 text-teal-500" />
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Vắc xin đã tiêm
-                    </p>
+                <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-4">
+                  <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-400">
+                    <Syringe className="h-4 w-4" />
+                    Lịch sử các loại vắc xin đã tiêm
                   </div>
-                  <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
+                  <p className="mt-2 min-h-16 whitespace-pre-line text-xs font-medium text-slate-700 dark:text-slate-300">
                     {formatValue(selectedHealthRecord.vaccinations)}
                   </p>
                 </div>
@@ -414,59 +496,66 @@ const HealthRecords: React.FC = () => {
             </Card>
           </div>
 
-          <Card className="border-primary/15 py-5">
-            <CardHeader className="px-5">
-              <CardTitle className="text-lg">
-                Tiền sử và thói quen sức khỏe
-              </CardTitle>
+          {/* History and Lifestyle */}
+          <Card className="border-slate-200/80 bg-white py-0 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <CardHeader className="flex flex-row items-center gap-2.5 border-b border-slate-100 dark:border-slate-800 px-6 py-4.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600">
+                <ClipboardList className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  Tiền sử bệnh lý &amp; Thói quen lối sống
+                </CardTitle>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Căn cứ hỗ trợ bác sĩ chẩn đoán và tiên lượng</p>
+              </div>
             </CardHeader>
-            <CardContent className="grid gap-3 px-5 md:grid-cols-2">
-              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Dị ứng</p>
+            <CardContent className="grid gap-4 px-6 py-5 md:grid-cols-2">
+              <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/30 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  Dị ứng thuốc &amp; Thực phẩm
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
+                <p className="mt-2 text-xs font-medium text-amber-950 dark:text-amber-200 min-h-12 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.allergies)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                <div className="flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4 text-rose-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Bệnh nền</p>
+
+              <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 dark:border-rose-900/50 dark:bg-rose-950/30 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-rose-800 dark:text-rose-300">
+                  <ClipboardList className="h-4 w-4 text-rose-600" />
+                  Bệnh lý nền &amp; Mãn tính
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
+                <p className="mt-2 text-xs font-medium text-rose-950 dark:text-rose-200 min-h-12 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.medical_history)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                <div className="flex items-center gap-2">
+
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <CigaretteOff className="h-4 w-4 text-slate-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Hút thuốc
-                  </p>
+                  Hút thuốc lá
                 </div>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {formatValue(selectedHealthRecord.smoking)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3">
-                <div className="flex items-center gap-2">
+
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <Wine className="h-4 w-4 text-purple-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Rượu bia</p>
+                  Rượu bia / Chất có cồn
                 </div>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                <p className="mt-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {formatValue(selectedHealthRecord.alcohol_consumption)}
                 </p>
               </div>
-              <div className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-3 md:col-span-2">
-                <div className="flex items-center gap-2">
+
+              <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4 md:col-span-2">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <Stethoscope className="h-4 w-4 text-emerald-500" />
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Tần suất vận động
-                  </p>
+                  Tần suất vận động thể lực
                 </div>
-                <p className="mt-2 min-h-20 whitespace-pre-line rounded-md bg-slate-50 dark:bg-slate-950/60 dark:text-slate-300 dark:border dark:border-slate-800/80 p-2 text-sm text-slate-600">
+                <p className="mt-2 text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.exercise_frequency)}
                 </p>
               </div>

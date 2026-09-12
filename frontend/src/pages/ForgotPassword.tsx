@@ -102,44 +102,77 @@ const ForgotPassword: React.FC = () => {
       : "Đặt lại mật khẩu";
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-linear-to-br from-primary via-teal-700 to-emerald-800 text-white">
+    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white relative overflow-hidden">
+      {/* Decorative glow */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+
       {/* Left branding (matches SignIn/SignUp) */}
-      <div className="flex flex-col items-center justify-center p-8 md:p-16 flex-1 text-center md:text-left">
-        <img
-          src="/logo.jpg"
-          alt="Logo LifeHealth"
-          className="mb-6 w-20 md:w-24 object-cover rounded-2xl shadow-md border-2 border-white/30"
-        />
-        <div className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 leading-tight">
-          <Typewriter
-            words={["Khôi phục quyền truy cập LifeHealth."]}
-            loop={true}
-            cursor
-            cursorStyle="|"
-            typeSpeed={100}
-            deleteSpeed={60}
-            delaySpeed={2000}
-          />
+      <div className="relative z-10 flex flex-col justify-center p-8 sm:p-12 md:p-16 lg:p-20 flex-1">
+        <div className="max-w-lg mx-auto md:mx-0">
+          <div className="flex items-center gap-3.5 mb-8">
+            <img
+              src="/logo.jpg"
+              alt="Logo LifeHealth"
+              className="w-12 h-12 md:w-14 md:h-14 object-cover rounded-2xl shadow-md border-2 border-white/30"
+            />
+            <div>
+              <span className="text-xl md:text-2xl font-extrabold tracking-tight text-white font-heading">
+                LifeHealth
+              </span>
+              <p className="text-[11px] uppercase tracking-widest text-teal-200/80 font-bold">
+                Security &amp; Account
+              </p>
+            </div>
+          </div>
+
+          <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 leading-tight font-heading min-h-[72px]">
+            <Typewriter
+              words={[
+                "Khôi phục mật khẩu tài khoản.",
+                "Bảo mật thông tin y tế của bạn.",
+                "Tiếp cận lại dịch vụ an toàn.",
+              ]}
+              loop={true}
+              cursor
+              cursorStyle="|"
+              typeSpeed={80}
+              deleteSpeed={50}
+              delaySpeed={2200}
+            />
+          </div>
+
+          <p className="text-sm sm:text-base text-teal-100/90 leading-relaxed mb-8">
+            Xác minh email liên kết để cấp lại mật khẩu an toàn và tiếp tục quản lý hành trình chăm sóc sức khỏe của bạn.
+          </p>
+
+          <div className="hidden sm:grid grid-cols-1 gap-3 pt-2 text-xs text-teal-50">
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
+              <span>Xác minh qua mã bảo mật OTP 6 số gửi trực tiếp vào email</span>
+            </div>
+            <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
+              <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
+              <span>Được bảo vệ bằng mã hóa chuẩn y tế số</span>
+            </div>
+          </div>
         </div>
-        <p className="text-sm sm:text-base md:text-lg text-emerald-50/90 leading-relaxed max-w-lg">
-          Xác minh email của bạn để đặt lại mật khẩu và tiếp tục quản lý chăm sóc sức khỏe.
-        </p>
       </div>
 
       {/* Right form */}
-      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 md:p-12 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl shadow-2xl flex-1 border-t md:border-t-0 md:border-l border-slate-200/50 dark:border-slate-800">
-        <Card className="w-full max-w-md shadow-none rounded-none border-0 bg-transparent">
-          <CardHeader className="px-0 pt-0">
+      <div className="relative z-10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 flex items-center justify-center p-6 sm:p-10 md:p-12 lg:p-16 rounded-t-3xl md:rounded-t-none md:rounded-l-3xl shadow-2xl flex-1 border-t md:border-t-0 md:border-l border-slate-200/50 dark:border-slate-800">
+        <Card className="w-full max-w-md shadow-none rounded-none border-0 bg-transparent py-0">
+          <CardHeader className="px-0 pt-0 pb-5">
             {step !== "email" && (
               <button
                 type="button"
                 onClick={() => setStep(step === "reset" ? "otp" : "email")}
-                className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors mb-3"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors mb-3 cursor-pointer w-fit"
               >
                 <ArrowLeft size={15} /> Quay lại bước trước
               </button>
             )}
-            <CardTitle className="text-center text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-slate-100">
+            <CardTitle className="text-center text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-heading">
               {stepTitle}
             </CardTitle>
           </CardHeader>
@@ -152,20 +185,39 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed">
                   Nhập địa chỉ email liên kết với tài khoản của bạn để nhận mã xác thực một lần (OTP).
                 </p>
-                <Input
-                  type="email"
-                  placeholder="Nhập email của bạn"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-xl"
-                  required
-                />
-                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
-                  {loading ? <Loading /> : "Gửi mã OTP"}
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Địa chỉ email <span className="text-rose-500">*</span>
+                  </label>
+                  <Input
+                    type="email"
+                    placeholder="nhap.email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="rounded-xl h-11"
+                    aria-label="Địa chỉ email"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                  disabled={loading}
+                >
+                  {loading ? <Loading /> : "Gửi mã OTP xác minh"}
                 </Button>
+                <div className="text-center pt-2">
+                  <button
+                    type="button"
+                    onClick={() => navigate("/sign-in")}
+                    className="text-xs font-bold text-primary hover:underline cursor-pointer"
+                  >
+                    Quay lại đăng nhập
+                  </button>
+                </div>
               </form>
             )}
 
@@ -177,11 +229,17 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
-                <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-                  Mã OTP 6 số đã được gửi đến <strong className="text-slate-800 dark:text-slate-200">{email}</strong>
+                <p className="text-xs sm:text-sm text-center text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Mã OTP 6 số đã được gửi đến <strong className="text-primary">{email}</strong>
                 </p>
-                <OtpInput value={otp} onChange={setOtp} />
-                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
+                <div className="py-2">
+                  <OtpInput value={otp} onChange={setOtp} />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                  disabled={loading}
+                >
                   {loading ? <Loading /> : "Xác minh mã OTP"}
                 </Button>
                 <p className="text-xs text-center text-slate-500 dark:text-slate-400">
@@ -190,7 +248,7 @@ const ForgotPassword: React.FC = () => {
                     type="button"
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || loading}
-                    className="text-primary font-semibold hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed"
+                    className="text-primary font-bold hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
                   >
                     {cooldown > 0 ? `Gửi lại (${cooldown}s)` : "Gửi lại"}
                   </button>
@@ -206,19 +264,29 @@ const ForgotPassword: React.FC = () => {
                 }}
                 className="space-y-4"
               >
-                <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed">
                   Nhập mật khẩu mới an toàn (tối thiểu 6 ký tự).
                 </p>
-                <Input
-                  type="password"
-                  placeholder="Nhập mật khẩu mới"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="rounded-xl"
-                  required
-                />
-                <Button type="submit" className="w-full py-2.5 rounded-xl text-sm font-semibold" disabled={loading}>
-                  {loading ? <Loading /> : "Đặt lại mật khẩu"}
+                <div className="space-y-1.5 text-left">
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Mật khẩu mới <span className="text-rose-500">*</span>
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="Nhập mật khẩu mới"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="rounded-xl h-11"
+                    aria-label="Mật khẩu mới"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                  disabled={loading}
+                >
+                  {loading ? <Loading /> : "Cập nhật mật khẩu"}
                 </Button>
               </form>
             )}

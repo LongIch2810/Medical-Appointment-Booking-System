@@ -4,10 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { FaSearch } from "react-icons/fa";
+import { ArrowLeft, ChevronLeft, ChevronRight, Newspaper, Search } from "lucide-react";
 import { useArticles, useTopics } from "@/hooks/useArticles";
 import { useDebounce } from "@/hooks/useDebounce";
+import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
+import ErrorState from "@/components/notification/ErrorState";
+import NotFoundResult from "@/components/notification/NotFoundResult";
 import type { Article } from "@/types/interface/article.interface";
 
 const ARTICLE_LIMIT = 6;
@@ -42,7 +44,7 @@ const News = () => {
     [page, debouncedSearch, topicSlug],
   );
 
-  const { data: articleData, isLoading, isError } = useArticles(filters);
+  const { data: articleData, isLoading, isError, refetch } = useArticles(filters);
   const { data: topicData } = useTopics({
     page: 1,
     limit: TOPIC_LIMIT,
@@ -64,67 +66,71 @@ const News = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 pb-16">
       {/* Header */}
-      <header className="bg-primary text-white shadow dark:border-b dark:border-slate-800">
-        <div className="container mx-auto px-4 py-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <header className="bg-gradient-to-r from-teal-800 via-primary to-teal-700 text-white shadow-md">
+        <div className="container mx-auto px-4 py-4.5 flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
             <Button
               type="button"
               variant="ghost"
               size="sm"
               onClick={() => navigate("/")}
-              className="h-9 gap-1.5 px-3 text-white hover:bg-white/15 hover:text-white"
+              className="h-9 gap-1.5 px-3 text-white hover:bg-white/15 hover:text-white rounded-xl cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
               Trang chủ
             </Button>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2.5">
               <img
                 src="/logo.jpg"
                 alt="LifeHealth Logo"
-                className="w-10 h-10 object-contain rounded-md"
+                className="w-9 h-9 object-cover rounded-xl border border-white/30"
               />
-              <h1 className="text-xl font-bold sm:text-2xl">LifeHealth News</h1>
+              <div>
+                <h1 className="text-lg font-extrabold sm:text-xl font-heading flex items-center gap-1.5">
+                  <Newspaper className="h-4.5 w-4.5 text-teal-200" />
+                  LifeHealth News
+                </h1>
+              </div>
             </div>
           </div>
 
-          <div className="w-full max-w-xs md:w-auto relative text-slate-700 dark:text-slate-200">
-            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <div className="w-full max-w-sm md:w-auto relative text-slate-700 dark:text-slate-200">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
             <Input
               type="search"
-              placeholder="Tìm kiếm bài viết..."
+              placeholder="Tìm kiếm bài viết y khoa..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10 dark:bg-white/10 dark:border-white/20 dark:text-white dark:placeholder:text-white/60"
+              className="pl-10 h-10 rounded-full bg-white/95 dark:bg-slate-900/90 border-transparent placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-2xs text-xs sm:text-sm"
+              aria-label="Tìm kiếm bài viết"
             />
           </div>
         </div>
 
-        <nav className="bg-primary/90 border-t border-primary/70 relative">
-          <div
-            className="topic-scroll container mx-auto flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 pt-2 pb-3 text-sm"
-          >
+        <nav className="bg-teal-900/40 border-t border-white/10 relative">
+          <div className="topic-scroll container mx-auto flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 py-2.5 text-xs sm:text-sm">
             <button
               type="button"
               onClick={() => handleSelectTopic(undefined)}
-              className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-full border px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                 !topicSlug
-                  ? "border-white bg-white text-primary shadow-sm"
-                  : "border-white/40 bg-white/10 text-white hover:border-white hover:bg-white hover:text-primary"
+                  ? "border-white bg-white text-primary shadow-xs"
+                  : "border-white/30 bg-white/10 text-white hover:bg-white/20"
               }`}
             >
-              Tất cả
+              Tất cả chuyên mục
             </button>
             {topics.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
                 onClick={() => handleSelectTopic(topic.slug)}
-                className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                className={`shrink-0 rounded-full border px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
                   topicSlug === topic.slug
-                    ? "border-white bg-white text-primary shadow-sm"
-                    : "border-white/40 bg-white/10 text-white hover:border-white hover:bg-white hover:text-primary"
+                    ? "border-white bg-white text-primary shadow-xs"
+                    : "border-white/30 bg-white/10 text-white hover:bg-white/20"
                 }`}
               >
                 {topic.name}
@@ -133,56 +139,75 @@ const News = () => {
           </div>
           <span
             aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-primary/90 to-transparent"
+            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-teal-900/40 to-transparent"
           />
         </nav>
       </header>
 
-      <main className="container mx-auto px-4 py-10">
+      <main className="container mx-auto px-4 py-10 max-w-7xl">
         {isLoading ? (
-          <p className="text-center text-slate-500 dark:text-slate-400">Đang tải bài viết...</p>
+          <MedicalAiLoading
+            label="Đang tải danh sách bài viết..."
+            description="Hệ thống đang chuẩn bị những kiến thức y khoa cập nhật nhất"
+            minHeight="min-h-80"
+          />
         ) : isError ? (
-          <p className="text-center text-rose-500 dark:text-rose-400">
-            Không thể tải danh sách bài viết.
-          </p>
+          <ErrorState
+            title="Không thể tải tin tức"
+            description="Đã xảy ra lỗi khi kết nối tới máy chủ tin tức. Vui lòng thử lại."
+            onRetry={() => refetch()}
+          />
         ) : articles.length === 0 ? (
-          <p className="text-center text-slate-500 dark:text-slate-400">
-            Không tìm thấy bài viết phù hợp.
-          </p>
+          <NotFoundResult
+            title="Không tìm thấy bài viết"
+            description="Hãy thử đổi từ khóa tìm kiếm hoặc chọn chuyên mục bài viết khác."
+            onReset={() => {
+              setSearch("");
+              setTopicSlug(undefined);
+              setPage(1);
+            }}
+          />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {articles.map((article) => (
                 <Card
                   key={article.id}
-                  className="overflow-hidden shadow-md flex flex-col dark:border-slate-800/80 dark:bg-slate-900"
+                  className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col group py-0"
                 >
-                  <img
-                    src={getArticleImage(article)}
-                    alt={article.title}
-                    width={400}
-                    height={192}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-48 object-cover"
-                  />
-                  <CardContent className="flex flex-col flex-grow">
+                  <div className="relative overflow-hidden h-48 w-full bg-slate-100 dark:bg-slate-800">
+                    <img
+                      src={getArticleImage(article)}
+                      alt={article.title}
+                      width={400}
+                      height={192}
+                      loading="lazy"
+                      decoding="async"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    {article.topic?.name && (
+                      <span className="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs px-2.5 py-0.5 text-[11px] font-bold text-primary shadow-xs">
+                        {article.topic.name}
+                      </span>
+                    )}
+                  </div>
+                  <CardContent className="flex flex-col flex-grow p-5 space-y-3">
                     <Link
                       to={`/news/${article.id}`}
-                      className="text-xl font-bold hover:text-primary hover:underline mb-2 line-clamp-2 text-slate-900 dark:text-slate-100 dark:hover:text-primary"
+                      className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors line-clamp-2 font-heading leading-snug"
                     >
                       {article.title}
                     </Link>
-                    <p className="text-slate-600 dark:text-slate-400 flex-grow line-clamp-3">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex-grow line-clamp-3 leading-relaxed">
                       {article.summary}
                     </p>
 
-                    {article.tags?.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                    {article.tags && article.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
                         {article.tags.map((tag) => (
                           <span
                             key={tag.name}
-                            className="text-xs bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-300 rounded-full px-2 py-0.5"
+                            className="text-[10px] font-bold bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-300 rounded-full px-2 py-0.5"
                           >
                             #{tag.name}
                           </span>
@@ -190,53 +215,59 @@ const News = () => {
                       </div>
                     )}
 
-                    <div className="mt-4 flex items-center space-x-3 text-sm text-slate-500 dark:text-slate-400">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage
-                          src={article.author?.picture ?? ""}
-                          alt={article.author?.fullname ?? ""}
-                        />
-                        <AvatarFallback>
-                          {getAuthorInitial(article)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-slate-700 dark:text-slate-300">
-                          {article.author?.fullname ?? "Tác giả"}
-                        </p>
-                        <p>{article.created_at ?? "—"}</p>
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-7 h-7">
+                          <AvatarImage
+                            src={article.author?.picture ?? ""}
+                            alt={article.author?.fullname ?? ""}
+                          />
+                          <AvatarFallback className="text-xs font-bold">
+                            {getAuthorInitial(article)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
+                          {article.author?.fullname ?? "Ban Y tế"}
+                        </span>
                       </div>
+                      <span>{article.created_at ?? ""}</span>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <div className="mt-10 flex items-center justify-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 1}
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
-              >
-                Trước
-              </Button>
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                Trang {page}/{totalPages}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages}
-                onClick={() =>
-                  setPage((current) => Math.min(totalPages, current + 1))
-                }
-              >
-                Sau
-              </Button>
-            </div>
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page <= 1}
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  className="rounded-xl gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Trước
+                </Button>
+                <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 px-2">
+                  Trang {page} / {totalPages}
+                </span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={page >= totalPages}
+                  onClick={() =>
+                    setPage((current) => Math.min(totalPages, current + 1))
+                  }
+                  className="rounded-xl gap-1"
+                >
+                  Sau
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </>
         )}
       </main>
