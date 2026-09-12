@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MedicalRecordUpload } from './medical-record-upload';
+import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 
 // Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu chatbot
@@ -25,6 +26,13 @@ import { MedicalRecordUpload } from './medical-record-upload';
 const CHATBOT_REQUEST_TIMEOUT_MS = 100_000;
 const CHATBOT_SUMMARY_REQUEST_TIMEOUT_MS = 120_000;
 const CHATBOT_KEEP_ALIVE_TIMEOUT_MS = 5_000;
+const CHAT_HISTORY_CONTEXT_LIMIT = 10;
+const CHAT_HISTORY_CACHE_TTL_SECONDS = 3_600;
+
+type CachedChatMessage = {
+  role: RoleMessage;
+  content: string;
+};
 
 @Injectable()
 export class ChatHistoryService {
@@ -33,7 +41,51 @@ export class ChatHistoryService {
     private readonly conversationRepo: Repository<Conversation>,
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
+    private readonly redisCacheService: RedisCacheService,
   ) {}
+
+  private getChatHistoryCacheKey(userId: number) {
+    return `chat_history_context:${userId}`;
+  }
+
+  private async refreshChatHistoryCache(
+    userId: number,
+    message: CachedChatMessage,
+  ) {
+    try {
+      const cacheKey = this.getChatHistoryCacheKey(userId);
+      const cached = await this.redisCacheService.getData<CachedChatMessage[]>(
+        cacheKey,
+      );
+
+      // The database query already includes the message just saved when the
+      // cache is cold, so only prepend the message when the cache is warm.
+      const history = cached
+        ? [message, ...cached]
+        : await this.loadChatHistoryContextFromDatabase(userId);
+
+      await this.redisCacheService.setData(
+        cacheKey,
+        history.slice(0, CHAT_HISTORY_CONTEXT_LIMIT),
+        CHAT_HISTORY_CACHE_TTL_SECONDS,
+      );
+    } catch (error) {
+      // Redis is an optimization; a cache outage must not break chat history.
+      console.warn('Chat history cache refresh failed:', error);
+    }
+  }
+
+  private async loadChatHistoryContextFromDatabase(
+    userId: number,
+  ): Promise<CachedChatMessage[]> {
+    const history = await this.conversationRepo.find({
+      where: { user: { id: userId } },
+      order: { created_at: 'DESC' },
+      take: CHAT_HISTORY_CONTEXT_LIMIT,
+    });
+
+    return history.map(({ role, content }) => ({ role, content }));
+  }
 
   // Chatbot service (Render free plan) tự spin-down sau ~15 phút không
   // traffic và cold-start mất ~80-90s, khiến tin nhắn chat đầu tiên sau
@@ -64,6 +116,7 @@ export class ChatHistoryService {
       role,
       content,
     });
+    await this.refreshChatHistoryCache(userId, { role, content });
   }
 
   async getChatHistoryContext(userId: number) {
@@ -71,12 +124,25 @@ export class ChatHistoryService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại!');
     }
-    const history = await this.conversationRepo.find({
-      where: { user: { id: userId } },
-      order: { created_at: 'DESC' },
-      take: 10,
-    });
+    try {
+      const cached = await this.redisCacheService.getData<CachedChatMessage[]>(
+        this.getChatHistoryCacheKey(userId),
+      );
+      if (cached) return cached;
+    } catch (error) {
+      console.warn('Chat history cache read failed:', error);
+    }
 
+    const history = await this.loadChatHistoryContextFromDatabase(userId);
+    try {
+      await this.redisCacheService.setData(
+        this.getChatHistoryCacheKey(userId),
+        history,
+        CHAT_HISTORY_CACHE_TTL_SECONDS,
+      );
+    } catch (error) {
+      console.warn('Chat history cache warm-up failed:', error);
+    }
     return history;
   }
 

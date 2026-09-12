@@ -10,6 +10,7 @@ import axios from 'axios';
 import Conversation from 'src/entities/conversation.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
+import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 
 describe('ChatHistoryService', () => {
   let service: ChatHistoryService;
@@ -37,6 +38,13 @@ describe('ChatHistoryService', () => {
             getOrThrow: jest.fn((key: string) =>
               key === 'CHATBOT_INTERNAL_KEY' ? 'test-internal-key' : undefined,
             ),
+          },
+        },
+        {
+          provide: RedisCacheService,
+          useValue: {
+            getData: jest.fn(),
+            setData: jest.fn().mockResolvedValue(undefined),
           },
         },
       ],
