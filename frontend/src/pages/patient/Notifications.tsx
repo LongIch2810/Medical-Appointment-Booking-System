@@ -4,11 +4,10 @@ import StateCard from "@/components/notification/StateCard";
 import { Button } from "@/components/ui/button";
 import {
   useMarkAllNotificationsAsRead,
-  useMarkNotificationAsRead,
   useMyNotifications,
+  useOpenNotification,
   useUnreadNotificationCount,
 } from "@/hooks/useNotifications";
-import type { AppNotification } from "@/types/interface/notification.interface";
 import {
   Bell,
   CheckCheck,
@@ -18,17 +17,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 
-function isInternalPath(path: string | null): path is string {
-  return Boolean(path && /^\/(?!\/)/.test(path));
-}
-
 export default function Notifications() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const query = useMyNotifications({
@@ -37,15 +30,10 @@ export default function Notifications() {
     ...(unreadOnly ? { isRead: false } : {}),
   });
   const unreadQuery = useUnreadNotificationCount();
-  const markRead = useMarkNotificationAsRead();
   const markAll = useMarkAllNotificationsAsRead();
   const data = query.data?.data;
   const unreadCount = unreadQuery.data?.data.count ?? 0;
-
-  const openNotification = async (notification: AppNotification) => {
-    if (!notification.isRead) await markRead.mutateAsync(notification.id);
-    if (isInternalPath(notification.actionUrl)) navigate(notification.actionUrl);
-  };
+  const openNotification = useOpenNotification();
 
   if (query.isError) {
     return <ErrorState onRetry={() => void query.refetch()} />;

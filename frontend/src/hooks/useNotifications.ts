@@ -4,8 +4,13 @@ import {
   markAllNotificationsAsRead,
   markNotificationAsRead,
 } from "@/api/notificationApi";
-import type { NotificationListParams } from "@/types/interface/notification.interface";
+import type {
+  AppNotification,
+  NotificationListParams,
+} from "@/types/interface/notification.interface";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 export const notificationQueryKeys = {
   all: ["my-notifications"] as const,
@@ -49,4 +54,25 @@ export function useMarkAllNotificationsAsRead() {
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: notificationQueryKeys.all }),
   });
+}
+
+export function isInternalPath(path: string | null): path is string {
+  return Boolean(path && /^\/(?!\/)/.test(path));
+}
+
+export function useOpenNotification() {
+  const navigate = useNavigate();
+  const markRead = useMarkNotificationAsRead();
+
+  return useCallback(
+    async (notification: AppNotification) => {
+      if (!notification.isRead) {
+        await markRead.mutateAsync(notification.id);
+      }
+      if (isInternalPath(notification.actionUrl)) {
+        navigate(notification.actionUrl);
+      }
+    },
+    [markRead, navigate],
+  );
 }

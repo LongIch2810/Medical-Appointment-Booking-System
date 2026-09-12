@@ -551,6 +551,7 @@ const vi = {
     markAllShort: "Đọc tất cả",
     unreadLabel: "Chưa đọc",
     openNotification: "Mở thông báo",
+    dismiss: "Đóng thông báo",
     previousPage: "Trang thông báo trước",
     nextPage: "Trang thông báo tiếp theo",
     bellTitle: "Thông báo",

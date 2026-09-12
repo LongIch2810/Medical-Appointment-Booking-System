@@ -10,11 +10,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   useMarkAllNotificationsAsRead,
-  useMarkNotificationAsRead,
   useMyNotifications,
+  useOpenNotification,
   useUnreadNotificationCount,
 } from "@/hooks/useNotifications";
-import type { AppNotification } from "@/types/interface/notification.interface";
 import {
   ArrowRight,
   Bell,
@@ -26,28 +25,15 @@ import {
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
-function isInternalPath(path: string | null): path is string {
-  return Boolean(path && /^\/(?!\/)/.test(path));
-}
-
 export default function NotificationBell() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const notificationsQuery = useMyNotifications({ page: 1, limit: 5 });
   const unreadQuery = useUnreadNotificationCount();
-  const markRead = useMarkNotificationAsRead();
   const markAll = useMarkAllNotificationsAsRead();
   const notifications = notificationsQuery.data?.data.notifications ?? [];
   const unreadCount = unreadQuery.data?.data.count ?? 0;
-
-  const openNotification = async (notification: AppNotification) => {
-    if (!notification.isRead) {
-      await markRead.mutateAsync(notification.id);
-    }
-    if (isInternalPath(notification.actionUrl)) {
-      navigate(notification.actionUrl);
-    }
-  };
+  const openNotification = useOpenNotification();
 
   return (
     <DropdownMenu>

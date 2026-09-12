@@ -551,6 +551,7 @@ const en = {
     markAllShort: "Read all",
     unreadLabel: "Unread",
     openNotification: "Open notification",
+    dismiss: "Dismiss notification",
     previousPage: "Previous notification page",
     nextPage: "Next notification page",
     bellTitle: "Notifications",

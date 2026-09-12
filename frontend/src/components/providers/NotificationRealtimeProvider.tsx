@@ -1,5 +1,8 @@
+import NotificationToast, {
+  NotificationToastCloseButton,
+} from "@/components/notification/NotificationToast";
 import { useSocket } from "@/hooks/useSocket";
-import { notificationQueryKeys } from "@/hooks/useNotifications";
+import { notificationQueryKeys, useOpenNotification } from "@/hooks/useNotifications";
 import type {
   AppNotification,
   NotificationListData,
@@ -8,6 +11,7 @@ import type {
 import type { ApiResponse } from "@/types/interface/patient.interface";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, type PropsWithChildren } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useUserSettings } from "@/hooks/useSettings";
 
@@ -19,12 +23,14 @@ export default function NotificationRealtimeProvider({
   children,
   enabled,
 }: NotificationRealtimeProviderProps) {
+  const { t } = useTranslation();
   const socket = useSocket();
   const queryClient = useQueryClient();
   const toastedIds = useRef(new Set<number>());
   const settingsQuery = useUserSettings(enabled);
   const realtimeToastsEnabled =
     settingsQuery.data?.data.realtimeToastsEnabled ?? true;
+  const openNotification = useOpenNotification();
 
   useEffect(() => {
     if (!enabled || !socket) return;
@@ -90,7 +96,21 @@ export default function NotificationRealtimeProvider({
         if (oldestId !== undefined) toastedIds.current.delete(oldestId);
       }
       if (realtimeToastsEnabled) {
-        toast.info(`${notification.title}: ${notification.content}`);
+        toast(
+          <NotificationToast
+            notification={notification}
+            onOpen={openNotification}
+            openLabel={t("notifications.openNotification")}
+          />,
+          {
+            icon: false,
+            closeButton: NotificationToastCloseButton,
+            closeOnClick: true,
+            autoClose: 6000,
+            hideProgressBar: true,
+            className: "notification-realtime-toast",
+          },
+        );
       }
     };
     const handleUpdated = (notification: AppNotification) => {
@@ -164,7 +184,7 @@ export default function NotificationRealtimeProvider({
       socket.off("notification:deleted", handleDeleted);
       socket.off("notification:read-all", handleReadAll);
     };
-  }, [enabled, queryClient, realtimeToastsEnabled, socket]);
+  }, [enabled, openNotification, queryClient, realtimeToastsEnabled, socket, t]);
 
   return children;
 }
