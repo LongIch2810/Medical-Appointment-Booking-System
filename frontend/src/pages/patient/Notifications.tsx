@@ -1,7 +1,7 @@
 import ErrorState from "@/components/notification/ErrorState";
+import NotificationTypeIcon from "@/components/notification/NotificationTypeIcon";
 import StateCard from "@/components/notification/StateCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   useMarkAllNotificationsAsRead,
   useMarkNotificationAsRead,
@@ -9,7 +9,14 @@ import {
   useUnreadNotificationCount,
 } from "@/hooks/useNotifications";
 import type { AppNotification } from "@/types/interface/notification.interface";
-import { Bell, CheckCheck, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  Clock3,
+  Loader2,
+} from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -33,6 +40,7 @@ export default function Notifications() {
   const markRead = useMarkNotificationAsRead();
   const markAll = useMarkAllNotificationsAsRead();
   const data = query.data?.data;
+  const unreadCount = unreadQuery.data?.data.count ?? 0;
 
   const openNotification = async (notification: AppNotification) => {
     if (!notification.isRead) await markRead.mutateAsync(notification.id);
@@ -44,78 +52,104 @@ export default function Notifications() {
   }
 
   return (
-    <div className="space-y-6">
+    <section className="space-y-5" aria-labelledby="notifications-heading">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Bell className="h-5.5 w-5.5" />
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                {t("notifications.pageTitle")}
-              </h2>
-              {(unreadQuery.data?.data.count ?? 0) > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-extrabold text-white">
-                  {t("notifications.newCount", { count: unreadQuery.data?.data.count })}
-                </span>
-              )}
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-xs sm:p-6">
+        <div className="absolute inset-y-0 left-0 w-1 bg-primary" aria-hidden="true" />
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3.5">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/15">
+              <Bell className="h-5 w-5" strokeWidth={1.8} />
+            </span>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2
+                  id="notifications-heading"
+                  className="font-heading text-xl font-bold tracking-tight text-foreground"
+                >
+                  {t("notifications.pageTitle")}
+                </h2>
+                {unreadCount > 0 && (
+                  <span
+                    aria-live="polite"
+                    className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-extrabold text-primary ring-1 ring-inset ring-primary/15"
+                  >
+                    {t("notifications.newCount", { count: unreadCount })}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {t("notifications.pageSubtitle")}
+              </p>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t("notifications.pageSubtitle")}
-            </p>
           </div>
+          <Button
+            variant="outline"
+            disabled={markAll.isPending || unreadCount === 0}
+            onClick={() => markAll.mutate()}
+            className="min-h-11 shrink-0 gap-2 rounded-xl px-4 text-sm font-semibold"
+          >
+            {markAll.isPending ? (
+              <Loader2 className="h-4 w-4 motion-safe:animate-spin" />
+            ) : (
+              <CheckCheck className="h-4 w-4 text-primary" />
+            )}
+            <span>{t("notifications.markAllAsRead")}</span>
+          </Button>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={markAll.isPending || (unreadQuery.data?.data.count ?? 0) === 0}
-          onClick={() => markAll.mutate()}
-          className="gap-2 rounded-xl text-xs font-semibold cursor-pointer"
-        >
-          <CheckCheck className="h-3.5 w-3.5 text-primary" />
-          <span>{t("notifications.markAllAsRead")}</span>
-        </Button>
+        <div className="mt-5 flex items-center gap-2 border-t border-border/70 pt-4 text-xs text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-primary ring-4 ring-primary/10" />
+          <span>
+            {unreadCount > 0
+              ? t("notifications.inboxSummary", { count: unreadCount })
+              : t("notifications.allCaughtUp")}
+          </span>
+        </div>
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2">
+      <div
+        role="group"
+        aria-label={t("notifications.filterLabel")}
+        className="inline-flex w-full items-center gap-1 rounded-2xl border border-border bg-muted/50 p-1 sm:w-auto"
+      >
         <button
           type="button"
+          aria-pressed={!unreadOnly}
           onClick={() => {
             setUnreadOnly(false);
             setPage(1);
           }}
           className={cn(
-            "rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer",
+            "min-h-11 flex-1 rounded-xl px-4 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:flex-none",
             !unreadOnly
-              ? "border-primary bg-primary text-white shadow-xs"
-              : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
+              ? "bg-card text-primary shadow-xs ring-1 ring-border"
+              : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
           )}
         >
           {t("notifications.allFilter")}
         </button>
         <button
           type="button"
+          aria-pressed={unreadOnly}
           onClick={() => {
             setUnreadOnly(true);
             setPage(1);
           }}
           className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-xs font-bold transition-all cursor-pointer",
+            "inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold outline-none transition-colors focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:flex-none",
             unreadOnly
-              ? "border-primary bg-primary text-white shadow-xs"
-              : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
+              ? "bg-card text-primary shadow-xs ring-1 ring-border"
+              : "text-muted-foreground hover:bg-card/70 hover:text-foreground",
           )}
         >
           <span>{t("notifications.unreadFilter")}</span>
           {(unreadQuery.data?.data.count ?? 0) > 0 && (
             <span
               className={cn(
-                "rounded-full px-1.5 py-0.2 text-[10px] font-extrabold",
+                "min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-extrabold tabular-nums",
                 unreadOnly
-                  ? "bg-white/20 text-white"
+                  ? "bg-primary text-primary-foreground"
                   : "bg-primary/10 text-primary",
               )}
             >
@@ -127,8 +161,20 @@ export default function Notifications() {
 
       {/* Notification List */}
       {query.isLoading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="h-7 w-7 animate-spin text-primary" />
+        <div className="space-y-3" aria-label={t("notifications.loading")} aria-busy="true">
+          {[0, 1, 2].map((item) => (
+            <div
+              key={item}
+              className="flex items-start gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5"
+            >
+              <span className="h-12 w-12 shrink-0 rounded-2xl bg-muted motion-safe:animate-pulse" />
+              <span className="min-w-0 flex-1 space-y-3 pt-1">
+                <span className="block h-4 w-2/5 rounded-full bg-muted motion-safe:animate-pulse" />
+                <span className="block h-3 w-full rounded-full bg-muted motion-safe:animate-pulse" />
+                <span className="block h-3 w-3/4 rounded-full bg-muted motion-safe:animate-pulse" />
+              </span>
+            </div>
+          ))}
         </div>
       ) : !data?.notifications.length ? (
         <StateCard
@@ -141,51 +187,57 @@ export default function Notifications() {
           }
         />
       ) : (
-        <div className="space-y-3">
+        <ul className="space-y-3" aria-live="polite">
           {data.notifications.map((notification) => (
-            <Card
-              key={notification.id}
-              onClick={() => void openNotification(notification)}
-              className={cn(
-                "group cursor-pointer rounded-2xl border transition-all hover:shadow-sm py-0",
-                notification.isRead
-                  ? "border-slate-200/80 bg-white hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-                  : "border-primary/30 bg-primary/3 hover:border-primary/60 dark:border-primary/40 dark:bg-primary/10",
-              )}
-            >
-              <CardContent className="flex items-start gap-4 p-4.5 sm:p-5">
-                <span
-                  className={cn(
-                    "mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full",
-                    notification.isRead
-                      ? "bg-slate-200 dark:bg-slate-700"
-                      : "bg-primary ring-4 ring-primary/20",
-                  )}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3
+            <li key={notification.id}>
+              <button
+                type="button"
+                onClick={() => void openNotification(notification)}
+                aria-label={`${notification.title}. ${t("notifications.openNotification")}`}
+                className={cn(
+                  "group relative flex min-h-24 w-full items-start gap-3 overflow-hidden rounded-2xl border p-4 text-left outline-none transition-[border-color,background-color,box-shadow] duration-200 hover:shadow-sm focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 sm:gap-4 sm:p-5",
+                  notification.isRead
+                    ? "border-border bg-card hover:border-primary/25"
+                    : "border-primary/30 bg-primary/[0.045] shadow-xs hover:border-primary/55 dark:bg-primary/10",
+                )}
+              >
+                {!notification.isRead && (
+                  <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-primary" aria-hidden="true" />
+                )}
+                <NotificationTypeIcon type={notification.type} />
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                    <span
                       className={cn(
-                        "text-sm font-bold",
-                        notification.isRead
-                          ? "text-slate-800 dark:text-slate-200"
-                          : "text-slate-900 dark:text-slate-100",
+                        "font-heading text-sm leading-snug text-foreground sm:text-[15px]",
+                        notification.isRead ? "font-semibold" : "font-bold",
                       )}
                     >
                       {notification.title}
-                    </h3>
-                    <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                      <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
                       {notification.createdAt}
                     </span>
-                  </div>
-                  <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  </span>
+                  <span className="mt-1.5 line-clamp-2 block text-sm leading-relaxed text-muted-foreground sm:line-clamp-none">
                     {notification.content}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+                  </span>
+                  {!notification.isRead && (
+                    <span className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-bold text-primary">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                      {t("notifications.unreadLabel")}
+                    </span>
+                  )}
+                </span>
+                <ChevronRight
+                  className="mt-3 h-4 w-4 shrink-0 text-muted-foreground/60 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-primary motion-reduce:transition-none"
+                  aria-hidden="true"
+                />
+              </button>
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {/* Pagination */}
@@ -196,11 +248,12 @@ export default function Notifications() {
             size="icon"
             disabled={page <= 1}
             onClick={() => setPage((current) => current - 1)}
-            className="rounded-xl h-9 w-9 cursor-pointer"
+            aria-label={t("notifications.previousPage")}
+            className="h-11 w-11 rounded-xl"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
+          <span className="min-w-16 text-center text-xs font-semibold tabular-nums text-muted-foreground">
             {t("common.page")} {page}/{data?.totalPages}
           </span>
           <Button
@@ -208,12 +261,13 @@ export default function Notifications() {
             size="icon"
             disabled={page >= (data?.totalPages ?? 1)}
             onClick={() => setPage((current) => current + 1)}
-            className="rounded-xl h-9 w-9 cursor-pointer"
+            aria-label={t("notifications.nextPage")}
+            className="h-11 w-11 rounded-xl"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
