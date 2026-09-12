@@ -49,6 +49,10 @@ const en = {
     loggingOut: "Logging out...",
     processing: "Processing...",
   },
+  demoNotice: {
+    text: "This is an educational, non-commercial project — the booking flow is a simulation and does not connect you with a real doctor or clinic.",
+    dismiss: "Dismiss notice",
+  },
   nav: {
     home: "Home",
     doctors: "Doctors",

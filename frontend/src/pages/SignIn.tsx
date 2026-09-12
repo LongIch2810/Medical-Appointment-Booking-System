@@ -13,6 +13,7 @@ import { useLogin } from "@/hooks/useLogin";
 import { signInSchema, type SignInFormData } from "@/schemas/auth.schema";
 import { backendBaseURL } from "@/configs/axios";
 import Loading from "@/components/loading/Loading";
+import DemoProjectBanner from "@/components/common/DemoProjectBanner";
 
 const SignIn = () => {
   const { t } = useTranslation();
@@ -40,7 +41,10 @@ const SignIn = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white">
+      <DemoProjectBanner />
+
+      <div className="flex-1 flex flex-col md:flex-row relative overflow-hidden">
       {/* Subtle decorative glow & patterns */}
       <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-teal-400/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-96 h-96 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
@@ -187,6 +191,7 @@ const SignIn = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
       </div>
     </div>
   );

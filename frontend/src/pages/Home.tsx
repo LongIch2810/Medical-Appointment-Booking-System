@@ -1,5 +1,6 @@
 import React, { lazy } from "react";
 // Above-the-fold & light sections: Eager imports for instantaneous rendering and early query execution
+import DemoProjectBanner from "@/components/common/DemoProjectBanner";
 import HeroSection from "@/components/section/HeroSection";
 import TrustStripSection from "@/components/section/TrustStripSection";
 import SpecialtiesSection from "@/components/section/SpecialtiesSection";
@@ -19,6 +20,8 @@ const AiHealthcareAssistantSection = lazy(
 const Home: React.FC = () => {
   return (
     <main className="mt-16 lg:mt-24 min-h-screen bg-white dark:bg-[#0B1220] text-slate-900 dark:text-[#F1F5F9]">
+      <DemoProjectBanner />
+
       {/* 1. Hero with Asymmetric Layout, Care Path Heartbeat & Preview Card */}
       <HeroSection />
 
