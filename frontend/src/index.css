@@ -45,6 +45,23 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Surface Elevation Tokens */
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-card: var(--surface-card);
+  --color-surface-input: var(--surface-input);
+  --color-surface-popover: var(--surface-popover);
+
+  /* Semantic Status Tokens */
+  --color-status-success: var(--status-success);
+  --color-status-warning: var(--status-warning);
+  --color-status-error: var(--status-error);
+  --color-status-info: var(--status-info);
+
+  /* Semantic Text Tokens */
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
   /* Calm Clinical Guidance Tokens */
   --color-clinical-teal: var(--clinical-teal);
   --color-clinical-teal-hover: var(--clinical-teal-hover);
@@ -57,37 +74,54 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.99 0.002 180);
-  --foreground: oklch(0.18 0.02 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 240);
-  --primary: oklch(0.66 0.13 176);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.015 176);
-  --secondary-foreground: oklch(0.25 0.05 176);
-  --muted: oklch(0.965 0.005 240);
-  --muted-foreground: oklch(0.52 0.02 240);
-  --accent: oklch(0.95 0.02 176);
-  --accent-foreground: oklch(0.25 0.05 176);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.008 240);
-  --input: oklch(0.92 0.008 240);
-  --ring: oklch(0.66 0.13 176);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.99 0.002 180);
-  --sidebar-foreground: oklch(0.18 0.02 240);
-  --sidebar-primary: oklch(0.66 0.13 176);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.015 176);
-  --sidebar-accent-foreground: oklch(0.25 0.05 176);
-  --sidebar-border: oklch(0.92 0.008 240);
-  --sidebar-ring: oklch(0.66 0.13 176);
+  --background: #fcfdfb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #f1f5f9;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --border: #e2e8f0;
+  --input: #f8fafc;
+  --ring: #0d9488;
+  --chart-1: #0284c7;
+  --chart-2: #0d9488;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #ef4444;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #0d9488;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f8fafc;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #0d9488;
+
+  /* Surface Elevation Hierarchy */
+  --surface-elevated: #ffffff;
+  --surface-card: #ffffff;
+  --surface-input: #f8fafc;
+  --surface-popover: #ffffff;
+
+  /* Semantic Typography Hierarchy */
+  --text-main: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  /* Semantic Status Tokens */
+  --status-success: #10b981;
+  --status-warning: #f59e0b;
+  --status-error: #ef4444;
+  --status-info: #0284c7;
 
   /* Calm Clinical Guidance Light Palette */
   --clinical-teal: #159a98;
@@ -104,46 +138,64 @@
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
-  --primary: oklch(0.75 0.12 176);
-  --primary-foreground: oklch(0.15 0.04 176);
-  --secondary: oklch(0.268 0.007 34.298);
-  --secondary-foreground: oklch(0.985 0.001 106.423);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.75 0.12 176);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.216 0.006 56.043);
-  --sidebar-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-primary: oklch(0.75 0.12 176);
-  --sidebar-primary-foreground: oklch(0.15 0.04 176);
-  --sidebar-accent: oklch(0.268 0.007 34.298);
-  --sidebar-accent-foreground: oklch(0.985 0.001 106.423);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.75 0.12 176);
+  /* LifeHealth Slate-Navy Dark Elevation Hierarchy (No pure #000000) */
+  --background: #0b1220;
+  --foreground: #f1f5f9;
+  --card: #172033;
+  --card-foreground: #f1f5f9;
+  --popover: #172033;
+  --popover-foreground: #f1f5f9;
+  --primary: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #131b2e;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --destructive: #fb7185;
+  --border: #293548;
+  --input: #1e293b;
+  --ring: #2dd4bf;
+  --chart-1: #38bdf8;
+  --chart-2: #2dd4bf;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #fb7185;
+  --sidebar: #111827;
+  --sidebar-foreground: #f1f5f9;
+  --sidebar-primary: #2dd4bf;
+  --sidebar-primary-foreground: #042f2e;
+  --sidebar-accent: #172033;
+  --sidebar-accent-foreground: #f1f5f9;
+  --sidebar-border: #293548;
+  --sidebar-ring: #2dd4bf;
+
+  /* Surface Elevation Hierarchy */
+  --surface-elevated: #111827;
+  --surface-card: #172033;
+  --surface-input: #1e293b;
+  --surface-popover: #172033;
+
+  /* Semantic Typography Hierarchy */
+  --text-main: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  /* Semantic Status Tokens */
+  --status-success: #34d399;
+  --status-warning: #fbbf24;
+  --status-error: #fb7185;
+  --status-info: #60a5fa;
 
   /* Calm Clinical Guidance Dark Palette */
-  --clinical-teal: #2cd4d1;
-  --clinical-teal-hover: #159a98;
-  --clinical-ink: #eaf7f5;
-  --care-mist: #152b31;
-  --warm-white: #0e1a1e;
-  --human-coral: #ff8e7d;
-  --neutral-slate: #93a6ad;
+  --clinical-teal: #2dd4bf;
+  --clinical-teal-hover: #14b8a6;
+  --clinical-ink: #f1f5f9;
+  --care-mist: #132b32;
+  --warm-white: #0b1220;
+  --human-coral: #fb7185;
+  --neutral-slate: #94a3b8;
 
   /* Global Text Selection Tokens (WCAG AA compliant contrast) */
   --selection-background: #2dd4bf;
@@ -366,10 +418,24 @@
     border: 1px solid rgba(255, 255, 255, 0.6);
   }
 
+  .dark .glass-card {
+    background: rgba(23, 32, 51, 0.82);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(41, 53, 72, 0.7);
+  }
+
   .glass-header {
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
+  }
+
+  .dark .glass-header {
+    background: rgba(11, 18, 32, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(41, 53, 72, 0.6);
   }
 
   .topic-scroll::-webkit-scrollbar {

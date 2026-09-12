@@ -118,8 +118,8 @@ const ChatPanel: FC<ChatPanelProps> = ({
   }, [isFetchingNextPage, messages]);
 
   return (
-    <div className={cn("flex flex-col bg-white dark:bg-slate-900", className)}>
-      <div className="flex items-center gap-3.5 border-b border-slate-100 dark:border-slate-800 p-4.5 bg-slate-50/30 dark:bg-slate-900/60">
+    <div className={cn("flex flex-col bg-white dark:bg-[#172033]", className)}>
+      <div className="flex items-center gap-3.5 border-b border-slate-100 dark:border-[#293548] p-4.5 bg-slate-50/30 dark:bg-[#111827]">
         {onBack && (
           <Button
             type="button"
@@ -147,7 +147,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0">
-          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+          <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F1F5F9] truncate">
             {channel ? `${t("appointments.doctorPrefix")} ` : ""}
             {getDoctorDisplayName(channel, currentUserId)}
           </p>
@@ -168,7 +168,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
         onScroll={handleScroll}
         aria-live="polite"
         aria-relevant="additions"
-        className="flex-1 space-y-3.5 overflow-y-auto bg-slate-50/70 dark:bg-slate-950/60 p-5"
+        className="flex-1 space-y-3.5 overflow-y-auto bg-slate-50/70 dark:bg-[#0B1220]/60 p-5"
       >
         {isFetchingNextPage && (
           <div className="flex justify-center pb-2">
@@ -203,7 +203,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
       </div>
 
       <form
-        className="sticky bottom-0 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))]"
+        className="sticky bottom-0 border-t border-slate-100 dark:border-[#293548] bg-white dark:bg-[#111827] p-3.5 pb-[calc(0.875rem+env(safe-area-inset-bottom))]"
         onSubmit={onSubmit}
       >
         <div className="flex items-center gap-2.5">
@@ -213,16 +213,16 @@ const ChatPanel: FC<ChatPanelProps> = ({
             placeholder={t("messages.inputPlaceholder")}
             aria-label={t("messages.inputPlaceholder")}
             disabled={!activeChannelId}
-            className="h-10.5 rounded-2xl border-slate-200 bg-slate-50/60 text-xs sm:text-sm shadow-none focus-visible:bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 dark:focus-visible:bg-slate-950"
+            className="h-10.5 rounded-2xl border-slate-200 bg-slate-50/60 text-xs sm:text-sm shadow-none focus-visible:bg-white dark:border-[#293548] dark:bg-[#1E293B] dark:text-[#F1F5F9] dark:focus-visible:bg-[#1E293B]"
           />
           <Button
             type="submit"
             aria-label={t("messages.sendBtn")}
-            className="h-10.5 px-4.5 rounded-2xl gap-2 !bg-primary hover:!bg-primary/90 !text-white font-bold text-xs shadow-xs shrink-0 cursor-pointer"
+            className="h-10.5 px-4.5 rounded-2xl gap-2 !bg-primary hover:!bg-primary/90 !text-primary-foreground font-bold text-xs shadow-xs shrink-0 cursor-pointer"
             disabled={!activeChannelId || isSending || !draft.trim()}
           >
-            <SendHorizontal className="h-4 w-4 !text-white" />
-            <span className="hidden sm:inline !text-white">{t("messages.sendBtn")}</span>
+            <SendHorizontal className="h-4 w-4 !text-primary-foreground" />
+            <span className="hidden sm:inline !text-primary-foreground">{t("messages.sendBtn")}</span>
           </Button>
         </div>
       </form>

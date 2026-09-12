@@ -128,8 +128,8 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
           Đặt lịch nhanh
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg p-0 gap-0 border border-slate-200/80 shadow-2xl rounded-2xl sm:rounded-3xl bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-        <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+      <DialogContent className="max-w-lg p-0 gap-0 border border-slate-200/80 shadow-2xl rounded-2xl sm:rounded-3xl bg-white dark:border-[#293548] dark:bg-[#172033] overflow-hidden">
+        <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12 bg-white dark:bg-[#111827]">
           <DialogHeader>
             <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
               Đặt lịch nhanh
@@ -147,7 +147,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
               value={selectedRelativeId}
               disabled={isLoadingRelatives || isPending}
               onChange={(e) => setSelectedRelativeId(Number(e.target.value))}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingRelatives ? "Đang tải người thân..." : "Chọn người thân"}
@@ -165,7 +165,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
           </label>
 
           {isAddingNewRelative && (
-            <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-3">
+            <div className="space-y-3 rounded-md border border-dashed border-primary/40 bg-primary/5 dark:bg-primary/10 p-3">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Họ và tên
                 <input
@@ -176,7 +176,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                   onChange={(e) =>
                     handleNewRelativeFieldChange("fullname", e.target.value)
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
                 />
               </label>
 
@@ -191,7 +191,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                       e.target.value
                     )
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
                 >
                   <option value="">Chọn mối quan hệ</option>
                   {relationships.map((relationship) => (
@@ -215,7 +215,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                     onChange={(e) =>
                       handleNewRelativeFieldChange("dob", e.target.value)
                     }
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
                   />
                 </label>
                 <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -226,7 +226,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                     onChange={(e) =>
                       handleNewRelativeFieldChange("gender", e.target.value)
                     }
-                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
                   >
                     <option value="true">Nam</option>
                     <option value="false">Nữ</option>
@@ -243,7 +243,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                   onChange={(e) =>
                     handleNewRelativeFieldChange("phone", e.target.value)
                   }
-                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
                 />
               </label>
             </div>
@@ -255,7 +255,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
               value={selectedSpecialtyId}
               disabled={isLoadingSpecialties || isPending}
               onChange={(e) => setSelectedSpecialtyId(Number(e.target.value))}
-              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+              className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingSpecialties ? "Đang tải chuyên khoa..." : "Chọn chuyên khoa"}
@@ -287,7 +287,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                 disabled={isPending}
                 min={isSelectedDateToday ? getVietnamTimeHHmm(new Date()) : undefined}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
               />
             </label>
             <label className="flex-1 text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -297,13 +297,13 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
                 value={endTime}
                 disabled={isPending}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+                className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
               />
             </label>
           </div>
         </div>
 
-        <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+        <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end gap-2.5">
           <Button
             type="button"
             variant="outline"
@@ -316,7 +316,7 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
             type="button"
             disabled={isPending}
             onClick={handleSubmit}
-            className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 text-white shadow-xs"
+            className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 text-white dark:!text-primary-foreground shadow-xs"
           >
             {isPending ? <Loading /> : "Đặt lịch"}
           </Button>

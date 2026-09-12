@@ -31,6 +31,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "@/components/common/LanguageSwitcher";
+import ThemeToggle from "@/components/common/ThemeToggle";
 import type { User } from "@/types/interface/user.interface";
 import { useLogout } from "@/hooks/useLogout";
 import { cn } from "@/lib/utils";
@@ -164,7 +165,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
   return (
     <motion.header
       ref={headerRef}
-      className="fixed top-0 flex h-[72px] lg:h-[112px] items-center justify-between px-4 sm:px-6 py-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xs border-b border-slate-100 dark:border-slate-800 w-full z-[40]"
+      className="fixed top-0 flex h-[72px] lg:h-[112px] items-center justify-between px-4 sm:px-6 py-4 bg-white/95 dark:bg-[#0B1220]/95 backdrop-blur-md shadow-xs border-b border-slate-100 dark:border-[#293548] w-full z-[40]"
       animate={{ y: hidden ? "-100%" : 0 }}
       transition={{ duration: prefersReducedMotion ? 0 : 0.25, ease: "easeInOut" }}
       inert={hidden ? true : undefined}
@@ -185,10 +186,10 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-[85vw] max-w-[340px] p-0 flex flex-col justify-between bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 shadow-2xl h-full"
+              className="w-[85vw] max-w-[340px] p-0 flex flex-col justify-between bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-[#293548] shadow-2xl h-full"
             >
               {/* Top Drawer Header & Brand */}
-              <div className="border-b border-slate-100 dark:border-slate-800 p-5 pb-4">
+              <div className="border-b border-slate-100 dark:border-[#293548] p-5 pb-4">
                 <Link
                   to="/"
                   className="flex items-center gap-3 cursor-pointer"
@@ -216,34 +217,39 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                   <LanguageSwitcher variant="pills" />
                 </div>
 
+                {/* Mobile Theme Toggle Pills */}
+                <div className="mt-2">
+                  <ThemeToggle variant="pills" />
+                </div>
+
                 {/* User Identity Banner (if logged in) */}
                 {userInfo ? (
-                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-slate-800/60 p-3 border border-slate-200/70 dark:border-slate-700/60">
+                  <div className="mt-4 flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-[#172033] p-3 border border-slate-200/70 dark:border-[#293548]">
                     <div className="flex items-center gap-2.5 overflow-hidden">
                       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-sm font-bold text-primary">
                         {(userInfo.username || "U").charAt(0).toUpperCase()}
                       </div>
                       <div className="truncate">
-                        <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">{userInfo.username}</p>
-                        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{userInfo.email || t("header.patient")}</p>
+                        <p className="truncate text-xs font-bold text-slate-900 dark:text-[#F1F5F9]">{userInfo.username}</p>
+                        <p className="truncate text-[11px] text-slate-500 dark:text-[#94A3B8]">{userInfo.email || t("header.patient")}</p>
                       </div>
                     </div>
                     <NavLink
                       to="/patient/profile"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="shrink-0 rounded-lg bg-white dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-primary shadow-xs border border-slate-200/80 dark:border-slate-700 hover:bg-primary hover:text-white transition-colors"
+                      className="shrink-0 rounded-lg bg-white dark:bg-[#1E293B] px-2.5 py-1 text-[11px] font-semibold text-primary shadow-xs border border-slate-200/80 dark:border-[#293548] hover:bg-primary hover:text-primary-foreground transition-colors"
                     >
                       {t("header.profileBtn")}
                     </NavLink>
                   </div>
                 ) : (
-                  <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3.5 border border-primary/15 text-center">
+                  <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/15 dark:to-teal-500/15 p-3.5 border border-primary/15 text-center">
                     <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t("header.bannerText")}</p>
                     <div className="mt-2.5 flex gap-2">
                       <Button
                         asChild
                         size="sm"
-                        className="flex-1 rounded-xl !bg-primary hover:!bg-primary/90 !text-white font-semibold text-xs shadow-xs"
+                        className="flex-1 rounded-xl !bg-primary hover:!bg-primary/90 !text-primary-foreground font-bold text-xs shadow-xs"
                       >
                         <NavLink to="/sign-in" onClick={() => setIsMobileMenuOpen(false)}>
                           {t("common.signIn")}
@@ -253,7 +259,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         asChild
                         variant="outline"
                         size="sm"
-                        className="flex-1 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
+                        className="flex-1 rounded-xl text-xs font-semibold border-slate-200 dark:border-[#293548] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#1E293B]"
                       >
                         <NavLink to="/sign-up" onClick={() => setIsMobileMenuOpen(false)}>
                           {t("common.signUp")}
@@ -282,8 +288,8 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         cn(
                           "group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition-all",
                           isActive
-                            ? "bg-primary text-white font-semibold shadow-xs"
-                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary",
+                            ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-primary",
                         )
                       }
                     >
@@ -295,7 +301,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                 "flex h-8 w-8 items-center justify-center rounded-lg transition-colors",
                                 isActive
                                   ? "bg-white/20 text-white"
-                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary",
+                                  : "bg-slate-100 dark:bg-[#1E293B] text-slate-600 dark:text-slate-300 group-hover:bg-primary/10 group-hover:text-primary",
                               )}
                             >
                               <item.icon className="h-4 w-4" />
@@ -308,7 +314,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                 "rounded-full px-2 py-0.5 text-[10px] font-bold",
                                 isActive
                                   ? "bg-white text-primary"
-                                  : "bg-emerald-100 text-emerald-700",
+                                  : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800/60",
                               )}
                             >
                               {item.badge}
@@ -322,7 +328,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
 
                 {/* Patient Portal Items (If logged in) */}
                 {userInfo && (
-                  <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-[#293548]">
                     <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
                       {t("header.patientArea")}
                     </p>
@@ -337,8 +343,8 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                           cn(
                             "group flex items-center justify-between rounded-xl px-3 py-2 text-xs sm:text-sm font-medium transition-all",
                             isActive
-                              ? "bg-primary text-white font-semibold shadow-xs"
-                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary",
+                              ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                              : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-primary",
                           )
                         }
                       >
@@ -350,7 +356,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                   "flex h-7 w-7 items-center justify-center rounded-lg transition-colors",
                                   isActive
                                     ? "bg-white/20 text-white"
-                                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary",
+                                    : "bg-slate-100 dark:bg-[#1E293B] text-slate-500 dark:text-slate-400 group-hover:bg-primary/10 group-hover:text-primary",
                                 )}
                               >
                                 <item.icon className="h-3.5 w-3.5" />
@@ -363,7 +369,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
                                   isActive
                                     ? "bg-white text-primary"
-                                    : "bg-violet-100 text-violet-700",
+                                    : "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 dark:border dark:border-violet-800/60",
                                 )}
                               >
                                 {item.badge}
@@ -378,7 +384,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               </div>
 
               {/* Bottom Drawer Footer */}
-              <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 p-4 space-y-3">
+              <div className="border-t border-slate-100 dark:border-[#293548] bg-slate-50/70 dark:bg-[#0B1220]/90 p-4 space-y-3">
                 {userInfo ? (
                   <Button
                     type="button"
@@ -388,7 +394,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       handleLogout();
                     }}
                     disabled={isPending}
-                    className="w-full justify-center gap-2 rounded-xl border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 font-semibold text-xs shadow-xs cursor-pointer"
+                    className="w-full justify-center gap-2 rounded-xl border-rose-200 dark:border-rose-900/50 bg-white dark:bg-[#172033] text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 font-semibold text-xs shadow-xs cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
                     {isPending ? t("common.loggingOut") : t("common.logout")}
@@ -457,18 +463,21 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
         {/* Desktop Language Switcher */}
         <LanguageSwitcher variant="dropdown" />
 
+        {/* Desktop Theme Switcher */}
+        <ThemeToggle variant="dropdown" />
+
         {userInfo && <NotificationBell />}
         {!userInfo ? (
           <div className="flex items-center gap-2 pl-2">
             <NavLink
               to="/sign-in"
-              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all"
+              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary hover:bg-slate-50 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#293548] transition-all"
             >
               {t("common.signIn")}
             </NavLink>
             <NavLink
               to="/sign-up"
-              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold !text-white bg-primary hover:bg-primary/90 shadow-xs hover:shadow-md transition-all"
+              className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold !text-primary-foreground bg-primary hover:bg-primary/90 shadow-xs hover:shadow-md transition-all"
             >
               {t("common.signUp")}
             </NavLink>
@@ -476,7 +485,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
         ) : (
           <DropdownMenu open={isUserMenuOpen} onOpenChange={setIsUserMenuOpen}>
             <DropdownMenuTrigger asChild className="cursor-pointer">
-              <Button variant="outline" className="flex items-center gap-2.5 rounded-2xl h-10 px-3 border-slate-200/90 dark:border-slate-700 hover:border-primary/40 bg-white dark:bg-slate-800 dark:text-slate-100">
+              <Button variant="outline" className="flex items-center gap-2.5 rounded-2xl h-10 px-3 border-slate-200/90 dark:border-[#293548] hover:border-primary/40 bg-white dark:bg-[#172033] dark:text-slate-100">
                 <div className="flex h-7 w-7 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold text-primary">
                   {(userInfo.fullname || userInfo.username || "U").charAt(0).toUpperCase()}
                 </div>
@@ -486,18 +495,18 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 <span className="text-slate-400 text-xs">▼</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" align="end">
+            <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border-slate-200 dark:border-[#293548] bg-white dark:bg-[#172033]" align="end">
               <DropdownMenuLabel className="px-3 py-2">
                 <p className="text-xs text-slate-400 font-normal">{t("header.greeting")}</p>
-                <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{userInfo.fullname || userInfo.username}</p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-normal">{userInfo.email}</p>
+                <p className="font-bold text-slate-800 dark:text-[#F1F5F9] truncate">{userInfo.fullname || userInfo.username}</p>
+                <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] truncate font-normal">{userInfo.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {headerSubItems.map((item, index) => (
                 <DropdownMenuItem
                   key={index}
                   asChild
-                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between"
+                  className="cursor-pointer rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-primary dark:hover:text-primary transition-colors flex items-center justify-between"
                 >
                   <Link
                     to={item.to}
@@ -510,7 +519,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       <span>{item.name}</span>
                     </div>
                     {item.badge && (
-                      <span className="rounded-full bg-violet-100 text-violet-700 text-[9px] font-bold px-1.5 py-0.2">
+                      <span className="rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 dark:border dark:border-violet-800/60 text-[9px] font-bold px-1.5 py-0.2">
                         {item.badge}
                       </span>
                     )}

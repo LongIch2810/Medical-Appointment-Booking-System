@@ -12,21 +12,21 @@ export const appointmentStatusLabelMap: Record<AppointmentStatus, string> = {
 };
 
 const statusBadgeClassMap: Record<AppointmentStatus, string> = {
-  PENDING: "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
-  CONFIRMED: "bg-sky-100 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
-  COMPLETED: "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
-  CANCELLED: "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
-  ABSENT: "bg-slate-200 text-slate-700 border border-slate-300 dark:bg-slate-800/60 dark:text-slate-400 dark:border-slate-700",
-  EXPIRED: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+  PENDING: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-[#FBBF24]/15 dark:text-[#FBBF24] dark:border-[#FBBF24]/40",
+  CONFIRMED: "bg-sky-100 text-sky-800 border border-sky-200 dark:bg-[#60A5FA]/15 dark:text-[#60A5FA] dark:border-[#60A5FA]/40",
+  COMPLETED: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-[#34D399]/15 dark:text-[#34D399] dark:border-[#34D399]/40",
+  CANCELLED: "bg-rose-100 text-rose-800 border border-rose-200 dark:bg-[#FB7185]/15 dark:text-[#FB7185] dark:border-[#FB7185]/40",
+  ABSENT: "bg-slate-200 text-slate-700 border border-slate-300 dark:bg-[#1E293B] dark:text-[#94A3B8] dark:border-[#293548]",
+  EXPIRED: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-[#FBBF24]/15 dark:text-[#FBBF24] dark:border-[#FBBF24]/40",
 };
 
 const statusDotClassMap: Record<AppointmentStatus, string> = {
-  PENDING: "bg-amber-500",
-  CONFIRMED: "bg-sky-500",
-  COMPLETED: "bg-emerald-500",
-  CANCELLED: "bg-rose-500",
-  ABSENT: "bg-slate-500",
-  EXPIRED: "bg-amber-600",
+  PENDING: "bg-amber-500 dark:bg-[#FBBF24]",
+  CONFIRMED: "bg-sky-500 dark:bg-[#60A5FA]",
+  COMPLETED: "bg-emerald-500 dark:bg-[#34D399]",
+  CANCELLED: "bg-rose-500 dark:bg-[#FB7185]",
+  ABSENT: "bg-slate-500 dark:bg-[#94A3B8]",
+  EXPIRED: "bg-amber-600 dark:bg-[#FBBF24]",
 };
 
 export const AppointmentStatusBadge: React.FC<{

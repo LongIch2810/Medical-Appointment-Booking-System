@@ -111,14 +111,14 @@ export function MedicalAiLoading({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 dark:bg-slate-950/85 backdrop-blur-xs">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/85 dark:bg-[#0B1220]/85 backdrop-blur-xs">
         {content}
       </div>
     );
   }
 
   return (
-    <Card className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xs shadow-xs">
+    <Card className="rounded-2xl border border-slate-200/80 dark:border-[#293548] bg-white/80 dark:bg-[#172033]/80 backdrop-blur-xs shadow-xs">
       <CardContent className="p-0">{content}</CardContent>
     </Card>
   );

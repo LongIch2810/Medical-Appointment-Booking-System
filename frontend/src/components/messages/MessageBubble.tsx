@@ -15,14 +15,14 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message, isMine, onRetry }) => 
       className={cn(
         "max-w-[82%] sm:max-w-[75%] rounded-2xl px-4.5 py-3 text-xs sm:text-sm shadow-2xs",
         isMine
-          ? "ml-auto rounded-br-xs bg-primary text-white"
-          : "rounded-bl-xs bg-white dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 border border-slate-200/70 dark:border-slate-700/80",
+          ? "ml-auto rounded-br-xs bg-primary text-primary-foreground dark:bg-teal-500/25 dark:text-teal-100 dark:border dark:border-teal-500/35 font-medium"
+          : "rounded-bl-xs bg-white dark:bg-[#172033] text-slate-800 dark:text-[#F1F5F9] border border-slate-200/70 dark:border-[#293548]",
         message.isOptimistic && "opacity-70",
         message.failed && "border border-rose-300 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300",
       )}
     >
       {!isMine && (
-        <p className="mb-1 text-xs font-bold text-primary dark:text-sky-400">
+        <p className="mb-1 text-xs font-bold text-primary dark:text-teal-400">
           BS. {message.sender.fullname ?? message.sender.username ?? "Bác sĩ"}
         </p>
       )}
@@ -32,7 +32,7 @@ const MessageBubble: FC<MessageBubbleProps> = ({ message, isMine, onRetry }) => 
       <div
         className={cn(
           "mt-1.5 flex items-center justify-end gap-2 text-[10px] font-medium",
-          isMine && !message.failed ? "text-white/75" : "text-slate-400 dark:text-slate-400",
+          isMine && !message.failed ? "text-primary-foreground/75 dark:text-teal-200/75" : "text-slate-400 dark:text-[#94A3B8]",
         )}
       >
         {message.failed ? (

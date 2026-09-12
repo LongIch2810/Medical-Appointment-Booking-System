@@ -168,18 +168,18 @@ const VisitResults: React.FC = () => {
   }, [search, visitResults]);
 
   return (
-    <Card className="overflow-hidden border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-xs">
-      <CardHeader className="space-y-4 border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-primary/5 via-white to-sky-50/30 dark:from-primary/10 dark:via-slate-900 dark:to-slate-900 px-6 py-5">
+    <Card className="overflow-hidden border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#172033] py-0 shadow-xs">
+      <CardHeader className="space-y-4 border-b border-slate-100 dark:border-[#293548] bg-gradient-to-r from-primary/5 via-white to-sky-50/30 dark:from-primary/10 dark:via-[#172033] dark:to-[#172033] px-6 py-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-3.5">
             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
               <FileText className="h-5.5 w-5.5" />
             </div>
             <div className="space-y-0.5">
-              <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+              <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {t("visitResults.pageTitle")}
               </CardTitle>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                 {t("visitResults.pageSubtitle")}
               </p>
             </div>
@@ -198,7 +198,7 @@ const VisitResults: React.FC = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("visitResults.searchPlaceholder")}
-            className="h-10.5 rounded-2xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 pl-10 text-xs sm:text-sm shadow-2xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
+            className="h-10.5 rounded-2xl border-slate-200 bg-white dark:border-[#293548] dark:bg-[#1E293B] dark:text-[#F1F5F9] pl-10 text-xs sm:text-sm shadow-2xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           />
         </div>
       </CardHeader>
@@ -215,22 +215,22 @@ const VisitResults: React.FC = () => {
             {t("common.error")}
           </div>
         ) : visitResults.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-12 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-[#293548] bg-slate-50/60 dark:bg-[#1E293B]/40 px-6 py-12 text-center">
             <FileSearch className="mx-auto mb-3 h-10 w-10 text-slate-400" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+            <p className="text-sm font-bold text-slate-700 dark:text-[#CBD5E1]">
               {t("visitResults.emptyList")}
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto">
               {t("visitResults.emptyListDesc")}
             </p>
           </div>
         ) : filteredResults.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-10 text-center">
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-[#293548] bg-slate-50/60 dark:bg-[#1E293B]/40 px-6 py-10 text-center">
             <Search className="mx-auto mb-3 h-8 w-8 text-slate-400" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
+            <p className="text-sm font-bold text-slate-700 dark:text-[#CBD5E1]">
               {t("visitResults.emptySearch")}
             </p>
-            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8]">
               {t("visitResults.emptySearchDesc")}
             </p>
           </div>
@@ -246,16 +246,16 @@ const VisitResults: React.FC = () => {
             return (
               <div
                 key={result.id}
-                className="group rounded-3xl border border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 p-5 shadow-2xs transition-all hover:border-primary/40 dark:hover:border-slate-700 hover:shadow-md"
+                className="group rounded-3xl border border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#1E293B]/60 p-5 shadow-2xs transition-all hover:border-primary/40 dark:hover:border-[#38BDF8]/40 hover:shadow-md"
               >
-                <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 md:flex-row md:items-start md:justify-between">
+                <div className="flex flex-col gap-3 border-b border-slate-100 dark:border-[#293548] pb-4 md:flex-row md:items-start md:justify-between">
                   <div className="flex flex-1 gap-3.5 min-w-0">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                       <Stethoscope className="h-5.5 w-5.5" />
                     </div>
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
+                        <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F1F5F9] truncate">
                           {t("appointments.doctorPrefix")} {doctorName}
                         </p>
                         <Badge
@@ -265,8 +265,8 @@ const VisitResults: React.FC = () => {
                           {specialty}
                         </Badge>
                       </div>
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-[#94A3B8]">
+                        <span className="inline-flex items-center gap-1 font-semibold text-slate-700 dark:text-[#CBD5E1]">
                           <CalendarClock className="h-3.5 w-3.5 text-primary" />
                           {appointmentDate ?? result.created_at}
                         </span>
@@ -277,7 +277,7 @@ const VisitResults: React.FC = () => {
                         ) : null}
                         <span className="inline-flex items-center gap-1">
                           <UserRound className="h-3.5 w-3.5 text-slate-400" />
-                          {t("appointments.patientLabel")} <strong className="text-slate-700 dark:text-slate-200">{patientName}</strong>
+                          {t("appointments.patientLabel")} <strong className="text-slate-700 dark:text-[#CBD5E1]">{patientName}</strong>
                         </span>
                       </div>
                     </div>
@@ -287,7 +287,7 @@ const VisitResults: React.FC = () => {
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 shrink-0 gap-1.5 self-start rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 px-3.5 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:hover:bg-slate-700 md:self-center cursor-pointer"
+                    className="h-9 shrink-0 gap-1.5 self-start rounded-xl border-slate-200 dark:border-[#293548] dark:bg-[#1E293B] px-3.5 text-xs font-bold text-slate-700 dark:text-[#CBD5E1] hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:hover:bg-[#293548] md:self-center cursor-pointer"
                     onClick={() => setSelected(result)}
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -318,14 +318,14 @@ const VisitResults: React.FC = () => {
           if (!open) setSelected(null);
         }}
       >
-        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl">
-          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl dark:bg-[#172033] dark:border-[#293548]">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">
                 <FileText className="h-5 w-5 text-primary" />
                 {t("visitResults.modalTitle")}
               </DialogTitle>
-              <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+              <DialogDescription className="text-xs text-slate-500 dark:text-[#94A3B8]">
                 {selected
                   ? `${t("appointments.doctorPrefix")} ${getDoctorName(selected)} • ${getSpecialtyName(selected)}`
                   : null}
@@ -335,12 +335,12 @@ const VisitResults: React.FC = () => {
 
           {selected ? (
             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
-              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-950/50">
+              <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:grid-cols-3 dark:border-[#293548] dark:bg-[#1E293B]">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t("appointments.appointmentDate")}
                   </p>
-                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-[#CBD5E1]">
                     <CalendarClock className="h-3.5 w-3.5 text-primary" />
                     {selected.appointment?.appointment_date ?? selected.created_at}
                   </p>
@@ -349,7 +349,7 @@ const VisitResults: React.FC = () => {
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t("common.patient")}
                   </p>
-                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-[#CBD5E1]">
                     <UserRound className="h-3.5 w-3.5 text-primary" />
                     {getPatientName(selected)}
                   </p>
@@ -358,7 +358,7 @@ const VisitResults: React.FC = () => {
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                     {t("appointments.doctorInCharge")}
                   </p>
-                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                  <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-[#CBD5E1]">
                     <Stethoscope className="h-3.5 w-3.5 text-primary" />
                     {t("appointments.doctorPrefix")} {getDoctorName(selected)}
                   </p>
@@ -378,7 +378,7 @@ const VisitResults: React.FC = () => {
             </div>
           ) : null}
 
-          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end">
             <Button
               type="button"
               variant="outline"

@@ -50,7 +50,7 @@ const MainLayout: React.FC = () => {
         className={cn(
           "w-full",
           isChatbot
-            ? "flex-1 h-[calc(100vh-72px)] lg:h-[calc(100vh-112px)] mt-[72px] lg:mt-[112px] p-2 sm:p-4 overflow-hidden flex flex-col items-center justify-center bg-slate-100/70 dark:bg-slate-950"
+            ? "flex-1 h-[calc(100vh-72px)] lg:h-[calc(100vh-112px)] mt-[72px] lg:mt-[112px] p-2 sm:p-4 overflow-hidden flex flex-col items-center justify-center bg-slate-100/70 dark:bg-[#0B1220]"
             : "flex-1 p-4 sm:p-6",
         )}
       >

@@ -82,9 +82,9 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-2xl p-0 gap-0 border border-slate-200/80 shadow-xl rounded-3xl bg-white dark:border-slate-800 dark:bg-slate-900">
+      <DialogContent className="max-w-2xl p-0 gap-0 border border-slate-200/80 shadow-xl rounded-3xl bg-white dark:border-[#293548] dark:bg-[#172033]">
         {/* Header styled matching Patient Portal cards */}
-        <div className="shrink-0 bg-white dark:bg-slate-900 p-6 sm:p-7 border-b border-slate-100 dark:border-slate-800 flex items-start gap-4">
+        <div className="shrink-0 bg-white dark:bg-[#111827] p-6 sm:p-7 border-b border-slate-100 dark:border-[#293548] flex items-start gap-4">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 shrink-0">
             <GraduationCap className="w-6 h-6 text-primary" />
           </div>
@@ -112,9 +112,9 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
         </div>
 
         {/* Content body - InfoTiles pattern like Patient Portal */}
-        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-7 space-y-3.5 bg-slate-50/60 dark:bg-slate-950/60 scrollbar-soft">
+        <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-7 space-y-3.5 bg-slate-50/60 dark:bg-[#0B1220]/60 scrollbar-soft">
           {/* Item 1: Non-commercial Purpose */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-[#293548] dark:bg-[#172033]">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary border border-primary/20 shrink-0 mt-0.5">
               <GraduationCap className="w-5 h-5 text-primary" />
             </div>
@@ -129,7 +129,7 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
           </div>
 
           {/* Item 2: Doctor photos & hospital demo data */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-[#293548] dark:bg-[#172033]">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shrink-0 mt-0.5 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-400">
               <HeartPulse className="w-5 h-5" />
             </div>
@@ -144,7 +144,7 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
           </div>
 
           {/* Item 3: AI Advice Reference */}
-          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-slate-800 dark:bg-slate-900">
+          <div className="rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-2xs flex items-start gap-3.5 dark:border-[#293548] dark:bg-[#172033]">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-50 text-purple-600 border border-purple-100 shrink-0 mt-0.5 dark:border-purple-900/50 dark:bg-purple-950/40 dark:text-purple-400">
               <Bot className="w-5 h-5" />
             </div>
@@ -159,7 +159,7 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
           </div>
 
           {/* Item 4: Copyright and take-down request */}
-          <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 transition-all hover:border-emerald-300 hover:shadow-2xs flex items-start gap-3.5 dark:border-emerald-800 dark:bg-emerald-950/40">
+          <div className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 transition-all hover:border-emerald-300 hover:shadow-2xs flex items-start gap-3.5 dark:border-emerald-800/50 dark:bg-[#1E293B]">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 border border-emerald-200 shrink-0 mt-0.5 dark:border-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
               <Mail className="w-5 h-5 text-emerald-700 dark:text-emerald-300" />
             </div>
@@ -182,7 +182,7 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
         </div>
 
         {/* Footer Actions matching Patient Portal Buttons */}
-        <div className="shrink-0 p-4 sm:p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="shrink-0 p-4 sm:p-6 bg-white dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex flex-col sm:flex-row items-center justify-between gap-4">
           <label className="flex items-center gap-2.5 cursor-pointer text-xs sm:text-sm text-slate-600 dark:text-slate-300 select-none font-medium">
             <input
               type="checkbox"
@@ -195,10 +195,10 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
 
           <Button
             onClick={handleAcknowledge}
-            className="w-full sm:w-auto rounded-xl !bg-primary hover:!bg-primary/90 font-bold !text-white hover:!text-white shadow-xs hover:shadow-md transition-all cursor-pointer h-11 px-6 text-sm flex items-center justify-center gap-2"
+            className="w-full sm:w-auto rounded-xl !bg-primary hover:!bg-primary/90 font-bold !text-white dark:!text-primary-foreground shadow-xs hover:shadow-md transition-all cursor-pointer h-11 px-6 text-sm flex items-center justify-center gap-2"
           >
-            <CheckCircle2 className="w-4.5 h-4.5 !text-white" />
-            <span className="!text-white">Tôi đã hiểu & Tiếp tục trải nghiệm</span>
+            <CheckCircle2 className="w-4.5 h-4.5 !text-white dark:!text-primary-foreground" />
+            <span className="!text-white dark:!text-primary-foreground">Tôi đã hiểu & Tiếp tục trải nghiệm</span>
           </Button>
         </div>
       </DialogContent>

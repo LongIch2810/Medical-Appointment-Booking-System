@@ -63,16 +63,16 @@ const PatientNavigation: React.FC = () => {
 
   return (
     <>
-      <aside className="hidden lg:flex lg:w-72 lg:shrink-0 lg:flex-col lg:gap-1.5 lg:rounded-3xl lg:border lg:border-slate-200/80 lg:bg-white lg:p-4 lg:shadow-xs sticky top-32 dark:border-slate-800 dark:bg-slate-900">
-        <Button asChild className="mb-3 w-full justify-center gap-2 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-white shadow-xs hover:shadow-md transition-all cursor-pointer h-11">
+      <aside className="hidden lg:flex lg:w-72 lg:shrink-0 lg:flex-col lg:gap-1.5 lg:rounded-3xl lg:border lg:border-slate-200/80 lg:bg-white lg:p-4 lg:shadow-xs sticky top-32 dark:border-[#293548] dark:bg-[#111827]">
+        <Button asChild className="mb-3 w-full justify-center gap-2 rounded-2xl bg-primary hover:bg-primary/90 font-bold text-primary-foreground shadow-xs hover:shadow-md transition-all cursor-pointer h-11">
           <NavLink
             to="/doctors"
             onMouseEnter={() => prefetchPatientRoute("/doctors")}
             onFocus={() => prefetchPatientRoute("/doctors")}
-            className="text-white flex items-center justify-center gap-2 w-full"
+            className="text-primary-foreground flex items-center justify-center gap-2 w-full"
           >
-            <CalendarPlus className="h-4.5 w-4.5 text-white" />
-            <span className="text-white font-bold text-sm">{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch khám mới" })}</span>
+            <CalendarPlus className="h-4.5 w-4.5 text-primary-foreground" />
+            <span className="text-primary-foreground font-bold text-sm">{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch khám mới" })}</span>
           </NavLink>
         </Button>
         <p className="px-3 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
@@ -90,8 +90,8 @@ const PatientNavigation: React.FC = () => {
                 cn(
                   "group flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium transition-all",
                   isActive
-                    ? "bg-primary text-white shadow-xs font-semibold"
-                    : "text-slate-700 hover:bg-slate-100/80 hover:text-primary dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white",
+                    ? "bg-primary text-primary-foreground shadow-xs font-bold"
+                    : "text-slate-700 hover:bg-slate-100/80 hover:text-primary dark:text-slate-300 dark:hover:bg-[#1E293B] dark:hover:text-primary",
                 )
               }
             >
@@ -102,7 +102,7 @@ const PatientNavigation: React.FC = () => {
                       "flex h-8.5 w-8.5 items-center justify-center rounded-xl transition-colors",
                       isActive
                         ? "bg-white/20 text-white"
-                        : "bg-primary/10 text-primary group-hover:bg-primary/20 dark:bg-slate-800 dark:text-teal-400",
+                        : "bg-primary/10 text-primary group-hover:bg-primary/20 dark:bg-[#1E293B] dark:text-teal-300",
                     )}
                   >
                     <Icon className="h-4 w-4" />
@@ -121,9 +121,9 @@ const PatientNavigation: React.FC = () => {
           to="/doctors"
           onMouseEnter={() => prefetchPatientRoute("/doctors")}
           onFocus={() => prefetchPatientRoute("/doctors")}
-          className="flex min-w-fit items-center gap-2 rounded-full border border-primary bg-primary hover:bg-primary/90 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs"
+          className="flex min-w-fit items-center gap-2 rounded-full border border-primary bg-primary hover:bg-primary/90 px-4 py-2 text-xs sm:text-sm font-bold text-primary-foreground shadow-xs"
         >
-          <CalendarPlus className="h-4 w-4 text-white" />
+          <CalendarPlus className="h-4 w-4 text-primary-foreground" />
           <span>{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch mới" })}</span>
         </NavLink>
         {navItems.map(({ label, to, icon: Icon, end }) => (
@@ -137,8 +137,8 @@ const PatientNavigation: React.FC = () => {
               cn(
                 "flex min-w-fit items-center gap-2 rounded-full border px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all",
                 isActive
-                  ? "border-primary bg-primary text-white shadow-xs font-bold"
-                  : "border-slate-200 bg-white text-slate-700 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300",
+                  ? "border-primary bg-primary text-primary-foreground shadow-xs font-bold"
+                  : "border-slate-200 bg-white text-slate-700 hover:border-primary/40 hover:text-primary dark:border-[#293548] dark:bg-[#111827] dark:text-slate-300",
               )
             }
           >
@@ -168,7 +168,7 @@ const PatientPortalShell: React.FC = () => {
   return (
     <section className="mt-16 md:mt-24 pb-12">
       {/* Top Welcome Banner */}
-      <div className="relative mb-6 overflow-hidden rounded-3xl border border-teal-600/30 bg-gradient-to-br from-teal-800 via-teal-700 to-emerald-700 p-6 text-white shadow-md dark:border-teal-500/20 dark:from-slate-900 dark:via-teal-950 dark:to-slate-900 md:p-7">
+      <div className="relative mb-6 overflow-hidden rounded-3xl border border-teal-600/30 bg-gradient-to-br from-teal-800 via-teal-700 to-emerald-700 p-6 text-white shadow-md dark:border-teal-500/20 dark:from-[#0B1220] dark:via-[#132B32] dark:to-[#0B1220] md:p-7">
         {/* Subtle decorative glow */}
         <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-emerald-400/15 blur-3xl pointer-events-none" />
         <div className="absolute -left-16 -bottom-16 h-64 w-64 rounded-full bg-teal-300/10 blur-2xl pointer-events-none" />
@@ -186,7 +186,7 @@ const PatientPortalShell: React.FC = () => {
                   {initial}
                 </AvatarFallback>
               </Avatar>
-              <span className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-400 shadow-xs" />
+              <span className="absolute bottom-0.5 right-0.5 h-4 w-4 rounded-full border-2 border-white dark:border-[#111827] bg-emerald-400 shadow-xs" />
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -205,7 +205,7 @@ const PatientPortalShell: React.FC = () => {
             </div>
           </div>
 
-          <div className="hidden rounded-2xl bg-white/10 dark:bg-slate-800/60 px-5 py-3 text-right md:block border border-white/15 dark:border-slate-700/50 backdrop-blur-xs shadow-2xs">
+          <div className="hidden rounded-2xl bg-white/10 dark:bg-[#172033]/80 px-5 py-3 text-right md:block border border-white/15 dark:border-[#293548] backdrop-blur-xs shadow-2xs">
             <p className="text-[10px] uppercase tracking-widest text-teal-100/75 dark:text-slate-400 font-bold">
               {t("header.linkedAccount", { defaultValue: "Tài khoản liên kết" })}
             </p>

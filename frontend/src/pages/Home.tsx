@@ -18,7 +18,7 @@ const AiHealthcareAssistantSection = lazy(
 
 const Home: React.FC = () => {
   return (
-    <main className="mt-16 lg:mt-24 min-h-screen bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
+    <main className="mt-16 lg:mt-24 min-h-screen bg-white dark:bg-[#0B1220] text-slate-900 dark:text-[#F1F5F9]">
       {/* 1. Hero with Asymmetric Layout, Care Path Heartbeat & Preview Card */}
       <HeroSection />
 

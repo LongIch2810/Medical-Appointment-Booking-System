@@ -14,6 +14,10 @@ import { fetchDoctors } from "@/api/doctorApi";
 import { fetchPatientChannels } from "@/api/patientApi";
 import ChannelList from "@/components/messages/ChannelList";
 import ChatPanel from "@/components/messages/ChatPanel";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Loading from "@/components/loading/Loading";
+import ErrorState from "@/components/notification/ErrorState";
+import NotFoundResult from "@/components/notification/NotFoundResult";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -97,8 +101,8 @@ const Messages: React.FC = () => {
 
   const {
     data: channelsResponse,
-    isLoading,
-    isError,
+    isLoading: isChannelsLoading,
+    isError: isChannelsError,
     refetch: refetchChannels,
   } = usePatientChannels({
     page: channelPage,
@@ -158,7 +162,12 @@ const Messages: React.FC = () => {
     },
   });
 
-  const { data: doctorsResponse, isLoading: isLoadingDoctors } = useQuery({
+  const {
+    data: doctorsResponse,
+    isLoading: isDoctorsLoading,
+    isError: isDoctorsError,
+    refetch: refetchDoctors,
+  } = useQuery({
     queryKey: ["message-doctors", doctorSearch, doctorPage],
     queryFn: () =>
       fetchDoctors({
@@ -228,7 +237,7 @@ const Messages: React.FC = () => {
     if (
       !requestedDoctorUserId ||
       !currentUser?.id ||
-      isLoading ||
+      isChannelsLoading ||
       handledDoctorUserIdRef.current === requestedDoctorUserId
     ) {
       return;
@@ -259,7 +268,7 @@ const Messages: React.FC = () => {
     channels,
     createDirectChannelMutation,
     currentUser?.id,
-    isLoading,
+    isChannelsLoading,
     requestedDoctorUserId,
     setSearchParams,
   ]);
@@ -419,14 +428,14 @@ const Messages: React.FC = () => {
 
   return (
     <>
-      <Card className="grid h-[calc(100vh-8rem)] min-h-[520px] grid-cols-1 overflow-hidden border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-xs lg:grid-cols-[340px_1fr] rounded-3xl">
+      <Card className="grid h-[calc(100vh-140px)] min-h-[560px] grid-cols-1 overflow-hidden rounded-3xl border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#172033] py-0 shadow-sm lg:grid-cols-[360px_1fr]">
         <ChannelList
-          className={mobileDetailOpen ? "hidden lg:flex" : "flex"}
+          className={cn(mobileDetailOpen ? "hidden lg:flex" : "flex")}
           channels={channels}
           activeChannelId={activeChannelId}
           currentUserId={currentUser?.id}
-          isLoading={isLoading}
-          isError={isError}
+          isLoading={isChannelsLoading}
+          isError={isChannelsError}
           onRetry={() => refetchChannels()}
           onSelectChannel={handleSelectChannel}
           onCreateNew={() => setOpenCreateDialog(true)}
@@ -457,13 +466,13 @@ const Messages: React.FC = () => {
       </Card>
 
       <Dialog open={openCreateDialog} onOpenChange={setOpenCreateDialog}>
-        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl">
-          <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 space-y-3 pr-12">
+        <DialogContent className="max-w-2xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl dark:bg-[#172033] dark:border-[#293548]">
+          <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-[#293548] space-y-3 pr-12">
             <DialogHeader>
-              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              <DialogTitle className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">
                 {t("messages.searchDoctorTitle")}
               </DialogTitle>
-              <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8]">
                 {t("messages.searchDoctorDesc")}
               </DialogDescription>
             </DialogHeader>
@@ -478,43 +487,63 @@ const Messages: React.FC = () => {
                 placeholder={t("messages.doctorSearchPlaceholder")}
                 aria-label={t("messages.doctorSearchPlaceholder")}
                 icon={<Search className="h-4 w-4" />}
-                className="rounded-xl"
+                className="h-10 rounded-2xl"
               />
             </div>
           </div>
 
-          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 space-y-2.5 scrollbar-soft">
-            {isLoadingDoctors ? (
-              <div className="rounded-xl border border-slate-200 p-6 text-center text-sm text-slate-500">
-                {t("common.loading")}
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-4 sm:p-5 space-y-2.5 max-h-[360px] scrollbar-soft">
+            {isDoctorsLoading ? (
+              <div className="flex justify-center py-10">
+                <Loading size={26} />
               </div>
+            ) : isDoctorsError ? (
+              <ErrorState
+                title={t("common.error")}
+                description="Error loading doctors list."
+                onRetry={() => refetchDoctors()}
+              />
             ) : doctors.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                {t("doctor.noResultsTitle")}
-              </div>
+              <NotFoundResult
+                title={t("messages.notFoundDoctor")}
+                description={t("messages.notFoundDoctorDesc")}
+              />
             ) : (
               doctors.map((doctor) => (
                 <div
                   key={doctor.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/80 bg-white p-3.5 transition hover:border-primary/40 hover:shadow-2xs dark:border-slate-800 dark:bg-slate-900"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200/80 dark:border-[#293548] p-3.5 hover:border-primary/40 dark:hover:border-[#38BDF8]/40 transition-all bg-white dark:bg-[#1E293B]/60"
                 >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {t("appointments.doctorPrefix")} {doctor.fullname}
-                    </p>
-                    <p className="truncate text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                      {doctor.specialty || t("common.notUpdated")}
-                    </p>
-                    <p className="truncate text-xs text-slate-400">
-                      {doctor.workplace || t("common.notUpdated")}
-                    </p>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-11 w-11 border border-slate-200 dark:border-[#293548] shadow-2xs shrink-0">
+                      <AvatarImage
+                        src={doctor.picture ?? ""}
+                        alt={doctor.fullname ?? "Doctor"}
+                        className="object-cover"
+                      />
+                      <AvatarFallback className="bg-primary/10 dark:bg-primary/20 text-xs font-bold text-primary dark:text-sky-300">
+                        {doctor.fullname?.charAt(0) ?? "D"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
+                        {t("appointments.doctorPrefix")} {doctor.fullname}
+                      </p>
+                      <p className="truncate text-xs font-semibold text-primary dark:text-sky-400">
+                        {doctor.specialty || t("home.statDoctors")}
+                      </p>
+                      <p className="truncate text-xs text-slate-500 dark:text-[#94A3B8]">
+                        {doctor.workplace || t("common.notUpdated")}
+                      </p>
+                    </div>
                   </div>
+
                   <Button
                     type="button"
                     size="sm"
                     disabled={createDirectChannelMutation.isPending}
                     onClick={() => handleStartConversation(doctor)}
-                    className="rounded-xl font-bold !bg-primary text-white shrink-0 cursor-pointer"
+                    className="rounded-xl font-bold !bg-primary !text-primary-foreground shrink-0 cursor-pointer"
                   >
                     {t("messages.startChatBtn")}
                   </Button>
@@ -523,7 +552,7 @@ const Messages: React.FC = () => {
             )}
           </div>
 
-          <div className="shrink-0 p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+          <div className="shrink-0 p-4 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex items-center justify-between gap-2">
             <Button
               type="button"
               variant="outline"

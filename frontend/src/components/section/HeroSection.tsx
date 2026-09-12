@@ -219,9 +219,9 @@ export const HeroSection: React.FC = () => {
             <div className="absolute -inset-4 bg-radial from-teal-400/20 via-teal-200/10 to-transparent blur-2xl -z-10 pointer-events-none" />
 
             {/* Doctor Card Composition */}
-            <div className="hero-visual-card relative w-full max-w-[440px] rounded-3xl overflow-hidden border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl">
+            <div className="hero-visual-card relative w-full max-w-[440px] rounded-3xl overflow-hidden border border-slate-200/90 dark:border-[#293548] bg-white dark:bg-[#172033] shadow-xl">
               {/* Cropped & Framed Banner Visual */}
-              <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+              <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100 dark:bg-[#1E293B]">
                 <img
                   src="/banner.png"
                   alt="LifeHealth Medical Specialists"
@@ -232,10 +232,10 @@ export const HeroSection: React.FC = () => {
                   fetchPriority="high"
                   decoding="async"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-[#0B1220]/90 via-[#0B1220]/30 to-transparent" />
 
                 {/* Top Badge: Verified Clinical Network */}
-                <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm">
+                <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 dark:bg-[#111827]/95 backdrop-blur-md text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm border border-transparent dark:border-[#293548]">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#159a98]" />
                   <span>{t("home.verifiedSpecialistBadge")}</span>
                 </div>
@@ -251,7 +251,7 @@ export const HeroSection: React.FC = () => {
               </div>
 
               {/* Interactive Appointment Preview Card */}
-              <div className="hero-preview-card p-4 sm:p-5 bg-white dark:bg-slate-900 space-y-3.5">
+              <div className="hero-preview-card p-4 sm:p-5 bg-white dark:bg-[#172033] space-y-3.5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -266,11 +266,11 @@ export const HeroSection: React.FC = () => {
                 </div>
 
                 {/* Doctor Brief */}
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#1E293B] border border-slate-100 dark:border-[#293548] flex items-center gap-3">
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
                     alt="Dr. Nguyen Minh Anh"
-                    className="w-12 h-12 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 bg-teal-50"
+                    className="w-12 h-12 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-[#293548] bg-teal-50"
                   />
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -287,7 +287,7 @@ export const HeroSection: React.FC = () => {
 
                 {/* Slot Details */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900 text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <div className="p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/60 text-slate-700 dark:text-slate-200 flex items-center gap-2">
                     <Clock className="w-4 h-4 text-[#159a98] shrink-0" />
                     <div>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
@@ -296,7 +296,7 @@ export const HeroSection: React.FC = () => {
                       <span className="font-bold">09:00 - 09:30</span>
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900 text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <div className="p-2.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-100 dark:border-teal-900/60 text-slate-700 dark:text-slate-200 flex items-center gap-2">
                     <CalendarCheck className="w-4 h-4 text-[#159a98] shrink-0" />
                     <div>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">

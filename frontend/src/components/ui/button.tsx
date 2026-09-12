@@ -5,25 +5,25 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-[0.98] cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-semibold transition-all duration-200 disabled:pointer-events-none disabled:opacity-45 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 active:scale-[0.98] cursor-pointer",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-white shadow-xs hover:bg-primary/90 hover:shadow-md border border-primary/20",
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-md border border-primary/20",
         destructive:
           "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/30 border border-destructive/20",
         outline:
-          "border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-primary hover:border-primary/40 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:border-primary/50",
+          "border border-slate-200/90 bg-white text-slate-700 shadow-2xs hover:bg-slate-50 hover:text-primary hover:border-primary/40 dark:bg-[#172033] dark:border-[#293548] dark:text-slate-200 dark:hover:bg-[#1E293B] dark:hover:border-primary/50",
         secondary:
           "bg-secondary text-secondary-foreground shadow-2xs hover:bg-secondary/80 border border-secondary/40",
         ghost:
-          "text-slate-700 hover:bg-slate-100 hover:text-primary dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-primary",
+          "text-slate-700 hover:bg-slate-100 hover:text-primary dark:text-slate-200 dark:hover:bg-[#1E293B] dark:hover:text-primary",
         link: "text-primary underline-offset-4 hover:underline font-semibold",
         primary:
-          "bg-primary text-white shadow-xs hover:bg-primary/90 hover:shadow-md border border-primary/20",
+          "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90 hover:shadow-md border border-primary/20",
         google:
-          "bg-white text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 hover:border-slate-300 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800",
+          "bg-white text-slate-700 border border-slate-200 shadow-2xs hover:bg-slate-50 hover:border-slate-300 dark:bg-[#172033] dark:border-[#293548] dark:text-slate-200 dark:hover:bg-[#1E293B]",
         details:
           "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60 dark:hover:bg-emerald-900/50",
         sky: "bg-sky-50 text-sky-700 border border-sky-200 hover:bg-sky-100 hover:text-sky-800 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60 dark:hover:bg-sky-900/50",

@@ -17,11 +17,11 @@ export default function StateCard({
   description,
   actionLabel,
   onAction,
-  iconClassName = "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  iconClassName = "bg-slate-100 text-slate-600 dark:bg-[#1E293B] dark:text-teal-300",
 }: StateCardProps) {
   return (
     <div className="flex justify-center items-center w-full py-8 sm:py-12 px-4">
-      <Card className="w-full max-w-md border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs rounded-2xl">
+      <Card className="w-full max-w-md border border-slate-200/80 dark:border-[#293548] bg-white dark:bg-[#172033] shadow-xs rounded-2xl">
         <CardContent className="flex flex-col items-center p-6 sm:p-8 text-center space-y-4">
           <div
             className={`flex items-center justify-center w-16 h-16 rounded-2xl ${iconClassName}`}
@@ -30,11 +30,11 @@ export default function StateCard({
           </div>
 
           <div className="space-y-1.5">
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 font-heading">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F1F5F9] font-heading">
               {title}
             </h2>
             {description && (
-              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-sm leading-relaxed">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] max-w-sm leading-relaxed">
                 {description}
               </p>
             )}
@@ -44,7 +44,7 @@ export default function StateCard({
             <Button
               variant="outline"
               onClick={onAction}
-              className="mt-2 rounded-xl border-slate-200 dark:border-slate-800 font-semibold"
+              className="mt-2 rounded-xl border-slate-200 dark:border-[#293548] dark:bg-[#1E293B] dark:text-[#F1F5F9] dark:hover:bg-[#253347] font-semibold"
             >
               {actionLabel}
             </Button>

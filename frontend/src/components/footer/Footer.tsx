@@ -19,7 +19,7 @@ const Footer = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   return (
-    <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-16 text-sm">
+    <footer className="bg-[#111827] text-slate-300 border-t border-[#293548] mt-16 text-sm">
       <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-1 md:grid-cols-5 gap-10">
         {/* Logo and Description */}
         <div className="md:col-span-2 space-y-4">
@@ -70,7 +70,7 @@ const Footer = () => {
                 key={index}
                 href={social.href}
                 aria-label={social.label}
-                className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-slate-400 hover:bg-primary hover:text-white transition-all shadow-xs"
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#172033] text-slate-400 hover:bg-primary hover:text-primary-foreground border border-[#293548] transition-all shadow-xs"
               >
                 <social.icon className="w-4 h-4" />
               </a>
@@ -138,7 +138,7 @@ const Footer = () => {
       </div>
 
       {/* Newsletter */}
-      <div className="border-t border-slate-800/80 bg-slate-950/60 py-7">
+      <div className="border-t border-[#293548] bg-[#0B1220]/60 py-7">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <h4 className="text-sm font-bold text-white">
@@ -155,11 +155,11 @@ const Footer = () => {
             <input
               type="email"
               placeholder={t("footer.emailPlaceholder")}
-              className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder:text-slate-500 w-full md:w-72 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              className="bg-[#172033] border border-[#293548] rounded-xl px-4 py-2.5 text-xs sm:text-sm text-[#F1F5F9] placeholder:text-[#94A3B8] w-full md:w-72 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <button
               type="submit"
-              className="inline-flex items-center gap-1.5 bg-primary text-white font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition text-xs sm:text-sm shrink-0 shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1.5 bg-primary text-primary-foreground font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition text-xs sm:text-sm shrink-0 shadow-xs cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
               <span>{t("footer.subscribe")}</span>
@@ -169,8 +169,8 @@ const Footer = () => {
       </div>
 
       {/* Educational & Non-Commercial Disclaimer Section */}
-      <div className="border-t border-slate-800/80 bg-slate-950/80 py-6 px-6">
-        <div className="max-w-7xl mx-auto rounded-2xl bg-slate-900 border border-slate-800 p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
+      <div className="border-t border-[#293548] bg-[#0B1220]/80 py-6 px-6">
+        <div className="max-w-7xl mx-auto rounded-2xl bg-[#172033] border border-[#293548] p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm">
           <div className="flex items-start gap-3.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400/10 text-amber-400 border border-amber-400/20 shrink-0 mt-0.5">
               <GraduationCap className="w-5 h-5" />
@@ -204,7 +204,7 @@ const Footer = () => {
       </div>
 
       {/* Bottom */}
-      <div className="border-t border-slate-800/60 text-center py-5 text-xs text-slate-500">
+      <div className="border-t border-[#293548]/70 text-center py-5 text-xs text-slate-400">
         &copy; {new Date().getFullYear()} LifeHealth Medical Platform. {t("footer.copyrightDesc", { defaultValue: "Dự án nghiên cứu & học thuật phi thương mại." })}
       </div>
     </footer>

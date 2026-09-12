@@ -86,7 +86,7 @@ const NotFound = () => {
           </section>
 
           {/* Right Action Card */}
-          <Card className="relative overflow-hidden border-slate-200/80 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 py-0 shadow-lg backdrop-blur-xl rounded-3xl">
+          <Card className="relative overflow-hidden border-slate-200/80 dark:border-[#293548] bg-white/90 dark:bg-[#172033]/90 py-0 shadow-lg backdrop-blur-xl rounded-3xl">
             <div className="absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r from-primary via-emerald-500 to-teal-400" />
             <CardHeader className="space-y-3 px-6 pb-0 pt-7 sm:px-8">
               <div className="flex items-center justify-between gap-3">
@@ -101,38 +101,38 @@ const NotFound = () => {
                 </Badge>
               </div>
               <div className="space-y-1">
-                <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl font-heading">
+                <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-[#F1F5F9] sm:text-2xl font-heading">
                   {t("staticPages.whatAreYouLookingFor")}
                 </CardTitle>
-                <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-normal">
+                <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-[#94A3B8] leading-normal">
                   {t("staticPages.shortcutDesc")}
                 </CardDescription>
               </div>
             </CardHeader>
 
             <CardContent className="space-y-3 px-6 py-5 sm:px-8">
-              <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/40 p-4">
-                <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+              <div className="rounded-2xl border border-slate-100 dark:border-[#293548] bg-slate-50/70 dark:bg-[#1E293B]/60 p-4">
+                <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-[#CBD5E1]">
                   <li
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#172033] transition-colors cursor-pointer group"
                     onClick={() => navigate("/doctors")}
                   >
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
+                    <span className="font-semibold text-slate-800 dark:text-[#CBD5E1] group-hover:text-primary transition-colors">
                       {t("staticPages.shortcutDoctors")}
                     </span>
                     <ChevronRight className="size-4 text-slate-400 group-hover:text-primary transition-colors" />
                   </li>
                   <li
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#172033] transition-colors cursor-pointer group"
                     onClick={() => navigate("/chatbot")}
                   >
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
+                    <span className="font-semibold text-slate-800 dark:text-[#CBD5E1] group-hover:text-primary transition-colors">
                       {t("staticPages.shortcutMedAi")}
                     </span>
                     <ChevronRight className="size-4 text-slate-400 group-hover:text-primary transition-colors" />
                   </li>
                   <li
-                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-slate-900 transition-colors cursor-pointer group"
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-white dark:hover:bg-[#172033] transition-colors cursor-pointer group"
                     onClick={() => navigate("/news")}
                   >
                     <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">

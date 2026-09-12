@@ -46,7 +46,7 @@ export default function NotificationBell() {
           type="button"
           variant="outline"
           size="icon"
-          className="relative h-10 w-10 rounded-xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          className="relative h-10 w-10 rounded-xl border-slate-200 bg-white dark:border-[#293548] dark:bg-[#172033] dark:text-slate-100"
           aria-label={`Thông báo, ${unreadCount} chưa đọc`}
         >
           <Bell className="h-4.5 w-4.5" />
@@ -59,10 +59,10 @@ export default function NotificationBell() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="end"
-        className="w-[min(92vw,380px)] rounded-2xl border-slate-200 dark:border-slate-800 dark:bg-slate-900 p-2 shadow-xl"
+        className="w-[min(92vw,380px)] rounded-2xl border-slate-200 dark:border-[#293548] dark:bg-[#172033] p-2 shadow-xl"
       >
         <div className="flex items-center justify-between gap-3 px-2 py-1.5">
-          <DropdownMenuLabel className="p-0 text-sm font-bold text-slate-900 dark:text-slate-100">
+          <DropdownMenuLabel className="p-0 text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
             Thông báo
           </DropdownMenuLabel>
           {unreadCount > 0 && (
@@ -79,7 +79,7 @@ export default function NotificationBell() {
             </Button>
           )}
         </div>
-        <DropdownMenuSeparator className="dark:bg-slate-800" />
+        <DropdownMenuSeparator className="dark:bg-[#293548]" />
         {notificationsQuery.isLoading ? (
           <div className="flex items-center justify-center py-8 text-slate-500 dark:text-slate-400">
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -93,28 +93,28 @@ export default function NotificationBell() {
             <DropdownMenuItem
               key={notification.id}
               onClick={() => void openNotification(notification)}
-              className="mb-1 cursor-pointer items-start gap-2 rounded-xl p-3 focus:bg-slate-50 dark:focus:bg-slate-800"
+              className="mb-1 cursor-pointer items-start gap-2 rounded-xl p-3 focus:bg-slate-50 dark:focus:bg-[#1E293B]"
             >
               <span
                 className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
-                  notification.isRead ? "bg-slate-200 dark:bg-slate-700" : "bg-primary"
+                  notification.isRead ? "bg-slate-200 dark:bg-slate-700" : "bg-primary ring-2 ring-primary/20"
                 }`}
               />
               <span className="min-w-0">
-                <span className="block text-xs font-bold text-slate-800 dark:text-slate-100">
+                <span className="block text-xs font-bold text-slate-800 dark:text-[#F1F5F9]">
                   {notification.title}
                 </span>
-                <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-slate-500 dark:text-slate-400">
+                <span className="mt-0.5 line-clamp-2 block text-[11px] leading-4 text-slate-500 dark:text-[#CBD5E1]">
                   {notification.content}
                 </span>
-                <span className="mt-1 block text-[10px] text-slate-400 dark:text-slate-500">
+                <span className="mt-1 block text-[10px] text-slate-400 dark:text-[#94A3B8]">
                   {notification.createdAt}
                 </span>
               </span>
             </DropdownMenuItem>
           ))
         )}
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="dark:bg-[#293548]" />
         <DropdownMenuItem
           onClick={() => navigate("/patient/notifications")}
           className="cursor-pointer justify-center rounded-xl py-2 text-xs font-semibold text-primary"

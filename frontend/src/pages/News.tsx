@@ -5,13 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Newspaper, Search } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
 import { useArticles, useTopics } from "@/hooks/useArticles";
 import { useDebounce } from "@/hooks/useDebounce";
 import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import ErrorState from "@/components/notification/ErrorState";
 import NotFoundResult from "@/components/notification/NotFoundResult";
 import type { Article } from "@/types/interface/article.interface";
+import { cn } from "@/lib/utils";
 
 const ARTICLE_LIMIT = 6;
 const TOPIC_LIMIT = 20;
@@ -68,7 +69,7 @@ const News = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0B1220] dark:text-[#F1F5F9] pb-16">
       {/* Header */}
       <header className="bg-gradient-to-r from-teal-800 via-primary to-teal-700 text-white shadow-md">
         <div className="container mx-auto px-4 py-4.5 flex flex-col gap-3.5 md:flex-row md:items-center md:justify-between">
@@ -83,70 +84,77 @@ const News = () => {
               <ArrowLeft className="h-4 w-4" />
               {t("news.backToHome")}
             </Button>
-            <div className="flex items-center gap-2.5">
-              <img
-                src="/logo.jpg"
-                alt="LifeHealth Logo"
-                className="w-9 h-9 object-cover rounded-xl border border-white/30"
-              />
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/15 text-white">
+                <Newspaper className="h-4.5 w-4.5" />
+              </span>
               <div>
-                <h1 className="text-lg font-extrabold sm:text-xl font-heading flex items-center gap-1.5">
-                  <Newspaper className="h-4.5 w-4.5 text-teal-200" />
-                  LifeHealth News
+                <h1 className="text-lg font-bold leading-tight">
+                  {t("news.pageTitle")}
                 </h1>
+                <p className="text-xs text-white/80">
+                  {t("news.pageSubtitle")}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="w-full max-w-sm md:w-auto relative text-slate-700 dark:text-slate-200">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+          {/* Search bar */}
+          <div className="w-full md:w-80">
             <Input
-              type="search"
-              placeholder={t("news.searchPlaceholder")}
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-10 h-10 rounded-full bg-white/95 dark:bg-slate-900/90 border-transparent placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-2xs text-xs sm:text-sm"
-              aria-label={t("news.searchPlaceholder")}
+              placeholder={t("news.searchPlaceholder")}
+              className="h-10 bg-white/95 text-slate-900 placeholder:text-slate-500 border-none rounded-xl text-xs sm:text-sm focus-visible:ring-2 focus-visible:ring-white/50"
             />
           </div>
         </div>
-
-        <nav className="bg-teal-900/40 border-t border-white/10 relative">
-          <div className="topic-scroll container mx-auto flex items-center gap-2 overflow-x-auto whitespace-nowrap px-4 py-2.5 text-xs sm:text-sm">
-            <button
-              type="button"
-              onClick={() => handleSelectTopic(undefined)}
-              className={`shrink-0 rounded-full border px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                !topicSlug
-                  ? "border-white bg-white text-primary shadow-xs"
-                  : "border-white/30 bg-white/10 text-white hover:bg-white/20"
-              }`}
-            >
-              {t("news.allTopics")}
-            </button>
-            {topics.map((topic) => (
-              <button
-                key={topic.id}
-                type="button"
-                onClick={() => handleSelectTopic(topic.slug)}
-                className={`shrink-0 rounded-full border px-3.5 py-1 text-xs font-bold transition-all cursor-pointer ${
-                  topicSlug === topic.slug
-                    ? "border-white bg-white text-primary shadow-xs"
-                    : "border-white/30 bg-white/10 text-white hover:bg-white/20"
-                }`}
-              >
-                {topic.name}
-              </button>
-            ))}
-          </div>
-          <span
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-teal-900/40 to-transparent"
-          />
-        </nav>
       </header>
 
-      <main className="container mx-auto px-4 py-10 max-w-7xl">
+      {/* Topic Filter Pills */}
+      {topics.length > 0 && (
+        <div className="container mx-auto px-4 pt-6">
+          <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            <Button
+              type="button"
+              variant={!topicSlug ? "default" : "outline"}
+              size="sm"
+              className={cn(
+                "rounded-full text-xs font-semibold px-4 cursor-pointer",
+                !topicSlug
+                  ? "!bg-primary !text-primary-foreground shadow-xs"
+                  : "bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#293548] hover:border-primary/40",
+              )}
+              onClick={() => handleSelectTopic(undefined)}
+            >
+              {t("news.allTopics")}
+            </Button>
+            {topics.map((topic) => {
+              const active = topicSlug === topic.slug;
+              return (
+                <Button
+                  key={topic.id}
+                  type="button"
+                  variant={active ? "default" : "outline"}
+                  size="sm"
+                  className={cn(
+                    "rounded-full text-xs font-semibold px-4 cursor-pointer",
+                    active
+                      ? "!bg-primary !text-primary-foreground shadow-xs"
+                      : "bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#293548] hover:border-primary/40",
+                  )}
+                  onClick={() => handleSelectTopic(topic.slug)}
+                >
+                  {topic.name}
+                </Button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Articles Grid */}
+      <main className="container mx-auto px-4 py-6">
         {isLoading ? (
           <MedicalAiLoading
             label={t("news.loadingLabel")}
@@ -175,9 +183,9 @@ const News = () => {
               {articles.map((article) => (
                 <Card
                   key={article.id}
-                  className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col group py-0"
+                  className="overflow-hidden rounded-2xl border border-slate-200/80 dark:border-[#293548] bg-white dark:bg-[#172033] shadow-2xs hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col group py-0"
                 >
-                  <div className="relative overflow-hidden h-48 w-full bg-slate-100 dark:bg-slate-800">
+                  <div className="relative overflow-hidden h-48 w-full bg-slate-100 dark:bg-[#1E293B]">
                     <img
                       src={getArticleImage(article)}
                       alt={article.title}
@@ -188,7 +196,7 @@ const News = () => {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     {article.topic?.name && (
-                      <span className="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-slate-900/90 backdrop-blur-xs px-2.5 py-0.5 text-[11px] font-bold text-primary shadow-xs">
+                      <span className="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-[#172033]/90 backdrop-blur-xs px-2.5 py-0.5 text-[11px] font-bold text-primary shadow-xs">
                         {article.topic.name}
                       </span>
                     )}
@@ -196,11 +204,11 @@ const News = () => {
                   <CardContent className="flex flex-col flex-grow p-5 space-y-3">
                     <Link
                       to={`/news/${article.id}`}
-                      className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors line-clamp-2 font-heading leading-snug"
+                      className="text-base sm:text-lg font-bold text-slate-900 dark:text-[#F1F5F9] group-hover:text-primary transition-colors line-clamp-2 font-heading leading-snug"
                     >
                       {article.title}
                     </Link>
-                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 flex-grow line-clamp-3 leading-relaxed">
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-[#94A3B8] flex-grow line-clamp-3 leading-relaxed">
                       {article.summary}
                     </p>
 

@@ -458,10 +458,10 @@ export default function AICoachHealth() {
 
           {/* Selected Member Summary Card */}
           {selectedProfileObj && (
-            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4.5 transition-all dark:border-slate-800 dark:bg-slate-950/40">
+            <div className="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-4.5 transition-all dark:border-[#293548] dark:bg-[#1E293B]/60">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3.5">
-                  <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0 dark:border-slate-800">
+                  <Avatar className="h-12 w-12 border-2 border-white shadow-sm shrink-0 dark:border-[#293548]">
                     <AvatarFallback
                       className={cn(
                         "text-sm font-bold",
@@ -477,7 +477,7 @@ export default function AICoachHealth() {
                   </Avatar>
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                      <p className="text-sm font-bold text-slate-900 dark:text-[#F1F5F9]">
                         {selectedProfileObj.fullname}
                       </p>
                       <Badge

@@ -74,8 +74,8 @@ const AlertDialogConfirmBook = ({
 
   return (
     <AlertDialog open={openConfirm} onOpenChange={setOpenConfirm}>
-      <AlertDialogContent className="max-w-md p-0 gap-0 rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800">
-        <AlertDialogHeader className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 text-center">
+      <AlertDialogContent className="max-w-md p-0 gap-0 rounded-2xl shadow-xl overflow-hidden bg-white dark:bg-[#172033] border border-slate-200/80 dark:border-[#293548]">
+        <AlertDialogHeader className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-[#293548] text-center bg-white dark:bg-[#111827]">
           <div className="flex items-center justify-center w-11 h-11 mx-auto rounded-full bg-primary/10 text-primary dark:bg-primary/20">
             <CalendarDays size={24} />
           </div>
@@ -95,7 +95,7 @@ const AlertDialogConfirmBook = ({
             })}
           </div>
 
-          <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 p-3.5 space-y-2 text-xs sm:text-sm">
+          <div className="rounded-xl border border-slate-100 dark:border-[#293548] bg-slate-50/70 dark:bg-[#1E293B] p-3.5 space-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <Stethoscope size={16} className="text-primary shrink-0" />
               <span className="text-slate-500 dark:text-slate-400">{t("doctor.doctorLabel")}</span>
@@ -118,7 +118,7 @@ const AlertDialogConfirmBook = ({
               onChange={(event) =>
                 setSelectedRelativeId(Number(event.target.value))
               }
-              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-[#293548] dark:bg-[#1E293B] dark:text-slate-100"
             >
               <option value={0}>
                 {isLoadingRelatives
@@ -148,7 +148,7 @@ const AlertDialogConfirmBook = ({
           </div>
         </div>
 
-        <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-slate-950/80">
+        <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-[#293548] flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-[#111827]">
           <AlertDialogCancel className="w-full sm:w-auto rounded-xl">
             {t("doctor.cancelBtn")}
           </AlertDialogCancel>
@@ -160,7 +160,7 @@ const AlertDialogConfirmBook = ({
               !selectedRelativeId
             }
             onClick={handleBook}
-            className="w-full sm:w-auto rounded-xl font-bold !bg-primary text-white hover:!bg-primary/90"
+            className="w-full sm:w-auto rounded-xl font-bold !bg-primary text-white dark:!text-primary-foreground hover:!bg-primary/90"
           >
             {isPending ? <Loading /> : t("doctor.confirmBtn")}
           </AlertDialogAction>

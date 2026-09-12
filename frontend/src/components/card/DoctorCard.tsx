@@ -63,10 +63,10 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
 
   return (
     <>
-      <Card className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 p-0 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
+      <Card className="group relative flex flex-col justify-between overflow-hidden rounded-3xl border border-slate-200/80 dark:border-[#293548] bg-white dark:bg-[#172033] p-0 shadow-2xs transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-lg">
         <div>
           {/* Header */}
-          <CardHeader className="flex flex-row items-start gap-3.5 border-b border-slate-100/80 dark:border-slate-800 bg-gradient-to-br from-slate-50/70 via-white to-primary/5 dark:from-slate-900 dark:via-slate-900 dark:to-primary/10 p-4.5">
+          <CardHeader className="flex flex-row items-start gap-3.5 border-b border-slate-100/80 dark:border-[#293548] bg-gradient-to-br from-slate-50/70 via-white to-primary/5 dark:from-[#172033] dark:via-[#172033] dark:to-primary/10 p-4.5">
             <div className="relative shrink-0">
               <img
                 src={
@@ -80,12 +80,12 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
                 decoding="async"
                 className="h-15 w-15 rounded-2xl object-cover ring-2 ring-primary/20 shadow-2xs transition-transform group-hover:scale-105"
               />
-              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white dark:border-slate-900 bg-emerald-500" />
+              <span className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white dark:border-[#172033] bg-emerald-500" />
             </div>
 
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center justify-between gap-1.5">
-                <CardTitle className="truncate text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">
+                <CardTitle className="truncate text-base font-bold text-slate-900 dark:text-[#F1F5F9] group-hover:text-primary transition-colors">
                   {t("doctor.drPrefix")} {fullname}
                 </CardTitle>
                 {isOutstanding && (
@@ -108,7 +108,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
                   <span className="truncate">{workplace || t("doctor.generalHospital")}</span>
                 </div>
                 {doctor_level && (
-                  <div className="inline-block rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
+                  <div className="inline-block rounded-md bg-slate-100 dark:bg-[#1E293B] px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-[#CBD5E1]">
                     {doctor_level}
                   </div>
                 )}
@@ -119,7 +119,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
           {/* Content */}
           <CardContent className="space-y-2.5 p-4.5 text-xs">
             {/* Quick Metrics */}
-            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50/80 dark:bg-slate-800/60 p-2.5 border border-slate-100 dark:border-slate-800">
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-50/80 dark:bg-[#1E293B] p-2.5 border border-slate-100 dark:border-[#293548]">
               <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-bold">
                 <Star size={14} className="fill-amber-400 text-amber-400" />
                 <span>{avg_rating.toFixed(1)} / 5</span>
@@ -155,7 +155,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
         <CardFooter className="flex flex-col gap-2 p-4.5 pt-0">
           <Button
             onClick={() => setIsShow(true)}
-            className="w-full gap-2 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-xs cursor-pointer h-10"
+            className="w-full gap-2 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm shadow-xs cursor-pointer h-10"
           >
             <Calendar size={15} />
             <span>{t("doctor.bookAppointment")}</span>
@@ -175,7 +175,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
               onClick={() => navigate(`/doctors/${id}`)}
               variant="outline"
               size="sm"
-              className="gap-1.5 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold h-8.5 cursor-pointer"
+              className="gap-1.5 rounded-xl border-slate-200 dark:border-[#293548] bg-white dark:bg-[#1E293B] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-[#253347] text-xs font-semibold h-8.5 cursor-pointer"
             >
               <Eye size={13} />
               {t("doctor.details")}

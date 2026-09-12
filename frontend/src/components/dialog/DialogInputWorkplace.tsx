@@ -54,11 +54,11 @@ const DialogInputWorkplace = ({ className = "" }: { className: string }) => {
       </DialogTrigger>
 
       {/* Nội dung dialog */}
-      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden">
-        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
+      <DialogContent className="max-w-md p-0 gap-0 overflow-hidden dark:border-[#293548] dark:bg-[#172033]">
+        <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-[#293548] bg-white dark:bg-[#111827] pr-12">
           <DialogHeader>
             <DialogTitle>Nhập nơi làm việc</DialogTitle>
-            <DialogDescription className="mt-1.5 text-xs sm:text-sm text-slate-500">
+            <DialogDescription className="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Nhập tên nơi làm việc của bác sĩ (Ví dụ: &quot;Bệnh viện Bạch Mai&quot; hoặc &quot;Phòng khám Hoàn Mỹ&quot;) để lọc danh sách.
             </DialogDescription>
           </DialogHeader>
@@ -75,11 +75,11 @@ const DialogInputWorkplace = ({ className = "" }: { className: string }) => {
         </div>
 
         {/* Footer với nút hành động */}
-        <div className="shrink-0 p-4 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+        <div className="shrink-0 p-4 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end gap-2.5">
           <Button variant="outline" onClick={handleClose} className="rounded-xl">
             Đóng
           </Button>
-          <Button onClick={handleSave} disabled={!tempValue.trim()} className="rounded-xl font-bold !bg-primary text-white">
+          <Button onClick={handleSave} disabled={!tempValue.trim()} className="rounded-xl font-bold !bg-primary text-white dark:!text-primary-foreground">
             Xác nhận
           </Button>
         </div>

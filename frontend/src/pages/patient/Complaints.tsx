@@ -445,10 +445,10 @@ const MyComplaints = () => {
           if (!open) setSelectedComplaint(null);
         }}
       >
-        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden rounded-2xl">
-          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+        <DialogContent className="sm:max-w-xl p-0 gap-0 overflow-hidden rounded-2xl dark:bg-[#172033] dark:border-[#293548]">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">
                 <span
                   className={cn(
                     "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
@@ -462,11 +462,11 @@ const MyComplaints = () => {
                 </span>
               </DialogTitle>
               <DialogDescription className="flex flex-wrap items-center gap-2 mt-1.5">
-                <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <span className="mono-label rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-[#1E293B] dark:text-[#CBD5E1]">
                   #{selectedComplaint?.id as number}
                 </span>
                 <StatusBadge status={selectedStatus} />
-                <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+                <span className="inline-flex items-center gap-1 text-xs text-slate-500 dark:text-[#94A3B8]">
                   <CalendarClock className="h-3.5 w-3.5" />
                   {formatDate(selectedComplaint?.created_at as string | null)}
                 </span>
@@ -475,11 +475,11 @@ const MyComplaints = () => {
           </div>
 
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
-            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/50">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-[#293548] dark:bg-[#1E293B]">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-[#94A3B8]">
                 {t("complaints.detailContent")}
               </p>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-[#CBD5E1]">
                 {selectedComplaint?.description as string}
               </p>
             </div>
@@ -520,7 +520,7 @@ const MyComplaints = () => {
             ) : null}
           </div>
 
-          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end">
             <Button
               type="button"
               variant="outline"
@@ -540,14 +540,14 @@ const MyComplaints = () => {
           if (!open) setForm({ title: "", description: "" });
         }}
       >
-        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden rounded-2xl">
-          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+        <DialogContent className="sm:max-w-lg p-0 gap-0 overflow-hidden rounded-2xl dark:bg-[#172033] dark:border-[#293548]">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-slate-900 dark:text-[#F1F5F9]">
                 <Send className="h-5 w-5 text-primary" />
                 {t("complaints.modalTitle")}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-slate-500 dark:text-[#94A3B8]">
                 {t("complaints.modalDesc")}
               </DialogDescription>
             </DialogHeader>
@@ -565,7 +565,7 @@ const MyComplaints = () => {
                   }
                   placeholder={t("complaints.titlePlaceholder")}
                   required
-                  maxLength={150}
+                  maxLength={100}
                   className="rounded-xl"
                 />
               </div>
@@ -589,7 +589,7 @@ const MyComplaints = () => {
               </div>
             </div>
 
-            <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+            <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end gap-2.5">
               <Button
                 type="button"
                 variant="outline"
@@ -599,7 +599,7 @@ const MyComplaints = () => {
               >
                 {t("common.cancel")}
               </Button>
-              <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold !bg-primary text-white gap-1.5">
+              <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold !bg-primary !text-primary-foreground gap-1.5">
                 <Send className="h-4 w-4" />
                 {isSubmitting ? t("common.sending") : t("complaints.submitBtn")}
               </Button>

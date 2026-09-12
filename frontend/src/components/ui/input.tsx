@@ -17,10 +17,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             type={type}
             data-slot="input"
             className={cn(
-              "file:text-foreground placeholder:text-slate-400 dark:placeholder:text-slate-500 flex h-10 w-full min-w-0 rounded-xl border bg-white px-3.5 py-2 text-sm shadow-2xs transition-all duration-200 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/20",
+              "file:text-foreground placeholder:text-slate-400 dark:placeholder:text-[#94A3B8] flex h-10 w-full min-w-0 rounded-xl border bg-white px-3.5 py-2 text-sm shadow-2xs transition-all duration-200 outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-45 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/25",
               error
-                ? "border-rose-400 focus-visible:border-rose-500 focus-visible:ring-rose-200 dark:border-rose-500 dark:focus-visible:ring-rose-950/50"
-                : "border-slate-200 hover:border-slate-300 dark:border-slate-800 dark:hover:border-slate-700 dark:bg-slate-900 dark:text-slate-100",
+                ? "border-rose-400 focus-visible:border-rose-500 focus-visible:ring-rose-200 dark:border-[#FB7185] dark:focus-visible:ring-rose-950/50"
+                : "border-slate-200 hover:border-slate-300 dark:border-[#293548] dark:hover:border-primary/50 dark:bg-[#1E293B] dark:text-[#F1F5F9]",
               icon ? "pr-10" : "",
               className
             )}

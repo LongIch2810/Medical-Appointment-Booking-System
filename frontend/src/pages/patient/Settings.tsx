@@ -487,10 +487,10 @@ const Settings: React.FC = () => {
               </div>
 
               {/* System Reminder Info Box */}
-              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/70 dark:border-slate-800 p-4 text-xs text-slate-600 dark:text-slate-400">
+              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200/70 dark:border-[#293548] p-4 text-xs text-slate-600 dark:text-[#94A3B8]">
                 <Clock className="h-4.5 w-4.5 text-primary shrink-0" />
                 <p>
-                  <strong className="font-semibold text-slate-800 dark:text-slate-200">Thời gian nhắc lịch mặc định:</strong> Trước{" "}
+                  <strong className="font-semibold text-slate-800 dark:text-[#CBD5E1]">Thời gian nhắc lịch mặc định:</strong> Trước{" "}
                   <span className="font-bold text-primary dark:text-sky-400">{reminderHours} giờ</span> theo quy định hệ thống LifeHealth. Bạn có thể kiểm tra danh sách lịch tại mục "Lịch khám".
                 </p>
               </div>
@@ -563,14 +563,14 @@ const Settings: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-950/50 border border-slate-200/60 dark:border-slate-800 p-3">
+                  <div className="flex items-center justify-between rounded-xl bg-slate-50 dark:bg-[#1E293B] border border-slate-200/60 dark:border-[#293548] p-3">
                     <div className="flex items-center gap-2.5">
                       <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                       <div>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                        <p className="text-xs font-bold text-slate-800 dark:text-[#CBD5E1]">
                           Trình duyệt Web hiện tại
                         </p>
-                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <p className="text-[11px] text-slate-500 dark:text-[#94A3B8]">
                           Đang hoạt động (Trực tuyến)
                         </p>
                       </div>
@@ -580,7 +580,7 @@ const Settings: React.FC = () => {
                     </Badge>
                   </div>
 
-                  <div className="rounded-xl border border-slate-200/60 dark:border-slate-800 p-3 text-xs space-y-1.5 text-slate-600 dark:text-slate-300">
+                  <div className="rounded-xl border border-slate-200/60 dark:border-[#293548] p-3 text-xs space-y-1.5 text-slate-600 dark:text-[#CBD5E1]">
                     <div className="flex justify-between">
                       <span className="text-slate-500 dark:text-slate-400">Xác thực mã hóa:</span>
                       <span className="font-semibold text-slate-800 dark:text-slate-200">JWT Token (Bearer)</span>
@@ -709,22 +709,22 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Language & Regional Defaults */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-950/50 space-y-4">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-[#293548] p-5 bg-slate-50/50 dark:bg-[#1E293B] space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-[#94A3B8]">
                       {t("settings.languageSection", { defaultValue: "Ngôn ngữ hiển thị" })}
                     </p>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                    <p className="text-xs text-slate-600 dark:text-[#94A3B8] mt-0.5">
                       {t("settings.languageSectionDesc", { defaultValue: "Lựa chọn ngôn ngữ giao diện của hệ thống LifeHealth" })}
                     </p>
                   </div>
                   <LanguageSwitcher variant="pills" />
                 </div>
-                <div className="grid gap-4 sm:grid-cols-2 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
+                <div className="grid gap-4 sm:grid-cols-2 pt-3 border-t border-slate-200/60 dark:border-[#293548] text-xs">
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">{t("settings.dateFormat", { defaultValue: "Định dạng ngày tháng" })}</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
+                    <span className="text-slate-500 dark:text-[#94A3B8] block">{t("settings.dateFormat", { defaultValue: "Định dạng ngày tháng" })}</span>
+                    <span className="font-bold text-slate-800 dark:text-[#CBD5E1] text-sm mt-0.5 block">
                       DD/MM/YYYY (24 Giờ)
                     </span>
                   </div>
@@ -1016,7 +1016,7 @@ const Settings: React.FC = () => {
 
             </div>
 
-            <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+            <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end gap-2.5">
               <Button
                 type="button"
                 variant="outline"
@@ -1029,7 +1029,7 @@ const Settings: React.FC = () => {
               <Button
                 type="submit"
                 disabled={changePasswordMutation.isPending}
-                className="rounded-xl !bg-primary hover:!bg-primary/90 font-bold !text-white shadow-sm cursor-pointer"
+                className="rounded-xl !bg-primary hover:!bg-primary/90 font-bold !text-primary-foreground shadow-sm cursor-pointer"
               >
                 {changePasswordMutation.isPending ? (
                   <>

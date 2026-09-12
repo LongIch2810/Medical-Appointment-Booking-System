@@ -214,8 +214,8 @@ export default function Chatbot() {
 
   return (
     <section className="w-full h-full flex justify-center items-center overflow-hidden">
-      <Card className="w-full max-w-3xl h-full flex flex-col gap-0 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900">
-        <CardHeader className="shrink-0 px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 flex flex-row items-center justify-between bg-white dark:bg-slate-900 rounded-t-2xl shadow-2xs">
+      <Card className="w-full max-w-3xl h-full flex flex-col gap-0 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 dark:border-[#293548] bg-white dark:bg-[#172033]">
+        <CardHeader className="shrink-0 px-5 py-3.5 border-b border-slate-100 dark:border-[#293548] flex flex-row items-center justify-between bg-white dark:bg-[#111827] rounded-t-2xl shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="relative">
               <img
@@ -223,13 +223,13 @@ export default function Chatbot() {
                 alt="LifeHealth Logo"
                 className="size-11 object-cover rounded-2xl shadow-xs border border-primary/20"
               />
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-900">
+              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111827]">
                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
               </span>
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg flex items-center gap-1.5">
+                <h1 className="font-bold text-slate-900 dark:text-[#F1F5F9] text-base sm:text-lg flex items-center gap-1.5">
                   LifeHealth MedAI
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -244,7 +244,7 @@ export default function Chatbot() {
                   {t("common.officialAi")}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium">
                 {t("chatbot.pageSubtitle")}
               </p>
             </div>
@@ -252,14 +252,14 @@ export default function Chatbot() {
         </CardHeader>
 
         {/* Mandatory Amber Medical Disclaimer */}
-        <div className="shrink-0 px-4 py-2 bg-amber-50/90 dark:bg-amber-950/40 border-b border-amber-200/80 dark:border-amber-900/60 flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
+        <div className="shrink-0 px-4 py-2 bg-amber-50/90 dark:bg-amber-950/30 border-b border-amber-200/80 dark:border-amber-900/40 flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
           <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <p className="leading-tight text-[11px] sm:text-xs">
             <strong>{t("chatbot.disclaimerStrong")}</strong> {t("chatbot.disclaimerText")}
           </p>
         </div>
 
-        <CardContent className="flex-1 min-h-0 p-0 bg-slate-50/60 dark:bg-slate-950/40 overflow-hidden">
+        <CardContent className="flex-1 min-h-0 p-0 bg-slate-50/60 dark:bg-[#0B1220]/60 overflow-hidden">
           <div ref={scrollAreaWrapperRef} className="h-full w-full overflow-hidden">
             <ScrollArea className="h-full w-full">
               <div className="p-3 sm:p-4 space-y-3.5">
@@ -276,7 +276,7 @@ export default function Chatbot() {
                         {isTyping && (
                           <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
                         )}
-                        <Avatar className="relative w-9 h-9 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xs">
+                        <Avatar className="relative w-9 h-9 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#293548] shadow-xs">
                           <AvatarImage src="" alt="Bot" />
                           <AvatarFallback>
                             <MedicalRobotAvatar active={!!isTyping} />
@@ -290,8 +290,8 @@ export default function Chatbot() {
                       className={`max-w-[80%] min-w-0 px-4 py-2.5 rounded-2xl break-words text-sm md:text-base shadow-xs
                         ${
                           role === "human"
-                            ? "bg-primary text-white rounded-br-none whitespace-pre-wrap font-medium"
-                            : "bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-none"
+                            ? "bg-primary text-primary-foreground dark:bg-teal-500/25 dark:text-teal-100 dark:border dark:border-teal-500/35 rounded-br-none whitespace-pre-wrap font-medium"
+                            : "bg-white dark:bg-[#172033] border border-slate-200/80 dark:border-[#293548] text-slate-800 dark:text-[#F1F5F9] rounded-bl-none"
                         }`}
                     >
                       {isTyping ? (
@@ -320,19 +320,19 @@ export default function Chatbot() {
         </CardContent>
 
         {/* Input */}
-        <CardFooter className="shrink-0 p-3 sm:p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 flex gap-2.5">
+        <CardFooter className="shrink-0 p-3 sm:p-4 border-t border-slate-100 dark:border-[#293548] bg-white dark:bg-[#111827] flex gap-2.5">
           <Input
             value={input}
             onInput={handleInputContent}
             onKeyDown={handleKeyDown}
             disabled={isPending}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus-visible:ring-primary/20"
+            className="flex-1 rounded-xl border border-slate-200 dark:border-[#293548] bg-white dark:bg-[#1E293B] px-3.5 py-2 text-sm text-slate-900 dark:text-[#F1F5F9] focus-visible:ring-primary/20"
             placeholder={isPending ? t("chatbot.inputThinkingPlaceholder") : t("chatbot.inputPlaceholder")}
           />
           <Button
             disabled={isPending || !input.trim()}
             onClick={handleSend}
-            className="rounded-xl px-5 bg-primary hover:bg-primary/90 text-white font-semibold text-sm shadow-xs cursor-pointer gap-1.5"
+            className="rounded-xl px-5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-xs cursor-pointer gap-1.5"
           >
             {isPending ? (
               <Loading size={10} />

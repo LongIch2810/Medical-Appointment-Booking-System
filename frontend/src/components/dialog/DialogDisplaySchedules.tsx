@@ -62,9 +62,9 @@ const DialogDisplaySchedules = ({
         }}
       >
         <DialogContent
-          className="w-full max-w-4xl sm:max-w-4xl p-0 gap-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden bg-white dark:border-slate-800 dark:bg-slate-900"
+          className="w-full max-w-4xl sm:max-w-4xl p-0 gap-0 rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden bg-white dark:border-[#293548] dark:bg-[#172033]"
         >
-          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 pr-12">
+          <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] bg-white dark:bg-[#111827] pr-12">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
                 {t("doctor.dialogScheduleTitle", { doctorName })}
@@ -82,8 +82,8 @@ const DialogDisplaySchedules = ({
                 <CalendarComponent />
               </div>
 
-              <Separator className="md:hidden w-full my-1 dark:bg-slate-800" />
-              <Separator orientation="vertical" className="hidden md:block self-stretch h-auto dark:bg-slate-800" />
+              <Separator className="md:hidden w-full my-1 dark:bg-[#293548]" />
+              <Separator orientation="vertical" className="hidden md:block self-stretch h-auto dark:bg-[#293548]" />
 
               <div className="flex-1 min-w-0 w-full space-y-4">
                 <div className="flex items-center justify-between">
@@ -113,7 +113,7 @@ const DialogDisplaySchedules = ({
           </div>
 
           {/* Footer cố định */}
-          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/90 dark:bg-slate-950/90 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="shrink-0 p-4 sm:p-5 bg-slate-50/90 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
               {doctor_schedule_id ? (
                 <span>{t("doctor.pleaseClickBook")}</span>
@@ -134,7 +134,7 @@ const DialogDisplaySchedules = ({
               <Button
                 disabled={isPending || !doctor_schedule_id}
                 onClick={() => setOpenConfirm(true)}
-                className="flex-1 sm:flex-none rounded-xl font-bold !bg-primary hover:!bg-primary/90 text-white shadow-xs"
+                className="flex-1 sm:flex-none rounded-xl font-bold !bg-primary hover:!bg-primary/90 text-white dark:!text-primary-foreground shadow-xs"
               >
                 {isPending ? <Loading /> : t("doctor.bookAppointment")}
               </Button>

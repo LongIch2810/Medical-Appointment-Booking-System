@@ -565,13 +565,13 @@ const HealthRecords: React.FC = () => {
           </Card>
 
           <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
-            <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl">
-              <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
+            <DialogContent className="sm:max-w-3xl p-0 gap-0 overflow-hidden rounded-2xl sm:rounded-3xl dark:bg-[#172033] dark:border-[#293548]">
+              <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12">
                 <DialogHeader>
-                  <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  <DialogTitle className="text-lg font-bold text-slate-900 dark:text-[#F1F5F9]">
                     {t("healthRecords.updateModalTitle", { name: selectedHealthRecord.patient.fullname ?? "" })}
                   </DialogTitle>
-                  <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
+                  <DialogDescription className="text-xs text-slate-500 dark:text-[#94A3B8]">
                     {t("healthRecords.updateModalSubtitle")}
                   </DialogDescription>
                 </DialogHeader>
@@ -774,7 +774,7 @@ const HealthRecords: React.FC = () => {
 
                 </div>
 
-                <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-950/80 border-t border-slate-100 dark:border-slate-800 flex justify-end gap-2.5">
+                <div className="shrink-0 p-4 sm:p-5 bg-slate-50/80 dark:bg-[#111827] border-t border-slate-100 dark:border-[#293548] flex justify-end gap-2.5">
                   <Button
                     type="button"
                     variant="outline"
@@ -786,7 +786,7 @@ const HealthRecords: React.FC = () => {
                   <Button
                     type="submit"
                     disabled={updateHealthProfileMutation.isPending}
-                    className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 !text-white"
+                    className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 !text-primary-foreground"
                   >
                     {updateHealthProfileMutation.isPending
                       ? t("common.saving")

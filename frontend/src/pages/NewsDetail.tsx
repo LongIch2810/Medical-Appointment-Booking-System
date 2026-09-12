@@ -67,13 +67,13 @@ const NewsDetail = () => {
   const images = Array.isArray(article.img_urls) ? article.img_urls : [];
 
   return (
-    <div className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen">
+    <div className="bg-slate-50 dark:bg-[#0B1220] text-slate-900 dark:text-[#F1F5F9] min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-2 text-primary dark:text-teal-400 dark:hover:bg-slate-800"
+            className="gap-2 text-primary dark:text-teal-400 dark:hover:bg-[#1E293B]"
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -82,7 +82,7 @@ const NewsDetail = () => {
           <Button
             variant="outline"
             size="sm"
-            className="gap-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200"
+            className="gap-2 dark:border-[#293548] dark:bg-[#1E293B] dark:text-[#CBD5E1]"
             onClick={() => navigate("/news")}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -90,7 +90,7 @@ const NewsDetail = () => {
           </Button>
         </div>
 
-        <article className="bg-white rounded-2xl shadow-sm overflow-hidden dark:bg-slate-900 dark:border dark:border-slate-800">
+        <article className="bg-white rounded-2xl shadow-sm overflow-hidden dark:bg-[#172033] dark:border dark:border-[#293548]">
           <img
             src={getCoverImage(article)}
             alt={article.title}
@@ -108,17 +108,17 @@ const NewsDetail = () => {
                   {article.topic.name}
                 </Link>
               )}
-              <h1 className="text-2xl md:text-4xl font-bold leading-tight text-slate-900 dark:text-slate-100">
+              <h1 className="text-2xl md:text-4xl font-bold leading-tight text-slate-900 dark:text-[#F1F5F9]">
                 {article.title}
               </h1>
               {article.summary && (
-                <p className="text-base md:text-lg text-slate-600 dark:text-slate-300">
+                <p className="text-base md:text-lg text-slate-600 dark:text-[#CBD5E1]">
                   {article.summary}
                 </p>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500 dark:text-[#94A3B8]">
               <div className="flex items-center gap-2">
                 <Avatar className="h-9 w-9">
                   <AvatarImage
@@ -128,7 +128,7 @@ const NewsDetail = () => {
                   <AvatarFallback>{getAuthorInitial(article)}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-medium text-slate-700 dark:text-slate-300">
+                  <p className="font-medium text-slate-700 dark:text-[#CBD5E1]">
                     {article.author?.fullname ?? t("news.authorLabel")}
                   </p>
                   {article.author?.email && (
@@ -158,10 +158,10 @@ const NewsDetail = () => {
               </div>
             )}
 
-            <Separator className="dark:bg-slate-800" />
+            <Separator className="dark:bg-[#293548]" />
 
             <div
-              className="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:scroll-mt-20 dark:text-slate-300"
+              className="prose prose-slate dark:prose-invert max-w-none prose-img:rounded-xl prose-headings:scroll-mt-20 dark:text-[#CBD5E1]"
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 

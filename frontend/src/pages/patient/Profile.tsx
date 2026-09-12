@@ -168,12 +168,12 @@ const Profile: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Profile Header Card */}
-      <Card className="overflow-hidden border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-sm transition-all">
-        <div className="relative border-b border-slate-100 dark:border-slate-800 bg-gradient-to-r from-emerald-50/60 via-teal-50/30 to-sky-50/20 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-6 md:p-8">
+      <Card className="overflow-hidden border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#172033] py-0 shadow-sm transition-all">
+        <div className="relative border-b border-slate-100 dark:border-[#293548] bg-gradient-to-r from-emerald-50/60 via-teal-50/30 to-sky-50/20 dark:from-emerald-950/20 dark:via-[#172033] dark:to-[#172033] p-6 md:p-8">
           <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center">
             {/* Avatar with Camera Trigger */}
             <div className="relative group">
-              <Avatar className="h-24 w-24 border-4 border-white dark:border-slate-800 shadow-md ring-2 ring-primary/20 sm:h-28 sm:w-28 transition-transform group-hover:scale-105">
+              <Avatar className="h-24 w-24 border-4 border-white dark:border-[#293548] shadow-md ring-2 ring-primary/20 sm:h-28 sm:w-28 transition-transform group-hover:scale-105">
                 <AvatarImage
                   src={displayPicture}
                   alt={profile?.fullname ?? "Avatar"}
@@ -185,7 +185,7 @@ const Profile: React.FC = () => {
               </Avatar>
               <label
                 htmlFor="avatar-upload"
-                className="absolute bottom-0 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white dark:border-slate-800 bg-primary text-white shadow-md transition-all hover:bg-primary/90 hover:scale-110 active:scale-95"
+                className="absolute bottom-0 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white dark:border-[#293548] bg-primary text-primary-foreground shadow-md transition-all hover:bg-primary/90 hover:scale-110 active:scale-95"
                 title={t("profile.changeAvatar")}
               >
                 <Camera className="h-4 w-4" />
@@ -203,7 +203,7 @@ const Profile: React.FC = () => {
             {/* Profile Identity Details */}
             <div className="text-center sm:text-left flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 sm:text-2xl truncate">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-[#F1F5F9] sm:text-2xl truncate">
                   {profile?.fullname || t("profile.notUpdatedName")}
                 </h2>
                 <Badge
@@ -360,7 +360,7 @@ const Profile: React.FC = () => {
                     id="username"
                     value={profile?.username ?? ""}
                     disabled
-                    className="rounded-xl bg-slate-50/80 dark:bg-slate-950/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed"
+                    className="rounded-xl bg-slate-50/80 dark:bg-[#1E293B] text-slate-500 dark:text-[#94A3B8] border-slate-200 dark:border-[#293548] cursor-not-allowed"
                   />
                   <p className="text-[11px] text-slate-400">
                     {t("profile.usernameHint")}
@@ -371,7 +371,7 @@ const Profile: React.FC = () => {
 
             {/* Section 2: Thông tin liên lạc */}
             <div className="space-y-4">
-              <div className="border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div className="border-b border-slate-100 dark:border-[#293548] pb-2">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
                     2
@@ -392,7 +392,7 @@ const Profile: React.FC = () => {
                     type="email"
                     value={profile?.email ?? ""}
                     disabled
-                    className="rounded-xl bg-slate-50/80 dark:bg-slate-950/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed"
+                    className="rounded-xl bg-slate-50/80 dark:bg-[#1E293B] text-slate-500 dark:text-[#94A3B8] border-slate-200 dark:border-[#293548] cursor-not-allowed"
                   />
                   <p className="text-[11px] text-slate-400 flex items-center gap-1">
                     <Info className="h-3 w-3 inline shrink-0" />
@@ -441,7 +441,7 @@ const Profile: React.FC = () => {
         </CardContent>
 
         {/* Footer Actions */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 px-6 py-4 rounded-b-2xl">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-[#293548] bg-slate-50/70 dark:bg-[#111827] px-6 py-4 rounded-b-2xl">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {isDirty || selectedFile ? (
               <span className="text-amber-600 dark:text-amber-400 font-medium">{t("profile.hasUnsavedChanges")}</span>
@@ -455,7 +455,7 @@ const Profile: React.FC = () => {
               variant="outline"
               onClick={handleReset}
               disabled={isPending || (!isDirty && !selectedFile)}
-              className="gap-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 dark:border-slate-700 dark:bg-slate-800"
+              className="gap-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 dark:border-[#293548] dark:bg-[#1E293B]"
             >
               <RotateCcw className="h-4 w-4" />
               {t("profile.revertBtn")}
@@ -464,17 +464,17 @@ const Profile: React.FC = () => {
               type="submit"
               form="profile-form"
               disabled={isPending}
-              className="gap-2 rounded-xl !bg-primary hover:!bg-primary/90 px-5 font-semibold !text-white hover:!text-white shadow-sm cursor-pointer"
+              className="gap-2 rounded-xl !bg-primary hover:!bg-primary/90 px-5 font-semibold !text-primary-foreground shadow-sm cursor-pointer"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span className="text-white">{t("profile.savingProfileBtn")}</span>
+                  <Loader2 className="h-4 w-4 animate-spin text-primary-foreground" />
+                  <span className="text-primary-foreground">{t("profile.savingProfileBtn")}</span>
                 </>
               ) : (
                 <>
-                  <Save className="h-4 w-4 text-white" />
-                  <span className="text-white">{t("profile.saveProfileBtn")}</span>
+                  <Save className="h-4 w-4 text-primary-foreground" />
+                  <span className="text-primary-foreground">{t("profile.saveProfileBtn")}</span>
                 </>
               )}
             </Button>

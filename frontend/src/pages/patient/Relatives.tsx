@@ -202,17 +202,17 @@ const Relatives: React.FC = () => {
     <>
       <div className="grid gap-6 xl:grid-cols-[1.3fr_1fr] items-start">
         {/* Left Column: Relatives List */}
-        <Card className="border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-sm transition-all">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-5">
+        <Card className="border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#172033] py-0 shadow-sm transition-all">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-[#293548] px-6 py-5">
             <div className="flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <UsersRound className="h-4 w-4" />
               </span>
               <div>
-                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                   {t("relatives.pageTitle")}
                 </CardTitle>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                   {t("relatives.pageSubtitle")}
                 </p>
               </div>
@@ -236,14 +236,14 @@ const Relatives: React.FC = () => {
                 onRetry={() => refetchRelatives()}
               />
             ) : relatives.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 p-8 text-center">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+              <div className="rounded-2xl border-2 border-dashed border-slate-200 dark:border-[#293548] bg-slate-50/50 dark:bg-[#1E293B]/40 p-8 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-[#1E293B] text-slate-400">
                   <UsersRound className="h-6 w-6" />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-[#CBD5E1]">
                   {t("relatives.emptyListTitle")}
                 </h4>
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
+                <p className="mt-1 text-xs text-slate-500 dark:text-[#94A3B8] max-w-sm mx-auto">
                   {t("relatives.emptyListDesc")}
                 </p>
               </div>
@@ -257,7 +257,7 @@ const Relatives: React.FC = () => {
                       "group rounded-2xl border p-4.5 transition-all",
                       isSelectedForEdit
                         ? "border-primary bg-primary/5 dark:bg-primary/20 shadow-sm ring-1 ring-primary/20"
-                        : "border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900/60 hover:border-primary/40 dark:hover:border-slate-700 hover:shadow-md",
+                        : "border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#1E293B]/60 hover:border-primary/40 dark:hover:border-[#38BDF8]/40 hover:shadow-md",
                     )}
                   >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -363,8 +363,8 @@ const Relatives: React.FC = () => {
         </Card>
 
         {/* Right Column: Form Add / Edit Relative */}
-        <Card className="border-slate-200/80 bg-white dark:border-slate-800/80 dark:bg-slate-900 py-0 shadow-sm transition-all sticky top-24">
-          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 px-6 py-5">
+        <Card className="border-slate-200/80 bg-white dark:border-[#293548] dark:bg-[#172033] py-0 shadow-sm transition-all sticky top-24">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-slate-100 dark:border-[#293548] px-6 py-5">
             <div className="flex items-center gap-2.5">
               <span
                 className={cn(
@@ -381,10 +381,10 @@ const Relatives: React.FC = () => {
                 )}
               </span>
               <div>
-                <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
+                <CardTitle className="text-base font-bold text-slate-900 dark:text-[#F1F5F9]">
                   {isEditing ? t("relatives.editTitle") : t("relatives.addTitle")}
                 </CardTitle>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500 dark:text-[#94A3B8]">
                   {isEditing ? t("relatives.editTitle") : t("relatives.addSubtitle")}
                 </p>
               </div>
