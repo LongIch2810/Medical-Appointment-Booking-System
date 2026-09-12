@@ -21,12 +21,12 @@ describe('DateFormatInterceptor', () => {
     interceptor = new DateFormatInterceptor();
   });
 
-  it('formats a top-level Date value to dd-MM-yyyy', (done) => {
+  it('formats a top-level Date value to dd/MM/yyyy', (done) => {
     const date = new Date(2026, 8, 3); // 3 Sep 2026
     interceptor
       .intercept(makeContext(), makeCallHandler(date))
       .subscribe((result) => {
-        expect(result).toBe('03-09-2026');
+        expect(result).toBe('03/09/2026');
         done();
       });
   });
@@ -43,7 +43,7 @@ describe('DateFormatInterceptor', () => {
         expect(result).toEqual({
           id: 1,
           name: 'John',
-          createdAt: '15-01-2026',
+          createdAt: '15/01/2026',
         });
         done();
       });
@@ -58,8 +58,8 @@ describe('DateFormatInterceptor', () => {
       .intercept(makeContext(), makeCallHandler(payload))
       .subscribe((result) => {
         expect(result).toEqual([
-          { id: 1, dob: '01-06-2020' },
-          { id: 2, dob: '01-06-2021' },
+          { id: 1, dob: '01/06/2020' },
+          { id: 2, dob: '01/06/2021' },
         ]);
         done();
       });

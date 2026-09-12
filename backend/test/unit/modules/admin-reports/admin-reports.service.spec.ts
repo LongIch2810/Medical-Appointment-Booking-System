@@ -47,7 +47,7 @@ describe('AdminReportsService', () => {
 
         expect(mockedAxios.post).toHaveBeenCalledWith(
           expect.any(String),
-          { question: expect.stringContaining('01-01-2026') },
+          { question: expect.stringContaining('01/01/2026') },
           expect.any(Object),
         );
       },
@@ -101,7 +101,7 @@ describe('AdminReportsService', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'http://chatbot.local/chatbot/create-report',
         {
-          question: expect.stringContaining('15-03-2026 đến 15-03-2026'),
+          question: expect.stringContaining('15/03/2026 đến 15/03/2026'),
         },
         {
           timeout: 240_000,
@@ -109,7 +109,7 @@ describe('AdminReportsService', () => {
         },
       );
       expect(result.reportType).toBe(ReportType.NEW_USER_REGISTRATIONS);
-      expect(result.rangeLabel).toBe('15-03-2026 - 15-03-2026');
+      expect(result.rangeLabel).toBe('15/03/2026 - 15/03/2026');
       expect(result.pdfUrl).toBe('http://files/report.pdf');
       expect(result.tableRows).toEqual([{ role: 'PATIENT', user_count: 3 }]);
       expect(result.tableColumns).toEqual([
@@ -133,11 +133,11 @@ describe('AdminReportsService', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.any(String),
         {
-          question: expect.stringContaining('10-01-2026 đến 15-01-2026'),
+          question: expect.stringContaining('10/01/2026 đến 15/01/2026'),
         },
         expect.any(Object),
       );
-      expect(result.rangeLabel).toBe('10-01-2026 - 15-01-2026');
+      expect(result.rangeLabel).toBe('10/01/2026 - 15/01/2026');
     });
 
     it('defaults pdfUrl/report/chartConfig/tableRows when the chatbot response carries no data', async () => {

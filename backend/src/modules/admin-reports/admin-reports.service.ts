@@ -81,7 +81,7 @@ export class AdminReportsService {
           }
         : FIXED_DATE_RANGE_RESOLVERS[dto.rangePreset](now);
 
-    // formatDateDDMMYYYY (dd-MM-yyyy) để khớp định dạng ngày hiển thị chung
+    // formatDateDDMMYYYY (dd/MM/yyyy) để khớp định dạng ngày hiển thị chung
     // của toàn app (DateFormatInterceptor / các response DTO khác).
     const fromLabel = formatDateDDMMYYYY(from)!;
     const toLabel = formatDateDDMMYYYY(to)!;

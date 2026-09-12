@@ -50,13 +50,13 @@ describe('backend utilities', () => {
 
   it('formats dates recursively and rejects invalid inputs', () => {
     const date = new Date(2026, 8, 3, 14, 5);
-    expect(formatDateDDMMYYYY(date)).toBe('03-09-2026');
-    expect(formatDateTimeDDMMYYYYHHmm(date)).toBe('14:05 03-09-2026');
+    expect(formatDateDDMMYYYY(date)).toBe('03/09/2026');
+    expect(formatDateTimeDDMMYYYYHHmm(date)).toBe('14:05 03/09/2026');
     expect(formatDateDDMMYYYY('not-a-date')).toBeNull();
     expect(formatDateTimeDDMMYYYYHHmm(undefined)).toBeNull();
     expect(formatDate({ date, nested: [date, 'same'] })).toEqual({
-      date: '03-09-2026',
-      nested: ['03-09-2026', 'same'],
+      date: '03/09/2026',
+      nested: ['03/09/2026', 'same'],
     });
   });
 
@@ -132,7 +132,7 @@ describe('backend utilities', () => {
 
     expect(removePasswordDeep(value)).toEqual({
       profile: { name: 'Patient' },
-      entries: [{ date: '03-09-2026' }],
+      entries: [{ date: '03/09/2026' }],
     });
   });
 

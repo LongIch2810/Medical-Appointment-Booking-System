@@ -32,6 +32,7 @@ import { SpecialtiesService } from '../specialties/specialties.service';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 import { AppointmentsMapper } from './appointments.mapper';
+import { formatDateDDMMYYYY } from 'src/utils/formatDate';
 import { isPgDriverError } from '../../utils/isPgDriverError';
 import { toHHMM, toMinutes } from '../../utils/toMinutes';
 import Relative from '../../entities/relative.entity';
@@ -1169,7 +1170,7 @@ export class AppointmentsService {
       doctorUserId: doctorUser.id,
       patientName: appointment.patient.fullname ?? 'Bệnh nhân',
       doctorName: doctorUser.fullname ?? 'Bác sĩ',
-      appointmentDate: String(appointment.appointment_date),
+      appointmentDate: formatDateDDMMYYYY(appointment.appointment_date)!,
       startTime: appointment.doctor_schedule.start_time,
       endTime: appointment.doctor_schedule.end_time,
       status: appointment.status,
