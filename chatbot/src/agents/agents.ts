@@ -90,6 +90,7 @@ const structuredGuardModel = guardModel.withStructuredOutput(topicGuardSchema, {
 async function classifyTopic(state: typeof MessagesAnnotation.State) {
   if (state.messages.length === 0) return { messages: [] };
 
+  const startedAt = Date.now();
   const recent = state.messages.slice(-GUARD_HISTORY_WINDOW);
   let result: { in_scope: boolean } | undefined;
   try {
@@ -99,8 +100,25 @@ async function classifyTopic(state: typeof MessagesAnnotation.State) {
     ]);
   } catch (error) {
     console.error("[TopicGuard] classification failed, failing open:", error);
+    console.log(
+      JSON.stringify({
+        scope: "chatbot_agent_timing",
+        node: "guard",
+        durationMs: Date.now() - startedAt,
+        result: "error",
+      }),
+    );
     return { messages: [] };
   }
+
+  console.log(
+    JSON.stringify({
+      scope: "chatbot_agent_timing",
+      node: "guard",
+      durationMs: Date.now() - startedAt,
+      result: result ? (result.in_scope ? "in_scope" : "out_of_scope") : "undefined",
+    }),
+  );
 
   // Gateway đôi khi không thực sự gọi function (invoke trả về undefined) —
   // fail-open thay vì crash, cùng cách xử lý phòng thủ đã dùng ở
