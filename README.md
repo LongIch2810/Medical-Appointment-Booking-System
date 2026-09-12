@@ -46,14 +46,28 @@ Modern healthcare delivery demands friction-free access for patients and high-ef
 
 ---
 
-## Patient Experience (Redesigned UI)
+## Patient Experience (Current UI)
 
-The Patient Portal (`frontend/`) has undergone a comprehensive redesign prioritizing clean healthcare aesthetics, calm visual hierarchy, WCAG-compliant readability, and effortless multi-step workflows.
+The Patient Portal (`frontend/`) provides a calm, responsive healthcare experience with clear booking flows, specialist discovery, protected health information, and integrated LifeHealth MedAI access. Vietnamese is the default language, with English available from the header.
 
 ### 1. Modern Portal Landing Page
-The redesigned public landing page greets patients with clear care pathways, search by specialty, doctor recommendations, and health education articles.
+The current public landing page presents the three-step care path, popular specialties, verified doctors, appointment guidance, privacy commitments, and direct entry points to doctor search and the health assistant.
 
-![Patient Home Landing Page](docs/screenshots/patient/home.png)
+The header also provides the current display and language controls:
+
+- **Language:** Vietnamese (`VI`) by default, with English (`EN`) available.
+- **Theme:** Light and dark display modes with matching contrast, surfaces, and accent colors.
+- **Responsive layout:** The same booking-focused information architecture adapts across desktop and mobile screens.
+
+| Light / Vietnamese | Dark / Vietnamese |
+| :---: | :---: |
+| ![Patient Home - Light Vietnamese](docs/screenshots/patient/home-light-vi.png) | ![Patient Home - Dark Vietnamese](docs/screenshots/patient/home-dark-vi.png) |
+
+| Light / English | Dark / English |
+| :---: | :---: |
+| ![Patient Home - Light English](docs/screenshots/patient/home-light-en.png) | ![Patient Home - Dark English](docs/screenshots/patient/home-dark-en.png) |
+
+_The screenshots above were captured from the live patient portal at [patientuilifehealth.vercel.app](https://patientuilifehealth.vercel.app), reflecting the current landing-page design._
 
 ---
 
