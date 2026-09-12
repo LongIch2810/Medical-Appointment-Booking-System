@@ -59,6 +59,21 @@ export interface CreateNotificationPayload {
   actionUrl?: string;
 }
 
+export type NotificationAudience = "ALL" | "ROLE" | "USERS";
+
+export interface SendNotificationBroadcastPayload {
+  title: string;
+  content: string;
+  audience: NotificationAudience;
+  actionUrl?: string;
+  roleName?: string;
+  userIds?: number[];
+}
+
+export interface SendNotificationBroadcastResponse {
+  targetedCount: number;
+}
+
 export interface UpdateNotificationPayload {
   title?: string;
   content?: string;

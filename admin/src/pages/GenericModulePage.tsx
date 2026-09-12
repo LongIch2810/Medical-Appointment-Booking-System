@@ -75,7 +75,9 @@ import {
   useDeleteNotification,
   useInfiniteNotificationRecipients,
   useNotifications,
+  useSendNotificationBroadcast,
 } from "@/hooks/useNotifications";
+import { useRoles } from "@/hooks/useRoles";
 import {
   useActivateUser,
   useDeactivateUser,
@@ -1815,30 +1817,66 @@ function ComplaintCreateDialog({
   );
 }
 
+type NotificationAudienceMode = "SINGLE" | "ALL" | "ROLE" | "USERS";
+
+const AUDIENCE_MODE_OPTIONS: { value: NotificationAudienceMode; label: string }[] = [
+  { value: "SINGLE", label: "Một người dùng" },
+  { value: "ALL", label: "Tất cả người dùng" },
+  { value: "ROLE", label: "Theo vai trò" },
+  { value: "USERS", label: "Người dùng cụ thể" },
+];
+
 function NotificationCreateDialog({
   trigger,
 }: {
   trigger: ReactNode;
 }) {
   const create = useCreateNotification();
+  const sendBroadcast = useSendNotificationBroadcast();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [actionUrl, setActionUrl] = useState("");
   const [userSearch, setUserSearch] = useState("");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [recipientError, setRecipientError] = useState("");
+  const [audienceMode, setAudienceMode] =
+    useState<NotificationAudienceMode>("SINGLE");
+  const [selectedRoleName, setSelectedRoleName] = useState("");
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(
+    new Set(),
+  );
   const recipientsQuery = useInfiniteNotificationRecipients({
     limit: 20,
     search: userSearch || undefined,
   });
   const eligibleUsers =
     recipientsQuery.data?.pages.flatMap((page) => page.data.users) ?? [];
+  const rolesQuery = useRoles({
+    page: 1,
+    limit: 100,
+    search: "",
+    arrange: "asc",
+  });
+  const roles = rolesQuery.data?.data?.roles ?? [];
+
+  const toggleUserId = (userId: number) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+    setRecipientError("");
+  };
 
   return (
     <FormDialog
       trigger={trigger}
       title="Thêm thông báo"
-      isSubmitting={create.isPending}
+      isSubmitting={create.isPending || sendBroadcast.isPending}
       onOpen={() => {
         setTitle("");
         setContent("");
@@ -1846,17 +1884,40 @@ function NotificationCreateDialog({
         setUserSearch("");
         setSelectedUser(null);
         setRecipientError("");
+        setAudienceMode("SINGLE");
+        setSelectedRoleName("");
+        setSelectedUserIds(new Set());
       }}
       onSubmit={() => {
-        if (!selectedUser) {
-          setRecipientError("Vui lòng chọn người nhận.");
-          throw new Error("Missing notification recipient");
+        if (audienceMode === "SINGLE") {
+          if (!selectedUser) {
+            setRecipientError("Vui lòng chọn người nhận.");
+            throw new Error("Missing notification recipient");
+          }
+          return create.mutateAsync({
+            title,
+            content,
+            userId: selectedUser.id,
+            actionUrl: actionUrl || undefined,
+          });
         }
-        return create.mutateAsync({
+        if (audienceMode === "ROLE" && !selectedRoleName) {
+          setRecipientError("Vui lòng chọn vai trò.");
+          throw new Error("Missing role");
+        }
+        if (audienceMode === "USERS" && selectedUserIds.size === 0) {
+          setRecipientError("Vui lòng chọn ít nhất một người dùng.");
+          throw new Error("Missing recipients");
+        }
+        return sendBroadcast.mutateAsync({
           title,
           content,
-          userId: selectedUser.id,
           actionUrl: actionUrl || undefined,
+          audience: audienceMode,
+          ...(audienceMode === "ROLE" ? { roleName: selectedRoleName } : {}),
+          ...(audienceMode === "USERS"
+            ? { userIds: [...selectedUserIds] }
+            : {}),
         });
       }}
     >
@@ -1877,89 +1938,218 @@ function NotificationCreateDialog({
           onChange={(e) => setContent(e.target.value)}
         />
       </FormField>
-      <FormField
-        label="Người nhận"
-        htmlFor="notif-user-search"
-        required
-        hint="Hiển thị tài khoản đang hoạt động thuộc mọi vai trò."
-      >
-        <Input
-          id="notif-user-search"
-          type="search"
-          placeholder="Tìm theo tên hoặc email"
-          value={userSearch}
-          onChange={(event) => setUserSearch(event.target.value)}
-        />
-        <div
-          className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
-          onScroll={(event) => {
-            const { scrollTop, scrollHeight, clientHeight } =
-              event.currentTarget;
-            const isNearBottom =
-              scrollHeight - scrollTop - clientHeight < 48;
-            if (
-              isNearBottom &&
-              recipientsQuery.hasNextPage &&
-              !recipientsQuery.isFetchingNextPage
-            ) {
-              void recipientsQuery.fetchNextPage();
-            }
-          }}
-        >
-          {recipientsQuery.isLoading ? (
-            <p className="px-2 py-3 text-xs text-slate-500">
-              Đang tìm người dùng...
-            </p>
-          ) : eligibleUsers.length === 0 ? (
-            <p className="px-2 py-3 text-xs text-slate-500">
-              Không tìm thấy người nhận phù hợp.
-            </p>
-          ) : (
-            eligibleUsers.map((user) => (
-              <button
-                key={user.id}
-                type="button"
-                onClick={() => {
-                  setSelectedUser(user);
+      <FormField label="Đối tượng nhận">
+        <div className="flex flex-wrap gap-4">
+          {AUDIENCE_MODE_OPTIONS.map(({ value, label }) => (
+            <label
+              key={value}
+              className="flex items-center gap-2 text-xs sm:text-sm font-medium text-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="notif-audience"
+                value={value}
+                checked={audienceMode === value}
+                onChange={() => {
+                  setAudienceMode(value);
                   setRecipientError("");
                 }}
-                className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs transition-colors ${
-                  selectedUser?.id === user.id
-                    ? "bg-primary/10 text-primary"
-                    : "hover:bg-slate-100 dark:hover:bg-slate-800"
-                }`}
-              >
-                <span className="min-w-0">
-                  <span className="block truncate font-bold">
-                    {user.fullname}
+                className="accent-primary"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+      </FormField>
+      {audienceMode === "SINGLE" ? (
+        <FormField
+          label="Người nhận"
+          htmlFor="notif-user-search"
+          required
+          hint="Hiển thị tài khoản đang hoạt động thuộc mọi vai trò."
+        >
+          <Input
+            id="notif-user-search"
+            type="search"
+            placeholder="Tìm theo tên hoặc email"
+            value={userSearch}
+            onChange={(event) => setUserSearch(event.target.value)}
+          />
+          <div
+            className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
+            onScroll={(event) => {
+              const { scrollTop, scrollHeight, clientHeight } =
+                event.currentTarget;
+              const isNearBottom =
+                scrollHeight - scrollTop - clientHeight < 48;
+              if (
+                isNearBottom &&
+                recipientsQuery.hasNextPage &&
+                !recipientsQuery.isFetchingNextPage
+              ) {
+                void recipientsQuery.fetchNextPage();
+              }
+            }}
+          >
+            {recipientsQuery.isLoading ? (
+              <p className="px-2 py-3 text-xs text-slate-500">
+                Đang tìm người dùng...
+              </p>
+            ) : eligibleUsers.length === 0 ? (
+              <p className="px-2 py-3 text-xs text-slate-500">
+                Không tìm thấy người nhận phù hợp.
+              </p>
+            ) : (
+              eligibleUsers.map((user) => (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setRecipientError("");
+                  }}
+                  className={`flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs transition-colors ${
+                    selectedUser?.id === user.id
+                      ? "bg-primary/10 text-primary"
+                      : "hover:bg-slate-100 dark:hover:bg-slate-800"
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-bold">
+                      {user.fullname}
+                    </span>
+                    <span className="block truncate text-slate-500">
+                      {user.email}
+                    </span>
                   </span>
-                  <span className="block truncate text-slate-500">
-                    {user.email}
-                  </span>
-                </span>
-                <Badge variant="outline">
-                  {user.roles.map(({ role_name }) => role_name).join(", ")}
-                </Badge>
-              </button>
-            ))
-          )}
-          {recipientsQuery.isFetchingNextPage ? (
-            <p className="px-2 py-2 text-center text-xs text-slate-500">
-              Đang tải thêm...
+                  <Badge variant="outline">
+                    {user.roles.map(({ role_name }) => role_name).join(", ")}
+                  </Badge>
+                </button>
+              ))
+            )}
+            {recipientsQuery.isFetchingNextPage ? (
+              <p className="px-2 py-2 text-center text-xs text-slate-500">
+                Đang tải thêm...
+              </p>
+            ) : null}
+          </div>
+          {selectedUser ? (
+            <p className="text-xs font-semibold text-emerald-600">
+              Đã chọn: {selectedUser.fullname} ({selectedUser.email})
             </p>
           ) : null}
-        </div>
-        {selectedUser ? (
-          <p className="text-xs font-semibold text-emerald-600">
-            Đã chọn: {selectedUser.fullname} ({selectedUser.email})
+        </FormField>
+      ) : audienceMode === "ALL" ? (
+        <FormField label="Đối tượng">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Thông báo sẽ được gửi tới toàn bộ tài khoản đang hoạt động (gồm
+            cả patient, doctor và admin).
           </p>
-        ) : null}
-        {recipientError ? (
-          <p className="text-xs font-semibold text-rose-600">
-            {recipientError}
-          </p>
-        ) : null}
-      </FormField>
+        </FormField>
+      ) : audienceMode === "ROLE" ? (
+        <FormField label="Vai trò" htmlFor="notif-role" required>
+          <select
+            id="notif-role"
+            value={selectedRoleName}
+            onChange={(event) => {
+              setSelectedRoleName(event.target.value);
+              setRecipientError("");
+            }}
+            className="flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm text-slate-900 shadow-2xs outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+          >
+            <option value="">-- Chọn vai trò --</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.role_name}>
+                {role.role_name}
+              </option>
+            ))}
+          </select>
+        </FormField>
+      ) : (
+        <FormField
+          label="Người nhận cụ thể"
+          htmlFor="notif-users-search"
+          required
+          hint="Chọn nhiều người dùng bằng checkbox."
+        >
+          <Input
+            id="notif-users-search"
+            type="search"
+            placeholder="Tìm theo tên hoặc email"
+            value={userSearch}
+            onChange={(event) => setUserSearch(event.target.value)}
+          />
+          <div
+            className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
+            onScroll={(event) => {
+              const { scrollTop, scrollHeight, clientHeight } =
+                event.currentTarget;
+              const isNearBottom =
+                scrollHeight - scrollTop - clientHeight < 48;
+              if (
+                isNearBottom &&
+                recipientsQuery.hasNextPage &&
+                !recipientsQuery.isFetchingNextPage
+              ) {
+                void recipientsQuery.fetchNextPage();
+              }
+            }}
+          >
+            {recipientsQuery.isLoading ? (
+              <p className="px-2 py-3 text-xs text-slate-500">
+                Đang tìm người dùng...
+              </p>
+            ) : eligibleUsers.length === 0 ? (
+              <p className="px-2 py-3 text-xs text-slate-500">
+                Không tìm thấy người nhận phù hợp.
+              </p>
+            ) : (
+              eligibleUsers.map((user) => (
+                <label
+                  key={user.id}
+                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-xs hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={selectedUserIds.has(user.id)}
+                      onChange={() => toggleUserId(user.id)}
+                      className="accent-primary size-3.5"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold">
+                        {user.fullname}
+                      </span>
+                      <span className="block truncate text-slate-500">
+                        {user.email}
+                      </span>
+                    </span>
+                  </span>
+                  <Badge variant="outline">
+                    {user.roles.map(({ role_name }) => role_name).join(", ")}
+                  </Badge>
+                </label>
+              ))
+            )}
+            {recipientsQuery.isFetchingNextPage ? (
+              <p className="px-2 py-2 text-center text-xs text-slate-500">
+                Đang tải thêm...
+              </p>
+            ) : null}
+          </div>
+          {selectedUserIds.size > 0 ? (
+            <p className="text-xs font-semibold text-emerald-600">
+              Đã chọn: {selectedUserIds.size} người
+            </p>
+          ) : null}
+        </FormField>
+      )}
+      {recipientError ? (
+        <p className="text-xs font-semibold text-rose-600">
+          {recipientError}
+        </p>
+      ) : null}
       <FormField
         label="Đường dẫn khi nhấn (tuỳ chọn)"
         htmlFor="notif-action-url"
@@ -1995,6 +2185,7 @@ function NotificationsModule({
   const { can } = usePermission();
   const canCreate = can(
     PERMISSIONS.NOTIFICATION_CREATE,
+    PERMISSIONS.NOTIFICATION_SEND,
     PERMISSIONS.NOTIFICATION_MANAGE,
   );
   const canDelete = can(

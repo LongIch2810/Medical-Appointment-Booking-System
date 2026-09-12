@@ -9,6 +9,8 @@ import type {
   NotificationListPayload,
   NotificationListResponse,
   NotificationRecipientListPayload,
+  SendNotificationBroadcastPayload,
+  SendNotificationBroadcastResponse,
   UpdateNotificationPayload,
 } from "@/types/interface/notification.interface";
 
@@ -44,6 +46,15 @@ export async function createNotification(data: CreateNotificationPayload) {
     "/notifications/create",
     data,
   );
+  return response.data;
+}
+
+export async function sendNotificationBroadcast(
+  data: SendNotificationBroadcastPayload,
+) {
+  const response = await axiosInstance.post<
+    ApiResponse<SendNotificationBroadcastResponse>
+  >("/notifications/send", data);
   return response.data;
 }
 
