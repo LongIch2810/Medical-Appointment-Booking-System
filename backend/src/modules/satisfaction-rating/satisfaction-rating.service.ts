@@ -86,9 +86,8 @@ export class SatisfactionRatingService {
     );
 
     Object.assign(satisfactionRating, bodyUpdateSatisfactionRating);
-    const updatedRating = await this.satisfactionRatingRepo.save(
-      satisfactionRating,
-    );
+    const updatedRating =
+      await this.satisfactionRatingRepo.save(satisfactionRating);
     await this.invalidateDoctorCaches();
     return updatedRating;
   }

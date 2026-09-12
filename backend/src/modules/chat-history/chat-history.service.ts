@@ -54,9 +54,8 @@ export class ChatHistoryService {
   ) {
     try {
       const cacheKey = this.getChatHistoryCacheKey(userId);
-      const cached = await this.redisCacheService.getData<CachedChatMessage[]>(
-        cacheKey,
-      );
+      const cached =
+        await this.redisCacheService.getData<CachedChatMessage[]>(cacheKey);
 
       // The database query already includes the message just saved when the
       // cache is cold, so only prepend the message when the cache is warm.

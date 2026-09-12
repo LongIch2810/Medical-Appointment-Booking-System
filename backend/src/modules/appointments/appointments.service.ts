@@ -308,7 +308,10 @@ export class AppointmentsService {
           });
         }
 
-        this.assertNotPastTimeSlot(appointmentDateOnly, chosenSchedule.start_time);
+        this.assertNotPastTimeSlot(
+          appointmentDateOnly,
+          chosenSchedule.start_time,
+        );
 
         await this.assertNoPatientConflict(
           manager,
@@ -374,9 +377,7 @@ export class AppointmentsService {
     if (appointmentDateOnly !== this.formatDateOnly(now)) return;
 
     if (toMinutes(startTime) <= toMinutes(toHHMM(now))) {
-      throw new BadRequestException(
-        'Không thể đặt lịch cho khung giờ đã qua.',
-      );
+      throw new BadRequestException('Không thể đặt lịch cho khung giờ đã qua.');
     }
   }
 

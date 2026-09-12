@@ -27,9 +27,7 @@ export class RedisCacheService {
       port: this.configService.get<number>('REDIS_PORT'),
       password: this.configService.get<string>('REDIS_PASSWORD'),
       tls:
-        this.configService.get<string>('REDIS_TLS') === 'true'
-          ? {}
-          : undefined,
+        this.configService.get<string>('REDIS_TLS') === 'true' ? {} : undefined,
       db: redisDb,
     });
   }
