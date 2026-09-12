@@ -6,6 +6,10 @@ import { assertInternalServiceKeyConfigured } from "./middlewares/internalServic
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+type WarmupStatus = "warming" | "ready" | "degraded";
+
+let warmupStatus: WarmupStatus = "warming";
+
 let chatbotRouterPromise: Promise<Router> | undefined;
 
 async function getChatbotRouter(): Promise<Router> {
@@ -37,6 +41,7 @@ app.get("/healthy", (_req, res) => {
   res.status(200).json({
     status: "ok",
     service: "medical-appointment-chatbot",
+    dependencies: warmupStatus,
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
   });
@@ -55,39 +60,36 @@ app.use(errorHandler);
 
 export default app;
 
-async function startServer(): Promise<void> {
-  assertInternalServiceKeyConfigured();
-
-  const [{ buildKnowLedgeBase }, { default: initVectorDB }] =
-    await Promise.all([
-      import("./utils/buildKnowLedgeBase.js"),
-      import("./configs/vectordb.js"),
-    ]);
-
-  if (process.env.NODE_ENV === "production") {
-    await initVectorDB();
-  } else {
+async function warmUpChatbot(): Promise<void> {
+  if (process.env.NODE_ENV !== "production") {
+    const { buildKnowLedgeBase } = await import(
+      "./utils/buildKnowLedgeBase.js"
+    );
     await buildKnowLedgeBase();
   }
 
-  // getChatbotRouter() imports qa_sql.ts/admin_qa_sql.ts, which open the
-  // read-only Postgres DataSources at module load (up to 60 retries * 5s —
-  // 5 min worst case if the DB is unreachable). That cost used to be paid
-  // silently by whichever chat message happened to be first after a
-  // restart. Kick it off here so it starts as early as possible — but do
-  // NOT await it before app.listen(): Render's port-scan has its own
-  // timeout (well under 5 minutes), and a slow/stuck DB connection must
-  // not stop the process from binding its port and going live. The first
-  // real request still awaits the same in-flight promise, same as before,
-  // just started a few seconds earlier.
-  void getChatbotRouter()
-    .then(() => console.info("[startup] Chatbot router warmed up"))
-    .catch((error) =>
-      console.error("[startup] Chatbot router warmup failed", error),
-    );
+  await getChatbotRouter();
+}
+
+function startServer(): void {
+  assertInternalServiceKeyConfigured();
 
   app.listen(PORT, () => {
     console.log(`Server is running at http://localhost:${PORT}`);
+
+    // Render must see an open port even when Qdrant, Postgres, Redis, or a
+    // remote prompt registry is slow. The router import initializes those
+    // dependencies, so warm it only after the HTTP server is accepting
+    // traffic and expose the progress through /healthy.
+    void warmUpChatbot()
+      .then(() => {
+        warmupStatus = "ready";
+        console.info("[startup] Chatbot router warmed up");
+      })
+      .catch((error) => {
+        warmupStatus = "degraded";
+        console.error("[startup] Chatbot router warmup failed", error);
+      });
   });
 }
 
@@ -95,7 +97,9 @@ console.info("[startup] Chatbot Express app initialized", {
   node: process.version,
 });
 
-void startServer().catch((error) => {
+try {
+  startServer();
+} catch (error) {
   console.error("[startup] Chatbot initialization failed", error);
   process.exitCode = 1;
-});
+}

@@ -11,6 +11,7 @@ import { withRetry } from "../utils/retry.js";
 dotenv.config();
 
 const OPENAI_COLLECTION_NAME = "BOOKING_DOCTOR_SYSTEM_OPENAI_TE3_SMALL_V1";
+const DEFAULT_QDRANT_REQUEST_TIMEOUT_MS = 10_000;
 
 type QdrantConfig = {
   url: string;
@@ -42,6 +43,14 @@ function getQdrantConfig(): QdrantConfig {
     apiKey: requireEnv("QDRANT_API_KEY"),
     collectionName,
   };
+}
+
+function getQdrantRequestTimeoutMs(): number {
+  const configuredTimeout = Number(process.env.QDRANT_REQUEST_TIMEOUT_MS);
+
+  return Number.isFinite(configuredTimeout) && configuredTimeout > 0
+    ? configuredTimeout
+    : DEFAULT_QDRANT_REQUEST_TIMEOUT_MS;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -196,6 +205,9 @@ export default async function initVectorDB(texts?: Document[]) {
   const client = new QdrantClient({
     url: qdrantConfig.url,
     apiKey: qdrantConfig.apiKey,
+    // The client default is five minutes. A stalled DNS/network request then
+    // outlives Render's port scan and prevents a deployment from going live.
+    timeout: getQdrantRequestTimeoutMs(),
   });
 
   const collections = await withRetry(
@@ -214,8 +226,7 @@ export default async function initVectorDB(texts?: Document[]) {
       embeddingConfig.dimensions,
     );
     vectorstore = await QdrantVectorStore.fromExistingCollection(embeddings, {
-      url: qdrantConfig.url,
-      apiKey: qdrantConfig.apiKey,
+      client,
       collectionName: qdrantConfig.collectionName,
     });
 
@@ -241,8 +252,7 @@ export default async function initVectorDB(texts?: Document[]) {
     // QdrantVectorStore.addDocuments falls back to, so a later rebuild's
     // reconcileCollection() can recognize and update these same points.
     vectorstore = await QdrantVectorStore.fromDocuments(texts, embeddings, {
-      url: qdrantConfig.url,
-      apiKey: qdrantConfig.apiKey,
+      client,
       collectionName: qdrantConfig.collectionName,
     });
     await assertCollectionVectorSize(
