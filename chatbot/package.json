@@ -16,7 +16,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "SEE LICENSE IN ../LICENSE",
   "type": "module",
   "dependencies": {
     "@langchain/community": "^0.3.47",

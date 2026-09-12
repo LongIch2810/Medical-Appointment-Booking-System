@@ -170,6 +170,58 @@ The redesign of LifeHealth adheres to intentional healthcare design principles:
 | **Backend REST API** (`backend/`) | NestJS 11, TypeORM, PostgreSQL 16, Redis 7, BullMQ, Passport JWT / Google OAuth, Socket.IO Gateway, Swagger / OpenAPI, Jest |
 | **AI Chatbot Service** (`chatbot/`) | Express 5, TypeScript, LangChain, LangGraph, Qdrant Vector DB, OpenAI / Google Gemini / Ollama, Sharp, PDFKit, ChartJS Canvas |
 
+### Verified Dependency Versions
+
+Exact versions currently installed and running stably in this repository (see each service's `package.json` for the full list). Pin to these when reproducing an environment from scratch — some transitive dependencies (noted below) have narrower compatible ranges than their own `package.json` entry suggests.
+
+**Patient Application (`frontend/`)**
+
+| Library | Version | Library | Version |
+| :--- | :--- | :--- | :--- |
+| react / react-dom | 19.1.0 | @tanstack/react-query | 5.87.1 |
+| react-router-dom | 7.6.2 | zustand | 5.0.5 |
+| typescript | 5.8.3 | react-hook-form | 7.59.0 |
+| vite | 6.3.5 | zod | 3.25.72 |
+| tailwindcss | 4.1.10 | axios | 1.9.0 |
+| i18next / react-i18next | 26.4.2 / 17.0.13 | socket.io-client | 4.8.1 |
+| framer-motion | 12.17.0 | date-fns | 4.1.0 |
+
+**Admin & Doctor Portal (`admin/`)**
+
+| Library | Version | Library | Version |
+| :--- | :--- | :--- | :--- |
+| react / react-dom | 19.2.4 | @tanstack/react-query | 5.96.2 |
+| react-router-dom | 7.14.0 | zustand | 5.0.12 |
+| typescript | 5.8.3 | react-hook-form | 7.72.1 |
+| vite | 6.4.1 | zod | 3.25.76 |
+| tailwindcss | 4.2.2 | axios | 1.14.0 |
+| chart.js / react-chartjs-2 | 4.5.1 / 5.3.1 | socket.io-client | 4.8.3 |
+
+**Backend REST API (`backend/`)**
+
+| Library | Version | Library | Version |
+| :--- | :--- | :--- | :--- |
+| @nestjs/core (and other `@nestjs/*`) | 11.2.3 | ioredis | 5.11.1 |
+| typescript | 5.9.3 | bullmq | 5.81.4 |
+| typeorm | 0.3.31 | socket.io | 4.8.3 |
+| pg | 8.23.0 | passport | 0.7.0 |
+| class-validator | 0.14.4 | jest | 29.7.0 |
+
+**AI Chatbot Service (`chatbot/`)**
+
+| Library | Version | Library | Version |
+| :--- | :--- | :--- | :--- |
+| typescript | 5.8.3 | @langchain/openai | 0.5.18 |
+| express | 5.1.0 | @langchain/google-genai | 0.2.13 |
+| langchain | 0.3.29 | @langchain/community | 0.3.47 |
+| @langchain/core | 0.3.61 | @langchain/qdrant | 0.1.2 |
+| @langchain/langgraph | 0.3.5 | **@qdrant/js-client-rest** | **1.18.0 — do not bump** ⚠️ |
+| typeorm | 0.3.25 | pg | 8.16.2 |
+| pdfkit / pdfjs-dist | 0.17.2 / 4.10.38 | sharp | 0.34.5 |
+
+> [!WARNING]
+> `@qdrant/js-client-rest` must stay at `1.18.0`. `@langchain/qdrant@0.1.2` still calls the client's `.search()` method, which `1.19.0`+ removed in favor of `.query()` — bumping it silently breaks the RAG chatbot tool. See [CLAUDE.md](CLAUDE.md) for the full write-up.
+
 ---
 
 ## Architecture & System Design
@@ -421,4 +473,4 @@ For deep client-side conventions:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE) for educational and portfolio demonstration purposes.
+This project is licensed under the [LifeHealth Educational & Non-Commercial License](LICENSE) — free to use, study, and fork for personal learning, academic, and portfolio purposes, but not for commercial use. See the [LICENSE](LICENSE) file for the full terms.

@@ -1,21 +1,54 @@
-MIT License
+LifeHealth Educational & Non-Commercial License
 
 Copyright (c) 2026 LongIch2810
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Đây là dự án học tập và trình diễn kỹ thuật (đồ án cá nhân), không phải sản
+phẩm hay dịch vụ y tế thương mại. Giấy phép này cho phép sử dụng mã nguồn
+CHỈ cho mục đích phi thương mại, và không thay thế giấy phép nào cấp quyền
+sử dụng thương mại.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This is an educational and technical demonstration project (a personal/
+academic project), not a commercial medical product or service. This
+license permits use of the source code ONLY for non-commercial purposes,
+and does not itself grant any right to commercial use.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+--------------------------------------------------------------------------
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to use, copy, modify, merge, and distribute copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to the
+following conditions:
+
+1. Non-Commercial Use Only. The Software, and any copy, fork, or
+   derivative of it, may be used only for personal learning, academic
+   research, coursework, portfolio demonstration, or other non-commercial
+   purposes. You may NOT sell the Software or a derivative of it, offer it
+   or a derivative as a paid or ad-supported product or service, use it to
+   provide real medical, booking, or clinical services to real patients,
+   or otherwise use it for direct or indirect commercial advantage,
+   without the copyright holder's prior written permission.
+
+2. Attribution. The above copyright notice, this permission notice, and
+   the Non-Commercial Use Only condition above shall be included, in full
+   and without modification, in all copies or substantial portions of the
+   Software.
+
+3. No Medical Warranty. The Software (including any AI-generated content,
+   symptom triage, or clinical suggestions) is provided for educational
+   and demonstration purposes only. It is NOT a certified medical device
+   and must NOT be relied upon for actual diagnosis, treatment, or any
+   real medical decision. Doctor profiles, hospital names, and patient
+   records used within the Software are fictional or anonymized demo data.
+
+4. No Warranty; Limitation of Liability. THE SOFTWARE IS PROVIDED "AS IS",
+   WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+   LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+   HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+   AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+   SOFTWARE.
+
+For questions about this license or to request permission for a use not
+covered above, contact the copyright holder.

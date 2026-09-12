@@ -4,7 +4,7 @@
   "description": "",
   "author": "",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "SEE LICENSE IN ../LICENSE",
   "scripts": {
     "clean:swagger-metadata": "node -e \"require('fs').rmSync('src/metadata.ts', { force: true })\"",
     "prebuild": "npm run clean:swagger-metadata && node -e \"require('fs').rmSync('dist', { recursive: true, force: true, maxRetries: 10, retryDelay: 100 })\"",
