@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import axios from "axios";
+import httpClient from "../configs/httpClient.js";
 import { withRetry } from "../utils/retry.js";
 
 dotenv.config();
@@ -36,7 +37,7 @@ export const GetHealthProfileTool = tool(
       }
 
       const response = await withRetry(
-        () => axios.get(
+        () => httpClient.get(
           `${process.env.BACKEND_URL}/api/v1/health-profiles/${relative_id}`,
           {
             headers: {

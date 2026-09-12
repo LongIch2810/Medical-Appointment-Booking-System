@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import axios from "axios";
 import { ChatbotOperationError } from "../../../src/utils/retry.js";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
@@ -35,6 +34,26 @@ function resetStub() {
 }
 resetStub();
 
+// httpClient.ts wraps axios.create(...) in its own instance, whose
+// .post/.get are independent from the top-level `axios` module — mocking
+// axios.post/axios.get (as before the keep-alive-agent change) no longer
+// intercepts chatbot.service.ts's calls. Mock the httpClient module itself
+// instead, delegating to a global stub each test can freely reassign.
+type HttpStub = {
+  post: (...args: unknown[]) => Promise<unknown>;
+  get: (...args: unknown[]) => Promise<unknown>;
+};
+const httpGlobals = globalThis as typeof globalThis & {
+  __CHATBOT_HTTP_STUB__: HttpStub;
+};
+function resetHttpStub() {
+  httpGlobals.__CHATBOT_HTTP_STUB__ = {
+    post: async () => ({ data: {} }),
+    get: async () => ({ data: { data: [] } }),
+  };
+}
+resetHttpStub();
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const subjectDirUrl =
   pathToFileURL(path.resolve(here, "../../../src/services")).href + "/";
@@ -60,33 +79,36 @@ registerEsmMocks(subjectDirUrl, {
   "../langgraph/build_health_roadmap.graph.js": graphModule("roadmap"),
   "../langgraph/diagnosis.graph.js": graphModule("diagnosis"),
   "../langgraph/summary_medical_record.graph.js": graphModule("summary", true),
+  "../configs/httpClient.js": `
+    export default {
+      post: (...args) => globalThis.__CHATBOT_HTTP_STUB__.post(...args),
+      get: (...args) => globalThis.__CHATBOT_HTTP_STUB__.get(...args),
+    };
+  `,
 });
 
 const services = await import("../../../src/services/chatbot.service.js");
-const http = axios as unknown as {
-  get: (...args: unknown[]) => Promise<unknown>;
-  post: (...args: unknown[]) => Promise<unknown>;
-};
 
 test.beforeEach(() => {
   resetStub();
+  resetHttpStub();
   process.env.BACKEND_URL = "http://backend.test";
 });
 
-test("handleChatService stores history, invokes the agent, and prefers the booking tool reply", async (t) => {
+test("handleChatService stores history, invokes the agent, and prefers the booking tool reply", async () => {
   const posts: unknown[][] = [];
-  t.mock.method(http, "post", async (...args: unknown[]) => {
+  httpGlobals.__CHATBOT_HTTP_STUB__.post = async (...args: unknown[]) => {
     posts.push(args);
     return { data: {} };
-  });
-  t.mock.method(http, "get", async () => ({
+  };
+  httpGlobals.__CHATBOT_HTTP_STUB__.get = async () => ({
     data: {
       data: [
         { role: "human", content: "hello" },
         { role: "ai", content: "hi" },
       ],
     },
-  }));
+  });
   globals.__CHATBOT_SERVICE_STUB__.results.agent = {
     messages: [
       { content: "normal answer", _getType: () => "ai" },
@@ -125,11 +147,11 @@ test("handleChatService stores history, invokes the agent, and prefers the booki
   assert.equal(config.configurable.token, "token");
 });
 
-test("handleChatService falls back to the last AI message", async (t) => {
-  t.mock.method(http, "post", async () => ({ data: {} }));
-  t.mock.method(http, "get", async () => ({
+test("handleChatService falls back to the last AI message", async () => {
+  httpGlobals.__CHATBOT_HTTP_STUB__.post = async () => ({ data: {} });
+  httpGlobals.__CHATBOT_HTTP_STUB__.get = async () => ({
     data: { data: [{ role: "human", content: "hello" }] },
-  }));
+  });
 
   const result = await services.handleChatService({
     question: "hello",
@@ -139,10 +161,10 @@ test("handleChatService falls back to the last AI message", async (t) => {
   assert.deepEqual(result, { answer: "agent answer" });
 });
 
-test("handleChatService normalizes backend failures", async (t) => {
-  t.mock.method(http, "post", async () => {
+test("handleChatService normalizes backend failures", async () => {
+  httpGlobals.__CHATBOT_HTTP_STUB__.post = async () => {
     throw Object.assign(new Error("bad request"), { status: 400 });
-  });
+  };
 
   await assert.rejects(
     services.handleChatService({ question: "hello", userId: 1, token: "token" }),

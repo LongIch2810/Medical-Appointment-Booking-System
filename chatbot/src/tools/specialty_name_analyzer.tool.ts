@@ -2,7 +2,7 @@ import { getChatModel } from "../configs/llm.js";
 import { z } from "zod";
 import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
-import axios from "axios";
+import httpClient from "../configs/httpClient.js";
 import { withRetry } from "../utils/retry.js";
 import { logSafeError } from "../utils/safeLog.js";
 
@@ -40,7 +40,7 @@ function normalize(str: string): string {
 async function fetchSpecialties(): Promise<SpecialtyRow[]> {
   const res = await withRetry(
     () =>
-      axios.post(`${process.env.BACKEND_URL}/api/v1/specialties`, {
+      httpClient.post(`${process.env.BACKEND_URL}/api/v1/specialties`, {
         page: 1,
         limit: 100,
         arrange: "asc",

@@ -5,6 +5,7 @@ import { AnalyzeSpecialtyTool } from "../tools/specialty_name_analyzer.tool.js";
 import { AnalyzeTimeTool } from "../tools/time_analyzer.tool.js";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import axios from "axios";
+import httpClient from "../configs/httpClient.js";
 import {
   APPOINTMENT_SLOT_UNAVAILABLE,
   type BookingFailure,
@@ -354,7 +355,7 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
       };
     }
 
-    const response = await axios.post(
+    const response = await httpClient.post(
       `${process.env.BACKEND_URL}/api/v1/appointments/booking`,
       payload,
       {

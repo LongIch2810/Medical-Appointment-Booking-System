@@ -5,7 +5,7 @@ import { StructuredOutputParser } from "langchain/output_parsers";
 
 import * as dotenv from "dotenv";
 import { tool } from "@langchain/core/tools";
-import axios from "axios";
+import httpClient from "../configs/httpClient.js";
 import {
   detectExplicitRelationship,
   relationshipCodes,
@@ -205,7 +205,7 @@ export const AnalyzeRelativeTool = tool(
     try {
       const response = await withRetry(
         () =>
-          axios.get(apiUrl, {
+          httpClient.get(apiUrl, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         { operation: "relatives_lookup" },

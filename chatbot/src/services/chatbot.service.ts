@@ -4,6 +4,7 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import agent from "../agents/agents.js";
 import { ChatInput } from "../types/ChatInput.js";
 import axios from "axios";
+import httpClient from "../configs/httpClient.js";
 import createReportGraph from "../langgraph/create_report.graph.js";
 import buildHealthRoadmapGraph from "../langgraph/build_health_roadmap.graph.js";
 import diagnosisGraph from "../langgraph/diagnosis.graph.js";
@@ -53,7 +54,7 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
 
   try {
     let stepStartedAt = Date.now();
-    await axios.post(
+    await httpClient.post(
       `${process.env.BACKEND_URL}/api/v1/chat-history`,
       {
         userId,
@@ -72,7 +73,7 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
     stepStartedAt = Date.now();
     const { data: history } = await withRetry(
       () =>
-        axios.get(
+        httpClient.get(
           `${process.env.BACKEND_URL}/api/v1/chat-history/context/${userId}`,
           {
             headers: {
@@ -126,7 +127,7 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
     // dù LLM đã trả lời thành công (tốn chi phí LLM mà người dùng vẫn nhận
     // lỗi). Giờ lỗi lưu chỉ được log, không ảnh hưởng câu trả lời đã có.
     const saveAiMessageStartedAt = Date.now();
-    axios
+    httpClient
       .post(
         `${process.env.BACKEND_URL}/api/v1/chat-history`,
         {
