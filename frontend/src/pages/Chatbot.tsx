@@ -169,12 +169,20 @@ export default function Chatbot() {
     }, 100);
 
     try {
-      await sendChatbotMessage(question);
+      const answer = await sendChatbotMessage(question);
       clearTypingInterval();
       setOptimisticMessages((prev) =>
-        prev.filter((msg) => msg.id !== tempId + 1)
+        prev.map((msg) =>
+          msg.id === tempId + 1
+            ? {
+                ...msg,
+                isTyping: false,
+                content: answer,
+              }
+            : msg
+        )
       );
-      await queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
         queryKey: ["messages-chatbot", userId],
       });
     } catch (error) {
