@@ -121,22 +121,40 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
       );
     const replyContent = bookingToolReply?.content ?? reply.content;
 
-    stepStartedAt = Date.now();
-    await axios.post(
-      `${process.env.BACKEND_URL}/api/v1/chat-history`,
-      {
-        userId,
-        role: "ai",
-        content: replyContent,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    // Không await — lưu lịch sử AI reply không cần chặn response cho người
+    // dùng chờ. Trước đây nếu POST này lỗi/timeout thì cả request thất bại
+    // dù LLM đã trả lời thành công (tốn chi phí LLM mà người dùng vẫn nhận
+    // lỗi). Giờ lỗi lưu chỉ được log, không ảnh hưởng câu trả lời đã có.
+    const saveAiMessageStartedAt = Date.now();
+    axios
+      .post(
+        `${process.env.BACKEND_URL}/api/v1/chat-history`,
+        {
+          userId,
+          role: "ai",
+          content: replyContent,
         },
-        timeout: BACKEND_REQUEST_TIMEOUT_MS,
-      },
-    );
-    logStep("save_ai_message", { durationMs: Date.now() - stepStartedAt });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          timeout: BACKEND_REQUEST_TIMEOUT_MS,
+        },
+      )
+      .then(() =>
+        logStep("save_ai_message", {
+          durationMs: Date.now() - saveAiMessageStartedAt,
+        }),
+      )
+      .catch((error) => {
+        logStep("save_ai_message_failed", {
+          durationMs: Date.now() - saveAiMessageStartedAt,
+        });
+        console.error("Failed to persist AI reply:", {
+          status: axios.isAxiosError(error) ? error.response?.status : undefined,
+          code: axios.isAxiosError(error) ? error.code : undefined,
+        });
+      });
     logStep("done");
 
     return { answer: replyContent };

@@ -1,16 +1,34 @@
 import assert from "node:assert/strict";
+import path from "node:path";
 import test from "node:test";
-import { ragTool } from "../../../src/tools/rag.tool.js";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-// rag.tool.ts itself is thin wiring: its func just awaits setupRagGraph()
-// (from ../rag/rag.js) and then ragGraph.invoke(...). Unlike qa_sql.tool.ts,
-// setupRagGraph() does all of its real work (Qdrant vector-store connection,
-// LangChain Hub prompt pull) *inside* an async function body rather than at
-// module-import time, so importing rag.tool.ts here is safe — no network/DB
-// calls happen until the tool is actually invoked. Actually invoking it would
-// require a live Qdrant instance and network access, so this stays a
-// structural smoke test of the tool's registration/schema rather than
-// exercising setupRagGraph()/the graph itself.
+// rag.ts now initializes its Qdrant vector store + LLM ONCE at module-import
+// time (eager init, fixed a per-request latency bug — see rag.ts's own
+// comment). That means importing rag.tool.ts here would trigger real
+// network/DB calls unless we mock rag.ts's own dependencies first, the same
+// way rag.spec.ts does. We mock relative to src/rag/ (where rag.ts's own
+// import specifiers resolve), not src/tools/, since that's the module doing
+// the actual initialization work.
+const here = path.dirname(fileURLToPath(import.meta.url));
+const ragDirUrl = pathToFileURL(path.resolve(here, "../../../src/rag")).href + "/";
+
+registerEsmMocks(ragDirUrl, {
+  "../configs/vectordb.js": `
+    export default async function initVectorDB() {
+      return { similaritySearch: async () => [] };
+    }
+  `,
+  "../configs/llm.js": `
+    export function getChatModel() {
+      return { invoke: async () => ({ content: "" }) };
+    }
+  `,
+});
+
+const { ragTool } = await import("../../../src/tools/rag.tool.js");
+
 test("rag_tool is registered with the expected name and a non-empty description", () => {
   assert.equal(ragTool.name, "rag_tool");
   assert.equal(typeof ragTool.description, "string");

@@ -6,14 +6,13 @@ import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
 type RagStub = {
   searchCalls: unknown[];
-  promptCalls: unknown[];
   llmCalls: unknown[];
   searchError?: unknown;
 };
 const globals = globalThis as typeof globalThis & { __RAG_STUB__: RagStub };
 
 function resetStub() {
-  globals.__RAG_STUB__ = { searchCalls: [], promptCalls: [], llmCalls: [] };
+  globals.__RAG_STUB__ = { searchCalls: [], llmCalls: [] };
 }
 resetStub();
 
@@ -34,16 +33,6 @@ registerEsmMocks(subjectDirUrl, {
       };
     }
   `,
-  "langchain/hub": `
-    export async function pull(name) {
-      return {
-        invoke: async (args) => {
-          globalThis.__RAG_STUB__.promptCalls.push({ name, args });
-          return { formatted: args };
-        },
-      };
-    }
-  `,
   "../configs/llm.js": `
     export function getChatModel() {
       return {
@@ -56,26 +45,32 @@ registerEsmMocks(subjectDirUrl, {
   `,
 });
 
-const { default: setupRagGraph } = await import("../../../src/rag/rag.js");
+const { default: ragGraph } = await import("../../../src/rag/rag.js");
 
 test.beforeEach(resetStub);
 
 test("retrieves three nearest documents, joins context, and generates an answer", async () => {
-  const graph = await setupRagGraph();
-  const result = await graph.invoke({ question: "What services are available?" });
+  const result = await ragGraph.invoke({ question: "What services are available?" });
   const stub = globals.__RAG_STUB__;
 
   assert.deepEqual(stub.searchCalls, [["What services are available?", 3]]);
-  assert.deepEqual(stub.promptCalls, [
-    {
-      name: "rlm/rag-prompt",
-      args: {
-        question: "What services are available?",
-        context: "first document\nsecond document",
-      },
-    },
-  ]);
   assert.equal(stub.llmCalls.length, 1);
+
+  // prompt.invoke() giờ dùng ChatPromptTemplate thật (không còn pull từ
+  // LangChain Hub) — kiểm tra nội dung câu hỏi + tài liệu truy xuất được đã
+  // thật sự lọt vào message gửi cho LLM, thay vì assert trên promptCalls.
+  const [renderedMessages] = stub.llmCalls as [
+    Array<{ content: string }> & { toChatMessages?: () => Array<{ content: string }> },
+  ];
+  const messages =
+    typeof (renderedMessages as any).toChatMessages === "function"
+      ? (renderedMessages as any).toChatMessages()
+      : renderedMessages;
+  const renderedText = JSON.stringify(messages);
+  assert.match(renderedText, /What services are available\?/);
+  assert.match(renderedText, /first document/);
+  assert.match(renderedText, /second document/);
+
   assert.equal(result.answer, "grounded answer");
 });
 
@@ -83,9 +78,7 @@ test("propagates a non-retryable retrieval failure without calling the prompt or
   globals.__RAG_STUB__.searchError = Object.assign(new Error("invalid query"), {
     status: 400,
   });
-  const graph = await setupRagGraph();
 
-  await assert.rejects(graph.invoke({ question: "bad query" }), /invalid query/);
-  assert.equal(globals.__RAG_STUB__.promptCalls.length, 0);
+  await assert.rejects(ragGraph.invoke({ question: "bad query" }), /invalid query/);
   assert.equal(globals.__RAG_STUB__.llmCalls.length, 0);
 });

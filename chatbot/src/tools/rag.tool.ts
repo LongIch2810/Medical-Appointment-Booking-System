@@ -1,10 +1,9 @@
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
-import setupRagGraph from "../rag/rag.js";
+import ragGraph from "../rag/rag.js";
 
 export const ragTool = tool(
   async ({ question }) => {
-    const ragGraph = await setupRagGraph();
     const result = await ragGraph.invoke({ question });
     return result.answer;
   },
