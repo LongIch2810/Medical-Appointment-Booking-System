@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Stethoscope } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useGetSpecialtiesInfinite } from "@/hooks/useGetSpecialtiesInfinite";
 import SpecialtyCard from "../card/SpecialtyCard";
 import SpecialtyCardSkeleton from "../skeleton/SpecialtyCardSkeleton";
@@ -8,6 +9,7 @@ import ErrorState from "../notification/ErrorState";
 import type { SpecialtyProps } from "@/types/global";
 
 export const SpecialtiesSection: React.FC = () => {
+  const { t } = useTranslation();
   const { data, isLoading, isError, refetch } = useGetSpecialtiesInfinite();
 
   // On Home, only display the first 10 popular specialties in a compact grid
@@ -22,13 +24,13 @@ export const SpecialtiesSection: React.FC = () => {
           <div className="space-y-1.5 max-w-2xl">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#159a98] dark:text-[#2cd4d1]">
               <Stethoscope className="w-4 h-4" />
-              <span>Chuyên khoa đa dạng</span>
+              <span>{t("home.specialtiesEyebrow")}</span>
             </div>
             <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Chuyên khoa khám phổ biến
+              {t("home.specialtiesTitle")}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Lựa chọn đúng chuyên khoa để kết nối nhanh chóng với bác sĩ đầu ngành phù hợp triệu chứng của bạn.
+              {t("home.specialtiesSubtitle")}
             </p>
           </div>
 
@@ -36,7 +38,7 @@ export const SpecialtiesSection: React.FC = () => {
             to="/doctors"
             className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#159a98] dark:text-[#2cd4d1] hover:text-[#117d7b] dark:hover:text-teal-300 transition-colors shrink-0 group focus-visible:ring-2 focus-visible:ring-[#159a98] rounded-md outline-none"
           >
-            <span>Tất cả chuyên khoa</span>
+            <span>{t("home.viewAllSpecialties")}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
@@ -44,8 +46,8 @@ export const SpecialtiesSection: React.FC = () => {
         {/* Content State */}
         {isError ? (
           <ErrorState
-            title="Không thể tải danh sách chuyên khoa"
-            description="Đã xảy ra lỗi khi kết nối máy chủ. Vui lòng thử lại."
+            title={t("home.specialtiesErrorTitle")}
+            description={t("home.specialtiesErrorDesc")}
             onRetry={() => refetch()}
           />
         ) : (

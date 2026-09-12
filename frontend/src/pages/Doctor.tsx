@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { RotateCcw, Search } from "lucide-react";
-
+import { useTranslation } from "react-i18next";
 import DialogChooseSpecialty from "../components/dialog/DialogChooseSpecialty";
 import DialogChooseExperience from "../components/dialog/DialogChooseExperience";
 import DialogInputWorkplace from "../components/dialog/DialogInputWorkplace";
@@ -134,26 +134,28 @@ const Doctor = () => {
     setSearchParams({});
   };
 
+  const { t } = useTranslation();
+
   return (
     <section className="mt-16 md:mt-24 pb-16">
       <header className="container mx-auto max-w-4xl mb-8 px-4 text-center space-y-4">
         <div className="space-y-2">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 font-heading">
-            Đội ngũ Bác sĩ Chuyên khoa
+            {t("doctor.pageTitle")}
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 max-w-xl mx-auto leading-relaxed">
-            Tìm kiếm bác sĩ theo chuyên khoa, kinh nghiệm, bệnh viện hoặc khu vực và đặt lịch khám nhanh chóng.
+            {t("doctor.pageSubtitle")}
           </p>
         </div>
 
         <div className="max-w-2xl mx-auto">
           <Input
-            placeholder="Tìm kiếm theo tên bác sĩ, bệnh viện, chuyên khoa..."
+            placeholder={t("doctor.searchPlaceholder")}
             className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
             icon={<Search className="text-slate-400" size={18} />}
             value={search}
             onChange={handleSearch}
-            aria-label="Tìm kiếm bác sĩ"
+            aria-label={t("doctor.searchPlaceholder")}
           />
         </div>
 
@@ -171,7 +173,7 @@ const Doctor = () => {
               className="w-full md:w-auto gap-2 rounded-full border-rose-200 dark:border-rose-900/60 bg-rose-50/50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 shadow-2xs hover:bg-rose-100 dark:hover:bg-rose-900/50 text-xs font-bold h-9 cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              Đặt lại bộ lọc
+              {t("doctor.resetFilters")}
             </Button>
           )}
         </div>
@@ -180,8 +182,8 @@ const Doctor = () => {
       <div className="flex flex-col items-center lg:gap-10 gap-8 container mx-auto px-4">
         {isError ? (
           <ErrorState
-            title="Không thể tải danh sách bác sĩ"
-            description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng kiểm tra lại kết nối và thử lại."
+            title={t("doctor.errorTitle")}
+            description={t("doctor.errorDesc")}
             onRetry={() => refetch()}
           />
         ) : (
@@ -189,8 +191,8 @@ const Doctor = () => {
             <div className="flex justify-center w-full">
               {!isLoading && doctors.length === 0 && (
                 <NotFoundResult
-                  title="Không tìm thấy bác sĩ phù hợp"
-                  description="Hãy thử đổi từ khóa tìm kiếm hoặc đặt lại các tiêu chí bộ lọc."
+                  title={t("doctor.noResultsTitle")}
+                  description={t("doctor.noResultsDesc")}
                   onReset={handleResetFilters}
                 />
               )}
@@ -215,7 +217,7 @@ const Doctor = () => {
                   disabled={isFetchingNextPage}
                   className="rounded-xl px-6 py-2.5 font-bold shadow-xs hover:shadow-md cursor-pointer"
                 >
-                  {isFetchingNextPage ? <Loading /> : "Xem thêm bác sĩ"}
+                  {isFetchingNextPage ? <Loading /> : t("doctor.loadMore")}
                 </Button>
               )}
             </div>

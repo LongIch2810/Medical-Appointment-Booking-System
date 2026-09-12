@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { AppointmentStatus } from "@/types/interface/patient.interface";
 
@@ -30,16 +31,19 @@ const statusDotClassMap: Record<AppointmentStatus, string> = {
 
 export const AppointmentStatusBadge: React.FC<{
   status: AppointmentStatus;
-}> = ({ status }) => (
-  <span
-    className={cn(
-      "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
-      statusBadgeClassMap[status],
-    )}
-  >
+}> = ({ status }) => {
+  const { t } = useTranslation();
+  return (
     <span
-      className={cn("h-1.5 w-1.5 rounded-full", statusDotClassMap[status])}
-    />
-    {appointmentStatusLabelMap[status]}
-  </span>
-);
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        statusBadgeClassMap[status],
+      )}
+    >
+      <span
+        className={cn("h-1.5 w-1.5 rounded-full", statusDotClassMap[status])}
+      />
+      {t(`status.appointment.${status}`, { defaultValue: appointmentStatusLabelMap[status] })}
+    </span>
+  );
+};

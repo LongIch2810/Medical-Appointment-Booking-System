@@ -10,12 +10,14 @@ import OtpInput from "@/components/input/OtpInput";
 import Loading from "@/components/loading/Loading";
 import { sendOtp, verifyOtp } from "@/api/otpApi";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
+import { useTranslation } from "react-i18next";
 
 type Step = "email" | "otp" | "reset";
 
 const RESEND_COOLDOWN_SECONDS = 60;
 
 const ForgotPassword: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
@@ -96,10 +98,10 @@ const ForgotPassword: React.FC = () => {
 
   const stepTitle =
     step === "email"
-      ? "Quên mật khẩu"
+      ? t("auth.forgotStepEmailTitle")
       : step === "otp"
-      ? "Nhập mã OTP"
-      : "Đặt lại mật khẩu";
+      ? t("auth.forgotStepOtpTitle")
+      : t("auth.forgotStepResetTitle");
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white relative overflow-hidden">
@@ -129,9 +131,9 @@ const ForgotPassword: React.FC = () => {
           <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 leading-tight font-heading min-h-[72px]">
             <Typewriter
               words={[
-                "Khôi phục mật khẩu tài khoản.",
-                "Bảo mật thông tin y tế của bạn.",
-                "Tiếp cận lại dịch vụ an toàn.",
+                t("auth.forgotTypewriter1"),
+                t("auth.forgotTypewriter2"),
+                t("auth.forgotTypewriter3"),
               ]}
               loop={true}
               cursor
@@ -143,17 +145,17 @@ const ForgotPassword: React.FC = () => {
           </div>
 
           <p className="text-sm sm:text-base text-teal-100/90 leading-relaxed mb-8">
-            Xác minh email liên kết để cấp lại mật khẩu an toàn và tiếp tục quản lý hành trình chăm sóc sức khỏe của bạn.
+            {t("auth.forgotDescription")}
           </p>
 
           <div className="hidden sm:grid grid-cols-1 gap-3 pt-2 text-xs text-teal-50">
             <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
-              <span>Xác minh qua mã bảo mật OTP 6 số gửi trực tiếp vào email</span>
+              <span>{t("auth.forgotOtpFeature")}</span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
-              <span>Được bảo vệ bằng mã hóa chuẩn y tế số</span>
+              <span>{t("auth.forgotEncryptedFeature")}</span>
             </div>
           </div>
         </div>
@@ -169,7 +171,7 @@ const ForgotPassword: React.FC = () => {
                 onClick={() => setStep(step === "reset" ? "otp" : "email")}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-primary transition-colors mb-3 cursor-pointer w-fit"
               >
-                <ArrowLeft size={15} /> Quay lại bước trước
+                <ArrowLeft size={15} /> {t("auth.backToPrevStep")}
               </button>
             )}
             <CardTitle className="text-center text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-heading">
@@ -186,19 +188,19 @@ const ForgotPassword: React.FC = () => {
                 className="space-y-4"
               >
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed">
-                  Nhập địa chỉ email liên kết với tài khoản của bạn để nhận mã xác thực một lần (OTP).
+                  {t("auth.forgotEmailDesc")}
                 </p>
                 <div className="space-y-1.5 text-left">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Địa chỉ email <span className="text-rose-500">*</span>
+                    {t("auth.email")} <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     type="email"
-                    placeholder="nhap.email@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="rounded-xl h-11"
-                    aria-label="Địa chỉ email"
+                    aria-label={t("auth.email")}
                     required
                   />
                 </div>
@@ -207,7 +209,7 @@ const ForgotPassword: React.FC = () => {
                   className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
                   disabled={loading}
                 >
-                  {loading ? <Loading /> : "Gửi mã OTP xác minh"}
+                  {loading ? <Loading /> : t("auth.sendOtpBtn")}
                 </Button>
                 <div className="text-center pt-2">
                   <button
@@ -215,7 +217,7 @@ const ForgotPassword: React.FC = () => {
                     onClick={() => navigate("/sign-in")}
                     className="text-xs font-bold text-primary hover:underline cursor-pointer"
                   >
-                    Quay lại đăng nhập
+                    {t("auth.backToSignIn")}
                   </button>
                 </div>
               </form>
@@ -230,7 +232,7 @@ const ForgotPassword: React.FC = () => {
                 className="space-y-4"
               >
                 <p className="text-xs sm:text-sm text-center text-slate-600 dark:text-slate-300 leading-relaxed">
-                  Mã OTP 6 số đã được gửi đến <strong className="text-primary">{email}</strong>
+                  {t("auth.otpSentTo")} <strong className="text-primary">{email}</strong>
                 </p>
                 <div className="py-2">
                   <OtpInput value={otp} onChange={setOtp} />
@@ -240,17 +242,17 @@ const ForgotPassword: React.FC = () => {
                   className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
                   disabled={loading}
                 >
-                  {loading ? <Loading /> : "Xác minh mã OTP"}
+                  {loading ? <Loading /> : t("auth.verifyOtpBtn")}
                 </Button>
                 <p className="text-xs text-center text-slate-500 dark:text-slate-400">
-                  Không nhận được mã?{" "}
+                  {t("auth.resendOtpPrompt")}{" "}
                   <button
                     type="button"
                     onClick={handleResendOtp}
                     disabled={cooldown > 0 || loading}
                     className="text-primary font-bold hover:underline disabled:text-slate-400 disabled:no-underline disabled:cursor-not-allowed cursor-pointer"
                   >
-                    {cooldown > 0 ? `Gửi lại (${cooldown}s)` : "Gửi lại"}
+                    {cooldown > 0 ? `${t("auth.resendOtpBtn")} (${cooldown}s)` : t("auth.resendOtpBtn")}
                   </button>
                 </p>
               </form>
@@ -265,19 +267,19 @@ const ForgotPassword: React.FC = () => {
                 className="space-y-4"
               >
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 text-center leading-relaxed">
-                  Nhập mật khẩu mới an toàn (tối thiểu 6 ký tự).
+                  {t("auth.forgotResetDesc")}
                 </p>
                 <div className="space-y-1.5 text-left">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Mật khẩu mới <span className="text-rose-500">*</span>
+                    {t("auth.newPassword")} <span className="text-rose-500">*</span>
                   </label>
                   <Input
                     type="password"
-                    placeholder="Nhập mật khẩu mới"
+                    placeholder={t("auth.newPasswordPlaceholder")}
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
                     className="rounded-xl h-11"
-                    aria-label="Mật khẩu mới"
+                    aria-label={t("auth.newPassword")}
                     required
                   />
                 </div>
@@ -286,7 +288,7 @@ const ForgotPassword: React.FC = () => {
                   className="w-full h-11 rounded-xl text-sm font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
                   disabled={loading}
                 >
-                  {loading ? <Loading /> : "Cập nhật mật khẩu"}
+                  {loading ? <Loading /> : t("auth.resetPasswordBtn")}
                 </Button>
               </form>
             )}

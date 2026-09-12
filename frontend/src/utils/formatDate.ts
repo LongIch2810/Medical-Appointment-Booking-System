@@ -1,10 +1,14 @@
+import i18n from "@/i18n";
+
 export const formatDate = (
   date: Date | null | undefined,
-  weekdayLocale: string = "en-US",
+  weekdayLocale?: string,
   isHasWeekday: boolean = true
 ): string => {
   if (date === null || date === undefined) return "";
-  const weekday = new Intl.DateTimeFormat(weekdayLocale, {
+  const currentLang = i18n.language || "vi";
+  const activeLocale = weekdayLocale || (currentLang === "en" ? "en-US" : "vi-VN");
+  const weekday = new Intl.DateTimeFormat(activeLocale, {
     weekday: "long",
   }).format(date);
 
@@ -16,11 +20,13 @@ export const formatDate = (
     .format(date)
     .replace(/\//g, "-");
 
-  return isHasWeekday ? `${weekday},${dateFormat}` : dateFormat;
+  return isHasWeekday ? `${weekday}, ${dateFormat}` : dateFormat;
 };
 
-export const getWeekday = (date: Date): string => {
-  const weekday = new Intl.DateTimeFormat("en-US", {
+export const getWeekday = (date: Date, locale?: string): string => {
+  const currentLang = i18n.language || "vi";
+  const activeLocale = locale || (currentLang === "en" ? "en-US" : "vi-VN");
+  const weekday = new Intl.DateTimeFormat(activeLocale, {
     weekday: "long",
   }).format(date);
 

@@ -56,6 +56,7 @@ import {
   type RelativeFormValues,
 } from "@/schemas/relative.schema";
 import type { Relative } from "@/types/interface/patient.interface";
+import { useTranslation } from "react-i18next";
 
 const defaultFormState: RelativeFormValues = {
   fullname: "",
@@ -83,6 +84,7 @@ const getInitial = (name?: string | null) =>
   (name ?? "").trim().charAt(0).toUpperCase() || "?";
 
 const Relatives: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     data: relativesResponse,
@@ -156,10 +158,10 @@ const Relatives: React.FC = () => {
         { relativeId: editingRelativeId, data: payload },
         {
           onSuccess: () => {
-            toast.success("Đã cập nhật thông tin người thân thành công.");
+            toast.success(t("relatives.updateSuccessToast"));
             handleResetForm();
           },
-          onError: () => toast.error("Không thể cập nhật người thân. Vui lòng thử lại."),
+          onError: () => toast.error(t("common.error")),
         },
       );
       return;
@@ -167,10 +169,10 @@ const Relatives: React.FC = () => {
 
     createMutation.mutate(payload, {
       onSuccess: () => {
-        toast.success("Đã thêm người thân mới vào danh sách.");
+        toast.success(t("relatives.addSuccessToast"));
         handleResetForm();
       },
-      onError: () => toast.error("Không thể thêm người thân. Vui lòng thử lại."),
+      onError: () => toast.error(t("common.error")),
     });
   };
 
@@ -179,14 +181,14 @@ const Relatives: React.FC = () => {
     const targetId = deletingRelative.id;
     deleteMutation.mutate(targetId, {
       onSuccess: () => {
-        toast.info(`Đã xóa "${deletingRelative.fullname}" khỏi danh sách người thân.`);
+        toast.info(t("relatives.deleteSuccessToast"));
         if (editingRelativeId === targetId) {
           handleResetForm();
         }
         setDeletingRelative(null);
       },
       onError: () => {
-        toast.error("Không thể xóa người thân. Vui lòng thử lại.");
+        toast.error(t("common.error"));
         setDeletingRelative(null);
       },
     });
@@ -208,29 +210,29 @@ const Relatives: React.FC = () => {
               </span>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  Danh sách người thân
+                  {t("relatives.pageTitle")}
                 </CardTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Quản lý hồ sơ y tế và đặt lịch khám cho các thành viên gia đình
+                  {t("relatives.pageSubtitle")}
                 </p>
               </div>
             </div>
             <Badge variant="secondary" className="rounded-full px-3 py-1 font-semibold text-xs">
-              {relatives.length} thành viên
+              {t("relatives.membersCount", { count: relatives.length })}
             </Badge>
           </CardHeader>
 
           <CardContent className="space-y-3.5 p-6">
             {isRelativesLoading ? (
               <MedicalAiLoading
-                label="Đang tải danh sách người thân..."
-                description="Đang lấy thông tin các thành viên gia đình đã liên kết"
+                label={t("common.loading")}
+                description="Loading family members"
                 minHeight="min-h-56"
               />
             ) : isRelativesError ? (
               <ErrorState
-                title="Không thể tải danh sách người thân"
-                description="Đã có lỗi xảy ra khi lấy dữ liệu người thân."
+                title={t("common.error")}
+                description="Error loading relatives list."
                 onRetry={() => refetchRelatives()}
               />
             ) : relatives.length === 0 ? (
@@ -238,9 +240,11 @@ const Relatives: React.FC = () => {
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
                   <UsersRound className="h-6 w-6" />
                 </div>
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">Chưa có người thân nào</h4>
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                  {t("relatives.emptyListTitle")}
+                </h4>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Thêm thành viên gia đình để đặt lịch khám bệnh, tạo hồ sơ sức khỏe và xây dựng lộ trình AI Coach.
+                  {t("relatives.emptyListDesc")}
                 </p>
               </div>
             ) : (
@@ -281,15 +285,15 @@ const Relatives: React.FC = () => {
                               className={cn(
                                 "inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-semibold",
                                 relative.gender
-                                  ? "bg-sky-50 text-sky-700 border border-sky-200/60 dark:bg-sky-950/40 dark:border-sky-800/60 dark:text-sky-300"
-                                  : "bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300",
+                                    ? "bg-sky-50 text-sky-700 border border-sky-200/60 dark:bg-sky-950/40 dark:border-sky-800/60 dark:text-sky-300"
+                                    : "bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:border-rose-800/60 dark:text-rose-300",
                               )}
                             >
-                              {relative.gender ? "Nam" : "Nữ"}
+                              {relative.gender ? t("common.male") : t("common.female")}
                             </span>
                             <span className="inline-flex items-center gap-1 rounded-md bg-violet-50 border border-violet-200/60 text-violet-700 dark:bg-violet-950/40 dark:border-violet-800/60 dark:text-violet-300 px-2 py-0.5 text-[11px] font-semibold">
                               <HeartHandshake className="h-3 w-3" />
-                              {relative.relationship?.relationship_name || "Người thân"}
+                              {relative.relationship?.relationship_name || t("common.patient")}
                             </span>
                           </div>
 
@@ -318,11 +322,11 @@ const Relatives: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleNavigateToAICoach(relative.id)}
-                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold"
-                          title="Tạo lộ trình dinh dưỡng & tập luyện AI cho người thân này"
+                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold cursor-pointer"
+                          title={t("relatives.aiCoachBtn")}
                         >
                           <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                          AI Coach
+                          {t("relatives.aiCoachBtn")}
                         </Button>
 
                         {/* Edit Button */}
@@ -331,10 +335,10 @@ const Relatives: React.FC = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleEdit(relative)}
-                          className="h-8 gap-1 rounded-lg text-slate-700 hover:text-primary dark:text-slate-300 dark:hover:text-primary text-xs font-medium"
+                          className="h-8 gap-1 rounded-lg text-slate-700 hover:text-primary dark:text-slate-300 dark:hover:text-primary text-xs font-medium cursor-pointer"
                         >
                           <Pencil className="h-3.5 w-3.5" />
-                          Sửa
+                          {t("common.edit")}
                         </Button>
 
                         {/* Delete Button */}
@@ -344,10 +348,10 @@ const Relatives: React.FC = () => {
                           size="sm"
                           disabled={deleteMutation.isPending}
                           onClick={() => setDeletingRelative(relative)}
-                          className="h-8 gap-1 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40 text-xs font-medium"
+                          className="h-8 gap-1 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-400 dark:hover:bg-rose-950/40 text-xs font-medium cursor-pointer"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
-                          Xóa
+                          {t("common.delete")}
                         </Button>
                       </div>
                     </div>
@@ -378,12 +382,10 @@ const Relatives: React.FC = () => {
               </span>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  {isEditing ? "Cập nhật thông tin" : "Thêm người thân mới"}
+                  {isEditing ? t("relatives.editTitle") : t("relatives.addTitle")}
                 </CardTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {isEditing
-                    ? "Chỉnh sửa thông tin hồ sơ người thân đã chọn"
-                    : "Nhập thông tin người thân vào tài khoản của bạn"}
+                  {isEditing ? t("relatives.editTitle") : t("relatives.addSubtitle")}
                 </p>
               </div>
             </div>
@@ -393,11 +395,11 @@ const Relatives: React.FC = () => {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg text-xs"
+                className="h-8 gap-1 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 rounded-lg text-xs cursor-pointer"
                 onClick={handleResetForm}
               >
                 <X className="h-3.5 w-3.5" />
-                Hủy sửa
+                {t("common.cancel")}
               </Button>
             )}
           </CardHeader>
@@ -407,11 +409,11 @@ const Relatives: React.FC = () => {
               {/* Họ tên */}
               <div className="space-y-2">
                 <Label htmlFor="fullname" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Họ và tên người thân <span className="text-rose-500">*</span>
+                  {t("relatives.fullname")} <span className="text-rose-500">*</span>
                 </Label>
                 <Input
                   id="fullname"
-                  placeholder="Ví dụ: Nguyễn Thị Mai"
+                  placeholder={t("relatives.fullnamePlaceholder")}
                   error={errors.fullname?.message}
                   {...register("fullname")}
                   className="rounded-xl"
@@ -424,7 +426,7 @@ const Relatives: React.FC = () => {
               {/* Mối quan hệ */}
               <div className="space-y-2">
                 <Label htmlFor="relationship_code" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Mối quan hệ <span className="text-rose-500">*</span>
+                  {t("relatives.relationship")} <span className="text-rose-500">*</span>
                 </Label>
                 <Controller
                   name="relationship_code"
@@ -436,7 +438,7 @@ const Relatives: React.FC = () => {
                       disabled={isRelationshipsLoading}
                     >
                       <SelectTrigger id="relationship_code" className="rounded-xl w-full">
-                        <SelectValue placeholder="Chọn mối quan hệ" />
+                        <SelectValue placeholder={t("relatives.relationshipPlaceholder")} />
                       </SelectTrigger>
                       <SelectContent className="rounded-xl">
                         {relationships.map((rel) => (
@@ -457,7 +459,7 @@ const Relatives: React.FC = () => {
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="gender" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    Giới tính <span className="text-rose-500">*</span>
+                    {t("relatives.gender")} <span className="text-rose-500">*</span>
                   </Label>
                   <Controller
                     name="gender"
@@ -465,11 +467,11 @@ const Relatives: React.FC = () => {
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger id="gender" className="rounded-xl w-full">
-                          <SelectValue placeholder="Chọn giới tính" />
+                          <SelectValue placeholder={t("relatives.gender")} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
-                          <SelectItem value="true">Nam</SelectItem>
-                          <SelectItem value="false">Nữ</SelectItem>
+                          <SelectItem value="true">{t("common.male")}</SelectItem>
+                          <SelectItem value="false">{t("common.female")}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -481,7 +483,7 @@ const Relatives: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="dob" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    Ngày sinh (tùy chọn)
+                    {t("relatives.dob")} ({t("common.optional")})
                   </Label>
                   <Input
                     id="dob"
@@ -499,11 +501,11 @@ const Relatives: React.FC = () => {
               {/* Số điện thoại */}
               <div className="space-y-2">
                 <Label htmlFor="phone" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                  Số điện thoại (tùy chọn)
+                  {t("relatives.phone")} ({t("common.optional")})
                 </Label>
                 <Input
                   id="phone"
-                  placeholder="0912345678"
+                  placeholder={t("relatives.phonePlaceholder")}
                   error={errors.phone?.message}
                   {...register("phone")}
                   className="rounded-xl"
@@ -523,7 +525,7 @@ const Relatives: React.FC = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin text-white" />
-                      <span className="text-white">Đang lưu...</span>
+                      <span className="text-white">{t("common.saving")}</span>
                     </>
                   ) : (
                     <>
@@ -532,7 +534,7 @@ const Relatives: React.FC = () => {
                       ) : (
                         <UserPlus className="h-4 w-4 text-white" />
                       )}
-                      <span className="text-white">{isEditing ? "Lưu cập nhật" : "Thêm người thân"}</span>
+                      <span className="text-white">{isEditing ? t("relatives.updateBtn") : t("relatives.addBtn")}</span>
                     </>
                   )}
                 </Button>
@@ -542,10 +544,10 @@ const Relatives: React.FC = () => {
                   variant="outline"
                   onClick={handleResetForm}
                   disabled={isSubmitting}
-                  className="gap-1 rounded-xl text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:bg-slate-800"
+                  className="gap-1 rounded-xl text-slate-600 dark:text-slate-300 dark:border-slate-700 dark:bg-slate-800 cursor-pointer"
                 >
                   <RotateCcw className="h-4 w-4" />
-                  Làm mới
+                  {t("common.reset")}
                 </Button>
               </div>
             </form>
@@ -558,23 +560,19 @@ const Relatives: React.FC = () => {
         <AlertDialogContent className="rounded-2xl sm:max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-              Xác nhận xóa người thân
+              {t("relatives.deleteDialogTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm text-slate-600 dark:text-slate-300">
-              Bạn có chắc chắn muốn xóa người thân{" "}
-              <strong className="font-semibold text-slate-900 dark:text-slate-100">
-                &quot;{deletingRelative?.fullname}&quot;
-              </strong>{" "}
-              khỏi danh sách? Hành động này sẽ không thể khôi phục lại.
+              {t("relatives.deleteDialogDesc", { name: deletingRelative?.fullname ?? "" })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0">
-            <AlertDialogCancel className="rounded-xl">Hủy bỏ</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">{t("common.cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleConfirmDelete}
               className="rounded-xl bg-rose-600 font-semibold text-white hover:bg-rose-700"
             >
-              Xác nhận xóa
+              {t("relatives.deleteConfirmBtn")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,8 +1,11 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import FadeInView from "@/components/view/FadeInView";
 import { FileText, ShieldAlert, CheckCircle2, AlertCircle } from "lucide-react";
 
 const Terms = () => {
+  const { t } = useTranslation();
+
   return (
     <FadeInView>
       <section className="mt-16 md:mt-24 pb-16">
@@ -15,10 +18,10 @@ const Terms = () => {
                 </div>
                 <div>
                   <CardTitle className="text-xl md:text-2xl text-slate-900 dark:text-slate-100 font-bold tracking-tight">
-                    Điều khoản thanh toán & chuyển khoản
+                    {t("staticPages.termsTitle")}
                   </CardTitle>
                   <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    Cập nhật mới nhất về quy chế giao dịch trực tuyến trên LifeHealth
+                    {t("staticPages.termsSubtitle")}
                   </p>
                 </div>
               </div>
@@ -27,14 +30,14 @@ const Terms = () => {
               <div className="p-4 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 flex items-start gap-3 text-amber-900 dark:text-amber-300">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
                 <p className="text-xs md:text-sm leading-relaxed">
-                  Việc thực hiện thanh toán qua chuyển khoản hoặc cổng trực tuyến khi sử dụng dịch vụ đồng nghĩa với việc quý khách đã đọc, hiểu và hoàn toàn đồng ý với các điều khoản dưới đây.
+                  {t("staticPages.termsNotice")}
                 </p>
               </div>
 
               <div className="space-y-3">
                 <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
                   <ShieldAlert className="w-4 h-4 text-primary" />
-                  Quy định thực hiện giao dịch
+                  {t("staticPages.termsRegulations")}
                 </h3>
                 <ul className="space-y-2.5">
                   <li className="flex items-start gap-2.5">
@@ -62,10 +65,10 @@ const Terms = () => {
 
               <div className="border-t border-slate-100 dark:border-slate-800/80 pt-5 text-xs text-slate-500 dark:text-slate-400 space-y-2">
                 <p>
-                  Nếu phát sinh sự cố hoặc chưa nhận được xác nhận sau 15 phút, vui lòng liên hệ bộ phận chăm sóc khách hàng qua email <strong className="text-slate-700 dark:text-slate-300">support@lifehealth.vn</strong> hoặc hotline <strong className="text-slate-700 dark:text-slate-300">0909 123 456</strong>.
+                  {t("staticPages.termsContactPrompt")}
                 </p>
                 <p>
-                  LifeHealth bảo lưu quyền điều chỉnh và bổ sung các điều khoản này theo quy định pháp luật và thông báo công khai trên trang chủ.
+                  {t("staticPages.termsDisclaimer")}
                 </p>
               </div>
             </CardContent>

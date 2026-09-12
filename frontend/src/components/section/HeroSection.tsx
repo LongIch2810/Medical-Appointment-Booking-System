@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+import React, { useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -17,31 +18,35 @@ import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(useGSAP);
 
-const CARE_PATH_STEPS = [
-  {
-    step: "BƯỚC 01",
-    title: "Tìm chuyên khoa",
-    desc: "Chọn theo triệu chứng cần khám",
-    icon: Stethoscope,
-  },
-  {
-    step: "BƯỚC 02",
-    title: "Chọn bác sĩ & lịch",
-    desc: "Xem lịch trống theo ngày",
-    icon: UserCheck,
-  },
-  {
-    step: "BƯỚC 03",
-    title: "Nhận phiếu hẹn",
-    desc: "Có mã khám ngay sau khi đặt",
-    icon: CalendarCheck,
-  },
-];
-
 export const HeroSection: React.FC = () => {
+  const { t } = useTranslation();
   const { userInfo } = useUserStore();
   const heroRef = useRef<HTMLDivElement>(null);
   const carePathLineRef = useRef<SVGPathElement>(null);
+
+  const carePathSteps = useMemo(
+    () => [
+      {
+        step: t("home.step1Label"),
+        title: t("home.step1Title"),
+        desc: t("home.step1Desc"),
+        icon: Stethoscope,
+      },
+      {
+        step: t("home.step2Label"),
+        title: t("home.step2Title"),
+        desc: t("home.step2Desc"),
+        icon: UserCheck,
+      },
+      {
+        step: t("home.step3Label"),
+        title: t("home.step3Title"),
+        desc: t("home.step3Desc"),
+        icon: CalendarCheck,
+      },
+    ],
+    [t],
+  );
 
   useGSAP(
     () => {
@@ -160,26 +165,24 @@ export const HeroSection: React.FC = () => {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[#159a98]"></span>
               </span>
-              <span>Chăm sóc sức khỏe chủ động</span>
+              <span>{t("home.heroEyebrow1")}</span>
               <span className="text-slate-300 dark:text-slate-600">|</span>
               <span className="text-slate-600 dark:text-slate-400 text-xs font-medium">
-                Nền tảng đặt khám chính thức
+                {t("home.heroEyebrow2")}
               </span>
             </div>
 
             {/* Main Headline */}
             <h1 className="hero-title font-heading text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold text-slate-900 dark:text-slate-50 tracking-tight leading-[1.18]">
-              Đúng bác sĩ. Đúng thời điểm.{" "}
+              {t("home.heroHeadlineMain")}{" "}
               <span className="text-[#159a98] dark:text-[#2cd4d1] block sm:inline">
-                An tâm từ lần khám đầu tiên.
+                {t("home.heroHeadlineAccent")}
               </span>
             </h1>
 
             {/* Clear, patient-oriented description */}
             <p className="hero-desc text-base sm:text-lg text-slate-600 dark:text-slate-300 max-w-2xl leading-relaxed">
-              Kết nối trực tiếp với đội ngũ bác sĩ chuyên khoa được xác thực tại
-              Việt Nam. Tra cứu khung giờ rảnh minh bạch, nhận tư vấn chuyên môn
-              và hoàn tất đặt lịch hẹn khám trong vòng 10 giây.
+              {t("home.heroDescriptionRich")}
             </p>
 
             {/* Action CTAs */}
@@ -189,7 +192,7 @@ export const HeroSection: React.FC = () => {
                 className="hero-cta h-12 px-6 rounded-xl bg-[#159a98] hover:bg-[#117d7b] text-white font-bold text-sm sm:text-base shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
               >
                 <Link to="/doctors" className="inline-flex items-center justify-center gap-2">
-                  <span>Tìm bác sĩ phù hợp</span>
+                  <span>{t("home.findMatchingDoctor")}</span>
                   <ArrowRight className="h-4 w-4 shrink-0" />
                 </Link>
               </Button>
@@ -204,7 +207,7 @@ export const HeroSection: React.FC = () => {
                   className="inline-flex items-center justify-center gap-2"
                 >
                   <Sparkles className="h-4 w-4 text-[#159a98] dark:text-[#2cd4d1] shrink-0" />
-                  <span>Hỏi trợ lý sức khỏe</span>
+                  <span>{t("home.askHealthAssistant")}</span>
                 </Link>
               </Button>
             </div>
@@ -221,7 +224,7 @@ export const HeroSection: React.FC = () => {
               <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
                 <img
                   src="/banner.png"
-                  alt="Đội ngũ bác sĩ LifeHealth"
+                  alt="LifeHealth Medical Specialists"
                   width={440}
                   height={288}
                   className="w-full h-full object-cover object-center scale-105 hover:scale-100 transition-transform duration-700"
@@ -234,15 +237,15 @@ export const HeroSection: React.FC = () => {
                 {/* Top Badge: Verified Clinical Network */}
                 <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-md text-xs font-bold text-slate-800 dark:text-slate-100 shadow-sm">
                   <ShieldCheck className="w-3.5 h-3.5 text-[#159a98]" />
-                  <span>Bác sĩ chuyên khoa xác thực</span>
+                  <span>{t("home.verifiedSpecialistBadge")}</span>
                 </div>
 
                 <div className="absolute bottom-3 left-4 right-4 text-white">
                   <p className="text-xs font-semibold uppercase tracking-wider text-teal-200">
-                    Bệnh viện Đa khoa Trung ương
+                    {t("home.hospitalBadge")}
                   </p>
                   <p className="text-base font-bold drop-shadow-sm">
-                    Khám theo giờ hẹn • Tiết kiệm 45 phút chờ
+                    {t("home.saveWaitTime")}
                   </p>
                 </div>
               </div>
@@ -253,12 +256,12 @@ export const HeroSection: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                      Phiếu hẹn mẫu
+                      {t("home.sampleTicket")}
                     </span>
                   </div>
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" />
-                    Đã xác nhận
+                    {t("home.confirmedBadge")}
                   </span>
                 </div>
 
@@ -266,18 +269,18 @@ export const HeroSection: React.FC = () => {
                 <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-center gap-3">
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/2922/2922510.png"
-                    alt="BS. CKII Nguyễn Minh Anh"
+                    alt="Dr. Nguyen Minh Anh"
                     className="w-12 h-12 rounded-xl object-cover ring-1 ring-slate-200 dark:ring-slate-700 bg-teal-50"
                   />
                   <div className="min-w-0 flex-1">
                     <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                      BS. CKII Nguyễn Minh Anh
+                      {t("home.sampleDocName")}
                     </h4>
                     <p className="text-xs text-[#159a98] dark:text-[#2cd4d1] font-medium truncate">
-                      Chuyên khoa Tim mạch
+                      {t("home.sampleDocSpec")}
                     </p>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">
-                      15 năm kinh nghiệm • BV Đại học Y Dược
+                      {t("home.sampleDocExp")}
                     </p>
                   </div>
                 </div>
@@ -288,7 +291,7 @@ export const HeroSection: React.FC = () => {
                     <Clock className="w-4 h-4 text-[#159a98] shrink-0" />
                     <div>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
-                        Khung giờ
+                        {t("home.timeSlotLabel")}
                       </span>
                       <span className="font-bold">09:00 - 09:30</span>
                     </div>
@@ -297,9 +300,9 @@ export const HeroSection: React.FC = () => {
                     <CalendarCheck className="w-4 h-4 text-[#159a98] shrink-0" />
                     <div>
                       <span className="text-[10px] text-slate-500 dark:text-slate-400 block leading-tight">
-                        Lịch rảnh
+                        {t("home.availableLabel")}
                       </span>
-                      <span className="font-bold">Hôm nay</span>
+                      <span className="font-bold">{t("home.todayLabel")}</span>
                     </div>
                   </div>
                 </div>
@@ -310,7 +313,7 @@ export const HeroSection: React.FC = () => {
                   className="w-full h-10 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-teal-600 dark:hover:bg-teal-500 text-white font-bold text-xs shadow-xs cursor-pointer"
                 >
                   <Link to="/doctors">
-                    <span>Chọn bác sĩ & Xem lịch thực tế</span>
+                    <span>{t("home.viewRealScheduleBtn")}</span>
                     <ArrowRight className="w-3.5 h-3.5 ml-1" />
                   </Link>
                 </Button>
@@ -321,7 +324,7 @@ export const HeroSection: React.FC = () => {
 
         {/* Full-Width Signature Element: Care Path Process Panel */}
         <section
-          aria-label="Lộ trình 3 bước khám an tâm"
+          aria-label={t("home.carePathTitle")}
           className="care-path-panel relative rounded-2xl sm:rounded-3xl bg-white/90 dark:bg-slate-900/80 border border-teal-100/80 dark:border-slate-800/80 p-5 sm:p-6 lg:p-7 shadow-xs backdrop-blur-xs"
         >
           {/* Panel Header */}
@@ -329,12 +332,12 @@ export const HeroSection: React.FC = () => {
             <div className="flex items-center gap-2.5">
               <span className="w-1.5 h-4.5 rounded-full bg-[#159a98]" aria-hidden="true" />
               <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-heading">
-                Lộ trình 3 bước khám an tâm
+                {t("home.carePathTitle")}
               </h2>
             </div>
             <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 dark:text-teal-300 w-fit px-3 py-1 rounded-full bg-teal-50/80 dark:bg-teal-950/60 border border-teal-100 dark:border-teal-900/60">
               <Clock className="w-3.5 h-3.5 text-[#159a98] shrink-0" aria-hidden="true" />
-              <span>Chỉ mất ~10 giây</span>
+              <span>{t("home.carePathDuration")}</span>
             </div>
           </div>
 
@@ -381,7 +384,7 @@ export const HeroSection: React.FC = () => {
 
             {/* 3 Steps List */}
             <ol className="relative z-10 flex flex-col md:grid md:grid-cols-3 gap-6 md:gap-8">
-              {CARE_PATH_STEPS.map((item, index) => (
+              {carePathSteps.map((item, index) => (
                 <li
                   key={item.step}
                   className="care-path-step group relative flex items-start gap-4 md:flex-col md:items-center md:text-center"

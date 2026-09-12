@@ -19,6 +19,7 @@ import {
   Wine,
 } from "lucide-react";
 
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ErrorState from "@/components/notification/ErrorState";
@@ -28,21 +29,6 @@ import { usePatientDashboard } from "@/hooks/usePatientPortalApi";
 import { useProfile } from "@/hooks/useProfile";
 import type { PatientUser } from "@/types/interface/patient.interface";
 import { cn } from "@/lib/utils";
-
-const formatBoolean = (value: boolean | null | undefined) => {
-  if (value === null || value === undefined) return "Chưa cập nhật";
-  return value ? "Có" : "Không";
-};
-
-const formatValue = (
-  value: string | number | null | undefined,
-  suffix: string = "",
-) => {
-  if (value === null || value === undefined || value === "") {
-    return "Chưa cập nhật";
-  }
-  return `${value}${suffix}`;
-};
 
 type StatItem = {
   label: string;
@@ -71,6 +57,23 @@ const InfoTile: React.FC<{
 );
 
 const Dashboard: React.FC = () => {
+  const { t } = useTranslation();
+
+  const formatBoolean = (value: boolean | null | undefined) => {
+    if (value === null || value === undefined) return t("dashboard.notUpdated", { defaultValue: "Chưa cập nhật" });
+    return value ? t("dashboard.yes", { defaultValue: "Có" }) : t("dashboard.no", { defaultValue: "Không" });
+  };
+
+  const formatValue = (
+    value: string | number | null | undefined,
+    suffix: string = "",
+  ) => {
+    if (value === null || value === undefined || value === "") {
+      return t("dashboard.notUpdated", { defaultValue: "Chưa cập nhật" });
+    }
+    return `${value}${suffix}`;
+  };
+
   const {
     data: dashboardResponse,
     isLoading: isDashboardLoading,
@@ -86,36 +89,36 @@ const Dashboard: React.FC = () => {
 
   const stats: StatItem[] = [
     {
-      label: "Lịch khám sắp tới",
+      label: t("dashboard.stats.upcomingAppointments", { defaultValue: "Lịch khám sắp tới" }),
       value: dashboard?.upcomingAppointmentsCount ?? 0,
-      detail: "Đang chờ hoặc đã xác nhận",
+      detail: t("dashboard.stats.upcomingAppointmentsDetail", { defaultValue: "Đang chờ hoặc đã xác nhận" }),
       icon: CalendarCheck2,
       accent: "from-sky-500/10 via-sky-500/5 to-transparent",
       iconBg: "bg-sky-100 dark:bg-sky-950/50",
       iconText: "text-sky-600 dark:text-sky-400",
     },
     {
-      label: "Hồ sơ sức khỏe",
+      label: t("dashboard.stats.healthProfiles", { defaultValue: "Hồ sơ sức khỏe" }),
       value: dashboard?.healthProfilesCount ?? 0,
-      detail: "Hồ sơ trong tài khoản",
+      detail: t("dashboard.stats.healthProfilesDetail", { defaultValue: "Hồ sơ trong tài khoản" }),
       icon: HeartPulse,
       accent: "from-rose-500/10 via-rose-500/5 to-transparent",
       iconBg: "bg-rose-100 dark:bg-rose-950/50",
       iconText: "text-rose-600 dark:text-rose-400",
     },
     {
-      label: "Kết quả khám",
+      label: t("dashboard.stats.examinationResults", { defaultValue: "Kết quả khám" }),
       value: dashboard?.examinationResultsCount ?? 0,
-      detail: "Bệnh án & Đơn thuốc đã lưu",
+      detail: t("dashboard.stats.examinationResultsDetail", { defaultValue: "Bệnh án & Đơn thuốc đã lưu" }),
       icon: FileSearch,
       accent: "from-emerald-500/10 via-emerald-500/5 to-transparent",
       iconBg: "bg-emerald-100 dark:bg-emerald-950/50",
       iconText: "text-emerald-600 dark:text-emerald-400",
     },
     {
-      label: "Người thân liên kết",
+      label: t("dashboard.stats.relatives", { defaultValue: "Người thân liên kết" }),
       value: dashboard?.relativesCount ?? 0,
-      detail: "Thành viên gia đình quản lý",
+      detail: t("dashboard.stats.relativesDetail", { defaultValue: "Thành viên gia đình quản lý" }),
       icon: UsersRound,
       accent: "from-violet-500/10 via-violet-500/5 to-transparent",
       iconBg: "bg-violet-100 dark:bg-violet-950/50",
@@ -126,8 +129,8 @@ const Dashboard: React.FC = () => {
   if (isLoading) {
     return (
       <MedicalAiLoading
-        label="Đang tải dữ liệu tổng quan y tế..."
-        description="Hệ thống đang đồng bộ chỉ số sức khỏe và lịch khám của bạn"
+        label={t("dashboard.loadingTitle", { defaultValue: "Đang tải dữ liệu tổng quan y tế..." })}
+        description={t("dashboard.loadingDesc", { defaultValue: "Hệ thống đang đồng bộ chỉ số sức khỏe và lịch khám của bạn" })}
         minHeight="min-h-80"
       />
     );
@@ -136,8 +139,8 @@ const Dashboard: React.FC = () => {
   if (isError) {
     return (
       <ErrorState
-        title="Không thể tải dữ liệu dashboard"
-        description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+        title={t("dashboard.errorTitle", { defaultValue: "Không thể tải dữ liệu dashboard" })}
+        description={t("dashboard.errorDesc", { defaultValue: "Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại." })}
         onRetry={() => refetch()}
       />
     );
@@ -193,51 +196,53 @@ const Dashboard: React.FC = () => {
             </span>
             <div>
               <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Hồ sơ sức khỏe cá nhân
+                {t("dashboard.healthProfileTitle", { defaultValue: "Hồ sơ sức khỏe cá nhân" })}
               </CardTitle>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Chỉ số sinh trắc học và tiền sử y tế cơ bản</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t("dashboard.healthProfileSubtitle", { defaultValue: "Chỉ số sinh trắc học và tiền sử y tế cơ bản" })}
+              </p>
             </div>
           </div>
           <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 text-xs font-semibold gap-1">
             <Sparkles className="h-3 w-3" />
-            Chủ tài khoản
+            {t("dashboard.accountHolder", { defaultValue: "Chủ tài khoản" })}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-4 px-6 py-5">
           <div className="grid gap-3.5 md:grid-cols-2 xl:grid-cols-3">
             <InfoTile
-              label="Họ và tên"
+              label={t("dashboard.fullName", { defaultValue: "Họ và tên" })}
               value={formatValue(profile?.fullname)}
               icon={<Stethoscope className="h-4 w-4 text-slate-400" />}
             />
             <InfoTile
-              label="Ngày sinh"
+              label={t("dashboard.dob", { defaultValue: "Ngày sinh" })}
               value={formatValue(profile?.date_of_birth)}
               icon={<Cake className="h-4 w-4 text-pink-400" />}
             />
             <InfoTile
-              label="Giới tính"
+              label={t("dashboard.gender", { defaultValue: "Giới tính" })}
               value={
                 profile?.gender === undefined
-                  ? "Chưa cập nhật"
+                  ? t("dashboard.notUpdated", { defaultValue: "Chưa cập nhật" })
                   : profile.gender
-                    ? "Nam"
-                    : "Nữ"
+                    ? t("dashboard.male", { defaultValue: "Nam" })
+                    : t("dashboard.female", { defaultValue: "Nữ" })
               }
               icon={<Users className="h-4 w-4 text-indigo-400" />}
             />
             <InfoTile
-              label="Nhóm máu"
+              label={t("dashboard.bloodType", { defaultValue: "Nhóm máu" })}
               value={formatValue(healthProfile?.blood_type)}
               icon={<Droplet className="h-4 w-4 text-rose-500" />}
             />
             <InfoTile
-              label="Chiều cao"
+              label={t("dashboard.height", { defaultValue: "Chiều cao" })}
               value={formatValue(healthProfile?.height, " cm")}
               icon={<Ruler className="h-4 w-4 text-sky-500" />}
             />
             <InfoTile
-              label="Cân nặng"
+              label={t("dashboard.weight", { defaultValue: "Cân nặng" })}
               value={formatValue(healthProfile?.weight, " kg")}
               icon={<Scale className="h-4 w-4 text-emerald-500" />}
             />
@@ -247,7 +252,9 @@ const Dashboard: React.FC = () => {
             <div className="rounded-2xl border border-amber-200 bg-amber-50/70 dark:border-amber-900/50 dark:bg-amber-950/30 p-4.5">
               <div className="mb-2 flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                <p className="text-sm font-bold text-amber-900 dark:text-amber-300">Dị ứng ghi nhận</p>
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-300">
+                  {t("dashboard.allergies", { defaultValue: "Dị ứng ghi nhận" })}
+                </p>
               </div>
               <Badge
                 variant="outline"
@@ -259,7 +266,9 @@ const Dashboard: React.FC = () => {
             <div className="rounded-2xl border border-rose-200 bg-rose-50/70 dark:border-rose-900/50 dark:bg-rose-950/30 p-4.5">
               <div className="mb-2 flex items-center gap-2">
                 <ClipboardList className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-                <p className="text-sm font-bold text-rose-900 dark:text-rose-300">Bệnh nền & Tiền sử</p>
+                <p className="text-sm font-bold text-rose-900 dark:text-rose-300">
+                  {t("dashboard.medicalHistory", { defaultValue: "Bệnh nền & Tiền sử" })}
+                </p>
               </div>
               <Badge className="bg-rose-600 hover:bg-rose-700 dark:bg-rose-700 text-white font-medium">
                 {formatValue(healthProfile?.medical_history)}
@@ -277,24 +286,26 @@ const Dashboard: React.FC = () => {
           </span>
           <div>
             <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Lối sống &amp; Thói quen vận động
+              {t("dashboard.lifestyleTitle", { defaultValue: "Lối sống & Thói quen vận động" })}
             </CardTitle>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Các yếu tố ảnh hưởng trực tiếp đến thể trạng sức khỏe</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t("dashboard.lifestyleSubtitle", { defaultValue: "Các yếu tố ảnh hưởng trực tiếp đến thể trạng sức khỏe" })}
+            </p>
           </div>
         </CardHeader>
         <CardContent className="grid gap-3.5 px-6 py-5 md:grid-cols-3">
           <InfoTile
-            label="Hút thuốc lá"
+            label={t("dashboard.smoking", { defaultValue: "Hút thuốc lá" })}
             value={formatBoolean(healthProfile?.smoking)}
             icon={<CigaretteOff className="h-4 w-4 text-slate-400" />}
           />
           <InfoTile
-            label="Rượu bia / Chất có cồn"
+            label={t("dashboard.alcohol", { defaultValue: "Rượu bia / Chất có cồn" })}
             value={formatBoolean(healthProfile?.alcohol_consumption)}
             icon={<Wine className="h-4 w-4 text-slate-400" />}
           />
           <InfoTile
-            label="Tần suất thể dục"
+            label={t("dashboard.exercise", { defaultValue: "Tần suất thể dục" })}
             value={formatValue(healthProfile?.exercise_frequency)}
             icon={<Activity className="h-4 w-4 text-emerald-500" />}
           />

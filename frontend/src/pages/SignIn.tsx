@@ -7,6 +7,7 @@ import { Typewriter } from "react-simple-typewriter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Unlock, UserCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useShow } from "@/hooks/useShow";
 import { useLogin } from "@/hooks/useLogin";
 import { signInSchema, type SignInFormData } from "@/schemas/auth.schema";
@@ -14,6 +15,7 @@ import { backendBaseURL } from "@/configs/axios";
 import Loading from "@/components/loading/Loading";
 
 const SignIn = () => {
+  const { t } = useTranslation();
   const { isShow, toggleShow } = useShow(false);
   const {
     register,
@@ -30,6 +32,12 @@ const SignIn = () => {
   const handleGoogleLogin = () => {
     window.location.href = `${backendBaseURL}/auth/google`;
   };
+
+  const typewriterWords = [
+    t("auth.typewriter1", { defaultValue: "Chăm sóc sức khỏe toàn diện." }),
+    t("auth.typewriter2", { defaultValue: "Đặt lịch khám dễ dàng 24/7." }),
+    t("auth.typewriter3", { defaultValue: "Đồng hành cùng bác sĩ đầu ngành." }),
+  ];
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-br from-teal-900 via-teal-800 to-emerald-900 text-white relative overflow-hidden">
@@ -58,11 +66,7 @@ const SignIn = () => {
 
           <div className="text-2xl sm:text-3xl lg:text-4xl font-extrabold mb-4 leading-tight font-heading min-h-[72px]">
             <Typewriter
-              words={[
-                "Chăm sóc sức khỏe toàn diện.",
-                "Đặt lịch khám dễ dàng 24/7.",
-                "Đồng hành cùng bác sĩ đầu ngành.",
-              ]}
+              words={typewriterWords}
               loop={true}
               cursor
               cursorStyle="|"
@@ -73,17 +77,19 @@ const SignIn = () => {
           </div>
 
           <p className="text-sm sm:text-base text-teal-100/90 leading-relaxed mb-8">
-            Đăng nhập để đặt lịch khám bác sĩ chuyên khoa, tra cứu bệnh án số hóa và tương tác với trợ lý y tế thông minh MedAI.
+            {t("auth.signInHeroDesc", {
+              defaultValue: "Đăng nhập để đặt lịch khám bác sĩ chuyên khoa, tra cứu bệnh án số hóa và tương tác với trợ lý y tế thông minh MedAI."
+            })}
           </p>
 
           <div className="hidden sm:grid grid-cols-1 gap-3 pt-2 text-xs text-teal-50">
             <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
-              <span>Hơn 500+ bác sĩ chuyên khoa đầu ngành đã xác thực</span>
+              <span>{t("auth.trustBadge1", { defaultValue: "Hơn 500+ bác sĩ chuyên khoa đầu ngành đã xác thực" })}</span>
             </div>
             <div className="flex items-center gap-2.5 rounded-xl bg-white/10 px-3.5 py-2.5 backdrop-blur-xs border border-white/10">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-400/20 text-emerald-300 font-bold">✓</span>
-              <span>Bảo mật dữ liệu bệnh án theo tiêu chuẩn y tế</span>
+              <span>{t("auth.trustBadge2", { defaultValue: "Bảo mật dữ liệu bệnh án theo tiêu chuẩn y tế" })}</span>
             </div>
           </div>
         </div>
@@ -94,15 +100,15 @@ const SignIn = () => {
         <Card className="w-full max-w-md shadow-none rounded-none border-0 bg-transparent py-0">
           <CardHeader className="text-center px-0 pt-0 pb-6">
             <CardTitle className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 font-heading">
-              Đăng nhập tài khoản
+              {t("auth.signInTitle", { defaultValue: "Đăng nhập tài khoản" })}
             </CardTitle>
             <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Chưa có tài khoản LifeHealth?{" "}
+              {t("auth.dontHaveAccount", { defaultValue: "Chưa có tài khoản LifeHealth?" })}{" "}
               <Link
                 to="/sign-up"
                 className="text-primary hover:underline font-bold"
               >
-                Đăng ký ngay
+                {t("auth.signUpNow", { defaultValue: "Đăng ký ngay" })}
               </Link>
             </p>
           </CardHeader>
@@ -110,15 +116,15 @@ const SignIn = () => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-1.5 text-left">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                  Tên đăng nhập hoặc email <span className="text-rose-500">*</span>
+                  {t("auth.usernameOrEmail", { defaultValue: "Tên đăng nhập hoặc email" })} <span className="text-rose-500">*</span>
                 </label>
                 <Input
                   type="text"
-                  placeholder="Nhập tên đăng nhập hoặc email"
+                  placeholder={t("auth.usernameOrEmailPlaceholder", { defaultValue: "Nhập tên đăng nhập hoặc email" })}
                   icon={<UserCircle size={18} className="text-slate-400" />}
                   error={errors.usernameOrEmail?.message}
                   className="rounded-xl h-11"
-                  aria-label="Tên đăng nhập hoặc email"
+                  aria-label={t("auth.usernameOrEmail", { defaultValue: "Tên đăng nhập hoặc email" })}
                   {...register("usernameOrEmail")}
                 />
               </div>
@@ -126,23 +132,23 @@ const SignIn = () => {
               <div className="space-y-1.5 text-left">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Mật khẩu <span className="text-rose-500">*</span>
+                    {t("auth.password", { defaultValue: "Mật khẩu" })} <span className="text-rose-500">*</span>
                   </label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-slate-500 dark:text-slate-400 hover:text-primary transition-colors font-medium"
                   >
-                    Quên mật khẩu?
+                    {t("auth.forgotPassword", { defaultValue: "Quên mật khẩu?" })}
                   </Link>
                 </div>
                 <Input
                   type={isShow ? "text" : "password"}
-                  placeholder="Nhập mật khẩu"
+                  placeholder={t("auth.passwordPlaceholder", { defaultValue: "Nhập mật khẩu" })}
                   icon={isShow ? <Unlock size={18} className="text-slate-400" /> : <Lock size={18} className="text-slate-400" />}
                   onClickIcon={toggleShow}
                   error={errors.password?.message}
                   className="rounded-xl h-11"
-                  aria-label="Mật khẩu"
+                  aria-label={t("auth.password", { defaultValue: "Mật khẩu" })}
                   {...register("password")}
                 />
               </div>
@@ -152,7 +158,7 @@ const SignIn = () => {
                 className="w-full h-11 text-sm font-bold rounded-xl shadow-xs hover:shadow-md transition-all cursor-pointer mt-2"
                 disabled={isPending}
               >
-                {isPending ? <Loading /> : "Đăng nhập"}
+                {isPending ? <Loading /> : t("common.signIn", { defaultValue: "Đăng nhập" })}
               </Button>
             </form>
 
@@ -163,7 +169,7 @@ const SignIn = () => {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 font-semibold">
-                    Hoặc đăng nhập với
+                    {t("auth.orContinueWith", { defaultValue: "Hoặc đăng nhập với" })}
                   </span>
                 </div>
               </div>
@@ -173,9 +179,9 @@ const SignIn = () => {
                   variant="outline"
                   className="flex items-center justify-center w-full h-11 rounded-xl border border-slate-200 dark:border-slate-800 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors shadow-2xs cursor-pointer"
                   onClick={handleGoogleLogin}
-                  aria-label="Đăng nhập bằng tài khoản Google"
+                  aria-label={t("auth.googleSignIn", { defaultValue: "Đăng nhập bằng tài khoản Google" })}
                 >
-                  <FaGoogle className="mr-2 text-rose-500" /> Tiếp tục với Google
+                  <FaGoogle className="mr-2 text-rose-500" /> {t("auth.continueWithGoogle", { defaultValue: "Tiếp tục với Google" })}
                 </Button>
               </div>
             </div>

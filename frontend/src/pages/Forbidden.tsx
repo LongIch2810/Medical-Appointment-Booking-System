@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const Forbidden = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleGoBack = () => {
@@ -43,7 +45,7 @@ const Forbidden = () => {
           <section className="space-y-6 text-left">
             <Badge className="rounded-full border-primary/20 bg-white/80 px-4 py-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-primary shadow-sm backdrop-blur-sm">
               <ShieldAlert className="size-3.5" />
-              Access Restricted
+              {t("staticPages.accessRestrictedBadge")}
             </Badge>
 
             <div className="space-y-4">
@@ -52,12 +54,10 @@ const Forbidden = () => {
               </p>
               <div className="max-w-2xl space-y-3">
                 <h1 className="text-3xl font-black tracking-[-0.04em] text-foreground sm:text-5xl">
-                  Khu vực này đang được giới hạn quyền truy cập.
+                  {t("staticPages.forbiddenHeadline")}
                 </h1>
                 <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                  Tài khoản của bạn đã đăng nhập thành công, nhưng hiện không
-                  có quyền mở trang này. Hãy quay về khu vực phù hợp để tiếp
-                  tục sử dụng dịch vụ mà không bị gián đoạn.
+                  {t("staticPages.forbiddenDescription")}
                 </p>
               </div>
             </div>
@@ -65,20 +65,18 @@ const Forbidden = () => {
             <div className="grid gap-3 text-sm text-muted-foreground sm:grid-cols-2">
               <div className="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm">
                 <p className="font-semibold text-foreground">
-                  Trường hợp thường gặp
+                  {t("staticPages.commonScenarioTitle")}
                 </p>
                 <p className="mt-2">
-                  Bạn đang mở một khu vực chỉ dành cho hồ sơ bệnh nhân hoặc vai
-                  trò khác trong hệ thống.
+                  {t("staticPages.commonScenarioDesc")}
                 </p>
               </div>
               <div className="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.35)] backdrop-blur-sm">
                 <p className="font-semibold text-foreground">
-                  Hướng xử lý nhanh
+                  {t("staticPages.quickActionTitle")}
                 </p>
                 <p className="mt-2">
-                  Quay lại trang trước để tiếp tục phiên làm việc hoặc trở về
-                  trang chủ để chọn hành trình phù hợp.
+                  {t("staticPages.quickActionDesc")}
                 </p>
               </div>
             </div>
@@ -95,16 +93,15 @@ const Forbidden = () => {
                   variant="outline"
                   className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary"
                 >
-                  Quyền truy cập
+                  {t("staticPages.accessRestrictedBadge")}
                 </Badge>
               </div>
               <div className="space-y-2">
                 <CardTitle className="text-2xl font-black tracking-[-0.03em] sm:text-3xl">
-                  Bạn không thể tiếp tục tại đây
+                  {t("staticPages.accessDeniedTitle")}
                 </CardTitle>
                 <CardDescription className="text-sm leading-6 sm:text-base">
-                  Hệ thống đã chặn truy cập để bảo vệ dữ liệu và giữ đúng phạm
-                  vi sử dụng theo vai trò tài khoản hiện tại.
+                  {t("staticPages.accessDeniedDesc")}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -112,23 +109,20 @@ const Forbidden = () => {
             <CardContent className="space-y-4 px-6 py-6 sm:px-8">
               <div className="rounded-2xl border border-border/70 bg-secondary/70 p-4">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  Gợi ý tiếp theo
+                  {t("staticPages.nextSuggestionsTitle")}
                 </p>
                 <ul className="mt-3 space-y-3 text-sm text-foreground/85">
                   <li className="flex items-start gap-3">
                     <ChevronRight className="mt-0.5 size-4 text-primary" />
-                    Kiểm tra lại vai trò tài khoản nếu bạn cho rằng đây là nhầm
-                    lẫn.
+                    {t("staticPages.forbiddenStep1")}
                   </li>
                   <li className="flex items-start gap-3">
                     <ChevronRight className="mt-0.5 size-4 text-primary" />
-                    Quay lại màn hình trước để tiếp tục thao tác trong khu vực
-                    được cấp quyền.
+                    {t("staticPages.forbiddenStep2")}
                   </li>
                   <li className="flex items-start gap-3">
                     <ChevronRight className="mt-0.5 size-4 text-primary" />
-                    Dùng trang chủ để điều hướng lại đến đúng trải nghiệm dành
-                    cho bạn.
+                    {t("staticPages.forbiddenStep3")}
                   </li>
                 </ul>
               </div>
@@ -139,16 +133,16 @@ const Forbidden = () => {
                 className="h-11 w-full rounded-xl text-sm font-semibold sm:text-base"
                 onClick={() => navigate("/")}
               >
-                <Home className="size-4.5" />
-                Về trang chủ
+                <Home className="size-4.5 mr-2" />
+                {t("staticPages.forbiddenBackHome")}
               </Button>
               <Button
                 variant="outline"
                 className="h-11 w-full rounded-xl border-border/70 bg-white/70 text-sm font-semibold sm:text-base"
                 onClick={handleGoBack}
               >
-                <ArrowLeft className="size-4.5" />
-                Quay lại trang trước
+                <ArrowLeft className="size-4.5 mr-2" />
+                {t("staticPages.forbiddenGoBack")}
               </Button>
             </CardFooter>
           </Card>

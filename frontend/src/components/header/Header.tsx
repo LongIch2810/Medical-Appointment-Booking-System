@@ -29,6 +29,8 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import type { User } from "@/types/interface/user.interface";
 import { useLogout } from "@/hooks/useLogout";
 import { cn } from "@/lib/utils";
@@ -38,88 +40,89 @@ const HEADER_HEIGHT_MOBILE = 72;
 const HEADER_HEIGHT_DESKTOP = 112;
 const DESKTOP_BREAKPOINT = 1024;
 
-const headerItems = [
-  {
-    name: "Bác sĩ",
-    to: "/doctors",
-    icon: Stethoscope,
-  },
-  {
-    name: "Tin tức",
-    to: "/news",
-    icon: Newspaper,
-  },
-  {
-    name: "Liên hệ",
-    to: "/contact",
-    icon: PhoneCall,
-  },
-  {
-    name: "LifeHealth MedAI",
-    to: "/chatbot",
-    icon: Bot,
-    badge: "AI",
-  },
-];
-
-const headerSubItems = [
-  {
-    name: "Dashboard",
-    to: "/patient",
-    icon: LayoutDashboard,
-  },
-  {
-    name: "Thông tin cá nhân",
-    to: "/patient/profile",
-    icon: UserIcon,
-  },
-  {
-    name: "Lịch khám",
-    to: "/patient/appointments",
-    icon: Calendar,
-  },
-  {
-    name: "Người thân",
-    to: "/patient/relatives",
-    icon: Users,
-  },
-  {
-    name: "Tư vấn trực tuyến",
-    to: "/patient/messages",
-    icon: MessageSquare,
-  },
-  {
-    name: "AI Coach Health",
-    to: "/patient/ai-coach-health",
-    icon: Sparkles,
-    badge: "Mới",
-  },
-  {
-    name: "Hồ sơ sức khỏe",
-    to: "/patient/health-records",
-    icon: ClipboardList,
-  },
-  {
-    name: "Kết quả khám",
-    to: "/patient/visit-results",
-    icon: FileSearch,
-  },
-  {
-    name: "Cài đặt & Bảo mật",
-    to: "/patient/settings",
-    icon: Settings,
-  },
-];
-
 type HeaderProps = {
   userInfo: User | null;
 };
 
 const Header: React.FC<HeaderProps> = ({ userInfo }) => {
+  const { t } = useTranslation();
   const { mutate, isPending } = useLogout();
   const handleLogout = () => {
     mutate();
   };
+
+  const headerItems = [
+    {
+      name: t("nav.doctors"),
+      to: "/doctors",
+      icon: Stethoscope,
+    },
+    {
+      name: t("nav.news"),
+      to: "/news",
+      icon: Newspaper,
+    },
+    {
+      name: t("nav.contact"),
+      to: "/contact",
+      icon: PhoneCall,
+    },
+    {
+      name: t("nav.medAi"),
+      to: "/chatbot",
+      icon: Bot,
+      badge: "AI",
+    },
+  ];
+
+  const headerSubItems = [
+    {
+      name: t("nav.dashboard"),
+      to: "/patient",
+      icon: LayoutDashboard,
+    },
+    {
+      name: t("nav.profile"),
+      to: "/patient/profile",
+      icon: UserIcon,
+    },
+    {
+      name: t("nav.appointments"),
+      to: "/patient/appointments",
+      icon: Calendar,
+    },
+    {
+      name: t("nav.relatives"),
+      to: "/patient/relatives",
+      icon: Users,
+    },
+    {
+      name: t("nav.messages"),
+      to: "/patient/messages",
+      icon: MessageSquare,
+    },
+    {
+      name: t("nav.aiCoach"),
+      to: "/patient/ai-coach-health",
+      icon: Sparkles,
+      badge: t("common.new"),
+    },
+    {
+      name: t("nav.healthRecords"),
+      to: "/patient/health-records",
+      icon: ClipboardList,
+    },
+    {
+      name: t("nav.visitResults"),
+      to: "/patient/visit-results",
+      icon: FileSearch,
+    },
+    {
+      name: t("nav.settings"),
+      to: "/patient/settings",
+      icon: Settings,
+    },
+  ];
 
   const [hidden, setHidden] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -204,9 +207,14 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         CARE
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium">Nền tảng y tế số thông minh</p>
+                    <p className="text-[11px] text-slate-400 font-medium">{t("header.tagline")}</p>
                   </div>
                 </Link>
+
+                {/* Mobile Language Switcher Pills */}
+                <div className="mt-3">
+                  <LanguageSwitcher variant="pills" />
+                </div>
 
                 {/* User Identity Banner (if logged in) */}
                 {userInfo ? (
@@ -217,7 +225,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       </div>
                       <div className="truncate">
                         <p className="truncate text-xs font-bold text-slate-900 dark:text-slate-100">{userInfo.username}</p>
-                        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{userInfo.email || "Bệnh nhân"}</p>
+                        <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">{userInfo.email || t("header.patient")}</p>
                       </div>
                     </div>
                     <NavLink
@@ -225,12 +233,12 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="shrink-0 rounded-lg bg-white dark:bg-slate-800 px-2.5 py-1 text-[11px] font-semibold text-primary shadow-xs border border-slate-200/80 dark:border-slate-700 hover:bg-primary hover:text-white transition-colors"
                     >
-                      Hồ sơ
+                      {t("header.profileBtn")}
                     </NavLink>
                   </div>
                 ) : (
                   <div className="mt-4 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 p-3.5 border border-primary/15 text-center">
-                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Trải nghiệm dịch vụ y tế chuẩn quốc tế</p>
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">{t("header.bannerText")}</p>
                     <div className="mt-2.5 flex gap-2">
                       <Button
                         asChild
@@ -238,7 +246,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         className="flex-1 rounded-xl !bg-primary hover:!bg-primary/90 !text-white font-semibold text-xs shadow-xs"
                       >
                         <NavLink to="/sign-in" onClick={() => setIsMobileMenuOpen(false)}>
-                          Đăng nhập
+                          {t("common.signIn")}
                         </NavLink>
                       </Button>
                       <Button
@@ -248,7 +256,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                         className="flex-1 rounded-xl text-xs font-semibold border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
                       >
                         <NavLink to="/sign-up" onClick={() => setIsMobileMenuOpen(false)}>
-                          Đăng ký
+                          {t("common.signUp")}
                         </NavLink>
                       </Button>
                     </div>
@@ -261,7 +269,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 {/* Main Discovery Items */}
                 <div className="space-y-1">
                   <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Khám phá dịch vụ
+                    {t("header.exploreServices")}
                   </p>
                   {headerItems.map((item) => (
                     <NavLink
@@ -316,7 +324,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 {userInfo && (
                   <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-slate-800">
                     <p className="px-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                      Khu vực Bệnh nhân
+                      {t("header.patientArea")}
                     </p>
                     {headerSubItems.map((item) => (
                       <NavLink
@@ -383,11 +391,11 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                     className="w-full justify-center gap-2 rounded-xl border-rose-200 dark:border-rose-900/50 bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 font-semibold text-xs shadow-xs cursor-pointer"
                   >
                     <LogOut className="h-4 w-4" />
-                    {isPending ? "Đang đăng xuất..." : "Đăng xuất tài khoản"}
+                    {isPending ? t("common.loggingOut") : t("common.logout")}
                   </Button>
                 ) : (
                   <div className="text-center text-[11px] text-slate-500">
-                    Hotline cấp cứu & hỗ trợ:{" "}
+                    {t("header.hotline")}:{" "}
                     <a href="tel:1900123456" className="font-bold text-primary hover:underline">
                       1900 123 456
                     </a>
@@ -414,7 +422,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       </div>
 
       {userInfo && (
-        <div className="ml-auto md:hidden">
+        <div className="ml-auto md:hidden flex items-center gap-2">
           <NotificationBell />
         </div>
       )}
@@ -446,6 +454,9 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
           </NavLink>
         ))}
 
+        {/* Desktop Language Switcher */}
+        <LanguageSwitcher variant="dropdown" />
+
         {userInfo && <NotificationBell />}
         {!userInfo ? (
           <div className="flex items-center gap-2 pl-2">
@@ -453,13 +464,13 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
               to="/sign-in"
               className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-primary dark:hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-700 transition-all"
             >
-              Đăng nhập
+              {t("common.signIn")}
             </NavLink>
             <NavLink
               to="/sign-up"
               className="inline-flex items-center justify-center h-9.5 px-4 rounded-xl text-sm font-bold !text-white bg-primary hover:bg-primary/90 shadow-xs hover:shadow-md transition-all"
             >
-              Đăng ký
+              {t("common.signUp")}
             </NavLink>
           </div>
         ) : (
@@ -477,7 +488,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56 rounded-2xl p-1.5 shadow-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900" align="end">
               <DropdownMenuLabel className="px-3 py-2">
-                <p className="text-xs text-slate-400 font-normal">Xin chào,</p>
+                <p className="text-xs text-slate-400 font-normal">{t("header.greeting")}</p>
                 <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{userInfo.fullname || userInfo.username}</p>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate font-normal">{userInfo.email}</p>
               </DropdownMenuLabel>
@@ -512,7 +523,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                 onClick={handleLogout}
               >
                 <LogOut className="h-3.5 w-3.5 mr-2" />
-                {isPending ? "Đang xử lý..." : "Đăng xuất tài khoản"}
+                {isPending ? t("common.processing") : t("common.logout")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

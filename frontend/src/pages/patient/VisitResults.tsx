@@ -28,6 +28,7 @@ import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
 import { usePatientExaminationResults } from "@/hooks/usePatientPortalApi";
 import { cn } from "@/lib/utils";
 import type { ExaminationResult } from "@/types/interface/patient.interface";
+import { useTranslation } from "react-i18next";
 
 const getSpecialtyName = (result: ExaminationResult) =>
   result.appointment?.doctor?.specialty?.specialty_name ??
@@ -50,44 +51,14 @@ type Section = {
   surfaceClass: string;
 };
 
-const sections: Section[] = [
-  {
-    key: "symptoms",
-    label: "Triệu chứng lâm sàng",
-    icon: Activity,
-    iconClass: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
-    surfaceClass: "border-amber-200/80 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20",
-  },
-  {
-    key: "diagnosis",
-    label: "Chẩn đoán y khoa",
-    icon: Microscope,
-    iconClass: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
-    surfaceClass: "border-sky-200/80 bg-sky-50/40 dark:border-sky-900/40 dark:bg-sky-950/20",
-  },
-  {
-    key: "treatment",
-    label: "Phác đồ điều trị",
-    icon: ClipboardList,
-    iconClass: "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300",
-    surfaceClass: "border-violet-200/80 bg-violet-50/40 dark:border-violet-900/40 dark:bg-violet-950/20",
-  },
-  {
-    key: "prescription",
-    label: "Đơn thuốc chỉ định",
-    icon: Pill,
-    iconClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-    surfaceClass: "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20",
-  },
-];
-
 const ResultSection: React.FC<{
   section: Section;
   value: string | null | undefined;
   compact?: boolean;
-}> = ({ section, value, compact }) => {
+  notUpdatedText: string;
+}> = ({ section, value, compact, notUpdatedText }) => {
   const Icon = section.icon;
-  const text = value && value.trim().length > 0 ? value : "Chưa cập nhật";
+  const text = value && value.trim().length > 0 ? value : notUpdatedText;
   return (
     <div
       className={cn(
@@ -122,6 +93,7 @@ const ResultSection: React.FC<{
 };
 
 const VisitResults: React.FC = () => {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = usePatientExaminationResults({
     page: 1,
     limit: 50,
@@ -129,6 +101,48 @@ const VisitResults: React.FC = () => {
   });
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<ExaminationResult | null>(null);
+
+  const sections: Section[] = useMemo(
+    () => [
+      {
+        key: "symptoms",
+        label: t("visitResults.symptomsLabel"),
+        icon: Activity,
+        iconClass:
+          "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+        surfaceClass:
+          "border-amber-200/80 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20",
+      },
+      {
+        key: "diagnosis",
+        label: t("visitResults.diagnosisLabel"),
+        icon: Microscope,
+        iconClass:
+          "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+        surfaceClass:
+          "border-sky-200/80 bg-sky-50/40 dark:border-sky-900/40 dark:bg-sky-950/20",
+      },
+      {
+        key: "treatment",
+        label: t("visitResults.treatmentLabel"),
+        icon: ClipboardList,
+        iconClass:
+          "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300",
+        surfaceClass:
+          "border-violet-200/80 bg-violet-50/40 dark:border-violet-900/40 dark:bg-violet-950/20",
+      },
+      {
+        key: "prescription",
+        label: t("visitResults.prescriptionLabel"),
+        icon: Pill,
+        iconClass:
+          "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+        surfaceClass:
+          "border-emerald-200/80 bg-emerald-50/40 dark:border-emerald-900/40 dark:bg-emerald-950/20",
+      },
+    ],
+    [t],
+  );
 
   const visitResults = useMemo<ExaminationResult[]>(
     () => data?.data.examination_results ?? [],
@@ -163,10 +177,10 @@ const VisitResults: React.FC = () => {
             </div>
             <div className="space-y-0.5">
               <CardTitle className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
-                Kết quả khám &amp; Bệnh án điện tử
+                {t("visitResults.pageTitle")}
               </CardTitle>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Tổng hợp chi tiết triệu chứng, chẩn đoán y khoa, phác đồ điều trị và đơn thuốc.
+                {t("visitResults.pageSubtitle")}
               </p>
             </div>
           </div>
@@ -174,7 +188,7 @@ const VisitResults: React.FC = () => {
             variant="outline"
             className="self-start rounded-full border-primary/30 bg-primary/5 px-3 py-1 text-xs font-bold text-primary"
           >
-            {visitResults.length} hồ sơ bệnh án
+            {t("visitResults.badgeCount", { count: visitResults.length })}
           </Badge>
         </div>
 
@@ -183,7 +197,7 @@ const VisitResults: React.FC = () => {
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Tìm kiếm theo bác sĩ, chuyên khoa, chẩn đoán hoặc tên thuốc..."
+            placeholder={t("visitResults.searchPlaceholder")}
             className="h-10.5 rounded-2xl border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 pl-10 text-xs sm:text-sm shadow-2xs focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20"
           />
         </div>
@@ -192,32 +206,32 @@ const VisitResults: React.FC = () => {
       <CardContent className="space-y-4 px-6 py-5">
         {isLoading ? (
           <MedicalAiLoading
-            label="Đang tải kết quả khám..."
-            description="Đang truy xuất hồ sơ bệnh án và đơn thuốc từ phòng khám"
+            label={t("common.loading")}
+            description="Syncing medical records and prescriptions"
             minHeight="min-h-56"
           />
         ) : isError ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50/60 dark:border-rose-900/50 dark:bg-rose-950/40 p-5 text-sm text-rose-600 dark:text-rose-300 font-medium">
-            Không thể tải kết quả khám. Vui lòng thử lại sau.
+            {t("common.error")}
           </div>
         ) : visitResults.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-12 text-center">
             <FileSearch className="mx-auto mb-3 h-10 w-10 text-slate-400" />
             <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-              Chưa có kết quả khám nào
+              {t("visitResults.emptyList")}
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto">
-              Sau khi bác sĩ hoàn thành buổi khám và nhập kết luận, hồ sơ chi tiết sẽ tự động đồng bộ tại đây.
+              {t("visitResults.emptyListDesc")}
             </p>
           </div>
         ) : filteredResults.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-950/40 px-6 py-10 text-center">
             <Search className="mx-auto mb-3 h-8 w-8 text-slate-400" />
             <p className="text-sm font-bold text-slate-700 dark:text-slate-200">
-              Không tìm thấy kết quả phù hợp
+              {t("visitResults.emptySearch")}
             </p>
             <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-              Thử thay đổi từ khóa tìm kiếm khác.
+              {t("visitResults.emptySearchDesc")}
             </p>
           </div>
         ) : (
@@ -242,7 +256,7 @@ const VisitResults: React.FC = () => {
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
-                          BS. {doctorName}
+                          {t("appointments.doctorPrefix")} {doctorName}
                         </p>
                         <Badge
                           variant="secondary"
@@ -263,7 +277,7 @@ const VisitResults: React.FC = () => {
                         ) : null}
                         <span className="inline-flex items-center gap-1">
                           <UserRound className="h-3.5 w-3.5 text-slate-400" />
-                          Bệnh nhân: <strong className="text-slate-700 dark:text-slate-200">{patientName}</strong>
+                          {t("appointments.patientLabel")} <strong className="text-slate-700 dark:text-slate-200">{patientName}</strong>
                         </span>
                       </div>
                     </div>
@@ -277,7 +291,7 @@ const VisitResults: React.FC = () => {
                     onClick={() => setSelected(result)}
                   >
                     <Eye className="h-3.5 w-3.5" />
-                    Xem chi tiết
+                    {t("visitResults.viewDetailBtn")}
                   </Button>
                 </div>
 
@@ -288,6 +302,7 @@ const VisitResults: React.FC = () => {
                       section={section}
                       value={result[section.key] as string}
                       compact
+                      notUpdatedText={t("common.notUpdated")}
                     />
                   ))}
                 </div>
@@ -308,11 +323,11 @@ const VisitResults: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
                 <FileText className="h-5 w-5 text-primary" />
-                Chi tiết hồ sơ kết quả khám
+                {t("visitResults.modalTitle")}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
                 {selected
-                  ? `BS. ${getDoctorName(selected)} • Chuyên khoa: ${getSpecialtyName(selected)}`
+                  ? `${t("appointments.doctorPrefix")} ${getDoctorName(selected)} • ${getSpecialtyName(selected)}`
                   : null}
               </DialogDescription>
             </DialogHeader>
@@ -323,7 +338,7 @@ const VisitResults: React.FC = () => {
               <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 sm:grid-cols-3 dark:border-slate-800 dark:bg-slate-950/50">
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Ngày khám
+                    {t("appointments.appointmentDate")}
                   </p>
                   <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                     <CalendarClock className="h-3.5 w-3.5 text-primary" />
@@ -332,7 +347,7 @@ const VisitResults: React.FC = () => {
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Bệnh nhân
+                    {t("common.patient")}
                   </p>
                   <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                     <UserRound className="h-3.5 w-3.5 text-primary" />
@@ -341,11 +356,11 @@ const VisitResults: React.FC = () => {
                 </div>
                 <div className="space-y-0.5">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Bác sĩ khám
+                    {t("appointments.doctorInCharge")}
                   </p>
                   <p className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
                     <Stethoscope className="h-3.5 w-3.5 text-primary" />
-                    BS. {getDoctorName(selected)}
+                    {t("appointments.doctorPrefix")} {getDoctorName(selected)}
                   </p>
                 </div>
               </div>
@@ -356,6 +371,7 @@ const VisitResults: React.FC = () => {
                     key={section.key}
                     section={section}
                     value={selected[section.key] as string}
+                    notUpdatedText={t("common.notUpdated")}
                   />
                 ))}
               </div>
@@ -369,7 +385,7 @@ const VisitResults: React.FC = () => {
               onClick={() => setSelected(null)}
               className="rounded-xl font-medium"
             >
-              Đóng
+              {t("common.close")}
             </Button>
           </div>
         </DialogContent>

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "react-toastify";
 
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,28 +43,37 @@ import type {
   PatientAppointment,
 } from "@/types/interface/patient.interface";
 
-const bookingModeLabelMap: Record<PatientAppointment["booking_mode"], string> =
-  {
-    user_select: "Người dùng chọn lịch",
-    ai_select: "AI tự động chọn lịch",
-  };
-
-const filterTabs: Array<{ key: AppointmentStatus | "ALL"; label: string }> = [
-  { key: "ALL", label: "Tất cả" },
-  { key: "PENDING", label: "Chờ xác nhận" },
-  { key: "CONFIRMED", label: "Đã xác nhận" },
-  { key: "COMPLETED", label: "Đã khám" },
-  { key: "CANCELLED", label: "Đã hủy" },
-  { key: "ABSENT", label: "Vắng mặt" },
-  { key: "EXPIRED", label: "Quá hạn khám" },
-];
-
 const getSpecialtyName = (appointment: PatientAppointment) =>
   appointment.doctor.specialty.specialty_name ??
   appointment.doctor.specialty.name ??
   "Chưa cập nhật chuyên khoa";
 
 const Appointments: React.FC = () => {
+  const { t } = useTranslation();
+
+  const bookingModeLabelMap: Record<PatientAppointment["booking_mode"], string> =
+    useMemo(
+      () => ({
+        user_select: t("appointments.userSelect", { defaultValue: "Người dùng chọn lịch" }),
+        ai_select: t("appointments.aiSelect", { defaultValue: "AI tự động chọn lịch" }),
+      }),
+      [t],
+    );
+
+  const filterTabs: Array<{ key: AppointmentStatus | "ALL"; label: string }> =
+    useMemo(
+      () => [
+        { key: "ALL", label: t("common.all", { defaultValue: "Tất cả" }) },
+        { key: "PENDING", label: t("status.appointment.PENDING", { defaultValue: "Chờ xác nhận" }) },
+        { key: "CONFIRMED", label: t("status.appointment.CONFIRMED", { defaultValue: "Đã xác nhận" }) },
+        { key: "COMPLETED", label: t("status.appointment.COMPLETED", { defaultValue: "Đã khám" }) },
+        { key: "CANCELLED", label: t("status.appointment.CANCELLED", { defaultValue: "Đã hủy" }) },
+        { key: "ABSENT", label: t("status.appointment.ABSENT", { defaultValue: "Vắng mặt" }) },
+        { key: "EXPIRED", label: t("status.appointment.EXPIRED", { defaultValue: "Quá hạn khám" }) },
+      ],
+      [t],
+    );
+
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(0);
   const [openDetail, setOpenDetail] = useState(false);
   const [activeFilter, setActiveFilter] = useState<AppointmentStatus | "ALL">(
@@ -118,8 +128,8 @@ const Appointments: React.FC = () => {
 
   const handleCancel = (appointmentId: number) => {
     cancelMutation.mutate(appointmentId, {
-      onSuccess: () => toast.success("Đã hủy lịch khám."),
-      onError: () => toast.error("Không thể hủy lịch khám này."),
+      onSuccess: () => toast.success(t("appointments.cancelSuccess", { defaultValue: "Đã hủy lịch khám." })),
+      onError: () => toast.error(t("appointments.cancelError", { defaultValue: "Không thể hủy lịch khám này." })),
     });
   };
 
@@ -137,7 +147,7 @@ const Appointments: React.FC = () => {
   const handleSubmitRating = () => {
     if (!ratingTarget) return;
     if (!ratingFeedback.trim()) {
-      toast.error("Vui lòng nhập nội dung đánh giá.");
+      toast.error(t("appointments.enterRatingFeedback", { defaultValue: "Vui lòng nhập nội dung đánh giá." }));
       return;
     }
     ratingMutation.mutate(
@@ -147,7 +157,10 @@ const Appointments: React.FC = () => {
         feedback: ratingFeedback.trim(),
       },
       {
-        onSuccess: () => setRatingTarget(null),
+        onSuccess: () => {
+          toast.success(t("appointments.ratingSuccess", { defaultValue: "Cảm ơn bạn đã gửi đánh giá dịch vụ!" }));
+          setRatingTarget(null);
+        },
       },
     );
   };
@@ -162,16 +175,16 @@ const Appointments: React.FC = () => {
             </span>
             <div>
               <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Lịch khám bệnh của bạn
+                {t("appointments.title", { defaultValue: "Lịch khám bệnh của bạn" })}
               </CardTitle>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Theo dõi tiến độ, chi tiết và kết quả các lần khám đã đăng ký
+                {t("appointments.subtitle", { defaultValue: "Theo dõi tiến độ, chi tiết và kết quả các lần khám đã đăng ký" })}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
             <Filter className="h-4 w-4 text-primary" />
-            <span>Tổng cộng: {appointments.length} cuộc hẹn</span>
+            <span>{t("appointments.totalAppointments", { count: appointments.length, defaultValue: `Tổng cộng: ${appointments.length} cuộc hẹn` })}</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-5 px-6 py-5">
@@ -206,14 +219,14 @@ const Appointments: React.FC = () => {
 
           {isLoading ? (
             <MedicalAiLoading
-              label="Đang tải danh sách lịch khám..."
-              description="Hệ thống đang truy xuất dữ liệu các cuộc hẹn của bạn"
+              label={t("appointments.loadingTitle", { defaultValue: "Đang tải danh sách lịch khám..." })}
+              description={t("appointments.loadingDesc", { defaultValue: "Hệ thống đang truy xuất dữ liệu các cuộc hẹn của bạn" })}
               minHeight="min-h-56"
             />
           ) : isError ? (
             <ErrorState
-              title="Không thể tải lịch khám"
-              description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+              title={t("appointments.errorTitle", { defaultValue: "Không thể tải lịch khám" })}
+              description={t("appointments.errorDesc", { defaultValue: "Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại." })}
               onRetry={() => refetch()}
             />
           ) : filteredAppointments.length === 0 ? (
@@ -221,11 +234,11 @@ const Appointments: React.FC = () => {
               <CalendarClock className="mx-auto mb-3 h-10 w-10 text-slate-400" />
               <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
                 {activeFilter === "ALL"
-                  ? "Bạn chưa có lịch khám nào trong hệ thống."
-                  : "Không có lịch khám nào trong trạng thái đã chọn."}
+                  ? t("appointments.noAppointments", { defaultValue: "Bạn chưa có lịch khám nào trong hệ thống." })
+                  : t("appointments.noFilteredAppointments", { defaultValue: "Không có lịch khám nào trong trạng thái đã chọn." })}
               </p>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Khám phá danh sách bác sĩ chuyên khoa và đăng ký lịch khám mới dễ dàng.
+                {t("appointments.exploreDoctors", { defaultValue: "Khám phá danh sách bác sĩ chuyên khoa và đăng ký lịch khám mới dễ dàng." })}
               </p>
             </div>
           ) : (
@@ -288,7 +301,7 @@ const Appointments: React.FC = () => {
                           onClick={() => handleOpenDetail(appointment.id)}
                         >
                           <Eye className="h-3.5 w-3.5" />
-                          Chi tiết
+                          {t("appointments.details", { defaultValue: "Chi tiết" })}
                         </Button>
                         {hasExamResult ? (
                           <Button
@@ -299,7 +312,7 @@ const Appointments: React.FC = () => {
                             onClick={() => setExamResultTarget(appointment)}
                           >
                             <FileText className="h-3.5 w-3.5" />
-                            Kết quả khám
+                            {t("appointments.examResult", { defaultValue: "Kết quả khám" })}
                           </Button>
                         ) : null}
                         {canRate ? (
@@ -311,7 +324,7 @@ const Appointments: React.FC = () => {
                             onClick={() => handleOpenRating(appointment)}
                           >
                             <Star className="h-3.5 w-3.5" />
-                            Đánh giá
+                            {t("appointments.rate", { defaultValue: "Đánh giá" })}
                           </Button>
                         ) : null}
                         {canCancel ? (
@@ -322,10 +335,10 @@ const Appointments: React.FC = () => {
                             className="h-8.5 justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50"
                             disabled={cancelMutation.isPending}
                             onClick={() => handleCancel(appointment.id)}
-                            title="Hủy lịch khám"
+                            title={t("appointments.cancel", { defaultValue: "Hủy lịch" })}
                           >
                             <X className="h-3.5 w-3.5" />
-                            Hủy lịch
+                            {t("appointments.cancel", { defaultValue: "Hủy lịch" })}
                           </Button>
                         ) : null}
                       </div>
@@ -350,10 +363,10 @@ const Appointments: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
                 <Star className="h-5 w-5 text-amber-500 fill-current" />
-                Đánh giá dịch vụ khám bệnh
+                {t("appointments.ratingDialogTitle", { defaultValue: "Đánh giá dịch vụ khám bệnh" })}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Chia sẻ trải nghiệm khám bệnh của bạn để giúp nâng cao chất lượng dịch vụ.
+                {t("appointments.ratingDialogDesc", { defaultValue: "Chia sẻ trải nghiệm khám bệnh của bạn để giúp nâng cao chất lượng dịch vụ." })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -361,7 +374,7 @@ const Appointments: React.FC = () => {
           <DialogBody className="space-y-4 p-5">
             <div className="flex flex-col items-center gap-2.5">
               <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                Mức độ hài lòng của bạn
+                {t("appointments.satisfactionLevel", { defaultValue: "Mức độ hài lòng của bạn" })}
               </p>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map((score) => (
@@ -385,18 +398,18 @@ const Appointments: React.FC = () => {
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                Cảm nhận chi tiết
+                {t("appointments.feedbackLabel", { defaultValue: "Cảm nhận chi tiết" })}
               </label>
               <Textarea
                 rows={4}
                 maxLength={500}
                 value={ratingFeedback}
                 onChange={(e) => setRatingFeedback(e.target.value)}
-                placeholder="Nhập cảm nhận của bạn về bác sĩ, cơ sở vật chất và thời gian tiếp đón..."
+                placeholder={t("appointments.feedbackPlaceholder", { defaultValue: "Nhập cảm nhận của bạn về bác sĩ, cơ sở vật chất và thời gian tiếp đón..." })}
                 className="rounded-xl resize-none"
               />
               <p className="text-right text-[11px] text-slate-400">
-                {ratingFeedback.length}/500 ký tự
+                {ratingFeedback.length}/500 {t("appointments.characters", { defaultValue: "ký tự" })}
               </p>
             </div>
           </DialogBody>
@@ -409,7 +422,7 @@ const Appointments: React.FC = () => {
               disabled={ratingMutation.isPending}
               className="rounded-xl"
             >
-              Hủy bỏ
+              {t("common.cancel", { defaultValue: "Hủy bỏ" })}
             </Button>
             <Button
               type="button"
@@ -417,7 +430,7 @@ const Appointments: React.FC = () => {
               disabled={ratingMutation.isPending}
               className="rounded-xl !bg-primary hover:!bg-primary/90 !text-white font-bold shadow-xs cursor-pointer"
             >
-              {ratingMutation.isPending ? "Đang gửi..." : "Gửi đánh giá"}
+              {ratingMutation.isPending ? t("common.sending", { defaultValue: "Đang gửi..." }) : t("appointments.submitRating", { defaultValue: "Gửi đánh giá" })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -435,10 +448,14 @@ const Appointments: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-slate-100">
                 <FileText className="h-5 w-5 text-sky-600" />
-                Kết quả chẩn đoán y khoa
+                {t("appointments.examResultDialogTitle", { defaultValue: "Kết quả chẩn đoán y khoa" })}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Lịch khám #{examResultTarget?.id} • BS. {examResultTarget?.doctor.user.fullname ?? "—"}
+                {t("appointments.examResultDialogDesc", {
+                  id: examResultTarget?.id,
+                  doctor: examResultTarget?.doctor.user.fullname ?? "—",
+                  defaultValue: `Lịch khám #${examResultTarget?.id} • BS. ${examResultTarget?.doctor.user.fullname ?? "—"}`
+                })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -448,7 +465,7 @@ const Appointments: React.FC = () => {
               <div className="space-y-3.5">
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950/50">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Triệu chứng ghi nhận
+                    {t("appointments.symptomsLabel", { defaultValue: "Triệu chứng ghi nhận" })}
                   </p>
                   <p className="mt-1 whitespace-pre-line text-sm text-slate-800 dark:text-slate-200">
                     {examResultTarget.examination_result.symptoms ?? "—"}
@@ -456,7 +473,7 @@ const Appointments: React.FC = () => {
                 </div>
                 <div className="rounded-2xl border border-sky-200/80 bg-sky-50/40 p-3.5 dark:border-sky-800/80 dark:bg-sky-950/40">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-                    Kết luận chẩn đoán
+                    {t("appointments.diagnosisLabel", { defaultValue: "Kết luận chẩn đoán" })}
                   </p>
                   <p className="mt-1 whitespace-pre-line text-sm font-semibold text-slate-900 dark:text-slate-100">
                     {examResultTarget.examination_result.diagnosis ?? "—"}
@@ -464,7 +481,7 @@ const Appointments: React.FC = () => {
                 </div>
                 <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950/50">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Phác đồ &amp; Hướng điều trị
+                    {t("appointments.treatmentLabel", { defaultValue: "Phác đồ & Hướng điều trị" })}
                   </p>
                   <p className="mt-1 whitespace-pre-line text-sm text-slate-800 dark:text-slate-200">
                     {examResultTarget.examination_result.treatment ?? "—"}
@@ -472,7 +489,7 @@ const Appointments: React.FC = () => {
                 </div>
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-800 dark:bg-emerald-950/40">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-                    Đơn thuốc kê khai
+                    {t("appointments.prescriptionLabel", { defaultValue: "Đơn thuốc kê khai" })}
                   </p>
                   <p className="mt-1 whitespace-pre-line text-sm text-slate-800 dark:text-slate-200 font-medium">
                     {examResultTarget.examination_result.prescription ?? "—"}
@@ -489,7 +506,7 @@ const Appointments: React.FC = () => {
               onClick={() => setExamResultTarget(null)}
               className="rounded-xl"
             >
-              Đóng
+              {t("common.close", { defaultValue: "Đóng" })}
             </Button>
           </div>
         </DialogContent>
@@ -501,10 +518,10 @@ const Appointments: React.FC = () => {
           <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 pr-12">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                Chi tiết lịch khám bệnh
+                {t("appointments.detailDialogTitle", { defaultValue: "Chi tiết lịch khám bệnh" })}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                Toàn bộ thông tin đăng ký khám và thời gian tiếp đón.
+                {t("appointments.detailDialogDesc", { defaultValue: "Toàn bộ thông tin đăng ký khám và thời gian tiếp đón." })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -521,7 +538,7 @@ const Appointments: React.FC = () => {
                 <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
                   <div>
                     <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                      Mã phiếu khám
+                      {t("appointments.appointmentCode", { defaultValue: "Mã phiếu khám" })}
                     </p>
                     <p className="text-lg font-extrabold text-slate-900 dark:text-slate-100">
                       #{appointmentDetail.id}
@@ -534,10 +551,10 @@ const Appointments: React.FC = () => {
                   <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                       <Stethoscope className="h-4 w-4 text-primary" />
-                      Bác sĩ phụ trách
+                      {t("appointments.doctorInCharge", { defaultValue: "Bác sĩ phụ trách" })}
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      BS. {appointmentDetail.doctor.user.fullname ?? "Chưa cập nhật"}
+                      {t("common.dr", { defaultValue: "BS." })} {appointmentDetail.doctor.user.fullname ?? t("common.notUpdated", { defaultValue: "Chưa cập nhật" })}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {getSpecialtyName(appointmentDetail)}
@@ -547,20 +564,20 @@ const Appointments: React.FC = () => {
                   <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                       <UserRound className="h-4 w-4 text-primary" />
-                      Bệnh nhân khám
+                      {t("appointments.patientInAppointment", { defaultValue: "Bệnh nhân khám" })}
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {appointmentDetail.patient.fullname ?? "Chưa cập nhật"}
+                      {appointmentDetail.patient.fullname ?? t("common.notUpdated", { defaultValue: "Chưa cập nhật" })}
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
-                      Quan hệ: {appointmentDetail.patient.relationship?.relationship_name || "Bản thân"}
+                      {t("relatives.relationship", { defaultValue: "Quan hệ" })}: {appointmentDetail.patient.relationship?.relationship_name || t("relatives.self", { defaultValue: "Bản thân" })}
                     </p>
                   </div>
 
                   <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                       <CalendarClock className="h-4 w-4 text-primary" />
-                      Ngày khám bệnh
+                      {t("appointments.appointmentDate", { defaultValue: "Ngày khám bệnh" })}
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       {appointmentDetail.appointment_date}
@@ -570,7 +587,7 @@ const Appointments: React.FC = () => {
                   <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                     <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                       <Clock className="h-4 w-4 text-primary" />
-                      Khung giờ khám
+                      {t("appointments.timeSlot", { defaultValue: "Khung giờ khám" })}
                     </div>
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
                       {appointmentDetail.doctor_schedule.start_time} - {appointmentDetail.doctor_schedule.end_time}
@@ -581,17 +598,17 @@ const Appointments: React.FC = () => {
                 <div className="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
                   <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-slate-500">
                     <MapPin className="h-4 w-4 text-primary" />
-                    Cơ sở phòng khám / Nơi làm việc
+                    {t("appointments.workplaceLocation", { defaultValue: "Cơ sở phòng khám / Nơi làm việc" })}
                   </div>
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    {appointmentDetail.doctor.workplace || "Chưa cập nhật"}
+                    {appointmentDetail.doctor.workplace || t("common.notUpdated", { defaultValue: "Chưa cập nhật" })}
                   </p>
                 </div>
 
                 <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 text-xs sm:grid-cols-2 dark:border-slate-800 dark:bg-slate-950/50">
                   <div>
                     <p className="font-bold uppercase tracking-wide text-slate-500">
-                      Phương thức đặt lịch
+                      {t("appointments.bookingMode", { defaultValue: "Phương thức đặt lịch" })}
                     </p>
                     <p className="font-semibold text-slate-800 dark:text-slate-200 mt-1">
                       {bookingModeLabelMap[appointmentDetail.booking_mode]}
@@ -599,7 +616,7 @@ const Appointments: React.FC = () => {
                   </div>
                   <div>
                     <p className="font-bold uppercase tracking-wide text-slate-500">
-                      Thời điểm tạo phiếu
+                      {t("appointments.createdAt", { defaultValue: "Thời điểm tạo phiếu" })}
                     </p>
                     <p className="font-semibold text-slate-800 dark:text-slate-200 mt-1">
                       {appointmentDetail.created_at}
@@ -612,13 +629,13 @@ const Appointments: React.FC = () => {
                     variant="outline"
                     className="w-full justify-center border-amber-300 bg-amber-50 py-2.5 text-xs font-semibold text-amber-800 rounded-xl dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
                   >
-                    Lịch khám đang chờ bác sĩ xác nhận. Bạn có thể hủy nếu cần thay đổi lịch trình.
+                    {t("appointments.pendingNotice", { defaultValue: "Lịch khám đang chờ bác sĩ xác nhận. Bạn có thể hủy nếu cần thay đổi lịch trình." })}
                   </Badge>
                 )}
               </div>
             ) : (
               <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-950/40">
-                Không thể tải thông tin chi tiết lịch khám.
+                {t("appointments.loadDetailError", { defaultValue: "Không thể tải thông tin chi tiết lịch khám." })}
               </div>
             )}
           </DialogBody>
@@ -630,7 +647,7 @@ const Appointments: React.FC = () => {
               onClick={() => setOpenDetail(false)}
               className="rounded-xl"
             >
-              Đóng
+              {t("common.close", { defaultValue: "Đóng" })}
             </Button>
           </div>
         </DialogContent>

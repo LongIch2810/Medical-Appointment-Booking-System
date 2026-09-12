@@ -14,6 +14,7 @@ import {
   UserRound,
   UsersRound,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { NavLink, Outlet } from "react-router-dom";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,30 +30,31 @@ import {
 } from "@/utils/routePrefetch";
 import { useQueryClient } from "@tanstack/react-query";
 
-const navItems = [
-  { label: "Dashboard", to: "/patient", icon: LayoutDashboard, end: true },
-  { label: "Thông báo", to: "/patient/notifications", icon: BellRing },
-  { label: "Thông tin cá nhân", to: "/patient/profile", icon: UserRound },
-  { label: "Lịch khám", to: "/patient/appointments", icon: CalendarClock },
-  { label: "Người thân", to: "/patient/relatives", icon: UsersRound },
-  {
-    label: "Tư vấn trực tuyến",
-    to: "/patient/messages",
-    icon: MessageCircleMore,
-  },
-  {
-    label: "AI Coach Health",
-    to: "/patient/ai-coach-health",
-    icon: Sparkles,
-  },
-  { label: "Hồ sơ sức khỏe", to: "/patient/health-records", icon: FileHeart },
-  { label: "Kết quả khám", to: "/patient/visit-results", icon: FileSearch },
-  { label: "Góp ý & khiếu nại", to: "/patient/complaints", icon: AlertTriangle },
-  { label: "Cài đặt & Bảo mật", to: "/patient/settings", icon: Settings },
-];
-
 const PatientNavigation: React.FC = () => {
+  const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  const navItems = [
+    { label: t("nav.dashboard"), to: "/patient", icon: LayoutDashboard, end: true },
+    { label: t("nav.notifications"), to: "/patient/notifications", icon: BellRing },
+    { label: t("nav.profile"), to: "/patient/profile", icon: UserRound },
+    { label: t("nav.appointments"), to: "/patient/appointments", icon: CalendarClock },
+    { label: t("nav.relatives"), to: "/patient/relatives", icon: UsersRound },
+    {
+      label: t("nav.messages"),
+      to: "/patient/messages",
+      icon: MessageCircleMore,
+    },
+    {
+      label: t("nav.aiCoach"),
+      to: "/patient/ai-coach-health",
+      icon: Sparkles,
+    },
+    { label: t("nav.healthRecords"), to: "/patient/health-records", icon: FileHeart },
+    { label: t("nav.visitResults"), to: "/patient/visit-results", icon: FileSearch },
+    { label: t("nav.complaints"), to: "/patient/complaints", icon: AlertTriangle },
+    { label: t("nav.settings"), to: "/patient/settings", icon: Settings },
+  ];
 
   const handleIntent = (to: string) => {
     prefetchPatientRoute(to);
@@ -70,11 +72,11 @@ const PatientNavigation: React.FC = () => {
             className="text-white flex items-center justify-center gap-2 w-full"
           >
             <CalendarPlus className="h-4.5 w-4.5 text-white" />
-            <span className="text-white font-bold text-sm">Đặt lịch khám mới</span>
+            <span className="text-white font-bold text-sm">{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch khám mới" })}</span>
           </NavLink>
         </Button>
         <p className="px-3 pb-1.5 pt-1 text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-          Trung tâm Quản lý
+          {t("nav.managementCenter", { defaultValue: "Trung tâm Quản lý" })}
         </p>
         <div className="space-y-1">
           {navItems.map(({ label, to, icon: Icon, end }) => (
@@ -122,7 +124,7 @@ const PatientNavigation: React.FC = () => {
           className="flex min-w-fit items-center gap-2 rounded-full border border-primary bg-primary hover:bg-primary/90 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs"
         >
           <CalendarPlus className="h-4 w-4 text-white" />
-          <span>Đặt lịch mới</span>
+          <span>{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch mới" })}</span>
         </NavLink>
         {navItems.map(({ label, to, icon: Icon, end }) => (
           <NavLink
@@ -150,6 +152,7 @@ const PatientNavigation: React.FC = () => {
 };
 
 const PatientPortalShell: React.FC = () => {
+  const { t } = useTranslation();
   const { data: profileResponse } = useProfile();
   const profile = profileResponse?.data;
   const initial =
@@ -187,27 +190,27 @@ const PatientPortalShell: React.FC = () => {
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs md:text-sm font-medium text-white/80">Xin chào,</p>
+                <p className="text-xs md:text-sm font-medium text-white/80">{t("header.greeting", { defaultValue: "Xin chào," })}</p>
                 <Badge className="bg-white/20 hover:bg-white/25 text-white text-[11px] font-bold border-none backdrop-blur-xs gap-1">
                   <ShieldCheck className="h-3 w-3" />
-                  Bệnh nhân LifeHealth
+                  {t("header.patientBadge", { defaultValue: "Bệnh nhân LifeHealth" })}
                 </Badge>
               </div>
               <h1 className="text-xl font-extrabold tracking-tight md:text-2xl truncate mt-0.5 text-white font-heading">
                 {profile?.fullname ?? profile?.username ?? "Bệnh nhân LifeHealth"}
               </h1>
               <p className="mt-1 max-w-xl text-xs md:text-sm text-teal-50/90 dark:text-slate-300 line-clamp-1">
-                Quản lý lịch khám, hồ sơ sức khỏe, trao đổi bác sĩ và trợ lý y tế AI.
+                {t("header.patientSubtitle", { defaultValue: "Quản lý lịch khám, hồ sơ sức khỏe, trao đổi bác sĩ và trợ lý y tế AI." })}
               </p>
             </div>
           </div>
 
           <div className="hidden rounded-2xl bg-white/10 dark:bg-slate-800/60 px-5 py-3 text-right md:block border border-white/15 dark:border-slate-700/50 backdrop-blur-xs shadow-2xs">
             <p className="text-[10px] uppercase tracking-widest text-teal-100/75 dark:text-slate-400 font-bold">
-              Tài khoản liên kết
+              {t("header.linkedAccount", { defaultValue: "Tài khoản liên kết" })}
             </p>
             <p className="text-sm font-bold text-white truncate max-w-xs mt-0.5">
-              {profile?.email ?? "Chưa cập nhật email"}
+              {profile?.email ?? t("header.noEmail", { defaultValue: "Chưa cập nhật email" })}
             </p>
           </div>
         </div>

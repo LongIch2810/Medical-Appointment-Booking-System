@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +20,7 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const NotFound = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleGoBack = () => {
@@ -44,7 +46,7 @@ const NotFound = () => {
           <section className="space-y-6 text-left">
             <Badge className="rounded-full border-primary/25 bg-white/80 dark:bg-slate-900/80 px-4 py-1.5 text-[0.7rem] font-bold uppercase tracking-[0.22em] text-primary shadow-xs backdrop-blur-sm">
               <Compass className="size-3.5 mr-1" />
-              Trang không tồn tại
+              {t("staticPages.notFoundBadge")}
             </Badge>
 
             <div className="space-y-4">
@@ -53,11 +55,10 @@ const NotFound = () => {
               </p>
               <div className="max-w-2xl space-y-3">
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl lg:text-5xl font-heading">
-                  Liên kết này có thể đã thay đổi hoặc không tồn tại.
+                  {t("staticPages.notFoundHeadline")}
                 </h1>
                 <p className="max-w-xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
-                  Đường dẫn bạn vừa truy cập không tìm thấy trên hệ thống LifeHealth.
-                  Vui lòng kiểm tra lại địa chỉ hoặc sử dụng các phím điều hướng bên dưới để tiếp tục hành trình chăm sóc sức khỏe.
+                  {t("staticPages.notFoundDescription")}
                 </p>
               </div>
             </div>
@@ -66,19 +67,19 @@ const NotFound = () => {
               <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4 shadow-xs backdrop-blur-sm">
                 <p className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                   <Search className="size-4 text-primary" />
-                  Tìm kiếm bác sĩ
+                  {t("staticPages.findDoctorCardTitle")}
                 </p>
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-normal">
-                  Tra cứu hơn 500+ bác sĩ chuyên khoa đầu ngành và đặt lịch khám ngay.
+                  {t("staticPages.findDoctorCardDesc")}
                 </p>
               </div>
               <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 p-4 shadow-xs backdrop-blur-sm">
                 <p className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                   <FileQuestion className="size-4 text-primary" />
-                  Hỏi đáp cùng MedAI
+                  {t("staticPages.askMedAiCardTitle")}
                 </p>
                 <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 leading-normal">
-                  Trò chuyện với trợ lý y tế thông minh để được định hướng triệu chứng 24/7.
+                  {t("staticPages.askMedAiCardDesc")}
                 </p>
               </div>
             </div>
@@ -96,15 +97,15 @@ const NotFound = () => {
                   variant="outline"
                   className="rounded-full border-primary/20 bg-primary/5 px-3 py-1 text-xs font-bold text-primary"
                 >
-                  Gợi ý điều hướng
+                  {t("staticPages.navSuggestionBadge")}
                 </Badge>
               </div>
               <div className="space-y-1">
                 <CardTitle className="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl font-heading">
-                  Bạn muốn tìm nội dung gì?
+                  {t("staticPages.whatAreYouLookingFor")}
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-normal">
-                  Hãy chọn một trong các lối tắt dưới đây để trở về luồng sử dụng chính.
+                  {t("staticPages.shortcutDesc")}
                 </CardDescription>
               </div>
             </CardHeader>
@@ -117,7 +118,7 @@ const NotFound = () => {
                     onClick={() => navigate("/doctors")}
                   >
                     <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
-                      Danh sách bác sĩ &amp; đặt lịch khám
+                      {t("staticPages.shortcutDoctors")}
                     </span>
                     <ChevronRight className="size-4 text-slate-400 group-hover:text-primary transition-colors" />
                   </li>
@@ -126,7 +127,7 @@ const NotFound = () => {
                     onClick={() => navigate("/chatbot")}
                   >
                     <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
-                      Trợ lý sức khỏe MedAI 24/7
+                      {t("staticPages.shortcutMedAi")}
                     </span>
                     <ChevronRight className="size-4 text-slate-400 group-hover:text-primary transition-colors" />
                   </li>
@@ -135,7 +136,7 @@ const NotFound = () => {
                     onClick={() => navigate("/news")}
                   >
                     <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-primary transition-colors">
-                      Tin tức &amp; kiến thức y khoa
+                      {t("staticPages.shortcutNews")}
                     </span>
                     <ChevronRight className="size-4 text-slate-400 group-hover:text-primary transition-colors" />
                   </li>
@@ -149,7 +150,7 @@ const NotFound = () => {
                 onClick={() => navigate("/")}
               >
                 <Home className="size-4 mr-2" />
-                Về trang chủ LifeHealth
+                {t("staticPages.backToHomeBtn")}
               </Button>
               <Button
                 variant="outline"
@@ -157,7 +158,7 @@ const NotFound = () => {
                 onClick={handleGoBack}
               >
                 <ArrowLeft className="size-4 mr-2" />
-                Quay lại trang trước
+                {t("staticPages.goBackBtn")}
               </Button>
             </CardFooter>
           </Card>

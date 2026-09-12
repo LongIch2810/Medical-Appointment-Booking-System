@@ -39,6 +39,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "@/components/common/LanguageSwitcher";
 import { useChangePatientPassword } from "@/hooks/usePatientPortalApi";
 import { useUpdateUserSettings, useUserSettings } from "@/hooks/useSettings";
 import { cn } from "@/lib/utils";
@@ -58,33 +60,6 @@ interface TabItem {
   icon: React.ComponentType<{ className?: string }>;
   description: string;
 }
-
-const TABS: TabItem[] = [
-  {
-    id: "notifications",
-    label: "Thông báo & Lịch hẹn",
-    icon: Bell,
-    description: "Kênh nhận thông báo xác nhận lịch và nhắc hẹn",
-  },
-  {
-    id: "security",
-    label: "Bảo mật & Mật khẩu",
-    icon: ShieldCheck,
-    description: "Mật khẩu, phiên đăng nhập và bảo vệ tài khoản",
-  },
-  {
-    id: "appearance",
-    label: "Giao diện & Tùy chọn",
-    icon: Palette,
-    description: "Chế độ hiển thị sáng/tối và tùy chỉnh ứng dụng",
-  },
-  {
-    id: "privacy",
-    label: "Quyền riêng tư & Dữ liệu",
-    icon: FileHeart,
-    description: "Chia sẻ hồ sơ y tế và quyền truy cập dữ liệu",
-  },
-];
 
 const DEFAULT_SETTINGS: PatientSettings = {
   emailNotifications: true,
@@ -130,6 +105,7 @@ const ToggleSwitch: React.FC<{
 );
 
 const Settings: React.FC = () => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabKey>("notifications");
   const [settings, setSettings] = useState<PatientSettings>(DEFAULT_SETTINGS);
   const [currentTheme, setCurrentTheme] = useState<UserTheme>("SYSTEM");
@@ -138,6 +114,36 @@ const Settings: React.FC = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+
+  const tabs: TabItem[] = useMemo(
+    () => [
+      {
+        id: "notifications",
+        label: t("settings.notificationsTab", { defaultValue: "Thông báo & Lịch hẹn" }),
+        icon: Bell,
+        description: t("settings.notificationsTabDesc", { defaultValue: "Kênh nhận thông báo xác nhận lịch và nhắc hẹn" }),
+      },
+      {
+        id: "security",
+        label: t("settings.securityTab", { defaultValue: "Bảo mật & Mật khẩu" }),
+        icon: ShieldCheck,
+        description: t("settings.securityTabDesc", { defaultValue: "Mật khẩu, phiên đăng nhập và bảo vệ tài khoản" }),
+      },
+      {
+        id: "appearance",
+        label: t("settings.appearanceTab", { defaultValue: "Giao diện & Tùy chọn" }),
+        icon: Palette,
+        description: t("settings.appearanceTabDesc", { defaultValue: "Chế độ hiển thị sáng/tối và tùy chỉnh ứng dụng" }),
+      },
+      {
+        id: "privacy",
+        label: t("settings.privacyTab", { defaultValue: "Quyền riêng tư & Dữ liệu" }),
+        icon: FileHeart,
+        description: t("settings.privacyTabDesc", { defaultValue: "Chia sẻ hồ sơ y tế và quyền truy cập dữ liệu" }),
+      },
+    ],
+    [t],
+  );
 
   // Privacy toggles
   const [shareDoctorHistory, setShareDoctorHistory] = useState(true);
@@ -291,25 +297,25 @@ const Settings: React.FC = () => {
                 <Sparkles className="h-4 w-4 text-white" />
               </span>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">
-                Trung tâm cài đặt & bảo mật
+                {t("settings.heroBadge", { defaultValue: "Trung tâm cài đặt & bảo mật" })}
               </span>
             </div>
             <h1 className="text-xl font-extrabold tracking-tight sm:text-2xl">
-              Tùy chỉnh tài khoản bệnh nhân
+              {t("settings.title", { defaultValue: "Tùy chỉnh tài khoản bệnh nhân" })}
             </h1>
             <p className="text-xs sm:text-sm text-white/85 max-w-xl">
-              Quản lý kênh nhận thông báo lịch hẹn, bảo mật tài khoản, giao diện và quyền riêng tư dữ liệu y tế của bạn.
+              {t("settings.subtitle", { defaultValue: "Quản lý kênh nhận thông báo lịch hẹn, bảo mật tài khoản, giao diện và quyền riêng tư dữ liệu y tế của bạn." })}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end">
             <Badge className="bg-white/20 text-white hover:bg-white/30 border-white/20 backdrop-blur-md px-3 py-1 font-semibold text-xs">
               <ShieldCheck className="h-3.5 w-3.5 mr-1 text-emerald-200" />
-              Tài khoản được bảo vệ
+              {t("settings.protectedAccount", { defaultValue: "Tài khoản được bảo vệ" })}
             </Badge>
             <Badge className="bg-emerald-950/40 text-emerald-100 border-none px-3 py-1 text-xs">
               <Bell className="h-3.5 w-3.5 mr-1 text-emerald-300" />
-              {enabledNotificationsCount}/3 kênh thông báo bật
+              {enabledNotificationsCount}/3 {t("settings.notificationsEnabledCount", { defaultValue: "kênh thông báo bật" })}
             </Badge>
           </div>
         </div>
@@ -317,7 +323,7 @@ const Settings: React.FC = () => {
 
       {/* Tabs Navigation */}
       <div className="flex flex-wrap items-center gap-2 border-b border-slate-200/80 pb-2">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
           return (
@@ -703,25 +709,27 @@ const Settings: React.FC = () => {
               </div>
 
               {/* Language & Regional Defaults */}
-              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4.5 bg-slate-50/50 dark:bg-slate-950/50 space-y-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  Cài đặt vùng & Định dạng
-                </p>
-                <div className="grid gap-4 sm:grid-cols-3 text-xs">
+              <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 bg-slate-50/50 dark:bg-slate-950/50 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">Ngôn ngữ hiển thị</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
-                      Tiếng Việt (Mặc định)
-                    </span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      {t("settings.languageSection", { defaultValue: "Ngôn ngữ hiển thị" })}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                      {t("settings.languageSectionDesc", { defaultValue: "Lựa chọn ngôn ngữ giao diện của hệ thống LifeHealth" })}
+                    </p>
                   </div>
+                  <LanguageSwitcher variant="pills" />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 text-xs">
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">Định dạng ngày tháng</span>
+                    <span className="text-slate-500 dark:text-slate-400 block">{t("settings.dateFormat", { defaultValue: "Định dạng ngày tháng" })}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                       DD/MM/YYYY (24 Giờ)
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-500 dark:text-slate-400 block">Múi giờ hệ thống</span>
+                    <span className="text-slate-500 dark:text-slate-400 block">{t("settings.systemTimezone", { defaultValue: "Múi giờ hệ thống" })}</span>
                     <span className="font-bold text-slate-800 dark:text-slate-200 text-sm mt-0.5 block">
                       GMT+7 (Hà Nội, TP.HCM)
                     </span>

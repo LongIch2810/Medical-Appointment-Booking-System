@@ -20,6 +20,7 @@ import {
   Star,
   Stethoscope,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { DoctorCardProps } from "@/types/global";
 import { Badge } from "../ui/badge";
 import { useNavigate } from "react-router-dom";
@@ -28,6 +29,7 @@ import DialogDisplaySchedules from "../dialog/DialogDisplaySchedules";
 import { useUserStore } from "@/store/useUserStore";
 
 export default function DoctorCard(doctorCardProps: DoctorCardProps) {
+  const { t } = useTranslation();
   const {
     id,
     user_id,
@@ -84,14 +86,14 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center justify-between gap-1.5">
                 <CardTitle className="truncate text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-primary transition-colors">
-                  BS. {fullname}
+                  {t("doctor.drPrefix")} {fullname}
                 </CardTitle>
                 {isOutstanding && (
                   <Badge
                     className="flex shrink-0 items-center gap-1 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs border-none"
                   >
                     <Flame size={12} className="animate-pulse" />
-                    Nổi bật
+                    {t("doctor.outstanding")}
                   </Badge>
                 )}
               </div>
@@ -99,11 +101,11 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
               <CardDescription className="space-y-0.5 text-xs text-slate-600 dark:text-slate-400">
                 <div className="flex items-center gap-1.5 font-medium text-primary truncate">
                   <Stethoscope size={13} className="shrink-0" />
-                  <span className="truncate">{specialty || "Bác sĩ chuyên khoa"}</span>
+                  <span className="truncate">{specialty || t("doctor.generalSpecialist")}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400 truncate">
                   <Building2 size={13} className="shrink-0" />
-                  <span className="truncate">{workplace || "Bệnh viện đa khoa"}</span>
+                  <span className="truncate">{workplace || t("doctor.generalHospital")}</span>
                 </div>
                 {doctor_level && (
                   <div className="inline-block rounded-md bg-slate-100 dark:bg-slate-800 px-1.5 py-0.2 text-[10px] font-semibold text-slate-600 dark:text-slate-300">
@@ -124,13 +126,13 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
               </div>
               <div className="flex items-center justify-end gap-1.5 text-emerald-700 dark:text-emerald-400 font-bold">
                 <CheckCircle2 size={14} className="text-emerald-500" />
-                <span>{appointments_completed} ca khám</span>
+                <span>{t("doctor.appointmentsCompleted", { count: appointments_completed })}</span>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-medium">
               <Medal size={14} className="text-primary shrink-0" />
-              <span>Kinh nghiệm: <strong className="text-slate-800 dark:text-slate-200">{experience} năm</strong></span>
+              <span>{t("doctor.experienceYearsCount", { years: experience })}</span>
             </div>
 
             {address && (
@@ -156,7 +158,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
             className="w-full gap-2 rounded-2xl bg-primary hover:bg-primary/90 text-white font-bold text-xs sm:text-sm shadow-xs cursor-pointer h-10"
           >
             <Calendar size={15} />
-            <span>Đặt lịch khám ngay</span>
+            <span>{t("doctor.bookAppointment")}</span>
           </Button>
 
           <div className="grid grid-cols-2 gap-2 w-full">
@@ -167,7 +169,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
               className="gap-1.5 rounded-xl border-sky-200 dark:border-sky-800/60 bg-sky-50/50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 hover:bg-sky-100 dark:hover:bg-sky-900/60 text-xs font-semibold h-8.5 cursor-pointer"
             >
               <MessageCircle size={13} />
-              Tư vấn
+              {t("doctor.consult")}
             </Button>
             <Button
               onClick={() => navigate(`/doctors/${id}`)}
@@ -176,7 +178,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
               className="gap-1.5 rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold h-8.5 cursor-pointer"
             >
               <Eye size={13} />
-              Chi tiết
+              {t("doctor.details")}
             </Button>
           </div>
         </CardFooter>

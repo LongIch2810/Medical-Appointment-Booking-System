@@ -17,6 +17,8 @@ import {
   getLastMessageTime,
 } from "./messageHelpers";
 
+import { useTranslation } from "react-i18next";
+
 interface ChannelListProps {
   channels: Channel[];
   activeChannelId: number;
@@ -46,15 +48,17 @@ const ChannelList: FC<ChannelListProps> = ({
   onPageChange,
   className,
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={cn("flex flex-col", className)}>
       <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 p-4.5 bg-slate-50/50 dark:bg-slate-900/50">
         <div>
           <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">
-            Tư vấn trực tuyến
+            {t("messages.pageTitle")}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Kênh nhắn tin trực tiếp với bác sĩ
+            {t("messages.pageSubtitle")}
           </p>
         </div>
         <Button
@@ -62,8 +66,8 @@ const ChannelList: FC<ChannelListProps> = ({
           size="sm"
           className="h-8.5 w-8.5 rounded-xl !bg-primary hover:!bg-primary/90 !text-white p-0 shadow-xs cursor-pointer"
           onClick={onCreateNew}
-          aria-label="Tạo cuộc trò chuyện mới"
-          title="Tạo hội thoại mới"
+          aria-label={t("messages.searchDoctorBtn")}
+          title={t("messages.searchDoctorBtn")}
         >
           <Plus className="h-4 w-4 !text-white" />
         </Button>
@@ -75,14 +79,14 @@ const ChannelList: FC<ChannelListProps> = ({
           </div>
         ) : isError ? (
           <ErrorState
-            title="Không thể tải danh sách hội thoại"
-            description="Đã có lỗi xảy ra. Vui lòng thử lại."
+            title={t("common.error")}
+            description="Error loading conversations."
             onRetry={onRetry}
           />
         ) : channels.length === 0 ? (
           <NotFoundResult
-            title="Chưa có hội thoại"
-            description="Nhấn dấu + để chọn bác sĩ cần tư vấn."
+            title={t("messages.emptyChannels")}
+            description={t("messages.emptyChannelsDesc")}
           />
         ) : (
           channels.map((channel) => (
@@ -117,14 +121,14 @@ const ChannelList: FC<ChannelListProps> = ({
                     {channel.unread_count > 0 && (
                       <Badge
                         className="bg-primary text-white text-[10px] px-1.5 py-0.2"
-                        aria-label={`${channel.unread_count} tin nhắn chưa đọc`}
+                        aria-label={`${channel.unread_count} unread`}
                       >
                         {channel.unread_count}
                       </Badge>
                     )}
                   </div>
                   <p className="mt-0.5 text-[11px] font-semibold text-primary dark:text-sky-400">
-                    Bác sĩ chuyên khoa
+                    {t("home.statDoctors")}
                   </p>
                   <p className="mt-1 line-clamp-1 text-xs text-slate-600 dark:text-slate-300 break-words">
                     {getLastMessage(channel)}
@@ -146,9 +150,9 @@ const ChannelList: FC<ChannelListProps> = ({
               size="sm"
               disabled={page <= 1}
               onClick={() => onPageChange(Math.max(1, page - 1))}
-              className="rounded-xl text-xs"
+              className="rounded-xl text-xs cursor-pointer"
             >
-              Trước
+              {t("common.back")}
             </Button>
             <span className="text-[11px] font-semibold text-slate-500">
               {page}/{totalPages}
@@ -159,9 +163,9 @@ const ChannelList: FC<ChannelListProps> = ({
               size="sm"
               disabled={page >= totalPages}
               onClick={() => onPageChange(Math.min(totalPages, page + 1))}
-              className="rounded-xl text-xs"
+              className="rounded-xl text-xs cursor-pointer"
             >
-              Sau
+              {t("common.more")}
             </Button>
           </div>
         )}

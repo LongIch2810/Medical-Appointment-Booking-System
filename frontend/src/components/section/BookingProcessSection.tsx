@@ -1,30 +1,33 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, CheckCircle2, Search, ShieldAlert } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 
 export const BookingProcessSection: React.FC = () => {
+  const { t } = useTranslation();
+
   const steps = [
     {
       step: "01",
       icon: <Search className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Tra cứu chuyên khoa & bác sĩ",
-      desc: "Tìm kiếm chính xác theo chuyên khoa, bệnh viện, khu vực hoặc kinh nghiệm của bác sĩ.",
-      perk: "Lọc linh hoạt theo nhu cầu",
+      title: t("home.processStep1Title"),
+      desc: t("home.processStep1Desc"),
+      perk: t("home.processStep1Perk"),
     },
     {
       step: "02",
       icon: <Calendar className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Chọn khung giờ khám thuận tiện",
-      desc: "Xem trực tiếp lịch rảnh theo ngày của từng bác sĩ và ấn chọn giờ khám mong muốn.",
-      perk: "Khung giờ cố định, không phải chờ",
+      title: t("home.processStep2Title"),
+      desc: t("home.processStep2Desc"),
+      perk: t("home.processStep2Perk"),
     },
     {
       step: "03",
       icon: <CheckCircle2 className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Nhận phiếu hẹn & được nhắc lịch",
-      desc: "Phiếu khám điện tử được kích hoạt ngay trong tài khoản, kèm thông báo nhắc hẹn tự động.",
-      perk: "An tâm đi khám đúng giờ",
+      title: t("home.processStep3Title"),
+      desc: t("home.processStep3Desc"),
+      perk: t("home.processStep3Perk"),
     },
   ];
 
@@ -34,13 +37,13 @@ export const BookingProcessSection: React.FC = () => {
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[#159a98] dark:text-[#2cd4d1] mb-2">
-            <span>Quy trình tinh gọn</span>
+            <span>{t("home.processEyebrow")}</span>
           </div>
           <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-            Đặt lịch khám trong 3 bước đơn giản
+            {t("home.processTitle")}
           </h2>
           <p className="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400">
-            LifeHealth tối ưu hóa toàn bộ quá trình đặt hẹn, giúp bạn tiết kiệm thời gian chờ đợi và chủ động lịch trình sức khỏe.
+            {t("home.processSubtitle")}
           </p>
         </div>
 
@@ -86,14 +89,14 @@ export const BookingProcessSection: React.FC = () => {
             className="h-11 px-6 rounded-xl bg-[#159a98] hover:bg-[#117d7b] text-white font-bold text-sm shadow-md hover:shadow-lg transition-all cursor-pointer"
           >
             <Link to="/doctors" className="inline-flex items-center gap-2">
-              <span>Bắt đầu tìm bác sĩ & Đặt lịch</span>
+              <span>{t("home.processCtaBtn")}</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
           </Button>
 
           <p className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1">
             <ShieldAlert className="w-3.5 h-3.5" />
-            Không phát sinh phí đặt lịch trên hệ thống
+            {t("home.processCtaNote")}
           </p>
         </div>
       </div>

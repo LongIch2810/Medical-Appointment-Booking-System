@@ -25,8 +25,8 @@ describe('date and time utilities', () => {
     const date = new Date(2026, 8, 3);
     expect(formatDate(null)).toBe('');
     expect(formatDate(date, 'en-US', false)).toBe('03-09-2026');
-    expect(formatDate(date, 'en-US', true)).toMatch(/Thursday,03-09-2026/);
-    expect(getWeekday(date)).toBe('Thursday');
+    expect(formatDate(date, 'en-US', true)).toMatch(/Thursday,\s*03-09-2026/);
+    expect(getWeekday(date, 'en-US')).toBe('Thursday');
   });
 
   it('compares calendar days independently of time', () => {

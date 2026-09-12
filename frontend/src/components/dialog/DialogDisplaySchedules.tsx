@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ const DialogDisplaySchedules = ({
   specialtyName,
   doctorId,
 }: DialogDisplaySchedulesProps) => {
+  const { t } = useTranslation();
   const { data: doctorSchedulesRes, isLoading: isLoadingSchedules } =
     useGetDoctorSchedules(doctorId);
   const { selectedDate, doctor_schedule_id, tempTime, reset } =
@@ -65,10 +67,10 @@ const DialogDisplaySchedules = ({
           <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 pr-12">
             <DialogHeader>
               <DialogTitle className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
-                Ca khám của BS. {doctorName}
+                {t("doctor.dialogScheduleTitle", { doctorName })}
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                Chuyên khoa {specialtyName} • Chọn ngày và khung giờ khám thực tế
+                {t("doctor.dialogScheduleSubtitle", { specialtyName })}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -86,11 +88,14 @@ const DialogDisplaySchedules = ({
               <div className="flex-1 min-w-0 w-full space-y-4">
                 <div className="flex items-center justify-between">
                   <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide">
-                    Khung giờ khám ({getWeekday(selectedDate)})
+                    {t("doctor.timeSlotsWeekday", { weekday: getWeekday(selectedDate) })}
                   </h4>
                   {tempTime && (
                     <span className="text-xs font-semibold text-primary bg-primary/10 dark:bg-primary/20 dark:text-teal-300 px-2.5 py-1 rounded-full">
-                      Đã chọn: {tempTime.start_time} - {tempTime.end_time}
+                      {t("doctor.selectedTimeSlot", {
+                        start: tempTime.start_time,
+                        end: tempTime.end_time,
+                      })}
                     </span>
                   )}
                 </div>
@@ -111,9 +116,9 @@ const DialogDisplaySchedules = ({
           <div className="shrink-0 p-4 sm:p-5 bg-slate-50/90 dark:bg-slate-950/90 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="text-xs text-slate-500 dark:text-slate-400 text-center sm:text-left">
               {doctor_schedule_id ? (
-                <span>Vui lòng nhấn &quot;Đặt lịch khám&quot; để sang bước xác nhận thông tin.</span>
+                <span>{t("doctor.pleaseClickBook")}</span>
               ) : (
-                <span>Vui lòng bấm chọn một khung giờ khám màu xanh bên trên.</span>
+                <span>{t("doctor.pleaseSelectSlot")}</span>
               )}
             </div>
 
@@ -124,14 +129,14 @@ const DialogDisplaySchedules = ({
                 onClick={() => setOpen(false)}
                 className="flex-1 sm:flex-none rounded-xl"
               >
-                Hủy
+                {t("doctor.cancelBtn")}
               </Button>
               <Button
                 disabled={isPending || !doctor_schedule_id}
                 onClick={() => setOpenConfirm(true)}
                 className="flex-1 sm:flex-none rounded-xl font-bold !bg-primary hover:!bg-primary/90 text-white shadow-xs"
               >
-                {isPending ? <Loading /> : "Đặt lịch khám"}
+                {isPending ? <Loading /> : t("doctor.bookAppointment")}
               </Button>
             </div>
           </div>

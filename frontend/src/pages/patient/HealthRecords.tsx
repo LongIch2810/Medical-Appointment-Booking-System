@@ -59,19 +59,7 @@ import {
   healthProfileFormSchema,
   type HealthProfileFormValues,
 } from "@/schemas/healthProfile.schema";
-
-const formatValue = (
-  value: string | number | boolean | null | undefined,
-  suffix: string = "",
-) => {
-  if (value === null || value === undefined || value === "") {
-    return "Chưa cập nhật";
-  }
-  if (typeof value === "boolean") {
-    return value ? "Có" : "Không";
-  }
-  return `${value}${suffix}`;
-};
+import { useTranslation } from "react-i18next";
 
 const toDateInputValue = (value: string | null | undefined) => {
   if (!value) return "";
@@ -130,6 +118,7 @@ const optionalString = (value: string | undefined) =>
   !value || value.trim() === "" ? undefined : value.trim();
 
 const HealthRecords: React.FC = () => {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = usePatientHealthProfiles({
     page: 1,
     limit: 50,
@@ -153,6 +142,19 @@ const HealthRecords: React.FC = () => {
     resolver: zodResolver(healthProfileFormSchema),
     defaultValues: getInitialForm(),
   });
+
+  const formatValue = (
+    value: string | number | boolean | null | undefined,
+    suffix: string = "",
+  ) => {
+    if (value === null || value === undefined || value === "") {
+      return t("common.notUpdated");
+    }
+    if (typeof value === "boolean") {
+      return value ? t("common.yes") : t("common.no");
+    }
+    return `${value}${suffix}`;
+  };
 
   useEffect(() => {
     if (!selectedRelativeId && healthProfiles[0]?.patient.id) {
@@ -201,10 +203,10 @@ const HealthRecords: React.FC = () => {
       },
       {
         onSuccess: () => {
-          toast.success("Đã cập nhật hồ sơ sức khỏe.");
+          toast.success(t("healthRecords.updateSuccessToast"));
           setIsUpdateOpen(false);
         },
-        onError: () => toast.error("Không thể cập nhật hồ sơ sức khỏe."),
+        onError: () => toast.error(t("healthRecords.updateErrorToast")),
       },
     );
   };
@@ -220,32 +222,32 @@ const HealthRecords: React.FC = () => {
             </span>
             <div>
               <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                Hồ sơ sức khỏe cá nhân &amp; gia đình
+                {t("healthRecords.pageTitle")}
               </CardTitle>
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Lựa chọn hồ sơ thành viên để theo dõi chỉ số sinh trắc học và tiền sử y khoa
+                {t("healthRecords.pageSubtitle")}
               </p>
             </div>
           </div>
           <Badge variant="outline" className="w-fit text-xs font-semibold border-primary/20 text-primary bg-primary/5">
-            {healthProfiles.length} hồ sơ theo dõi
+            {t("healthRecords.recordsCount", { count: healthProfiles.length })}
           </Badge>
         </CardHeader>
         <CardContent className="space-y-3 px-6 py-5">
           {isLoading ? (
             <MedicalAiLoading
-              label="Đang tải hồ sơ sức khỏe..."
-              description="Đang đồng bộ dữ liệu sinh trắc học và lịch sử y khoa"
+              label={t("common.loading")}
+              description="Syncing biometric and medical data"
               minHeight="min-h-36"
             />
           ) : isError ? (
             <ErrorState
-              title="Không thể tải hồ sơ sức khỏe"
-              description="Đã xảy ra lỗi trong quá trình tải dữ liệu. Vui lòng thử lại."
+              title={t("common.error")}
+              description={t("healthRecords.updateErrorToast")}
             />
           ) : healthProfiles.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-8 text-center text-sm text-slate-500">
-              Chưa có hồ sơ sức khỏe nào trong hệ thống.
+              {t("healthRecords.emptyRecords")}
             </div>
           ) : (
             <div className="flex flex-wrap gap-2.5">
@@ -294,7 +296,7 @@ const HealthRecords: React.FC = () => {
 
       {!selectedHealthRecord ? (
         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-10 text-center text-sm text-slate-500">
-          Vui lòng chọn một hồ sơ ở trên để xem chi tiết thông tin y tế.
+          {t("healthRecords.selectRecordPrompt")}
         </div>
       ) : (
         <>
@@ -306,7 +308,7 @@ const HealthRecords: React.FC = () => {
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  Hồ sơ đang hiển thị
+                  {t("healthRecords.activeRecordLabel")}
                 </p>
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
@@ -324,7 +326,7 @@ const HealthRecords: React.FC = () => {
               className="gap-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
             >
               <Edit3 className="h-3.5 w-3.5 text-white" />
-              <span>Cập nhật chỉ số</span>
+              <span>{t("healthRecords.updateMetricsBtn")}</span>
             </Button>
           </div>
 
@@ -333,7 +335,7 @@ const HealthRecords: React.FC = () => {
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Nhóm máu
+                  {t("dashboard.bloodType")}
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-500">
                   <Droplet className="h-4.5 w-4.5" />
@@ -342,13 +344,13 @@ const HealthRecords: React.FC = () => {
               <p className="mt-3 text-2xl font-black text-rose-600 dark:text-rose-400">
                 {formatValue(selectedHealthRecord.blood_type)}
               </p>
-              <p className="mt-1 text-xs text-slate-400">Hệ nhóm máu ABO &amp; Rh</p>
+              <p className="mt-1 text-xs text-slate-400">{t("healthRecords.bloodTypeDesc")}</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Chiều cao
+                  {t("dashboard.height")}
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 dark:bg-sky-950/50 text-sky-500">
                   <Ruler className="h-4.5 w-4.5" />
@@ -357,13 +359,13 @@ const HealthRecords: React.FC = () => {
               <p className="mt-3 text-2xl font-black text-sky-600 dark:text-sky-400">
                 {formatValue(selectedHealthRecord.height, " cm")}
               </p>
-              <p className="mt-1 text-xs text-slate-400">Đơn vị đo lường chuẩn</p>
+              <p className="mt-1 text-xs text-slate-400">{t("healthRecords.heightDesc")}</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Cân nặng
+                  {t("dashboard.weight")}
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500">
                   <Scale className="h-4.5 w-4.5" />
@@ -372,13 +374,13 @@ const HealthRecords: React.FC = () => {
               <p className="mt-3 text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {formatValue(selectedHealthRecord.weight, " kg")}
               </p>
-              <p className="mt-1 text-xs text-slate-400">Trọng lượng cơ thể</p>
+              <p className="mt-1 text-xs text-slate-400">{t("healthRecords.weightDesc")}</p>
             </div>
 
             <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
-                  Khám gần nhất
+                  {t("healthRecords.lastCheckup")}
                 </span>
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-50 dark:bg-violet-950/50 text-violet-500">
                   <CalendarCheck2 className="h-4.5 w-4.5" />
@@ -387,7 +389,7 @@ const HealthRecords: React.FC = () => {
               <p className="mt-3 text-xl font-black text-violet-600 dark:text-violet-400 truncate">
                 {formatValue(selectedHealthRecord.last_checkup_date)}
               </p>
-              <p className="mt-1 text-xs text-slate-400">Thời gian kiểm tra y tế</p>
+              <p className="mt-1 text-xs text-slate-400">{t("healthRecords.lastCheckupDesc")}</p>
             </div>
           </div>
 
@@ -401,36 +403,36 @@ const HealthRecords: React.FC = () => {
                 </span>
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                    Chỉ số sinh tồn lâm sàng
+                    {t("healthRecords.clinicalVitalsTitle")}
                   </CardTitle>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Dữ liệu từ đợt kiểm tra sức khỏe gần nhất</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t("healthRecords.clinicalVitalsSubtitle")}</p>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3 px-6 py-5">
                 {[
                   {
-                    label: "Huyết áp tâm thu / tâm trương",
+                    label: t("healthRecords.bloodPressure"),
                     value: formatValue(selectedHealthRecord.blood_pressure),
                     unit: "mmHg",
                     icon: <HeartPulse className="h-4 w-4 text-rose-500" />,
                     bg: "bg-rose-50/60 dark:bg-rose-950/30",
                   },
                   {
-                    label: "Nhịp tim lúc nghỉ",
+                    label: t("healthRecords.heartRate"),
                     value: formatValue(selectedHealthRecord.heart_rate),
                     unit: "nhịp/phút (bpm)",
                     icon: <Activity className="h-4 w-4 text-pink-500" />,
                     bg: "bg-pink-50/60 dark:bg-pink-950/30",
                   },
                   {
-                    label: "Nồng độ đường huyết (Glucose)",
+                    label: t("healthRecords.glucose"),
                     value: formatValue(selectedHealthRecord.glucose_level),
                     unit: "mg/dL",
                     icon: <Droplets className="h-4 w-4 text-amber-500" />,
                     bg: "bg-amber-50/60 dark:bg-amber-950/30",
                   },
                   {
-                    label: "Chỉ số Cholesterol toàn phần",
+                    label: t("healthRecords.cholesterol"),
                     value: formatValue(selectedHealthRecord.cholesterol_level),
                     unit: "mg/dL",
                     icon: <Dna className="h-4 w-4 text-indigo-500" />,
@@ -468,16 +470,16 @@ const HealthRecords: React.FC = () => {
                 </span>
                 <div>
                   <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                    Thuốc điều trị &amp; Tiêm chủng
+                    {t("healthRecords.medicationsAndVaccinesTitle")}
                   </CardTitle>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Phác đồ thuốc kê đơn và lịch sử tiêm phòng</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">{t("healthRecords.medicationsAndVaccinesSubtitle")}</p>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3.5 px-6 py-5">
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-4">
                   <div className="flex items-center gap-2 text-xs font-bold text-cyan-700 dark:text-cyan-400">
                     <Pill className="h-4 w-4" />
-                    Thuốc đang sử dụng thường xuyên
+                    {t("healthRecords.currentMedications")}
                   </div>
                   <p className="mt-2 min-h-16 whitespace-pre-line text-xs font-medium text-slate-700 dark:text-slate-300">
                     {formatValue(selectedHealthRecord.medications)}
@@ -486,7 +488,7 @@ const HealthRecords: React.FC = () => {
                 <div className="rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 p-4">
                   <div className="flex items-center gap-2 text-xs font-bold text-teal-700 dark:text-teal-400">
                     <Syringe className="h-4 w-4" />
-                    Lịch sử các loại vắc xin đã tiêm
+                    {t("healthRecords.vaccineHistory")}
                   </div>
                   <p className="mt-2 min-h-16 whitespace-pre-line text-xs font-medium text-slate-700 dark:text-slate-300">
                     {formatValue(selectedHealthRecord.vaccinations)}
@@ -504,16 +506,16 @@ const HealthRecords: React.FC = () => {
               </span>
               <div>
                 <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-                  Tiền sử bệnh lý &amp; Thói quen lối sống
+                  {t("healthRecords.historyAndLifestyleTitle")}
                 </CardTitle>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Căn cứ hỗ trợ bác sĩ chẩn đoán và tiên lượng</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{t("healthRecords.historyAndLifestyleSubtitle")}</p>
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 px-6 py-5 md:grid-cols-2">
               <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 dark:border-amber-900/50 dark:bg-amber-950/30 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
-                  Dị ứng thuốc &amp; Thực phẩm
+                  {t("healthRecords.allergiesTitle")}
                 </div>
                 <p className="mt-2 text-xs font-medium text-amber-950 dark:text-amber-200 min-h-12 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.allergies)}
@@ -523,7 +525,7 @@ const HealthRecords: React.FC = () => {
               <div className="rounded-xl border border-rose-200/80 bg-rose-50/40 dark:border-rose-900/50 dark:bg-rose-950/30 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-rose-800 dark:text-rose-300">
                   <ClipboardList className="h-4 w-4 text-rose-600" />
-                  Bệnh lý nền &amp; Mãn tính
+                  {t("healthRecords.chronicConditionsTitle")}
                 </div>
                 <p className="mt-2 text-xs font-medium text-rose-950 dark:text-rose-200 min-h-12 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.medical_history)}
@@ -533,7 +535,7 @@ const HealthRecords: React.FC = () => {
               <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <CigaretteOff className="h-4 w-4 text-slate-500" />
-                  Hút thuốc lá
+                  {t("healthRecords.smokingTitle")}
                 </div>
                 <p className="mt-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {formatValue(selectedHealthRecord.smoking)}
@@ -543,7 +545,7 @@ const HealthRecords: React.FC = () => {
               <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <Wine className="h-4 w-4 text-purple-500" />
-                  Rượu bia / Chất có cồn
+                  {t("healthRecords.alcoholTitle")}
                 </div>
                 <p className="mt-2 text-xs font-semibold text-slate-900 dark:text-slate-100">
                   {formatValue(selectedHealthRecord.alcohol_consumption)}
@@ -553,7 +555,7 @@ const HealthRecords: React.FC = () => {
               <div className="rounded-xl border border-slate-200/80 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-900/50 p-4 md:col-span-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <Stethoscope className="h-4 w-4 text-emerald-500" />
-                  Tần suất vận động thể lực
+                  {t("healthRecords.exerciseTitle")}
                 </div>
                 <p className="mt-2 text-xs font-medium text-slate-800 dark:text-slate-200 whitespace-pre-line">
                   {formatValue(selectedHealthRecord.exercise_frequency)}
@@ -567,10 +569,10 @@ const HealthRecords: React.FC = () => {
               <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 pr-12">
                 <DialogHeader>
                   <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                    Cập nhật hồ sơ sức khỏe: {selectedHealthRecord.patient.fullname ?? "Bệnh nhân"}
+                    {t("healthRecords.updateModalTitle", { name: selectedHealthRecord.patient.fullname ?? "" })}
                   </DialogTitle>
                   <DialogDescription className="text-xs text-slate-500 dark:text-slate-400">
-                    Cập nhật các chỉ số sinh tồn và tiền sử y khoa để đội ngũ bác sĩ theo dõi chính xác.
+                    {t("healthRecords.updateModalSubtitle")}
                   </DialogDescription>
                 </DialogHeader>
               </div>
@@ -581,17 +583,17 @@ const HealthRecords: React.FC = () => {
               >
                 <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 grid gap-4 md:grid-cols-2 scrollbar-soft">
                 <div className="space-y-2">
-                  <Label htmlFor="bloodType">Nhóm máu</Label>
+                  <Label htmlFor="bloodType">{t("dashboard.bloodType")}</Label>
                   <Controller
                     name="blood_type"
                     control={control}
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger id="bloodType" className="w-full">
-                          <SelectValue placeholder="Chọn nhóm máu" />
+                          <SelectValue placeholder={t("dashboard.bloodType")} />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
+                          <SelectItem value={UNSPECIFIED}>{t("common.notUpdated")}</SelectItem>
                           {BLOOD_TYPE_OPTIONS.map((type) => (
                             <SelectItem key={type} value={type}>
                               {type}
@@ -604,7 +606,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="lastCheckupDate">Ngày khám gần nhất</Label>
+                  <Label htmlFor="lastCheckupDate">{t("healthRecords.lastCheckup")}</Label>
                   <Input
                     id="lastCheckupDate"
                     type="date"
@@ -613,7 +615,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="height">Chiều cao (cm)</Label>
+                  <Label htmlFor="height">{t("dashboard.height")} (cm)</Label>
                   <Input
                     id="height"
                     type="number"
@@ -624,7 +626,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="weight">Cân nặng (kg)</Label>
+                  <Label htmlFor="weight">{t("dashboard.weight")} (kg)</Label>
                   <Input
                     id="weight"
                     type="number"
@@ -635,7 +637,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="heartRate">Nhịp tim (bpm)</Label>
+                  <Label htmlFor="heartRate">{t("healthRecords.heartRate")} (bpm)</Label>
                   <Input
                     id="heartRate"
                     type="number"
@@ -646,17 +648,17 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="bloodPressure">Huyết áp</Label>
+                  <Label htmlFor="bloodPressure">{t("healthRecords.bloodPressure")}</Label>
                   <Input
                     id="bloodPressure"
-                    placeholder="Ví dụ: 120/80"
+                    placeholder="120/80"
                     error={errors.blood_pressure?.message}
                     {...register("blood_pressure")}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="glucoseLevel">Đường huyết (mg/dL)</Label>
+                  <Label htmlFor="glucoseLevel">{t("healthRecords.glucose")} (mg/dL)</Label>
                   <Input
                     id="glucoseLevel"
                     type="number"
@@ -667,7 +669,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="cholesterolLevel">Cholesterol (mg/dL)</Label>
+                  <Label htmlFor="cholesterolLevel">{t("healthRecords.cholesterol")} (mg/dL)</Label>
                   <Input
                     id="cholesterolLevel"
                     type="number"
@@ -678,7 +680,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="smoking">Hút thuốc</Label>
+                  <Label htmlFor="smoking">{t("healthRecords.smokingTitle")}</Label>
                   <Controller
                     name="smoking"
                     control={control}
@@ -688,9 +690,9 @@ const HealthRecords: React.FC = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
-                          <SelectItem value="true">Có</SelectItem>
-                          <SelectItem value="false">Không</SelectItem>
+                          <SelectItem value={UNSPECIFIED}>{t("common.notUpdated")}</SelectItem>
+                          <SelectItem value="true">{t("common.yes")}</SelectItem>
+                          <SelectItem value="false">{t("common.no")}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -698,7 +700,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="alcoholConsumption">Rượu bia</Label>
+                  <Label htmlFor="alcoholConsumption">{t("healthRecords.alcoholTitle")}</Label>
                   <Controller
                     name="alcohol_consumption"
                     control={control}
@@ -708,9 +710,9 @@ const HealthRecords: React.FC = () => {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value={UNSPECIFIED}>Chưa cập nhật</SelectItem>
-                          <SelectItem value="true">Có</SelectItem>
-                          <SelectItem value="false">Không</SelectItem>
+                          <SelectItem value={UNSPECIFIED}>{t("common.notUpdated")}</SelectItem>
+                          <SelectItem value="true">{t("common.yes")}</SelectItem>
+                          <SelectItem value="false">{t("common.no")}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -718,7 +720,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="exerciseFrequency">Tần suất vận động</Label>
+                  <Label htmlFor="exerciseFrequency">{t("healthRecords.exerciseTitle")}</Label>
                   <Textarea
                     id="exerciseFrequency"
                     {...register("exercise_frequency")}
@@ -731,7 +733,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="medicalHistory">Bệnh nền</Label>
+                  <Label htmlFor="medicalHistory">{t("healthRecords.chronicConditionsTitle")}</Label>
                   <Textarea id="medicalHistory" {...register("medical_history")} />
                   {errors.medical_history?.message && (
                     <p className="text-sm text-red-600">
@@ -741,7 +743,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="allergies">Dị ứng</Label>
+                  <Label htmlFor="allergies">{t("healthRecords.allergiesTitle")}</Label>
                   <Textarea id="allergies" {...register("allergies")} />
                   {errors.allergies?.message && (
                     <p className="text-sm text-red-600">
@@ -751,7 +753,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="medications">Thuốc đang sử dụng</Label>
+                  <Label htmlFor="medications">{t("healthRecords.currentMedications")}</Label>
                   <Textarea id="medications" {...register("medications")} />
                   {errors.medications?.message && (
                     <p className="text-sm text-red-600">
@@ -761,7 +763,7 @@ const HealthRecords: React.FC = () => {
                 </div>
 
                 <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="vaccinations">Vắc xin đã tiêm</Label>
+                  <Label htmlFor="vaccinations">{t("healthRecords.vaccineHistory")}</Label>
                   <Textarea id="vaccinations" {...register("vaccinations")} />
                   {errors.vaccinations?.message && (
                     <p className="text-sm text-red-600">
@@ -779,7 +781,7 @@ const HealthRecords: React.FC = () => {
                     onClick={() => setIsUpdateOpen(false)}
                     className="rounded-xl"
                   >
-                    Hủy
+                    {t("common.cancel")}
                   </Button>
                   <Button
                     type="submit"
@@ -787,8 +789,8 @@ const HealthRecords: React.FC = () => {
                     className="rounded-xl font-bold !bg-primary hover:!bg-primary/90 !text-white"
                   >
                     {updateHealthProfileMutation.isPending
-                      ? "Đang lưu..."
-                      : "Lưu thay đổi"}
+                      ? t("common.saving")
+                      : t("common.save")}
                   </Button>
                 </div>
               </form>

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,9 +65,11 @@ const jobOpenings = [
 ];
 
 const Careers = () => {
+  const { t } = useTranslation();
+
   const handleApply = (title: string) => {
     toast.success(
-      `Đã ghi nhận sự quan tâm của bạn cho vị trí "${title}". Vui lòng gửi CV về email: tuyendung@lifehealth.vn`,
+      t("staticPages.careersApplyToast", { title }),
       { autoClose: 6000 }
     );
   };
@@ -78,13 +81,13 @@ const Careers = () => {
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
               <Sparkles className="w-3.5 h-3.5" />
-              Gia nhập đội ngũ LifeHealth
+              {t("staticPages.careersBadge")}
             </span>
             <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Cơ hội nghề nghiệp &amp; Đồng hành phát triển
+              {t("staticPages.careersTitle")}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
-              LifeHealth không ngừng mở rộng với sứ mệnh mang đến trải nghiệm y tế số hiện đại, tin cậy cho cộng đồng. Chúng tôi luôn chào đón những chuyên gia tận tâm cùng chung tay kiến tạo giá trị bền vững.
+              {t("staticPages.careersSubtitle")}
             </p>
           </div>
         </FadeInView>
@@ -117,7 +120,7 @@ const Careers = () => {
                   <div className="grid md:grid-cols-2 gap-6 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-slate-100 text-xs uppercase tracking-wider mb-2.5">
-                        Mô tả công việc:
+                        {t("staticPages.careersJobDesc")}
                       </h4>
                       <ul className="space-y-2 text-xs sm:text-sm">
                         {job.responsibilities.map((task, idx) => (
@@ -131,7 +134,7 @@ const Careers = () => {
 
                     <div>
                       <h4 className="font-bold text-slate-900 dark:text-slate-100 text-xs uppercase tracking-wider mb-2.5">
-                        Yêu cầu ứng viên:
+                        {t("staticPages.careersJobReq")}
                       </h4>
                       <ul className="space-y-2 text-xs sm:text-sm">
                         {job.requirements.map((req, idx) => (
@@ -146,14 +149,15 @@ const Careers = () => {
 
                   <div className="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-100 dark:border-slate-800/80">
                     <p className="text-xs text-slate-400">
-                      Gửi hồ sơ về: <strong className="text-slate-600 dark:text-slate-300">tuyendung@lifehealth.vn</strong>
+                      {t("staticPages.careersSendCv")}{" "}
+                      <strong className="text-slate-600 dark:text-slate-300">tuyendung@lifehealth.vn</strong>
                     </p>
                     <Button
                       onClick={() => handleApply(job.title)}
                       className="gap-2 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white shadow-xs cursor-pointer"
                     >
                       <Send className="h-3.5 w-3.5" />
-                      <span>Ứng tuyển vị trí này</span>
+                      <span>{t("staticPages.careersApplyBtn")}</span>
                     </Button>
                   </div>
                 </CardContent>

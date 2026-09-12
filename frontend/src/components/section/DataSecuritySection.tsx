@@ -1,29 +1,32 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, FileCheck2, Lock, ShieldCheck, UserCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 
 export const DataSecuritySection: React.FC = () => {
+  const { t } = useTranslation();
+
   const securityItems = [
     {
       icon: <FileCheck2 className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Hạ tầng đạt chuẩn",
-      desc: "ISO 27001:2013 quản lý an toàn thông tin",
+      title: t("home.securityPillar1Title"),
+      desc: t("home.securityPillar1Desc"),
     },
     {
       icon: <ShieldCheck className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Bảo mật y tế",
-      desc: "Tuân thủ nghiêm ngặt theo quy chuẩn HIPAA",
+      title: t("home.securityPillar2Title"),
+      desc: t("home.securityPillar2Desc"),
     },
     {
       icon: <Lock className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Mã hóa đa tầng",
-      desc: "Dữ liệu hồ sơ bệnh án được bảo vệ tuyệt đối",
+      title: t("home.securityPillar3Title"),
+      desc: t("home.securityPillar3Desc"),
     },
     {
       icon: <UserCheck className="w-6 h-6 text-[#159a98] dark:text-[#2cd4d1]" />,
-      title: "Quyền sở hữu thuộc về bạn",
-      desc: "Chỉ người bệnh và bác sĩ được bạn cấp phép mới có quyền xem",
+      title: t("home.securityPillar4Title"),
+      desc: t("home.securityPillar4Desc"),
     },
   ];
 
@@ -34,13 +37,13 @@ export const DataSecuritySection: React.FC = () => {
         <div>
           <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
             <span className="text-xs font-bold uppercase tracking-wider text-[#159a98] dark:text-[#2cd4d1]">
-              An toàn & Bảo mật
+              {t("home.securityEyebrow")}
             </span>
             <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-1">
-              Thông tin sức khỏe của bạn là riêng tư tuyệt đối
+              {t("home.securityHeading")}
             </h2>
             <p className="mt-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-              LifeHealth cam kết bảo vệ dữ liệu hồ sơ khám và lịch sử điều trị theo các chuẩn mực an toàn cao nhất trong y tế số.
+              {t("home.securityDesc")}
             </p>
           </div>
 
@@ -72,11 +75,10 @@ export const DataSecuritySection: React.FC = () => {
 
           <div className="relative z-10 max-w-3xl mx-auto text-center space-y-5">
             <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
-              Sức khỏe không thể trì hoãn. <br className="hidden sm:inline" />
-              Hãy chủ động đặt lịch khám ngay hôm nay.
+              {t("home.securityBannerTitle")}
             </h2>
             <p className="text-sm sm:text-base text-teal-100 max-w-xl mx-auto leading-relaxed">
-              Tiết kiệm thời gian, tiếp cận bác sĩ giỏi và nhận sự chăm sóc y tế chuẩn mực chỉ trong vài bước thao tác.
+              {t("home.securityBannerDesc")}
             </p>
 
             <div className="pt-3 flex flex-col sm:flex-row items-center justify-center gap-3.5">
@@ -85,7 +87,7 @@ export const DataSecuritySection: React.FC = () => {
                 className="h-12 px-7 rounded-xl bg-white hover:bg-slate-100 text-slate-900 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transition-all cursor-pointer"
               >
                 <Link to="/doctors" className="inline-flex items-center gap-2">
-                  <span>Tìm bác sĩ & Đặt lịch khám</span>
+                  <span>{t("home.securityBannerBookBtn")}</span>
                   <ArrowRight className="w-4 h-4 text-[#159a98]" />
                 </Link>
               </Button>
@@ -96,7 +98,7 @@ export const DataSecuritySection: React.FC = () => {
                 className="h-12 px-6 rounded-xl border-white/30 bg-white/10 hover:bg-white/20 text-white font-semibold text-sm sm:text-base backdrop-blur-xs cursor-pointer"
               >
                 <Link to="/contact">
-                  <span>Liên hệ hỗ trợ</span>
+                  <span>{t("home.securityBannerContactBtn")}</span>
                 </Link>
               </Button>
             </div>

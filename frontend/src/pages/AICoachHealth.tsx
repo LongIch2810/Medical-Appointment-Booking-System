@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
   Activity,
@@ -57,6 +58,7 @@ function useElapsedWhile(active: boolean) {
 }
 
 function CoachProfileGate() {
+  const { t } = useTranslation();
   const { userInfo } = useUserStore();
   const { data, isLoading, isError, error } = useCoachProfile(!!userInfo);
   const [isEditing, setIsEditing] = useState(false);
@@ -99,12 +101,12 @@ function CoachProfileGate() {
               </h2>
               <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold gap-1">
                 <Sparkles className="h-3 w-3" />
-                Huấn luyện viên AI
+                {t("aiCoach.coachBadge")}
               </Badge>
             </div>
 
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              Mục tiêu chính:{" "}
+              {t("aiCoach.healthGoalLabel")}{" "}
               <span className="font-bold text-primary">
                 {coachProfile.health_goal}
               </span>
@@ -113,7 +115,7 @@ function CoachProfileGate() {
             {coachProfile.preferences && coachProfile.preferences.length > 0 && (
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-0.5">
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
-                  Sở thích:
+                  {t("aiCoach.preferencesLabel")}
                 </span>
                 {coachProfile.preferences.map((pref) => (
                   <span
@@ -127,9 +129,21 @@ function CoachProfileGate() {
             )}
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
-              {coachProfile.age != null && <span>Tuổi: <strong>{coachProfile.age}</strong></span>}
-              {coachProfile.height != null && <span>Chiều cao: <strong>{coachProfile.height} cm</strong></span>}
-              {coachProfile.weight != null && <span>Cân nặng: <strong>{coachProfile.weight} kg</strong></span>}
+              {coachProfile.age != null && (
+                <span>
+                  {t("aiCoach.ageLabel")} <strong>{coachProfile.age}</strong>
+                </span>
+              )}
+              {coachProfile.height != null && (
+                <span>
+                  {t("aiCoach.heightLabel")} <strong>{coachProfile.height} cm</strong>
+                </span>
+              )}
+              {coachProfile.weight != null && (
+                <span>
+                  {t("aiCoach.weightLabel")} <strong>{coachProfile.weight} kg</strong>
+                </span>
+              )}
             </div>
 
             <div className="pt-2">
@@ -139,7 +153,7 @@ function CoachProfileGate() {
                 className="rounded-xl border-slate-200 text-xs font-semibold hover:border-primary hover:text-primary dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-200"
                 onClick={() => setIsEditing(true)}
               >
-                Chỉnh sửa hồ sơ AI Coach
+                {t("aiCoach.editCoachProfileBtn")}
               </Button>
             </div>
           </div>
@@ -150,6 +164,7 @@ function CoachProfileGate() {
 }
 
 export default function AICoachHealth() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const relativeIdParam = searchParams.get("relativeId");
 
@@ -198,8 +213,8 @@ export default function AICoachHealth() {
           patient?.fullname ||
           patient?.username ||
           selfRelative.fullname ||
-          "Chủ tài khoản",
-        relationship: "Bản thân",
+          t("aiCoach.accountOwner"),
+        relationship: t("aiCoach.selfRelationship"),
         dob: patient?.date_of_birth ?? selfRelative.dob,
         gender: patient?.gender ?? selfRelative.gender,
       });
@@ -214,15 +229,15 @@ export default function AICoachHealth() {
         key: `relative_${rel.id}`,
         id: rel.id,
         isOwner: false,
-        fullname: rel.fullname || "Người thân",
-        relationship: rel.relationship?.relationship_name?.trim() || "Người thân",
+        fullname: rel.fullname || t("aiCoach.relativeDefault"),
+        relationship: rel.relationship?.relationship_name?.trim() || t("aiCoach.relativeDefault"),
         dob: rel.dob,
         gender: rel.gender,
       });
     });
 
     return list;
-  }, [patient, relativesResponse?.data.relatives]);
+  }, [patient, relativesResponse?.data.relatives, t]);
 
   const [selectedProfileKey, setSelectedProfileKey] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
@@ -276,7 +291,7 @@ export default function AICoachHealth() {
     setPdfUrl("");
 
     if (!selectedProfileObj) {
-      setError("Vui lòng chọn hồ sơ sức khỏe để AI tạo lộ trình phù hợp.");
+      setError(t("aiCoach.selectPromptError"));
       return;
     }
 
@@ -284,7 +299,7 @@ export default function AICoachHealth() {
       !Number.isInteger(selectedProfileObj.id) ||
       selectedProfileObj.id < 1
     ) {
-      setError("Hồ sơ được chọn không có mã người thân hợp lệ.");
+      setError(t("aiCoach.invalidMemberError"));
       setStatus("failed");
       return;
     }
@@ -298,7 +313,7 @@ export default function AICoachHealth() {
       const generatedPdfUrl = result?.pdfUrl?.trim();
 
       if (!generatedPdfUrl) {
-        throw new Error("Chatbot không trả về đường dẫn PDF.");
+        throw new Error(t("aiCoach.missingPdfError"));
       }
 
       setPdfUrl(generatedPdfUrl);
@@ -310,7 +325,7 @@ export default function AICoachHealth() {
           requestError,
           requestError instanceof Error && requestError.message
             ? requestError.message
-            : "AI không thể tạo lộ trình lúc này, vui lòng thử lại sau.",
+            : t("aiCoach.genericError"),
         ),
       );
       setStatus("failed");
@@ -329,21 +344,24 @@ export default function AICoachHealth() {
             <div className="space-y-2 max-w-2xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur-xs">
                 <Sparkles className="h-3.5 w-3.5" />
-                <span>Trí tuệ nhân tạo y tế thông minh</span>
+                <span>{t("aiCoach.tagline")}</span>
               </div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-                AI Health & Nutrition Coach
+                {t("aiCoach.title")}
               </h1>
               <p className="text-sm md:text-base text-white/90 leading-relaxed">
-                Huấn luyện viên sức khỏe cá nhân hóa: tự động phân tích dữ liệu thể trạng và thiết kế
-                lộ trình ăn uống, tập luyện chuyên biệt cho bạn và từng người thân trong gia đình.
+                {t("aiCoach.desc")}
               </p>
             </div>
             <div className="hidden lg:flex items-center gap-3 rounded-2xl bg-white/10 p-4 border border-white/20 backdrop-blur-xs">
               <Activity className="h-8 w-8 text-emerald-200" />
               <div>
-                <p className="text-xs uppercase tracking-wider text-white/70 font-medium">Hồ sơ sẵn có</p>
-                <p className="text-lg font-bold">{availableProfiles.length} thành viên</p>
+                <p className="text-xs uppercase tracking-wider text-white/70 font-medium">
+                  {t("aiCoach.availableProfiles")}
+                </p>
+                <p className="text-lg font-bold">
+                  {t("aiCoach.membersCount", { count: availableProfiles.length })}
+                </p>
               </div>
             </div>
           </div>
@@ -358,9 +376,11 @@ export default function AICoachHealth() {
         <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center dark:border-slate-800/80 dark:bg-slate-900">
           <NutritionAnimation />
           <div className="mt-4">
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Dinh dưỡng cân bằng</h4>
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {t("aiCoach.nutritionTitle")}
+            </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Phân tích thực đơn phù hợp với thể trạng và bệnh nền
+              {t("aiCoach.nutritionDesc")}
             </p>
           </div>
         </Card>
@@ -368,9 +388,11 @@ export default function AICoachHealth() {
         <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex flex-col items-center justify-center text-center dark:border-slate-800/80 dark:bg-slate-900">
           <PlankAnimation />
           <div className="mt-4">
-            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">Lộ trình rèn luyện</h4>
+            <h4 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+              {t("aiCoach.exerciseTitle")}
+            </h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Kế hoạch bài tập thể chất tối ưu theo từng mục tiêu
+              {t("aiCoach.exerciseDesc")}
             </p>
           </div>
         </Card>
@@ -385,10 +407,10 @@ export default function AICoachHealth() {
             </span>
             <div>
               <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                Tạo lộ trình chăm sóc sức khỏe với AI
+                {t("aiCoach.formCardTitle")}
               </CardTitle>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                Chọn người nhận lộ trình để AI tính toán khẩu phần dinh dưỡng và bài tập phù hợp
+                {t("aiCoach.formCardSubtitle")}
               </p>
             </div>
           </div>
@@ -398,18 +420,18 @@ export default function AICoachHealth() {
           {/* Profile Selector */}
           <div className="space-y-3">
             <label className="block text-sm font-bold text-slate-800 dark:text-slate-200">
-              Đối tượng phân tích <span className="text-rose-500">*</span>
+              {t("aiCoach.targetLabel")} <span className="text-rose-500">*</span>
             </label>
 
             {isDataLoading ? (
               <Skeleton className="h-11 w-full rounded-xl" />
             ) : isRelativesError ? (
               <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-300">
-                Không thể tải danh sách hồ sơ sức khỏe. Vui lòng thử lại sau.
+                {t("aiCoach.loadProfilesError")}
               </div>
             ) : availableProfiles.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900/40 dark:text-slate-400">
-                Chưa có dữ liệu hồ sơ. Vui lòng cập nhật thông tin cá nhân.
+                {t("aiCoach.noProfiles")}
               </div>
             ) : (
               <Select
@@ -418,7 +440,7 @@ export default function AICoachHealth() {
                 disabled={status === "processing"}
               >
                 <SelectTrigger className="h-11 rounded-xl w-full text-sm font-medium">
-                  <SelectValue placeholder="-- Chọn hồ sơ sức khỏe --" />
+                  <SelectValue placeholder={t("aiCoach.selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent className="rounded-xl">
                   {availableProfiles.map((p) => (
@@ -479,13 +501,13 @@ export default function AICoachHealth() {
                         </span>
                       )}
                       <span>
-                        Giới tính:{" "}
+                        {t("profile.genderLabel")}:{" "}
                         <strong>
                           {selectedProfileObj.gender === undefined
-                            ? "Chưa cập nhật"
+                            ? t("profile.notSpecifiedGender")
                             : selectedProfileObj.gender
-                              ? "Nam"
-                              : "Nữ"}
+                              ? t("common.male")
+                              : t("common.female")}
                         </strong>
                       </span>
                     </div>
@@ -493,7 +515,7 @@ export default function AICoachHealth() {
                 </div>
 
                 <div className="text-xs text-slate-500 dark:text-slate-400 max-w-xs text-left sm:text-right">
-                  Dữ liệu AI sẽ được tối ưu riêng theo thể trạng và độ tuổi của thành viên này.
+                  {t("aiCoach.aiOptimizedNote")}
                 </div>
               </div>
             </div>
@@ -503,7 +525,7 @@ export default function AICoachHealth() {
           <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/60 flex items-start gap-3 text-xs text-amber-900 dark:text-amber-300">
             <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
             <p className="leading-relaxed">
-              <strong>Khuyến cáo y khoa:</strong> Lộ trình sức khỏe AI được sinh ra tự động nhằm mục đích định hướng và hỗ trợ lối sống lành mạnh. Kết quả này không cấu thành chẩn đoán bệnh lý chính thức và không thay thế phác đồ điều trị của bác sĩ chuyên khoa.
+              <strong>{t("aiCoach.disclaimerStrong")}</strong> {t("aiCoach.disclaimerText")}
             </p>
           </div>
 
@@ -525,17 +547,19 @@ export default function AICoachHealth() {
               {status === "processing" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span className="text-white">AI đang tính toán và xây dựng lộ trình...</span>
+                  <span className="text-white">{t("aiCoach.btnGenerating")}</span>
                 </>
               ) : completedProfileKey === selectedProfileKey ? (
                 <>
                   <CheckCircle2 className="h-4 w-4 text-white" />
-                  <span className="text-white">Đã tạo lộ trình cho {selectedProfileObj?.fullname}</span>
+                  <span className="text-white">
+                    {t("aiCoach.btnCompleted", { name: selectedProfileObj?.fullname })}
+                  </span>
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 text-white" />
-                  <span className="text-white">Tạo lộ trình sức khỏe với AI</span>
+                  <span className="text-white">{t("aiCoach.btnGenerate")}</span>
                 </>
               )}
             </Button>
@@ -574,11 +598,13 @@ export default function AICoachHealth() {
                 </div>
                 <div>
                   <h3 className="text-lg font-bold text-emerald-900 dark:text-emerald-100">
-                    Lộ trình sức khỏe đã được tạo thành công! 🎉
+                    {t("aiCoach.successTitle")}
                   </h3>
                   <p className="text-xs sm:text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                    Báo cáo cá nhân hóa đã được tổng hợp dành riêng cho{" "}
-                    <strong>{selectedProfileObj?.fullname}</strong> ({selectedProfileObj?.relationship}).
+                    {t("aiCoach.successDesc", {
+                      name: selectedProfileObj?.fullname,
+                      relationship: selectedProfileObj?.relationship,
+                    })}
                   </p>
                 </div>
 
@@ -590,7 +616,7 @@ export default function AICoachHealth() {
                     className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 transition"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Xem chi tiết báo cáo PDF
+                    {t("aiCoach.viewPdfBtn")}
                   </a>
                   <Button
                     variant="outline"
@@ -598,7 +624,7 @@ export default function AICoachHealth() {
                     onClick={() => window.open(pdfUrl, "_blank")}
                   >
                     <Download className="h-4 w-4" />
-                    Tải về máy
+                    {t("aiCoach.downloadBtn")}
                   </Button>
                 </div>
               </motion.div>

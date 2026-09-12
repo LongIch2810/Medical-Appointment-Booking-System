@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
@@ -27,6 +28,7 @@ interface Message {
 }
 
 export default function Chatbot() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [input, setInput] = useState("");
   // ScrollArea (Radix) không forward ref tới phần tử thật sự cuộn được
@@ -73,11 +75,10 @@ export default function Chatbot() {
           {
             id: 1,
             role: "ai",
-            content:
-              "Xin chào! Tôi là **LifeHealth MedAI** — Trợ lý y tế thông minh của nền tảng LifeHealth. Tôi có thể hỗ trợ giải đáp thắc mắc sức khỏe hoặc hướng dẫn chăm sóc y tế cho bạn hôm nay như thế nào?",
+            content: t("chatbot.welcomeMessage"),
           },
         ];
-  }, [data, optimisticMessages]);
+  }, [data, optimisticMessages, t]);
 
   useEffect(() => {
     if (!userInfo) {
@@ -193,7 +194,7 @@ export default function Chatbot() {
             ? {
                 ...msg,
                 isTyping: false,
-                content: "Không thể lấy phản hồi từ chatbot. Vui lòng thử lại.",
+                content: t("chatbot.requestFailed"),
               }
             : msg
         )
@@ -240,11 +241,11 @@ export default function Chatbot() {
                   </svg>
                 </h1>
                 <span className="rounded-md bg-gradient-to-r from-emerald-500/15 to-teal-500/15 dark:from-emerald-500/25 dark:to-teal-500/25 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                  Official AI
+                  {t("common.officialAi")}
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                Trợ lý Y tế Thông minh LifeHealth • Trực tuyến 24/7
+                {t("chatbot.pageSubtitle")}
               </p>
             </div>
           </div>
@@ -254,7 +255,7 @@ export default function Chatbot() {
         <div className="shrink-0 px-4 py-2 bg-amber-50/90 dark:bg-amber-950/40 border-b border-amber-200/80 dark:border-amber-900/60 flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
           <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <p className="leading-tight text-[11px] sm:text-xs">
-            <strong>Khuyến cáo y khoa:</strong> Trợ lý AI chỉ mang tính tham khảo sơ bộ, không thay thế chẩn đoán hay chỉ định điều trị từ bác sĩ chuyên môn.
+            <strong>{t("chatbot.disclaimerStrong")}</strong> {t("chatbot.disclaimerText")}
           </p>
         </div>
 
@@ -305,7 +306,7 @@ export default function Chatbot() {
                     {/* Avatar User */}
                     {role === "human" && (
                       <Avatar className="w-9 h-9 bg-primary/10 border border-primary/20 shadow-xs shrink-0">
-                        <AvatarImage src={userInfo?.picture || ""} alt="Bạn" />
+                        <AvatarImage src={userInfo?.picture || ""} alt="User" />
                         <AvatarFallback className="font-bold text-primary text-xs">
                           {userInitial}
                         </AvatarFallback>
@@ -326,7 +327,7 @@ export default function Chatbot() {
             onKeyDown={handleKeyDown}
             disabled={isPending}
             className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-sm text-slate-900 dark:text-slate-100 focus-visible:ring-primary/20"
-            placeholder={isPending ? "Trợ lý AI đang suy nghĩ và soạn câu trả lời..." : "Nhập câu hỏi hoặc tình trạng sức khỏe của bạn..."}
+            placeholder={isPending ? t("chatbot.inputThinkingPlaceholder") : t("chatbot.inputPlaceholder")}
           />
           <Button
             disabled={isPending || !input.trim()}
@@ -338,7 +339,7 @@ export default function Chatbot() {
             ) : (
               <>
                 <Send className="w-3.5 h-3.5" />
-                <span>Gửi</span>
+                <span>{t("chatbot.sendBtn")}</span>
               </>
             )}
           </Button>

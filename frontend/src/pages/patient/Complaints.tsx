@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -41,67 +42,78 @@ type StatusMeta = {
   ringClass: string;
 };
 
-const statusMeta: Record<ComplaintStatus, StatusMeta> = {
-  pending: {
-    label: "Chờ xử lý",
-    badgeClass: "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
-    icon: Clock,
-    accentClass: "border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20",
-    chipClass: "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
-    ringClass: "ring-amber-200 dark:ring-amber-900/50",
-  },
-  in_progress: {
-    label: "Đang xử lý",
-    badgeClass: "bg-sky-100 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
-    icon: Sparkles,
-    accentClass: "border-sky-200 bg-sky-50/60 dark:border-sky-900/40 dark:bg-sky-950/20",
-    chipClass: "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
-    ringClass: "ring-sky-200 dark:ring-sky-900/50",
-  },
-  resolved: {
-    label: "Đã giải quyết",
-    badgeClass: "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
-    icon: CheckCircle2,
-    accentClass: "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20",
-    chipClass: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
-    ringClass: "ring-emerald-200 dark:ring-emerald-900/50",
-  },
-  rejected: {
-    label: "Từ chối",
-    badgeClass: "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
-    icon: XCircle,
-    accentClass: "border-rose-200 bg-rose-50/60 dark:border-rose-900/40 dark:bg-rose-950/20",
-    chipClass: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
-    ringClass: "ring-rose-200 dark:ring-rose-900/50",
-  },
-};
+const getStatusMeta = (
+  status: string | null | undefined,
+  t: (k: string) => string,
+): StatusMeta => {
+  const metaMap: Record<ComplaintStatus, StatusMeta> = {
+    pending: {
+      label: t("complaints.statusPending"),
+      badgeClass:
+        "bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60",
+      icon: Clock,
+      accentClass:
+        "border-amber-200 bg-amber-50/60 dark:border-amber-900/40 dark:bg-amber-950/20",
+      chipClass:
+        "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300",
+      ringClass: "ring-amber-200 dark:ring-amber-900/50",
+    },
+    in_progress: {
+      label: t("complaints.statusInProgress"),
+      badgeClass:
+        "bg-sky-100 text-sky-700 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800/60",
+      icon: Sparkles,
+      accentClass:
+        "border-sky-200 bg-sky-50/60 dark:border-sky-900/40 dark:bg-sky-950/20",
+      chipClass:
+        "bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300",
+      ringClass: "ring-sky-200 dark:ring-sky-900/50",
+    },
+    resolved: {
+      label: t("complaints.statusResolved"),
+      badgeClass:
+        "bg-emerald-100 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/60",
+      icon: CheckCircle2,
+      accentClass:
+        "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20",
+      chipClass:
+        "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+      ringClass: "ring-emerald-200 dark:ring-emerald-900/50",
+    },
+    rejected: {
+      label: t("complaints.statusRejected"),
+      badgeClass:
+        "bg-rose-100 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60",
+      icon: XCircle,
+      accentClass:
+        "border-rose-200 bg-rose-50/60 dark:border-rose-900/40 dark:bg-rose-950/20",
+      chipClass:
+        "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-300",
+      ringClass: "ring-rose-200 dark:ring-rose-900/50",
+    },
+  };
 
-const fallbackMeta: StatusMeta = {
-  label: "Khác",
-  badgeClass: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
-  icon: AlertTriangle,
-  accentClass: "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50",
-  chipClass: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  ringClass: "ring-slate-200 dark:ring-slate-800",
-};
+  const fallbackMeta: StatusMeta = {
+    label: t("common.other"),
+    badgeClass:
+      "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+    icon: AlertTriangle,
+    accentClass:
+      "border-slate-200 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/50",
+    chipClass:
+      "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    ringClass: "ring-slate-200 dark:ring-slate-800",
+  };
 
-const getStatusMeta = (status: string | null | undefined): StatusMeta => {
   if (!status) return fallbackMeta;
-  return statusMeta[status as ComplaintStatus] ?? fallbackMeta;
+  return metaMap[status as ComplaintStatus] ?? fallbackMeta;
 };
-
-const filterTabs: Array<{ key: "ALL" | ComplaintStatus; label: string }> = [
-  { key: "ALL", label: "Tất cả" },
-  { key: "pending", label: "Chờ xử lý" },
-  { key: "in_progress", label: "Đang xử lý" },
-  { key: "resolved", label: "Đã giải quyết" },
-  { key: "rejected", label: "Từ chối" },
-];
 
 const StatusBadge: React.FC<{ status: string | null | undefined }> = ({
   status,
 }) => {
-  const meta = getStatusMeta(status);
+  const { t } = useTranslation();
+  const meta = getStatusMeta(status, t);
   const Icon = meta.icon;
   return (
     <span
@@ -116,7 +128,15 @@ const StatusBadge: React.FC<{ status: string | null | undefined }> = ({
   );
 };
 
+const COMPLAINT_STATUSES: ComplaintStatus[] = [
+  "pending",
+  "in_progress",
+  "resolved",
+  "rejected",
+];
+
 const MyComplaints = () => {
+  const { t, i18n } = useTranslation();
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState<ComplaintStatus | undefined>(
     undefined,
@@ -156,15 +176,29 @@ const MyComplaints = () => {
     return result;
   }, [complaints]);
 
+  const filterTabs = useMemo<Array<{ key: "ALL" | ComplaintStatus; label: string }>>(
+    () => [
+      { key: "ALL", label: t("common.all") },
+      { key: "pending", label: t("complaints.statusPending") },
+      { key: "in_progress", label: t("complaints.statusInProgress") },
+      { key: "resolved", label: t("complaints.statusResolved") },
+      { key: "rejected", label: t("complaints.statusRejected") },
+    ],
+    [t],
+  );
+
   const formatDate = (d: string | null | undefined) => {
     if (!d) return "-";
-    return new Date(d).toLocaleDateString("vi-VN", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return new Date(d).toLocaleDateString(
+      i18n.language === "en" ? "en-US" : "vi-VN",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      },
+    );
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -183,7 +217,7 @@ const MyComplaints = () => {
 
   const selectedStatus =
     (selectedComplaint?.complaint_status as string | undefined) ?? null;
-  const selectedMeta = getStatusMeta(selectedStatus);
+  const selectedMeta = getStatusMeta(selectedStatus, t);
 
   return (
     <div className="space-y-5">
@@ -196,10 +230,10 @@ const MyComplaints = () => {
               </div>
               <div className="space-y-1">
                 <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Góp ý & khiếu nại
+                  {t("complaints.pageTitle")}
                 </CardTitle>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Gửi góp ý mới hoặc theo dõi trạng thái các phản hồi đã gửi.
+                  {t("complaints.pageSubtitle")}
                 </p>
               </div>
             </div>
@@ -209,13 +243,13 @@ const MyComplaints = () => {
               className="shrink-0 gap-1.5 self-start rounded-full px-4 md:self-center"
             >
               <Plus className="h-4 w-4" />
-              Gửi góp ý mới
+              {t("complaints.newComplaintBtn")}
             </Button>
           </div>
 
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            {(Object.keys(statusMeta) as ComplaintStatus[]).map((key) => {
-              const meta = statusMeta[key];
+            {COMPLAINT_STATUSES.map((key) => {
+              const meta = getStatusMeta(key, t);
               const Icon = meta.icon;
               return (
                 <div
@@ -290,18 +324,18 @@ const MyComplaints = () => {
 
           {isLoading ? (
             <MedicalAiLoading
-              label="Đang tải danh sách góp ý & khiếu nại..."
-              description="Hệ thống đang truy xuất thông tin phản hồi của bạn"
+              label={t("complaints.loadingLabel")}
+              description={t("complaints.loadingDesc")}
               minHeight="min-h-56"
             />
           ) : complaints.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
               <MessageSquare className="mx-auto mb-3 h-10 w-10 text-slate-400 dark:text-slate-500" />
               <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                Chưa có góp ý nào
+                {t("complaints.emptyTitle")}
               </p>
               <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Bấm "Gửi góp ý mới" để gửi phản hồi đầu tiên cho chúng tôi.
+                {t("complaints.emptyPrompt")}
               </p>
               <Button
                 type="button"
@@ -309,14 +343,14 @@ const MyComplaints = () => {
                 className="mt-4 gap-1.5 rounded-full"
               >
                 <Plus className="h-4 w-4" />
-                Gửi góp ý mới
+                {t("complaints.newComplaintBtn")}
               </Button>
             </div>
           ) : (
             <div className="space-y-3">
               {complaints.map((c) => {
                 const status = c.complaint_status as string;
-                const meta = getStatusMeta(status);
+                const meta = getStatusMeta(status, t);
                 const Icon = meta.icon;
                 const hasResponse = Boolean(c.response);
                 return (
@@ -363,7 +397,7 @@ const MyComplaints = () => {
                             {hasResponse ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800/50">
                                 <MessageCircleReply className="h-3 w-3" />
-                                Đã có phản hồi
+                                {t("complaints.hasResponse")}
                               </span>
                             ) : null}
                           </div>
@@ -388,7 +422,7 @@ const MyComplaints = () => {
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm text-slate-600 dark:text-slate-400">
-                    Trang {page} / {totalPages}
+                    {t("common.page")} {page} / {totalPages}
                   </span>
                   <Button
                     variant="outline"
@@ -443,7 +477,7 @@ const MyComplaints = () => {
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
             <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/50">
               <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Nội dung góp ý
+                {t("complaints.detailContent")}
               </p>
               <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
                 {selectedComplaint?.description as string}
@@ -457,7 +491,7 @@ const MyComplaints = () => {
                     <MessageCircleReply className="h-3.5 w-3.5" />
                   </span>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300">
-                    Phản hồi từ ban quản trị
+                    {t("complaints.adminResponse")}
                   </p>
                 </div>
                 <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-700 dark:text-slate-200">
@@ -468,10 +502,10 @@ const MyComplaints = () => {
               <div className="rounded-xl border border-dashed border-slate-300 bg-white p-4 text-center dark:border-slate-700 dark:bg-slate-900">
                 <MessageCircleReply className="mx-auto mb-2 h-6 w-6 text-slate-400" />
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                  Chưa có phản hồi
+                  {t("complaints.noResponse")}
                 </p>
                 <p className="mt-0.5 text-xs text-slate-500">
-                  Quản trị viên sẽ phản hồi sớm nhất có thể.
+                  {t("complaints.noResponseDesc")}
                 </p>
               </div>
             )}
@@ -479,8 +513,9 @@ const MyComplaints = () => {
             {selectedComplaint?.updated_at &&
             selectedComplaint?.updated_at !== selectedComplaint?.created_at ? (
               <p className="text-right text-xs text-slate-400">
-                Cập nhật lần cuối:{" "}
-                {formatDate(selectedComplaint?.updated_at as string | null)}
+                {t("complaints.lastUpdated", {
+                  date: formatDate(selectedComplaint?.updated_at as string | null),
+                })}
               </p>
             ) : null}
           </div>
@@ -492,7 +527,7 @@ const MyComplaints = () => {
               onClick={() => setSelectedComplaint(null)}
               className="rounded-xl"
             >
-              Đóng
+              {t("common.close")}
             </Button>
           </div>
         </DialogContent>
@@ -510,11 +545,10 @@ const MyComplaints = () => {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Send className="h-5 w-5 text-primary" />
-                Gửi góp ý mới
+                {t("complaints.modalTitle")}
               </DialogTitle>
               <DialogDescription>
-                Chia sẻ góp ý hoặc khiếu nại để chúng tôi cải thiện dịch vụ tốt
-                hơn.
+                {t("complaints.modalDesc")}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -522,21 +556,21 @@ const MyComplaints = () => {
           <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
             <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 sm:p-6 space-y-4 scrollbar-soft">
               <div className="space-y-2">
-                <Label htmlFor="complaint-title">Tiêu đề</Label>
+                <Label htmlFor="complaint-title">{t("complaints.titleLabel")}</Label>
                 <Input
                   id="complaint-title"
                   value={form.title}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, title: e.target.value }))
                   }
-                  placeholder="Tóm tắt ngắn gọn vấn đề..."
+                  placeholder={t("complaints.titlePlaceholder")}
                   required
                   maxLength={150}
                   className="rounded-xl"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="complaint-description">Nội dung</Label>
+                <Label htmlFor="complaint-description">{t("complaints.descLabel")}</Label>
                 <Textarea
                   id="complaint-description"
                   rows={5}
@@ -544,7 +578,7 @@ const MyComplaints = () => {
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, description: e.target.value }))
                   }
-                  placeholder="Mô tả chi tiết góp ý hoặc khiếu nại của bạn..."
+                  placeholder={t("complaints.descPlaceholder")}
                   required
                   maxLength={1000}
                   className="rounded-xl resize-none"
@@ -563,11 +597,11 @@ const MyComplaints = () => {
                 disabled={isSubmitting}
                 className="rounded-xl"
               >
-                Hủy
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold !bg-primary text-white gap-1.5">
                 <Send className="h-4 w-4" />
-                {isSubmitting ? "Đang gửi..." : "Gửi góp ý"}
+                {isSubmitting ? t("common.sending") : t("complaints.submitBtn")}
               </Button>
             </div>
           </form>

@@ -29,7 +29,9 @@ describe('patient API normalization', () => {
       },
     });
     const result = await createChannel([1, 2]);
-    expect(axiosMock.post).toHaveBeenCalledWith('/channels/create', [1, 2]);
+    expect(axiosMock.post).toHaveBeenCalledWith('/channels/create', {
+      member_ids: [1, 2],
+    });
     expect(result.data).toMatchObject({
       id: 9,
       channel_id: 9,
@@ -44,7 +46,9 @@ describe('patient API normalization', () => {
       data: { success: true, data: { id: 3, participants: [] } },
     });
     const result = await findChannelByParticipants({ senderId: 5, receiverId: 7 });
-    expect(axiosMock.post).toHaveBeenCalledWith('/channels/create', [5, 7]);
+    expect(axiosMock.post).toHaveBeenCalledWith('/channels/create', {
+      member_ids: [5, 7],
+    });
     expect(result.data.last_message).toBeNull();
 
     axiosMock.get.mockResolvedValue({

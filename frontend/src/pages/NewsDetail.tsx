@@ -1,5 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, CalendarDays, Tag as TagIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -23,6 +24,7 @@ const getAuthorInitial = (article?: Article) =>
   article?.author?.fullname?.charAt(0)?.toUpperCase() ?? "?";
 
 const NewsDetail = () => {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const articleId = Number(id) || 0;
@@ -43,8 +45,8 @@ const NewsDetail = () => {
     return (
       <div className="container mx-auto px-4 py-16">
         <MedicalAiLoading
-          label="Đang tải nội dung bài viết..."
-          description="Đang tổng hợp thông tin y khoa và kiến thức sức khỏe"
+          label={t("news.loadingDetailLabel")}
+          description={t("news.loadingDetailDesc")}
         />
       </div>
     );
@@ -53,10 +55,10 @@ const NewsDetail = () => {
   if (isError || !article) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
-        <p className="text-lg text-red-500">Không tìm thấy bài viết.</p>
+        <p className="text-lg text-red-500">{t("news.articleNotFound")}</p>
         <Button className="mt-6" onClick={() => navigate("/news")}>
           <ArrowLeft className="h-4 w-4" />
-          Về trang tin tức
+          {t("news.backToNews")}
         </Button>
       </div>
     );
@@ -75,7 +77,7 @@ const NewsDetail = () => {
             onClick={() => navigate("/")}
           >
             <ArrowLeft className="h-4 w-4" />
-            Trang chủ
+            {t("news.backToHome")}
           </Button>
           <Button
             variant="outline"
@@ -84,7 +86,7 @@ const NewsDetail = () => {
             onClick={() => navigate("/news")}
           >
             <ArrowLeft className="h-4 w-4" />
-            Danh sách bài viết
+            {t("news.backToNews")}
           </Button>
         </div>
 
@@ -127,7 +129,7 @@ const NewsDetail = () => {
                 </Avatar>
                 <div>
                   <p className="font-medium text-slate-700 dark:text-slate-300">
-                    {article.author?.fullname ?? "Tác giả"}
+                    {article.author?.fullname ?? t("news.authorLabel")}
                   </p>
                   {article.author?.email && (
                     <p className="text-xs text-slate-400 dark:text-slate-500">
@@ -182,7 +184,7 @@ const NewsDetail = () => {
         {relatedArticles.length > 0 && (
           <section className="mt-12 space-y-4">
             <h2 className="text-xl md:text-2xl font-semibold text-slate-900 dark:text-slate-100">
-              Bài viết liên quan
+              {t("news.relatedArticlesTitle")}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedArticles.slice(0, 3).map((item) => (

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Accordion,
   AccordionContent,
@@ -8,6 +9,8 @@ import FadeInView from "@/components/view/FadeInView";
 import { HelpCircle, Mail, Phone } from "lucide-react";
 
 const FAQ = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="mt-16 md:mt-24 pb-16">
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
@@ -15,13 +18,13 @@ const FAQ = () => {
           <div className="text-center space-y-3">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
               <HelpCircle className="w-3.5 h-3.5" />
-              Trung tâm trợ giúp
+              {t("staticPages.faqBadge")}
             </span>
             <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              Câu hỏi thường gặp
+              {t("staticPages.faqTitle")}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-sm md:text-base max-w-xl mx-auto leading-relaxed">
-              Dưới đây là danh sách những câu hỏi phổ biến nhất giúp bạn nắm rõ quy trình đặt khám và sử dụng LifeHealth nhanh chóng, dễ dàng.
+              {t("staticPages.faqSubtitle")}
             </p>
           </div>
         </FadeInView>

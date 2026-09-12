@@ -1,25 +1,25 @@
 import React from "react";
 import { ShieldCheck, CalendarCheck, Lock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export const TrustStripSection: React.FC = () => {
+  const { t } = useTranslation();
+
   const trustPoints = [
     {
       icon: <ShieldCheck className="w-5 h-5 text-[#159a98] dark:text-[#2cd4d1] shrink-0" />,
-      title: "Bác sĩ được xác minh",
-      description:
-        "100% bác sĩ liên kết chính thức với bằng cấp, chuyên khoa và chứng chỉ hành nghề rõ ràng.",
+      title: t("home.trust1Title"),
+      description: t("home.trust1Desc"),
     },
     {
       icon: <CalendarCheck className="w-5 h-5 text-[#159a98] dark:text-[#2cd4d1] shrink-0" />,
-      title: "Lịch khám minh bạch",
-      description:
-        "Tra cứu khung giờ rảnh theo ngày thực tế, nhận phiếu hẹn ngay không cần chờ xếp hàng.",
+      title: t("home.trust2Title"),
+      description: t("home.trust2Desc"),
     },
     {
       icon: <Lock className="w-5 h-5 text-[#159a98] dark:text-[#2cd4d1] shrink-0" />,
-      title: "Dữ liệu được bảo vệ",
-      description:
-        "Hồ sơ y tế cá nhân được mã hóa riêng tư, người bệnh hoàn toàn làm chủ thông tin của mình.",
+      title: t("home.trust3Title"),
+      description: t("home.trust3Desc"),
     },
   ];
 

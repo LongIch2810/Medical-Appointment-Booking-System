@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { CalendarClock, Clock, Plus, Stethoscope, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { prefetchPatientRoute } from "@/utils/routePrefetch";
 
@@ -13,6 +14,7 @@ import { usePatientAppointments } from "@/hooks/usePatientPortalApi";
 const UPCOMING_STATUSES = new Set(["PENDING", "CONFIRMED"]);
 
 const UpcomingAppointmentsCard: React.FC = () => {
+  const { t } = useTranslation();
   const { data, isLoading, isError, refetch } = usePatientAppointments({
     page: 1,
     limit: 50,
@@ -36,9 +38,11 @@ const UpcomingAppointmentsCard: React.FC = () => {
           </span>
           <div>
             <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
-              Lịch khám sắp tới
+              {t("dashboard.upcomingTitle", { defaultValue: "Lịch khám sắp tới" })}
             </CardTitle>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Các cuộc hẹn đang chờ hoặc đã xác nhận</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t("dashboard.upcomingSubtitle", { defaultValue: "Các cuộc hẹn đang chờ hoặc đã xác nhận" })}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -49,7 +53,7 @@ const UpcomingAppointmentsCard: React.FC = () => {
               onFocus={() => prefetchPatientRoute("/doctors")}
             >
               <Plus className="h-4 w-4 text-white" />
-              <span>Đặt lịch mới</span>
+              <span>{t("dashboard.bookNewAppointment", { defaultValue: "Đặt lịch mới" })}</span>
             </Link>
           </Button>
         </div>
@@ -63,21 +67,21 @@ const UpcomingAppointmentsCard: React.FC = () => {
           </div>
         ) : isError ? (
           <ErrorState
-            title="Không thể tải lịch khám sắp tới"
-            description="Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại."
+            title={t("dashboard.errorTitle", { defaultValue: "Không thể tải lịch khám sắp tới" })}
+            description={t("dashboard.errorDesc", { defaultValue: "Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại." })}
             onRetry={() => refetch()}
           />
         ) : upcoming.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-7 text-center">
             <CalendarClock className="mx-auto mb-2.5 h-9 w-9 text-slate-400" />
             <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-              Bạn chưa có lịch khám sắp tới nào
+              {t("dashboard.noUpcoming", { defaultValue: "Bạn chưa có lịch khám sắp tới nào" })}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-              Đặt lịch khám với bác sĩ chuyên khoa hoặc nhận tư vấn trực tuyến bất cứ lúc nào.
+              {t("dashboard.noUpcomingDesc", { defaultValue: "Đặt lịch khám với bác sĩ chuyên khoa hoặc nhận tư vấn trực tuyến bất cứ lúc nào." })}
             </p>
             <Button asChild size="sm" className="mt-3.5 rounded-xl text-xs font-bold bg-primary hover:bg-primary/90 text-white shadow-xs">
-              <Link to="/doctors">Tìm bác sĩ &amp; đặt lịch ngay</Link>
+              <Link to="/doctors">{t("dashboard.findDoctorAndBook", { defaultValue: "Tìm bác sĩ & đặt lịch ngay" })}</Link>
             </Button>
           </div>
         ) : (
@@ -93,7 +97,7 @@ const UpcomingAppointmentsCard: React.FC = () => {
                   </div>
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
-                      BS. {appointment.doctor.user.fullname ?? "Chưa cập nhật"}
+                      {t("common.dr", { defaultValue: "BS." })} {appointment.doctor.user.fullname ?? t("common.notUpdated", { defaultValue: "Chưa cập nhật" })}
                     </p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400">
                       <span className="inline-flex items-center gap-1 font-medium text-slate-700 dark:text-slate-200">
@@ -126,7 +130,7 @@ const UpcomingAppointmentsCard: React.FC = () => {
               onFocus={() => prefetchPatientRoute("/patient/appointments")}
               className="inline-flex items-center justify-center gap-1 w-full text-center text-xs font-bold text-primary hover:underline pt-1"
             >
-              <span>Xem tất cả danh sách lịch khám</span>
+              <span>{t("dashboard.viewAllAppointments", { defaultValue: "Xem tất cả danh sách lịch khám" })}</span>
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </>

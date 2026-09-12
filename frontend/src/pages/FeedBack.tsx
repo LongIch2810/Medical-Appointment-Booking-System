@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardHeader,
@@ -16,6 +17,7 @@ import { useUserStore } from "@/store/useUserStore";
 import { Link } from "react-router-dom";
 
 const Feedback = () => {
+  const { t } = useTranslation();
   const { userInfo } = useUserStore();
   const { mutate: submitComplaint, isPending } = useComplaint();
 
@@ -49,42 +51,40 @@ const Feedback = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-2xl text-primary font-bold text-center">
-                Góp ý & phản hồi
+                {t("staticPages.feedbackPageTitle")}
               </CardTitle>
             </CardHeader>
 
-            <CardContent className="space-y-4 text-sm text-gray-700">
+            <CardContent className="space-y-4 text-sm text-gray-700 dark:text-slate-300">
               <p>
-                LifeHealth luôn mong muốn nâng cao chất lượng dịch vụ. Nếu bạn
-                có ý kiến góp ý, phản hồi về trải nghiệm sử dụng, hãy để lại lời
-                nhắn cho chúng tôi. Mọi góp ý đều được trân trọng!
+                {t("staticPages.feedbackIntro")}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="fullname">Họ tên</Label>
+                  <Label htmlFor="fullname">{t("staticPages.feedbackFullName")}</Label>
                   <Input
                     id="fullname"
                     value={userInfo?.fullname || ""}
                     disabled
-                    className="bg-gray-50"
+                    className="bg-gray-50 dark:bg-slate-800"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="title">Tiêu đề</Label>
+                  <Label htmlFor="title">{t("staticPages.feedbackTitle")}</Label>
                   <Input
                     id="title"
                     name="title"
                     value={form.title}
                     onChange={handleChange}
                     required
-                    placeholder="Tiêu đề góp ý"
+                    placeholder={t("staticPages.feedbackTitlePlaceholder")}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="description">Nội dung góp ý</Label>
+                  <Label htmlFor="description">{t("staticPages.feedbackDesc")}</Label>
                   <Textarea
                     id="description"
                     name="description"
@@ -92,19 +92,19 @@ const Feedback = () => {
                     value={form.description}
                     onChange={handleChange}
                     required
-                    placeholder="Hãy chia sẻ ý kiến của bạn..."
+                    placeholder={t("staticPages.feedbackDescPlaceholder")}
                   />
                 </div>
 
                 <CardFooter className="flex flex-col gap-3 p-0">
                   <Button type="submit" className="w-full" disabled={isPending}>
-                    {isPending ? "Đang gửi..." : "Gửi góp ý"}
+                    {isPending ? t("staticPages.feedbackSending") : t("staticPages.feedbackSubmitBtn")}
                   </Button>
                   <Link
                     to="/patient/complaints"
                     className="text-center text-xs text-primary underline-offset-2 hover:underline"
                   >
-                    Xem lịch sử góp ý
+                    {t("staticPages.feedbackViewHistory")}
                   </Link>
                 </CardFooter>
               </form>

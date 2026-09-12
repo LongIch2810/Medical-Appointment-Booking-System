@@ -11,10 +11,12 @@ import {
   GraduationCap,
   Info,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { openEducationalDisclaimer } from "@/utils/disclaimer";
 
 const Footer = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-16 text-sm">
@@ -39,17 +41,17 @@ const Footer = () => {
             </span>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
-            Nền tảng Y tế Số thông minh hàng đầu — kết nối bệnh nhân với mạng lưới bác sĩ chuyên khoa đầu ngành và trợ lý AI chăm sóc sức khỏe 24/7.
+            {t("footer.tagline")}
           </p>
 
           <div className="space-y-2.5 pt-2 text-xs sm:text-sm text-slate-300">
             <div className="flex items-start gap-2.5">
               <MapPin className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-              <span>123 Lý Thường Kiệt, P.7, Q.10, TP.HCM</span>
+              <span>{t("footer.address", { defaultValue: "123 Lý Thường Kiệt, P.7, Q.10, TP.HCM" })}</span>
             </div>
             <div className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-primary shrink-0" />
-              <span className="font-bold text-white">1900 123 456 (Tổng đài 24/7)</span>
+              <span className="font-bold text-white">{t("footer.emergencyHotline")}</span>
             </div>
             <div className="flex items-center gap-2.5">
               <Mail className="w-4 h-4 text-primary shrink-0" />
@@ -78,57 +80,57 @@ const Footer = () => {
 
         {/* Links */}
         <div>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Về LifeHealth</h3>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">{t("footer.aboutUs")}</h3>
           <ul className="space-y-2.5 text-slate-400 text-sm">
             <li>
-              <Link to="/team" className="hover:text-primary transition-colors">Đội ngũ chuyên gia</Link>
+              <Link to="/team" className="hover:text-primary transition-colors">{t("footer.team", { defaultValue: "Đội ngũ chuyên gia" })}</Link>
             </li>
             <li>
-              <Link to="/careers" className="hover:text-primary transition-colors">Tuyển dụng</Link>
+              <Link to="/careers" className="hover:text-primary transition-colors">{t("footer.careers", { defaultValue: "Tuyển dụng" })}</Link>
             </li>
             <li>
-              <Link to="/news" className="hover:text-primary transition-colors">Tin tức y khoa</Link>
+              <Link to="/news" className="hover:text-primary transition-colors">{t("footer.medicalNews", { defaultValue: "Tin tức y khoa" })}</Link>
             </li>
             <li>
-              <Link to="/terms" className="hover:text-primary transition-colors">Chính sách bảo mật</Link>
+              <Link to="/terms" className="hover:text-primary transition-colors">{t("footer.privacyPolicy", { defaultValue: "Chính sách bảo mật" })}</Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Dịch vụ y tế</h3>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">{t("footer.medicalServices")}</h3>
           <ul className="space-y-2.5 text-slate-400 text-sm">
             <li>
-              <Link to="/doctors" className="hover:text-primary transition-colors">Đặt lịch khám bác sĩ</Link>
+              <Link to="/doctors" className="hover:text-primary transition-colors">{t("footer.bookDoctor", { defaultValue: "Đặt lịch khám bác sĩ" })}</Link>
             </li>
             <li>
-              <Link to="/chatbot" className="hover:text-primary transition-colors">Trợ lý AI MedAI</Link>
+              <Link to="/chatbot" className="hover:text-primary transition-colors">{t("footer.aiMedAi", { defaultValue: "Trợ lý AI MedAI" })}</Link>
             </li>
             <li>
               <Link to="/patient/ai-coach-health" className="hover:text-primary transition-colors">AI Health Coach</Link>
             </li>
             <li>
-              <Link to="/patient/visit-results" className="hover:text-primary transition-colors">Tra cứu bệnh án</Link>
+              <Link to="/patient/visit-results" className="hover:text-primary transition-colors">{t("footer.checkRecords", { defaultValue: "Tra cứu bệnh án" })}</Link>
             </li>
           </ul>
         </div>
 
         <div>
-          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">Hỗ trợ & Góp ý</h3>
+          <h3 className="font-bold text-white text-sm uppercase tracking-wider mb-4">{t("footer.support")}</h3>
           <ul className="space-y-2.5 text-slate-400 text-sm">
             <li>
-              <Link to="/faq" className="hover:text-primary transition-colors">Câu hỏi thường gặp</Link>
+              <Link to="/faq" className="hover:text-primary transition-colors">{t("footer.faq", { defaultValue: "Câu hỏi thường gặp" })}</Link>
             </li>
             <li>
-              <Link to="/contact" className="hover:text-primary transition-colors">Liên hệ tư vấn</Link>
+              <Link to="/contact" className="hover:text-primary transition-colors">{t("footer.contactSupport", { defaultValue: "Liên hệ tư vấn" })}</Link>
             </li>
             <li>
-              <Link to="/feedback" className="hover:text-primary transition-colors">Góp ý chất lượng</Link>
+              <Link to="/feedback" className="hover:text-primary transition-colors">{t("footer.feedback", { defaultValue: "Góp ý chất lượng" })}</Link>
             </li>
             <li className="pt-2">
               <div className="inline-flex items-center gap-1.5 rounded-lg bg-slate-800/80 px-2.5 py-1.5 text-xs text-emerald-400 border border-slate-700">
                 <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Chuẩn ISO y tế số</span>
+                <span>{t("footer.isoStandards", { defaultValue: "Chuẩn ISO y tế số" })}</span>
               </div>
             </li>
           </ul>
@@ -140,10 +142,10 @@ const Footer = () => {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <h4 className="text-sm font-bold text-white">
-              Đăng ký nhận bản tin y tế & sức khỏe định kỳ
+              {t("footer.newsletter")}
             </h4>
             <p className="text-xs text-slate-400 mt-0.5">
-              Cập nhật kiến thức y khoa, cảnh báo dịch bệnh và ưu đãi khám bệnh sớm nhất.
+              {t("footer.newsletterDesc")}
             </p>
           </div>
           <form
@@ -152,7 +154,7 @@ const Footer = () => {
           >
             <input
               type="email"
-              placeholder="Nhập địa chỉ email của bạn..."
+              placeholder={t("footer.emailPlaceholder")}
               className="bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm text-white placeholder:text-slate-500 w-full md:w-72 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <button
@@ -160,7 +162,7 @@ const Footer = () => {
               className="inline-flex items-center gap-1.5 bg-primary text-white font-bold px-4 py-2.5 rounded-xl hover:bg-primary/90 transition text-xs sm:text-sm shrink-0 shadow-xs cursor-pointer"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Đăng ký</span>
+              <span>{t("footer.subscribe")}</span>
             </button>
           </form>
         </div>
@@ -176,14 +178,16 @@ const Footer = () => {
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide bg-amber-400/15 text-amber-300 border border-amber-400/30">
-                  DỰ ÁN HỌC TẬP PHI THƯƠNG MẠI
+                  {t("footer.disclaimerBadge", { defaultValue: "DỰ ÁN HỌC TẬP PHI THƯƠNG MẠI" })}
                 </span>
                 <span className="text-[11px] font-medium text-slate-400">
                   Non-commercial Educational Project
                 </span>
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl">
-                Website <strong className="text-white">LifeHealth</strong> được xây dựng phục vụ nghiên cứu công nghệ, học thuật và đồ án. Mọi hình ảnh bác sĩ và cơ sở y tế trên trang web được sử dụng nhằm mục đích <span className="text-teal-300">minh họa giao diện & nghiên cứu phi lợi nhuận</span>. Hệ thống không thực hiện hoạt động kinh doanh y tế hay thu phí.
+                {t("footer.disclaimerText", {
+                  defaultValue: "Website LifeHealth được xây dựng phục vụ nghiên cứu công nghệ, học thuật và đồ án. Mọi hình ảnh bác sĩ và cơ sở y tế trên trang web được sử dụng nhằm mục đích minh họa giao diện & nghiên cứu phi lợi nhuận. Hệ thống không thực hiện hoạt động kinh doanh y tế hay thu phí."
+                })}
               </p>
             </div>
           </div>
@@ -194,14 +198,14 @@ const Footer = () => {
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-teal-300 hover:text-teal-200 border border-teal-500/30 text-xs sm:text-sm font-semibold transition-all shrink-0 cursor-pointer shadow-xs"
           >
             <Info className="w-4 h-4" />
-            <span>Xem chi tiết miễn trừ</span>
+            <span>{t("footer.disclaimerButton", { defaultValue: "Xem chi tiết miễn trừ" })}</span>
           </button>
         </div>
       </div>
 
       {/* Bottom */}
       <div className="border-t border-slate-800/60 text-center py-5 text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} LifeHealth Medical Platform. Dự án nghiên cứu & học thuật phi thương mại.
+        &copy; {new Date().getFullYear()} LifeHealth Medical Platform. {t("footer.copyrightDesc", { defaultValue: "Dự án nghiên cứu & học thuật phi thương mại." })}
       </div>
     </footer>
   );

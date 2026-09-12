@@ -16,6 +16,7 @@ import {
   getDoctorSubtitle,
 } from "./messageHelpers";
 import MessageBubble from "./MessageBubble";
+import { useTranslation } from "react-i18next";
 
 const NEAR_BOTTOM_THRESHOLD = 96;
 const LOAD_OLDER_THRESHOLD = 40;
@@ -59,6 +60,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
   onBack,
   className,
 }) => {
+  const { t } = useTranslation();
   const scrollRef = useRef<HTMLDivElement>(null);
   const wasNearBottomRef = useRef(true);
   const prevScrollHeightRef = useRef(0);
@@ -125,7 +127,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
             size="icon"
             className="lg:hidden -ml-1.5 shrink-0 rounded-xl"
             onClick={onBack}
-            aria-label="Quay lại danh sách hội thoại"
+            aria-label={t("common.back")}
           >
             <ChevronLeft className="h-5 w-5" />
           </Button>
@@ -146,7 +148,7 @@ const ChatPanel: FC<ChatPanelProps> = ({
         </Avatar>
         <div className="min-w-0">
           <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 truncate">
-            {channel ? "BS. " : ""}
+            {channel ? `${t("appointments.doctorPrefix")} ` : ""}
             {getDoctorDisplayName(channel, currentUserId)}
           </p>
           <div className="flex items-center gap-2 mt-0.5">
@@ -179,14 +181,14 @@ const ChatPanel: FC<ChatPanelProps> = ({
           </div>
         ) : isErrorMessages ? (
           <ErrorState
-            title="Không thể tải tin nhắn"
-            description="Đã có lỗi xảy ra khi tải lịch sử trò chuyện."
+            title={t("common.error")}
+            description="Error loading messages."
             onRetry={onRetryMessages}
           />
         ) : messages.length === 0 ? (
           <NotFoundResult
-            title="Chưa có tin nhắn"
-            description="Hãy đặt câu hỏi để nhận tư vấn từ bác sĩ."
+            title={t("messages.emptyChannels")}
+            description={t("messages.selectChannelPrompt")}
           />
         ) : (
           messages.map((message) => (
@@ -208,19 +210,19 @@ const ChatPanel: FC<ChatPanelProps> = ({
           <Input
             value={draft}
             onChange={(event) => onDraftChange(event.target.value)}
-            placeholder="Nhập câu hỏi hoặc tình trạng sức khỏe cần bác sĩ tư vấn..."
-            aria-label="Nhập tin nhắn"
+            placeholder={t("messages.inputPlaceholder")}
+            aria-label={t("messages.inputPlaceholder")}
             disabled={!activeChannelId}
             className="h-10.5 rounded-2xl border-slate-200 bg-slate-50/60 text-xs sm:text-sm shadow-none focus-visible:bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-100 dark:focus-visible:bg-slate-950"
           />
           <Button
             type="submit"
-            aria-label="Gửi tin nhắn"
+            aria-label={t("messages.sendBtn")}
             className="h-10.5 px-4.5 rounded-2xl gap-2 !bg-primary hover:!bg-primary/90 !text-white font-bold text-xs shadow-xs shrink-0 cursor-pointer"
             disabled={!activeChannelId || isSending || !draft.trim()}
           >
             <SendHorizontal className="h-4 w-4 !text-white" />
-            <span className="hidden sm:inline !text-white">Gửi</span>
+            <span className="hidden sm:inline !text-white">{t("messages.sendBtn")}</span>
           </Button>
         </div>
       </form>

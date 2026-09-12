@@ -1,10 +1,10 @@
-// ContactPage.tsx
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import FadeInView from "@/components/view/FadeInView";
 import { toast } from "react-toastify";
 import {
@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 
 const Contact = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -40,7 +41,7 @@ const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Gửi liên hệ:", formData);
-    toast.success("Cảm ơn bạn đã liên hệ LifeHealth! Chúng tôi sẽ phản hồi sớm nhất.");
+    toast.success(t("staticPages.contactSuccessToast"));
     setFormData({ name: "", email: "", phone: "", message: "" });
   };
 
@@ -52,14 +53,13 @@ const Contact = () => {
           <section className="text-center space-y-4 max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
               <Sparkles className="w-3.5 h-3.5" />
-              Nền tảng Y tế Số Thông Minh
+              {t("staticPages.contactBadge")}
             </span>
             <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
-              LifeHealth - Đồng hành cùng sức khỏe của bạn
+              {t("staticPages.contactTitle")}
             </h1>
             <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
-              LifeHealth là nền tảng chăm sóc sức khỏe trực tuyến hàng đầu tại Việt Nam,
-              giúp bạn dễ dàng đặt lịch khám với các bác sĩ và bệnh viện uy tín chỉ với vài thao tác nhanh gọn.
+              {t("staticPages.contactSubtitle")}
             </p>
           </section>
         </FadeInView>
@@ -232,10 +232,10 @@ const Contact = () => {
             <CardContent className="p-6 space-y-6">
               <div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
-                  Thông tin liên hệ
+                  {t("staticPages.contactInfoTitle")}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  Đội ngũ chăm sóc khách hàng LifeHealth luôn sẵn sàng lắng nghe và hỗ trợ bạn.
+                  {t("staticPages.contactInfoDesc")}
                 </p>
               </div>
 
@@ -245,8 +245,8 @@ const Contact = () => {
                     <Building2 className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">Trụ sở chính</p>
-                    <p className="text-slate-500 dark:text-slate-400">123 Lê Lợi, Quận 1, TP. Hồ Chí Minh</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{t("staticPages.contactHeadquarters")}</p>
+                    <p className="text-slate-500 dark:text-slate-400">{t("staticPages.contactHeadquartersAddress")}</p>
                   </div>
                 </div>
 
@@ -255,8 +255,8 @@ const Contact = () => {
                     <Phone className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">Hotline hỗ trợ</p>
-                    <p className="text-slate-500 dark:text-slate-400">0909 123 456 (Cước phí thông thường)</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{t("staticPages.contactHotline")}</p>
+                    <p className="text-slate-500 dark:text-slate-400">{t("staticPages.contactHotlineFee")}</p>
                   </div>
                 </div>
 
@@ -265,7 +265,7 @@ const Contact = () => {
                     <Mail className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">Email tiếp nhận</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{t("staticPages.contactEmailLabel")}</p>
                     <p className="text-slate-500 dark:text-slate-400">support@lifehealth.vn</p>
                   </div>
                 </div>
@@ -275,8 +275,8 @@ const Contact = () => {
                     <Clock className="w-4 h-4" />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">Thời gian làm việc</p>
-                    <p className="text-slate-500 dark:text-slate-400">Thứ 2 - Thứ 7: 8:00 - 17:00</p>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{t("staticPages.contactWorkTime")}</p>
+                    <p className="text-slate-500 dark:text-slate-400">{t("staticPages.contactWorkHours")}</p>
                   </div>
                 </div>
               </div>
@@ -287,15 +287,15 @@ const Contact = () => {
           <Card className="border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-sm bg-white dark:bg-slate-900">
             <CardContent className="p-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-1">
-                Gửi phản hồi trực tuyến
+                {t("staticPages.contactOnlineFeedback")}
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
-                Nhập thắc mắc hoặc yêu cầu hợp tác để được hỗ trợ kịp thời.
+                {t("staticPages.contactOnlineFeedbackDesc")}
               </p>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="name" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Họ và tên *
+                    {t("staticPages.contactName")} *
                   </Label>
                   <Input
                     id="name"
@@ -309,7 +309,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <Label htmlFor="email" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Địa chỉ Email *
+                    {t("staticPages.contactEmail")} *
                   </Label>
                   <Input
                     id="email"
@@ -324,7 +324,7 @@ const Contact = () => {
                 </div>
                 <div>
                   <Label htmlFor="phone" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Số điện thoại
+                    {t("staticPages.contactPhone")}
                   </Label>
                   <Input
                     id="phone"
@@ -337,13 +337,13 @@ const Contact = () => {
                 </div>
                 <div>
                   <Label htmlFor="message" className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                    Nội dung lời nhắn *
+                    {t("staticPages.contactMessage")} *
                   </Label>
                   <Textarea
                     id="message"
                     name="message"
                     rows={4}
-                    placeholder="Vui lòng chia sẻ thắc mắc hoặc thông tin bạn cần giải đáp..."
+                    placeholder={t("staticPages.contactMsgPlaceholder")}
                     value={formData.message}
                     onChange={handleChange}
                     className="mt-1 rounded-xl resize-none"
@@ -352,7 +352,7 @@ const Contact = () => {
                 </div>
                 <Button type="submit" className="w-full gap-2 rounded-xl">
                   <Send className="w-4 h-4" />
-                  Gửi liên hệ
+                  {t("staticPages.contactSubmitBtn")}
                 </Button>
               </form>
             </CardContent>

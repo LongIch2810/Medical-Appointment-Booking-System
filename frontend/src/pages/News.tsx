@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -28,6 +29,7 @@ const getAuthorInitial = (article: Article) =>
   article.author?.fullname?.charAt(0)?.toUpperCase() ?? "?";
 
 const News = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -79,7 +81,7 @@ const News = () => {
               className="h-9 gap-1.5 px-3 text-white hover:bg-white/15 hover:text-white rounded-xl cursor-pointer"
             >
               <ArrowLeft className="h-4 w-4" />
-              Trang chủ
+              {t("news.backToHome")}
             </Button>
             <div className="flex items-center gap-2.5">
               <img
@@ -100,11 +102,11 @@ const News = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
             <Input
               type="search"
-              placeholder="Tìm kiếm bài viết y khoa..."
+              placeholder={t("news.searchPlaceholder")}
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
               className="pl-10 h-10 rounded-full bg-white/95 dark:bg-slate-900/90 border-transparent placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-2xs text-xs sm:text-sm"
-              aria-label="Tìm kiếm bài viết"
+              aria-label={t("news.searchPlaceholder")}
             />
           </div>
         </div>
@@ -120,7 +122,7 @@ const News = () => {
                   : "border-white/30 bg-white/10 text-white hover:bg-white/20"
               }`}
             >
-              Tất cả chuyên mục
+              {t("news.allTopics")}
             </button>
             {topics.map((topic) => (
               <button
@@ -147,20 +149,20 @@ const News = () => {
       <main className="container mx-auto px-4 py-10 max-w-7xl">
         {isLoading ? (
           <MedicalAiLoading
-            label="Đang tải danh sách bài viết..."
-            description="Hệ thống đang chuẩn bị những kiến thức y khoa cập nhật nhất"
+            label={t("news.loadingLabel")}
+            description={t("news.loadingDesc")}
             minHeight="min-h-80"
           />
         ) : isError ? (
           <ErrorState
-            title="Không thể tải tin tức"
-            description="Đã xảy ra lỗi khi kết nối tới máy chủ tin tức. Vui lòng thử lại."
+            title={t("news.errorTitle")}
+            description={t("news.errorDesc")}
             onRetry={() => refetch()}
           />
         ) : articles.length === 0 ? (
           <NotFoundResult
-            title="Không tìm thấy bài viết"
-            description="Hãy thử đổi từ khóa tìm kiếm hoặc chọn chuyên mục bài viết khác."
+            title={t("news.notFoundTitle")}
+            description={t("news.notFoundDesc")}
             onReset={() => {
               setSearch("");
               setTopicSlug(undefined);
@@ -227,7 +229,7 @@ const News = () => {
                           </AvatarFallback>
                         </Avatar>
                         <span className="font-semibold text-slate-700 dark:text-slate-300 truncate max-w-[120px]">
-                          {article.author?.fullname ?? "Ban Y tế"}
+                          {article.author?.fullname ?? t("news.medicalBoardAuthor")}
                         </span>
                       </div>
                       <span>{article.created_at ?? ""}</span>
@@ -248,10 +250,10 @@ const News = () => {
                   className="rounded-xl gap-1"
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Trước
+                  {t("news.prevPage")}
                 </Button>
                 <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 px-2">
-                  Trang {page} / {totalPages}
+                  {t("news.pageCount", { page, totalPages })}
                 </span>
                 <Button
                   type="button"
@@ -263,7 +265,7 @@ const News = () => {
                   }
                   className="rounded-xl gap-1"
                 >
-                  Sau
+                  {t("news.nextPage")}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

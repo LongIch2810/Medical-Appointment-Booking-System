@@ -2,6 +2,7 @@ import { CalendarDays, Stethoscope, User } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,7 @@ const AlertDialogConfirmBook = ({
   isPending,
   handleConfirm,
 }: AlertDialogConfirmBookProps) => {
+  const { t, i18n } = useTranslation();
   const [selectedRelativeId, setSelectedRelativeId] = useState(0);
   const { data: relativesResponse, isLoading: isLoadingRelatives } =
     usePatientRelatives({
@@ -58,7 +60,7 @@ const AlertDialogConfirmBook = ({
 
   const handleBook = () => {
     if (!selectedRelativeId) {
-      toast.error("Vui lòng chọn người thân cần đặt lịch khám!");
+      toast.error(t("doctor.selectRelativeToast"));
       return;
     }
 
@@ -78,42 +80,37 @@ const AlertDialogConfirmBook = ({
             <CalendarDays size={24} />
           </div>
           <AlertDialogTitle className="text-center text-lg sm:text-xl font-bold mt-2 text-slate-900 dark:text-slate-100">
-            Xác nhận đặt lịch khám
+            {t("doctor.confirmBookingTitle")}
           </AlertDialogTitle>
           <AlertDialogDescription className="sr-only">
-            Xác nhận chi tiết thời gian và hồ sơ người bệnh
+            {t("doctor.confirmBookingTitle")}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 space-y-4 text-slate-600 dark:text-slate-300 text-sm scrollbar-soft">
           <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 text-center leading-relaxed dark:bg-primary/10 dark:border-primary/30">
-            Bạn có chắc chắn muốn đặt lịch vào ngày{" "}
-            <strong className="text-primary font-bold">
-              {formatDate(selectedDate, "vi-VN")}
-            </strong>{" "}
-            lúc{" "}
-            <strong className="text-primary font-bold">
-              {tempTime?.start_time} - {tempTime?.end_time}
-            </strong>
-            ?
+            {t("doctor.confirmBookingPrompt", {
+              date: formatDate(selectedDate, i18n.language === "vi" ? "vi-VN" : "en-US"),
+              time: `${tempTime?.start_time} - ${tempTime?.end_time}`,
+            })}
           </div>
 
           <div className="rounded-xl border border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/50 p-3.5 space-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
               <Stethoscope size={16} className="text-primary shrink-0" />
-              <span className="text-slate-500 dark:text-slate-400">Bác sĩ:</span>
+              <span className="text-slate-500 dark:text-slate-400">{t("doctor.doctorLabel")}</span>
               <strong className="text-slate-800 dark:text-slate-100 font-semibold">{doctorName}</strong>
             </div>
             <div className="flex items-center gap-2">
               <User size={16} className="text-primary shrink-0" />
-              <span className="text-slate-500 dark:text-slate-400">Chuyên khoa:</span>
+              <span className="text-slate-500 dark:text-slate-400">{t("doctor.specialtyLabel")}</span>
               <strong className="text-slate-800 dark:text-slate-100 font-semibold">{specialtyName}</strong>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <label className="block text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200">
-              Đặt lịch khám cho bệnh nhân
+              {t("doctor.patientSelectLabel")}
             </label>
             <select
               value={selectedRelativeId}
@@ -125,12 +122,12 @@ const AlertDialogConfirmBook = ({
             >
               <option value={0}>
                 {isLoadingRelatives
-                  ? "Đang tải danh sách người thân..."
-                  : "Chọn người thân để khám"}
+                  ? t("doctor.loadingRelatives")
+                  : t("doctor.selectRelativePlaceholder")}
               </option>
               {relatives.map((relative) => (
                 <option key={relative.id} value={relative.id}>
-                  {relative.fullname || "Chưa có tên"} -{" "}
+                  {relative.fullname || (i18n.language === "vi" ? "Chưa có tên" : "Unnamed")} -{" "}
                   {relative.relationship?.relationship_name}
                 </option>
               ))}
@@ -138,14 +135,14 @@ const AlertDialogConfirmBook = ({
 
             {!isLoadingRelatives && relatives.length === 0 && (
               <p className="text-xs text-error mt-1">
-                Bạn chưa có hồ sơ người thân nào.{" "}
+                {t("doctor.noRelativesPrompt")}{" "}
                 <Link
                   to="/patient/relatives"
                   className="font-medium underline hover:text-primary"
                 >
-                  Thêm người thân
+                  {t("doctor.addRelativeLink")}
                 </Link>{" "}
-                trước khi đặt lịch.
+                {t("doctor.beforeBookingSuffix")}
               </p>
             )}
           </div>
@@ -153,7 +150,7 @@ const AlertDialogConfirmBook = ({
 
         <AlertDialogFooter className="shrink-0 p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col-reverse sm:flex-row justify-end gap-2.5 bg-slate-50/80 dark:bg-slate-950/80">
           <AlertDialogCancel className="w-full sm:w-auto rounded-xl">
-            Hủy
+            {t("doctor.cancelBtn")}
           </AlertDialogCancel>
           <AlertDialogAction
             disabled={
@@ -165,7 +162,7 @@ const AlertDialogConfirmBook = ({
             onClick={handleBook}
             className="w-full sm:w-auto rounded-xl font-bold !bg-primary text-white hover:!bg-primary/90"
           >
-            {isPending ? <Loading /> : "Xác nhận đặt lịch"}
+            {isPending ? <Loading /> : t("doctor.confirmBtn")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

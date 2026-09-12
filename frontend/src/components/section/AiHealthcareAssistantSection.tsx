@@ -1,11 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { AlertCircle, ArrowRight, Bot, HeartHandshake, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { useUserStore } from "@/store/useUserStore";
 import AIApplicationInHealthCareAnimation from "../animation/AIApplicationInHealthCareAnimation";
 
 export const AiHealthcareAssistantSection: React.FC = () => {
+  const { t } = useTranslation();
   const { userInfo } = useUserStore();
 
   return (
@@ -20,15 +22,15 @@ export const AiHealthcareAssistantSection: React.FC = () => {
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-teal-50 dark:bg-teal-950/60 border border-teal-200/80 dark:border-teal-800 text-teal-800 dark:text-teal-200 text-xs font-bold w-fit">
                 <Sparkles className="w-3.5 h-3.5 text-[#159a98]" />
-                <span>Trợ lý y tế thông minh (AI Healthcare)</span>
+                <span>{t("home.aiAssistantBadge")}</span>
               </div>
 
               <h2 className="font-heading text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight leading-tight">
-                Định hướng triệu chứng & Hỗ trợ chăm sóc sức khỏe 24/7
+                {t("home.aiAssistantHeading")}
               </h2>
 
               <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-                Được phát triển trên nền tảng trí tuệ nhân tạo y tế chuyên sâu, trợ lý AI của LifeHealth giúp bạn phân tích các biểu hiện bất thường, gợi ý chuyên khoa phù hợp và hỗ trợ đặt lịch tự động với bác sĩ chỉ qua một vài câu hỏi tự nhiên.
+                {t("home.aiAssistantDesc")}
               </p>
 
               {/* 2 Feature Pills */}
@@ -39,10 +41,10 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                      Tư vấn & Phân luồng
+                      {t("home.aiFeature1Title")}
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Gợi ý đúng chuyên khoa theo triệu chứng bạn mô tả
+                      {t("home.aiFeature1Desc")}
                     </p>
                   </div>
                 </div>
@@ -53,10 +55,10 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                   </div>
                   <div>
                     <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                      AI Health Coach
+                      {t("home.aiFeature2Title")}
                     </h4>
                     <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      Lộ trình dinh dưỡng & rèn luyện cá nhân hóa 3-6 tháng
+                      {t("home.aiFeature2Desc")}
                     </p>
                   </div>
                 </div>
@@ -66,7 +68,7 @@ export const AiHealthcareAssistantSection: React.FC = () => {
               <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/60 flex items-start gap-3 text-xs text-amber-800 dark:text-amber-300">
                 <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
-                  <strong>Khuyến cáo y khoa:</strong> Trợ lý AI đóng vai trò định hướng và hỗ trợ tham khảo sơ bộ. Thông tin từ AI không thay thế việc khám trực tiếp, chẩn đoán bệnh hay chỉ định điều trị từ bác sĩ có chuyên môn.
+                  <strong>{t("home.aiDisclaimerStrong")}</strong> {t("home.aiDisclaimerText")}
                 </p>
               </div>
 
@@ -81,7 +83,7 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                     className="inline-flex items-center justify-center gap-2"
                   >
                     <Bot className="w-4 h-4" />
-                    <span>Hỏi trợ lý AI ngay</span>
+                    <span>{t("home.askAiBtn")}</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </Button>
@@ -96,7 +98,7 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                     className="inline-flex items-center justify-center gap-2"
                   >
                     <HeartHandshake className="w-4 h-4 text-[#159a98]" />
-                    <span>Xem lộ trình AI Coach</span>
+                    <span>{t("home.viewCoachBtn")}</span>
                   </Link>
                 </Button>
               </div>
@@ -108,7 +110,7 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                 <AIApplicationInHealthCareAnimation />
                 <div className="mt-2 text-center">
                   <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                    Phân tích triệu chứng • Hỗ trợ đặt lịch khám tức thì
+                    {t("home.aiAnimationNote")}
                   </span>
                 </div>
               </div>

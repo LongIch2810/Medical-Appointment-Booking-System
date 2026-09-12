@@ -13,12 +13,14 @@ import { Bell, CheckCheck, ChevronLeft, ChevronRight, Loader2 } from "lucide-rea
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 function isInternalPath(path: string | null): path is string {
   return Boolean(path && /^\/(?!\/)/.test(path));
 }
 
 export default function Notifications() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [unreadOnly, setUnreadOnly] = useState(false);
@@ -52,16 +54,16 @@ export default function Notifications() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                Thông báo hệ thống
+                {t("notifications.pageTitle")}
               </h2>
               {(unreadQuery.data?.data.count ?? 0) > 0 && (
                 <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-extrabold text-white">
-                  {unreadQuery.data?.data.count} mới
+                  {t("notifications.newCount", { count: unreadQuery.data?.data.count })}
                 </span>
               )}
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Cập nhật lịch khám, đơn thuốc và các khuyến nghị y tế mới nhất
+              {t("notifications.pageSubtitle")}
             </p>
           </div>
         </div>
@@ -73,7 +75,7 @@ export default function Notifications() {
           className="gap-2 rounded-xl text-xs font-semibold cursor-pointer"
         >
           <CheckCheck className="h-3.5 w-3.5 text-primary" />
-          <span>Đánh dấu tất cả đã đọc</span>
+          <span>{t("notifications.markAllAsRead")}</span>
         </Button>
       </div>
 
@@ -92,7 +94,7 @@ export default function Notifications() {
               : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
           )}
         >
-          Tất cả thông báo
+          {t("notifications.allFilter")}
         </button>
         <button
           type="button"
@@ -107,7 +109,7 @@ export default function Notifications() {
               : "border-slate-200 bg-white text-slate-600 hover:border-primary/40 hover:text-primary dark:border-slate-800 dark:bg-slate-800/70 dark:text-slate-300",
           )}
         >
-          <span>Chưa đọc</span>
+          <span>{t("notifications.unreadFilter")}</span>
           {(unreadQuery.data?.data.count ?? 0) > 0 && (
             <span
               className={cn(
@@ -131,11 +133,11 @@ export default function Notifications() {
       ) : !data?.notifications.length ? (
         <StateCard
           icon={<Bell className="h-8 w-8" />}
-          title="Chưa có thông báo nào"
+          title={t("notifications.emptyTitle")}
           description={
             unreadOnly
-              ? "Bạn đã đọc tất cả thông báo trong hộp thư."
-              : "Thông báo lịch hẹn và thông tin từ hệ thống sẽ xuất hiện tại đây."
+              ? t("notifications.emptyUnread")
+              : t("notifications.emptyAll")
           }
         />
       ) : (
@@ -199,7 +201,7 @@ export default function Notifications() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-xs font-semibold text-slate-600 dark:text-slate-400">
-            Trang {page}/{data?.totalPages}
+            {t("common.page")} {page}/{data?.totalPages}
           </span>
           <Button
             variant="outline"

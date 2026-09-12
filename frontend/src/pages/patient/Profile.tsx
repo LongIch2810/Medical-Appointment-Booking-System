@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -65,6 +66,7 @@ const getInitialForm = (profile?: PatientUser | null): ProfileFormValues => ({
 });
 
 const Profile: React.FC = () => {
+  const { t } = useTranslation();
   const { data: profileResponse, isLoading, isError, refetch } = useProfile();
   const updateProfileMutation = useUpdatePatientProfile();
   const profile = profileResponse?.data as PatientUser | undefined;
@@ -101,7 +103,7 @@ const Profile: React.FC = () => {
     const file = event.target.files?.[0] ?? null;
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("Kích thước ảnh tối đa là 5MB.");
+        toast.error(t("profile.maxFileSizeError"));
         return;
       }
       setSelectedFile(file);
@@ -128,18 +130,18 @@ const Profile: React.FC = () => {
 
     updateProfileMutation.mutate(formData, {
       onSuccess: () => {
-        toast.success("Đã cập nhật thông tin cá nhân thành công.");
+        toast.success(t("profile.updateSuccessToast"));
         setSelectedFile(null);
       },
-      onError: () => toast.error("Không thể cập nhật thông tin cá nhân. Vui lòng thử lại."),
+      onError: () => toast.error(t("profile.updateErrorToast")),
     });
   };
 
   if (isLoading) {
     return (
       <MedicalAiLoading
-        label="Đang tải hồ sơ bệnh nhân..."
-        description="Hệ thống đang truy xuất thông tin tài khoản và dữ liệu định danh y tế"
+        label={t("profile.loadingLabel")}
+        description={t("profile.loadingDesc")}
         minHeight="min-h-80"
       />
     );
@@ -148,8 +150,8 @@ const Profile: React.FC = () => {
   if (isError) {
     return (
       <ErrorState
-        title="Không thể tải thông tin cá nhân"
-        description="Đã xảy ra lỗi khi kết nối tới máy chủ. Vui lòng thử lại."
+        title={t("profile.errorTitle")}
+        description={t("profile.errorDesc")}
         onRetry={() => refetch()}
       />
     );
@@ -184,7 +186,7 @@ const Profile: React.FC = () => {
               <label
                 htmlFor="avatar-upload"
                 className="absolute bottom-0 right-0 flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border-2 border-white dark:border-slate-800 bg-primary text-white shadow-md transition-all hover:bg-primary/90 hover:scale-110 active:scale-95"
-                title="Thay đổi ảnh đại diện"
+                title={t("profile.changeAvatar")}
               >
                 <Camera className="h-4 w-4" />
                 <input
@@ -202,46 +204,49 @@ const Profile: React.FC = () => {
             <div className="text-center sm:text-left flex-1 min-w-0">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 sm:text-2xl truncate">
-                  {profile?.fullname || "Chưa cập nhật họ tên"}
+                  {profile?.fullname || t("profile.notUpdatedName")}
                 </h2>
                 <Badge
                   variant="outline"
                   className="border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 gap-1 text-xs font-semibold"
                 >
                   <ShieldCheck className="h-3 w-3" />
-                  Bệnh nhân chính
+                  {t("profile.primaryPatientBadge")}
                 </Badge>
               </div>
 
               <div className="mt-2 flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 text-sm text-slate-600 dark:text-slate-400">
                 <span className="inline-flex items-center gap-1.5">
                   <Mail className="h-3.5 w-3.5 text-slate-400" />
-                  {profile?.email || "Chưa cập nhật email"}
+                  {profile?.email || t("profile.notUpdatedEmail")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Phone className="h-3.5 w-3.5 text-slate-400" />
-                  {profile?.phone || "Chưa cập nhật SĐT"}
+                  {profile?.phone || t("profile.notUpdatedPhone")}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <Users className="h-3.5 w-3.5 text-slate-400" />
                   {profile?.gender === undefined
-                    ? "Chưa rõ"
+                    ? t("profile.notSpecifiedGender")
                     : profile.gender
-                      ? "Nam"
-                      : "Nữ"}
+                      ? t("common.male")
+                      : t("common.female")}
                 </span>
               </div>
 
               {selectedFile && (
                 <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 px-3 py-1.5 text-xs font-medium text-emerald-800 dark:text-emerald-300">
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Ảnh mới đã chọn: <strong className="font-semibold">{selectedFile.name}</strong></span>
+                  <span>
+                    {t("profile.newPhotoSelected")}{" "}
+                    <strong className="font-semibold">{selectedFile.name}</strong>
+                  </span>
                   <button
                     type="button"
                     onClick={() => setSelectedFile(null)}
                     className="ml-1 text-slate-400 hover:text-red-500 underline text-[11px]"
                   >
-                    Hủy ảnh
+                    {t("profile.cancelNewAvatar")}
                   </button>
                 </div>
               )}
@@ -260,11 +265,11 @@ const Profile: React.FC = () => {
                   <User className="h-4 w-4" />
                 </span>
                 <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                  Hồ sơ thông tin cá nhân
+                  {t("profile.pageTitle")}
                 </CardTitle>
               </div>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 pl-10">
-                Thông tin dùng để quản lý lịch khám, liên hệ trực tuyến và xuất hồ sơ bệnh án.
+                {t("profile.cardSubtitle")}
               </p>
             </div>
           </div>
@@ -279,7 +284,7 @@ const Profile: React.FC = () => {
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
                     1
                   </span>
-                  Thông tin định danh cơ bản
+                  {t("profile.sectionIdentity")}
                 </h3>
               </div>
 
@@ -287,7 +292,7 @@ const Profile: React.FC = () => {
                 {/* Họ và tên */}
                 <div className="space-y-2">
                   <Label htmlFor="fullname" className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                    Họ và tên <span className="text-rose-500">*</span>
+                    {t("profile.fullnameLabel")} <span className="text-rose-500">*</span>
                   </Label>
                   <Input
                     id="fullname"
@@ -305,7 +310,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="date_of_birth" className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    Ngày sinh <span className="text-rose-500">*</span>
+                    {t("profile.dobLabel")} <span className="text-rose-500">*</span>
                   </Label>
                   <Input
                     id="date_of_birth"
@@ -323,7 +328,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="gender" className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-slate-400" />
-                    Giới tính <span className="text-rose-500">*</span>
+                    {t("profile.genderLabel")} <span className="text-rose-500">*</span>
                   </Label>
                   <Controller
                     name="gender"
@@ -331,11 +336,11 @@ const Profile: React.FC = () => {
                     render={({ field }) => (
                       <Select value={field.value} onValueChange={field.onChange}>
                         <SelectTrigger id="gender" className="rounded-xl w-full">
-                          <SelectValue placeholder="Chọn giới tính" />
+                          <SelectValue placeholder={t("profile.selectGenderPlaceholder")} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl">
-                          <SelectItem value="true">Nam</SelectItem>
-                          <SelectItem value="false">Nữ</SelectItem>
+                          <SelectItem value="true">{t("common.male")}</SelectItem>
+                          <SelectItem value="false">{t("common.female")}</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -349,7 +354,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-sm font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                     <Lock className="h-3.5 w-3.5 text-slate-400" />
-                    Tên đăng nhập (Username)
+                    {t("profile.usernameLabel")}
                   </Label>
                   <Input
                     id="username"
@@ -358,7 +363,7 @@ const Profile: React.FC = () => {
                     className="rounded-xl bg-slate-50/80 dark:bg-slate-950/50 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed"
                   />
                   <p className="text-[11px] text-slate-400">
-                    Tên đăng nhập được dùng khi tạo tài khoản và không thể sửa đổi.
+                    {t("profile.usernameHint")}
                   </p>
                 </div>
               </div>
@@ -371,7 +376,7 @@ const Profile: React.FC = () => {
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-bold text-slate-600 dark:text-slate-300">
                     2
                   </span>
-                  Thông tin liên lạc & Địa chỉ
+                  {t("profile.sectionContact")}
                 </h3>
               </div>
 
@@ -380,7 +385,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-semibold text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5 text-slate-400" />
-                    Địa chỉ Email
+                    {t("profile.emailLabel")}
                   </Label>
                   <Input
                     id="email"
@@ -391,7 +396,7 @@ const Profile: React.FC = () => {
                   />
                   <p className="text-[11px] text-slate-400 flex items-center gap-1">
                     <Info className="h-3 w-3 inline shrink-0" />
-                    Email liên kết bảo mật tài khoản.
+                    {t("profile.emailHint")}
                   </p>
                 </div>
 
@@ -399,7 +404,7 @@ const Profile: React.FC = () => {
                 <div className="space-y-2">
                   <Label htmlFor="phone" className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <Phone className="h-3.5 w-3.5 text-slate-400" />
-                    Số điện thoại liên hệ <span className="text-rose-500">*</span>
+                    {t("profile.phoneLabel")} <span className="text-rose-500">*</span>
                   </Label>
                   <Input
                     id="phone"
@@ -417,11 +422,11 @@ const Profile: React.FC = () => {
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="address" className="text-sm font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    Địa chỉ thường trú
+                    {t("profile.addressLabel")}
                   </Label>
                   <Input
                     id="address"
-                    placeholder="Số nhà, tên đường, phường/xã, quận/huyện, tỉnh/thành phố"
+                    placeholder={t("profile.addressPlaceholder")}
                     error={errors.address?.message}
                     {...register("address")}
                     className="rounded-xl"
@@ -439,9 +444,9 @@ const Profile: React.FC = () => {
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-950/60 px-6 py-4 rounded-b-2xl">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {isDirty || selectedFile ? (
-              <span className="text-amber-600 dark:text-amber-400 font-medium">● Có thay đổi chưa được lưu</span>
+              <span className="text-amber-600 dark:text-amber-400 font-medium">{t("profile.hasUnsavedChanges")}</span>
             ) : (
-              <span>Dữ liệu hồ sơ đã được đồng bộ</span>
+              <span>{t("profile.dataSynced")}</span>
             )}
           </p>
           <div className="flex items-center gap-2.5">
@@ -453,7 +458,7 @@ const Profile: React.FC = () => {
               className="gap-1.5 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-slate-100 dark:border-slate-700 dark:bg-slate-800"
             >
               <RotateCcw className="h-4 w-4" />
-              Khôi phục
+              {t("profile.revertBtn")}
             </Button>
             <Button
               type="submit"
@@ -464,12 +469,12 @@ const Profile: React.FC = () => {
               {isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-white" />
-                  <span className="text-white">Đang lưu...</span>
+                  <span className="text-white">{t("profile.savingProfileBtn")}</span>
                 </>
               ) : (
                 <>
                   <Save className="h-4 w-4 text-white" />
-                  <span className="text-white">Lưu thay đổi</span>
+                  <span className="text-white">{t("profile.saveProfileBtn")}</span>
                 </>
               )}
             </Button>

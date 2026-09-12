@@ -42,6 +42,7 @@ import type {
   MessageListResponse,
 } from "@/types/interface/patient.interface";
 import { cancelPendingEvent, safeEmit } from "@/utils/socket";
+import { useTranslation } from "react-i18next";
 
 type DirectChannelResponse = {
   data?: Partial<Channel> & { channel_id?: number };
@@ -75,6 +76,7 @@ const findExistingDirectChannel = async (receiverId: number) => {
 };
 
 const Messages: React.FC = () => {
+  const { t } = useTranslation();
   const currentUser = useUserStore((state) => state.userInfo);
   const queryClient = useQueryClient();
   const socket = useSocket();
@@ -152,7 +154,7 @@ const Messages: React.FC = () => {
       }
     },
     onError: () => {
-      toast.error("Không thể tạo cuộc trò chuyện.");
+      toast.error(t("common.error"));
     },
   });
 
@@ -350,7 +352,7 @@ const Messages: React.FC = () => {
   const handleStartConversation = (doctor: DoctorCardData) => {
     if (!currentUser?.id) return;
     if (!doctor.user_id) {
-      toast.error("Không xác định được tài khoản của bác sĩ.");
+      toast.error(t("common.error"));
       return;
     }
 
@@ -358,7 +360,6 @@ const Messages: React.FC = () => {
     if (existingChannel) {
       setOpenCreateDialog(false);
       handleSelectChannel(existingChannel.id);
-      toast.warning("Cuộc trò chuyện với bác sĩ này đã tồn tại.");
       return;
     }
 
@@ -382,7 +383,7 @@ const Messages: React.FC = () => {
         channel_id: activeChannelId,
       },
       {
-        onError: () => toast.error("Không thể gửi tin nhắn."),
+        onError: () => toast.error(t("common.error")),
       },
     );
   };
@@ -460,10 +461,10 @@ const Messages: React.FC = () => {
           <div className="shrink-0 p-5 pb-3 border-b border-slate-100 dark:border-slate-800 space-y-3 pr-12">
             <DialogHeader>
               <DialogTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
-                Tạo cuộc trò chuyện
+                {t("messages.searchDoctorTitle")}
               </DialogTitle>
               <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                Chọn bác sĩ bạn muốn tư vấn trực tuyến.
+                {t("messages.searchDoctorDesc")}
               </DialogDescription>
             </DialogHeader>
 
@@ -474,8 +475,8 @@ const Messages: React.FC = () => {
                   setDoctorSearch(event.target.value);
                   setDoctorPage(1);
                 }}
-                placeholder="Tìm bác sĩ theo tên hoặc chuyên khoa..."
-                aria-label="Tìm bác sĩ theo tên hoặc chuyên khoa"
+                placeholder={t("messages.doctorSearchPlaceholder")}
+                aria-label={t("messages.doctorSearchPlaceholder")}
                 icon={<Search className="h-4 w-4" />}
                 className="rounded-xl"
               />
@@ -485,11 +486,11 @@ const Messages: React.FC = () => {
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain p-5 space-y-2.5 scrollbar-soft">
             {isLoadingDoctors ? (
               <div className="rounded-xl border border-slate-200 p-6 text-center text-sm text-slate-500">
-                Đang tải danh sách bác sĩ...
+                {t("common.loading")}
               </div>
             ) : doctors.length === 0 ? (
               <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
-                Không tìm thấy bác sĩ phù hợp.
+                {t("doctor.noResultsTitle")}
               </div>
             ) : (
               doctors.map((doctor) => (
@@ -499,13 +500,13 @@ const Messages: React.FC = () => {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-bold text-slate-900 dark:text-slate-100">
-                      BS.{doctor.fullname}
+                      {t("appointments.doctorPrefix")} {doctor.fullname}
                     </p>
                     <p className="truncate text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                      {doctor.specialty || "Chưa cập nhật chuyên khoa"}
+                      {doctor.specialty || t("common.notUpdated")}
                     </p>
                     <p className="truncate text-xs text-slate-400">
-                      {doctor.workplace || "Chưa cập nhật nơi làm việc"}
+                      {doctor.workplace || t("common.notUpdated")}
                     </p>
                   </div>
                   <Button
@@ -513,9 +514,9 @@ const Messages: React.FC = () => {
                     size="sm"
                     disabled={createDirectChannelMutation.isPending}
                     onClick={() => handleStartConversation(doctor)}
-                    className="rounded-xl font-bold !bg-primary text-white shrink-0"
+                    className="rounded-xl font-bold !bg-primary text-white shrink-0 cursor-pointer"
                   >
-                    Tạo
+                    {t("messages.startChatBtn")}
                   </Button>
                 </div>
               ))
@@ -529,12 +530,12 @@ const Messages: React.FC = () => {
               size="sm"
               disabled={doctorPage <= 1}
               onClick={() => setDoctorPage((page) => Math.max(1, page - 1))}
-              className="rounded-xl"
+              className="rounded-xl cursor-pointer"
             >
-              Trước
+              {t("common.back")}
             </Button>
             <span className="text-xs text-slate-500">
-              Trang {doctorPage}/{doctorTotalPages}
+              {t("common.page")} {doctorPage}/{doctorTotalPages}
             </span>
             <Button
               type="button"
@@ -544,9 +545,9 @@ const Messages: React.FC = () => {
               onClick={() =>
                 setDoctorPage((page) => Math.min(doctorTotalPages, page + 1))
               }
-              className="rounded-xl"
+              className="rounded-xl cursor-pointer"
             >
-              Sau
+              {t("common.more")}
             </Button>
           </div>
         </DialogContent>

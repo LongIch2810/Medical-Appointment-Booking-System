@@ -1,4 +1,5 @@
 import { useForm, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
@@ -62,6 +63,7 @@ export default function CreateCoachProfileForm({
   existingProfile?: CoachProfile | null;
   onDone?: () => void;
 }) {
+  const { t } = useTranslation();
   const isEditMode = !!existingProfile;
   const createMutation = useCreateCoachProfile();
   const updateMutation = useUpdateCoachProfile();
@@ -93,13 +95,13 @@ export default function CreateCoachProfileForm({
       onSuccess: () => {
         toast.success(
           isEditMode
-            ? "Đã cập nhật hồ sơ huấn luyện viên AI."
-            : "Đã tạo hồ sơ huấn luyện viên AI.",
+            ? t("aiCoach.coachUpdateSuccess")
+            : t("aiCoach.coachCreateSuccess"),
         );
         onDone?.();
       },
       onError: () => {
-        toast.error("Có lỗi xảy ra, vui lòng thử lại.");
+        toast.error(t("aiCoach.errorOccurred"));
       },
     });
   };
@@ -110,24 +112,24 @@ export default function CreateCoachProfileForm({
       className="bg-white rounded-3xl shadow-lg p-8 md:p-10 text-left space-y-6 dark:bg-slate-900 dark:border dark:border-slate-800"
     >
       <div className="space-y-2">
-        <Label htmlFor="displayName">Tên hiển thị huấn luyện viên</Label>
+        <Label htmlFor="displayName">{t("aiCoach.displayNameLabel")}</Label>
         <Input
           id="displayName"
-          placeholder="Ví dụ: Coach Mai"
+          placeholder={t("aiCoach.displayNamePlaceholder")}
           error={errors.display_name?.message}
           {...register("display_name")}
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="healthGoal">Mục tiêu sức khỏe</Label>
+        <Label htmlFor="healthGoal">{t("aiCoach.healthGoalSelectLabel")}</Label>
         <Controller
           name="health_goal"
           control={control}
           render={({ field }) => (
             <Select value={field.value} onValueChange={field.onChange}>
               <SelectTrigger id="healthGoal" className="w-full">
-                <SelectValue placeholder="Chọn mục tiêu sức khỏe" />
+                <SelectValue placeholder={t("aiCoach.healthGoalPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {HEALTH_GOAL_OPTIONS.map((goal) => (
@@ -145,7 +147,7 @@ export default function CreateCoachProfileForm({
       </div>
 
       <div className="space-y-2">
-        <Label>Sở thích</Label>
+        <Label>{t("aiCoach.preferencesLabel")}</Label>
         <Controller
           name="preferences"
           control={control}
@@ -185,7 +187,7 @@ export default function CreateCoachProfileForm({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="age">Tuổi</Label>
+          <Label htmlFor="age">{t("aiCoach.ageLabel")}</Label>
           <Input
             id="age"
             type="number"
@@ -195,7 +197,7 @@ export default function CreateCoachProfileForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="height">Chiều cao (cm)</Label>
+          <Label htmlFor="height">{t("aiCoach.heightLabel")} (cm)</Label>
           <Input
             id="height"
             type="number"
@@ -205,7 +207,7 @@ export default function CreateCoachProfileForm({
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="weight">Cân nặng (kg)</Label>
+          <Label htmlFor="weight">{t("aiCoach.weightLabel")} (kg)</Label>
           <Input
             id="weight"
             type="number"
@@ -224,7 +226,7 @@ export default function CreateCoachProfileForm({
             type="submit"
             className="rounded-2xl bg-primary text-white font-semibold px-6 py-3 shadow-md hover:bg-primary/90 transition"
           >
-            {isEditMode ? "Lưu thay đổi" : "Tạo hồ sơ huấn luyện viên"}
+            {isEditMode ? t("common.save") : t("aiCoach.createCoachProfileBtn")}
           </Button>
         )}
       </div>
