@@ -7,7 +7,7 @@ import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
 type GuardMode = "in_scope" | "out_of_scope" | "throw" | "undefined";
 type AgentStub = {
-  mode: "direct" | "tool";
+  mode: "direct" | "tool" | "booking";
   llmCalls: unknown[];
   toolCalls: unknown[];
   guardCalls: unknown[];
@@ -60,6 +60,12 @@ registerEsmMocks(subjectDirUrl, {
               return new AIMessage({
                 content: "",
                 tool_calls: [{ name: "rag_tool", args: { question: "q" }, id: "call-1", type: "tool_call" }],
+              });
+            }
+            if (state.mode === "booking" && state.llmCalls.length === 1) {
+              return new AIMessage({
+                content: "",
+                tool_calls: [{ name: "booking_appointment_tool", args: {}, id: "call-1", type: "tool_call" }],
               });
             }
             return new AIMessage("final answer");
@@ -143,6 +149,18 @@ test("routes model tool calls through ToolNode and then returns to the model", a
     { name: "rag_tool", args: { question: "q" } },
   ]);
   assert.equal(result.messages.at(-1)?.content, "final answer");
+});
+
+test("ends right after booking_appointment_tool instead of calling the model again", async () => {
+  globals.__AGENT_STUB__.mode = "booking";
+
+  const result = await agent.invoke({ messages: [] });
+
+  assert.equal(globals.__AGENT_STUB__.llmCalls.length, 1);
+  assert.deepEqual(globals.__AGENT_STUB__.toolCalls, [
+    { name: "booking_appointment_tool", args: {} },
+  ]);
+  assert.equal(result.messages.at(-1)?.content, "tool result");
 });
 
 test("topic guard: refuses an out-of-scope message without ever invoking the main agent", async () => {

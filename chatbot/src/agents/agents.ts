@@ -151,13 +151,30 @@ async function callTools(state: typeof MessagesAnnotation.State) {
   return toolNode.invoke(state);
 }
 
+/**
+ * booking_appointment_tool tự tạo sẵn văn bản trả lời hoàn chỉnh (3 phần
+ * Tóm tắt/Chi tiết/Lưu ý), và chatbot.service.ts đã ưu tiên lấy thẳng nội
+ * dung ToolMessage này làm câu trả lời cuối thay vì AIMessage tổng hợp sau
+ * đó — nghĩa là lượt gọi LLM thứ 2 (tools -> agent) chỉ để "chép lại y hệt"
+ * bị vứt bỏ hoàn toàn, tốn thêm 1-3s độ trễ vô ích mỗi lần đặt lịch thành
+ * công. Bỏ qua lượt gọi thừa này, kết thúc graph ngay sau tool.
+ */
+function shouldContinueAfterTools({ messages }: typeof MessagesAnnotation.State) {
+  for (let i = messages.length - 1; i >= 0; i -= 1) {
+    const message = messages[i] as any;
+    if (message._getType?.() !== "tool") break;
+    if (message.name === "booking_appointment_tool") return "__end__";
+  }
+  return "agent";
+}
+
 const workflow = new StateGraph(MessagesAnnotation)
   .addNode("guard", classifyTopic)
   .addNode("agent", callModel)
   .addNode("tools", callTools)
   .addEdge("__start__", "guard")
   .addConditionalEdges("guard", shouldProceedAfterGuard)
-  .addEdge("tools", "agent")
+  .addConditionalEdges("tools", shouldContinueAfterTools)
   .addConditionalEdges("agent", shouldContinue);
 
 const agent = workflow.compile();
