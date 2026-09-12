@@ -91,10 +91,14 @@ const executeQuery = async (state: typeof StateAnnotation.State) => {
 
 const generateAnswer = async (state: typeof StateAnnotation.State) => {
   const promptValue =
-    "Given the following user question, corresponding SQL query, " +
-    "and SQL result, answer the user question.\n\n" +
-    `Question: ${state.question}\n` +
-    `SQL Result: ${state.result}\n`;
+    "Dựa vào câu hỏi và kết quả truy vấn SQL dưới đây, hãy trả lời câu hỏi của người dùng.\n" +
+    "Trình bày câu trả lời theo ĐÚNG cấu trúc Markdown sau, không thêm/bớt tiêu đề:\n\n" +
+    "**Tóm tắt**\n<câu trả lời ngắn gọn>\n\n" +
+    "**Chi tiết**\n<liệt kê/giải thích đầy đủ dựa trên kết quả SQL>\n\n" +
+    "**Lưu ý & Bước tiếp theo**\n<gợi ý hành động tiếp theo phù hợp, ví dụ mời đặt lịch khám nếu câu hỏi liên quan đến bác sĩ/chuyên khoa>\n\n" +
+    `Câu hỏi: ${state.question}\n` +
+    `Kết quả SQL: ${state.result}\n\n` +
+    "Trả lời bằng đúng ngôn ngữ của câu hỏi.";
 
   const response = await llm.invoke(promptValue);
   return { answer: response.content };

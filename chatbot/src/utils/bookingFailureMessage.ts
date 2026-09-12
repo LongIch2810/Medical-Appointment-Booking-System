@@ -1,3 +1,5 @@
+import { formatAnswerTemplate } from "./answerTemplate.js";
+
 export const APPOINTMENT_SLOT_UNAVAILABLE = "APPOINTMENT_SLOT_UNAVAILABLE";
 
 export type BookingFailure = {
@@ -25,8 +27,16 @@ export function formatBookingFailure(error: BookingFailure) {
     const appointmentDate = formatAppointmentDate(error.appointmentDate);
     const startTime = error.startTime ? ` lúc ${error.startTime}` : "";
 
-    return `CHƯA ĐẶT LỊCH: ${patientName} chưa có lịch khám ${specialtyName} vào ${appointmentDate}${startTime} vì không còn ca trống. Vui lòng chọn ngày hoặc giờ khác.`;
+    return formatAnswerTemplate({
+      summary: "Chưa đặt được lịch khám.",
+      details: `${patientName} chưa có lịch khám ${specialtyName} vào ${appointmentDate}${startTime} vì không còn ca trống.`,
+      note: "Vui lòng chọn ngày hoặc giờ khác.",
+    });
   }
 
-  return `Đặt lịch không thành công: ${error.details}\nBạn vui lòng kiểm tra lại thông tin hoặc chọn khung giờ khác.`;
+  return formatAnswerTemplate({
+    summary: "Đặt lịch không thành công.",
+    details: error.details,
+    note: "Vui lòng kiểm tra lại thông tin hoặc chọn khung giờ khác.",
+  });
 }

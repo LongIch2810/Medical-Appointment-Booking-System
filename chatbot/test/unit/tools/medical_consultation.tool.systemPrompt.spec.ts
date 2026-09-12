@@ -55,6 +55,9 @@ test("sends a SystemMessage with the safety rules to the model, not just in the 
     /không tự ý đề nghị thay đổi/i,
   );
   assert.match(String(messages[0].content), /ngưng bất kỳ thuốc nào/i);
+  assert.match(String(messages[0].content), /\*\*Tóm tắt\*\*/);
+  assert.match(String(messages[0].content), /\*\*Chi tiết\*\*/);
+  assert.match(String(messages[0].content), /\*\*Lưu ý & Bước tiếp theo\*\*/);
   assert.equal(messages[1]._getType(), "human");
   assert.equal(String(messages[1].content), "Đau đầu nên làm gì?");
 });

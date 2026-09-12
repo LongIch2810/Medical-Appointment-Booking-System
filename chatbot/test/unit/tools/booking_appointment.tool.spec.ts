@@ -3,10 +3,9 @@ import test from "node:test";
 import { formatBookingResult } from "../../../src/tools/booking_appointment.tool.js";
 
 test("returns a generic message when the graph produced no result at all", () => {
-  assert.equal(
-    formatBookingResult(null),
-    "Không thể xử lý yêu cầu đặt lịch.",
-  );
+  const message = formatBookingResult(null);
+  assert.match(message, /\*\*Tóm tắt\*\*/);
+  assert.match(message, /Không thể xử lý yêu cầu đặt lịch\./);
 });
 
 test("asks the user to disambiguate when multiple relatives match", () => {
@@ -25,8 +24,8 @@ test("asks the user to disambiguate when multiple relatives match", () => {
 
 test("reports a system lookup error distinctly from a missing-information message", () => {
   const message = formatBookingResult({ relative_lookup_error: true });
-  assert.match(message, /Hệ thống đang gặp lỗi khi tra cứu người thân/);
-  assert.doesNotMatch(message, /Thiếu thông tin/);
+  assert.match(message, /Lỗi khi tra cứu người thân/);
+  assert.doesNotMatch(message, /Cần thêm thông tin để đặt lịch/);
 });
 
 test("combines both lookup-error reasons when relative AND specialty lookups both fail", () => {
@@ -42,7 +41,7 @@ test("lists every missing field using the readable Vietnamese label", () => {
     missing: ["selected_relative_id", "appointment_date", "unknown_field_xyz"],
   });
 
-  assert.match(message, /Thiếu thông tin để đặt lịch/);
+  assert.match(message, /Cần thêm thông tin để đặt lịch/);
   assert.match(message, /Người được đặt khám/);
   assert.match(message, /ngày khám/);
   // Unknown field keys fall back to the raw key instead of crashing.
@@ -83,7 +82,7 @@ test("renders a full success message with every booking_result field", () => {
     },
   });
 
-  assert.match(message, /ĐẶT LỊCH THÀNH CÔNG/);
+  assert.match(message, /Đặt lịch khám thành công!/);
   assert.match(message, /Người khám: Nguyễn Văn A/);
   assert.match(message, /Bác sĩ: Lê Văn Minh/);
   assert.match(message, /Chuyên khoa: Nội tổng quát/);
@@ -100,7 +99,7 @@ test("falls back to 'bệnh nhân' and placeholder text for missing success-mess
     },
   });
 
-  assert.match(message, /ĐẶT LỊCH THÀNH CÔNG/);
+  assert.match(message, /Đặt lịch khám thành công!/);
   assert.match(message, /Người khám: bệnh nhân/);
   assert.match(message, /Bác sĩ: Không xác định/);
   assert.match(message, /Chuyên khoa: Chưa rõ chuyên khoa/);
@@ -112,7 +111,7 @@ test("reports a generic 'could not display details' message when booking_result 
   const message = formatBookingResult({
     booking_result: { some_unexpected_shape: true },
   });
-  assert.match(message, /không thể hiển thị chi tiết/);
+  assert.match(message, /không thể hiển thị chi tiết đặt lịch/i);
 });
 
 test("asks for missing profile details when a named relative could not be found", () => {
@@ -124,5 +123,6 @@ test("asks for missing profile details when a named relative could not be found"
 
 test("falls back to a generic error message when the result matches none of the known shapes", () => {
   const message = formatBookingResult({});
-  assert.equal(message, "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại sau.");
+  assert.match(message, /\*\*Tóm tắt\*\*/);
+  assert.match(message, /Có lỗi xảy ra khi đặt lịch\./);
 });

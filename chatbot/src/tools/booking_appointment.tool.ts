@@ -3,6 +3,7 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import bookingGraph from "../langgraph/booking.graph.js";
 import { formatBookingFailure } from "../utils/bookingFailureMessage.js";
+import { formatAnswerTemplate } from "../utils/answerTemplate.js";
 import { logSafeError } from "../utils/safeLog.js";
 
 dotenv.config();
@@ -15,13 +16,22 @@ dotenv.config();
  * cùng pattern với formatBookingFailure() trong bookingFailureMessage.ts.
  */
 export function formatBookingResult(result: any): string {
-  if (!result) return "Không thể xử lý yêu cầu đặt lịch.";
+  if (!result)
+    return formatAnswerTemplate({
+      summary: "Không thể xử lý yêu cầu đặt lịch.",
+      details: "Hệ thống không nhận được phản hồi hợp lệ từ quy trình đặt lịch.",
+      note: "Vui lòng thử lại sau ít phút.",
+    });
 
   if (result.ambiguous_relatives === true && Array.isArray(result.relatives)) {
     const relativeNames = result.relatives
       .map((r: any) => `${r.fullname} - ${r.dob}`)
       .join(", ");
-    return `Tôi tìm thấy nhiều người thân phù hợp: ${relativeNames}. Bạn vui lòng chỉ định rõ bạn muốn đặt lịch cho ai?`;
+    return formatAnswerTemplate({
+      summary: "Tìm thấy nhiều người thân phù hợp.",
+      details: `Danh sách: ${relativeNames}.`,
+      note: "Vui lòng chỉ định rõ bạn muốn đặt lịch cho ai.",
+    });
   }
 
   // Lỗi tra cứu (API người thân / API chuyên khoa) khiến thông tin không
@@ -31,7 +41,11 @@ export function formatBookingResult(result: any): string {
     const parts: string[] = [];
     if (result.relative_lookup_error) parts.push("tra cứu người thân");
     if (result.specialty_resolve_error) parts.push("tra cứu chuyên khoa");
-    return `Hệ thống đang gặp lỗi khi ${parts.join(" và ")}. Bạn vui lòng thử lại sau ít phút.`;
+    return formatAnswerTemplate({
+      summary: "Hệ thống đang gặp sự cố.",
+      details: `Lỗi khi ${parts.join(" và ")}.`,
+      note: "Vui lòng thử lại sau ít phút.",
+    });
   }
 
   if (Array.isArray(result.missing) && result.missing.length > 0) {
@@ -47,7 +61,11 @@ export function formatBookingResult(result: any): string {
     const readable = result.missing
       .map((f: string) => `- ${fieldLabels[f] || f}`)
       .join("\n");
-    return `Thiếu thông tin để đặt lịch:\n${readable}\n.`;
+    return formatAnswerTemplate({
+      summary: "Cần thêm thông tin để đặt lịch.",
+      details: readable,
+      note: "Vui lòng cung cấp đầy đủ các thông tin trên.",
+    });
   }
 
   // booking_error: mọi trường hợp đặt lịch THẤT BẠI (chưa đăng nhập, lỗi
@@ -93,31 +111,32 @@ export function formatBookingResult(result: any): string {
       // nó, các dòng liền kề (không cách nhau dòng trống) sẽ bị gộp lại
       // thành một câu duy nhất.
       const line = (text: string) => `${text}  `; // 2 trailing space = <br> Markdown
-      return [
-        "ĐẶT LỊCH THÀNH CÔNG!",
-        "",
-        line(`Người khám: ${patient}`),
-        line(`Bác sĩ: ${doctorName}`),
-        line(`Chuyên khoa: ${specialty}`),
-        line(`Ngày khám: ${date}`),
-        line(`Thời gian: ${startTime} - ${endTime}`),
-        line(`Địa chỉ khám: ${address}`),
-        line(`Liên hệ: ${phone}`),
-        `Email: ${email}`,
-        "",
-        `Hình thức đặt lịch: ${bookingMode}`,
-        "",
-        "---",
-        "",
-        line("Cảm ơn bạn đã tin tưởng LifeHealth!"),
-        "Chúc bạn và gia đình nhiều sức khỏe.",
-      ].join("\n");
+      return formatAnswerTemplate({
+        summary: "Đặt lịch khám thành công!",
+        details: [
+          line(`Người khám: ${patient}`),
+          line(`Bác sĩ: ${doctorName}`),
+          line(`Chuyên khoa: ${specialty}`),
+          line(`Ngày khám: ${date}`),
+          line(`Thời gian: ${startTime} - ${endTime}`),
+          line(`Địa chỉ khám: ${address}`),
+          line(`Liên hệ: ${phone}`),
+          `Email: ${email}`,
+          "",
+          `Hình thức đặt lịch: ${bookingMode}`,
+        ].join("\n"),
+        note: "Cảm ơn bạn đã tin tưởng LifeHealth! Chúc bạn và gia đình nhiều sức khỏe.",
+      });
     }
 
     // br tồn tại nhưng không đúng shape mong đợi (thiếu doctor/doctor_schedule)
     // — tránh rơi lặng lẽ vào fallback chung chung mất hết ngữ cảnh.
     console.warn("booking_result không đúng định dạng mong đợi");
-    return "Đặt lịch có thể đã được ghi nhận nhưng không thể hiển thị chi tiết. Vui lòng kiểm tra lại trong lịch sử đặt lịch của bạn.";
+    return formatAnswerTemplate({
+      summary: "Không thể hiển thị chi tiết đặt lịch.",
+      details: "Đặt lịch có thể đã được ghi nhận nhưng hệ thống không hiển thị được đầy đủ thông tin.",
+      note: "Vui lòng kiểm tra lại trong lịch sử đặt lịch của bạn.",
+    });
   }
 
   // Fallback phòng hờ: về lý thuyết mọi trường hợp relative_not_found_label
@@ -127,10 +146,18 @@ export function formatBookingResult(result: any): string {
   // thực tế — giữ lại chỉ để không im lặng rơi vào lỗi chung chung nếu
   // logic phía trên có thay đổi ngoài dự kiến trong tương lai.
   if (result.relative_not_found_label) {
-    return `Không tìm thấy hồ sơ "${result.relative_not_found_label}" trong danh sách người thân của bạn. Bạn vui lòng cho tôi biết thêm họ tên, ngày sinh và giới tính của người này, hoặc cho tôi biết muốn đặt lịch cho ai khác.`;
+    return formatAnswerTemplate({
+      summary: `Không tìm thấy hồ sơ "${result.relative_not_found_label}".`,
+      details: "Không có trong danh sách người thân của bạn.",
+      note: "Vui lòng cho tôi biết thêm họ tên, ngày sinh và giới tính, hoặc cho biết muốn đặt lịch cho ai khác.",
+    });
   }
 
-  return "Có lỗi xảy ra khi đặt lịch. Vui lòng thử lại sau.";
+  return formatAnswerTemplate({
+    summary: "Có lỗi xảy ra khi đặt lịch.",
+    details: "Không xác định được nguyên nhân cụ thể.",
+    note: "Vui lòng thử lại sau.",
+  });
 }
 
 export const bookingAppointmentTool = tool(
@@ -138,7 +165,11 @@ export const bookingAppointmentTool = tool(
     try {
       const token = runManager?.configurable?.token;
       if (!token)
-        return "Bạn chưa đăng nhập. Vui lòng đăng nhập trước khi đặt lịch.";
+        return formatAnswerTemplate({
+          summary: "Bạn chưa đăng nhập.",
+          details: "Cần đăng nhập tài khoản để đặt lịch khám.",
+          note: "Vui lòng đăng nhập trước khi đặt lịch.",
+        });
 
       const result = await bookingGraph.invoke({
         text_input: full_text_input,
@@ -148,7 +179,11 @@ export const bookingAppointmentTool = tool(
       return formatBookingResult(result);
     } catch (error) {
       logSafeError("bookingAppointmentTool failed", error);
-      return "Lỗi hệ thống khi đặt lịch. Vui lòng thử lại.";
+      return formatAnswerTemplate({
+        summary: "Lỗi hệ thống khi đặt lịch.",
+        details: "Có sự cố xảy ra trong quá trình xử lý yêu cầu đặt lịch của bạn.",
+        note: "Vui lòng thử lại.",
+      });
     }
   },
   {
@@ -166,7 +201,7 @@ Một "phiên đặt lịch" (booking session) MỚI bắt đầu khi người d
 - "Đặt lịch cho con gái"
 
 Một "phiên đặt lịch" KẾT THÚC khi:
-- Tool trả về "ĐẶT LỊCH THÀNH CÔNG".
+- Tool trả về "Đặt lịch khám thành công!".
 - Tool trả về một lỗi nghiệp vụ (ví dụ: "Hết lịch", "Bác sĩ không rảnh").
 - Người dùng nói "hủy", "thôi không đặt nữa".
 

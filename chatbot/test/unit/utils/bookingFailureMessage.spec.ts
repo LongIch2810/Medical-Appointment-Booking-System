@@ -15,11 +15,14 @@ test("formats an unavailable slot as a clear non-successful booking result", () 
     startTime: "12:00",
   });
 
-  assert.equal(
+  assert.match(message, /\*\*Tóm tắt\*\*/);
+  assert.match(message, /\*\*Chi tiết\*\*/);
+  assert.match(message, /\*\*Lưu ý & Bước tiếp theo\*\*/);
+  assert.match(
     message,
-    "CHƯA ĐẶT LỊCH: Nam chưa có lịch khám Lão khoa vào 25/08/2026 lúc 12:00 vì không còn ca trống. Vui lòng chọn ngày hoặc giờ khác."
+    /Nam chưa có lịch khám Lão khoa vào 25\/08\/2026 lúc 12:00 vì không còn ca trống\./
   );
-  assert.equal(message.includes("ĐẶT LỊCH THÀNH CÔNG"), false);
+  assert.equal(message.includes("Đặt lịch khám thành công"), false);
 });
 
 test("preserves non-slot booking failures", () => {
