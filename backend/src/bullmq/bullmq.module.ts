@@ -29,7 +29,9 @@ import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const configuredRedisDb = Number(
-          configService.get<string>('REDIS_DB') ?? 0,
+          configService.get<string>('REDIS_BULLMQ_DB') ??
+            configService.get<string>('REDIS_DB') ??
+            0,
         );
         const redisDb =
           Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0

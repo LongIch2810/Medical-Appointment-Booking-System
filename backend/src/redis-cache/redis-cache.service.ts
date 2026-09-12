@@ -7,6 +7,16 @@ export class RedisCacheService {
   private client: Redis;
 
   constructor(configService: ConfigService) {
+    const configuredRedisDb = Number(
+      configService.get<string>('REDIS_CACHE_DB') ??
+        configService.get<string>('REDIS_DB') ??
+        0,
+    );
+    const redisDb =
+      Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
+        ? configuredRedisDb
+        : 0;
+
     this.client = new Redis({
       host: configService.get<string>('REDIS_HOST'),
       port: configService.get<number>('REDIS_PORT'),
@@ -15,6 +25,7 @@ export class RedisCacheService {
         configService.get<string>('REDIS_TLS') === 'true'
           ? {}
           : undefined,
+      db: redisDb,
     });
   }
 
