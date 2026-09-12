@@ -1,31 +1,18 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUserStore } from "@/store/useUserStore";
-import MarkdownMessage from "@/components/message/MarkdownMessage";
-import MedicalAILoading from "@/components/animation/MedicalAILoading";
-import MedicalRobotAvatar from "@/components/animation/MedicalRobotAvatar";
-import Loading from "@/components/loading/Loading";
 import { useGetMessagesChatbotInfinite } from "@/hooks/useGetMessagesChatbotInfinite";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Input } from "@/components/ui/input";
 import { sendChatbotMessage } from "@/api/conversationApi";
-import { AlertCircle, Send } from "lucide-react";
-
-type Role = "human" | "ai";
-
-interface Message {
-  id: number;
-  content: string;
-  role: Role;
-  isTyping?: boolean;
-  startTypingAt?: number;
-  elapsed?: number;
-}
+import ErrorState from "@/components/notification/ErrorState";
+import Loading from "@/components/loading/Loading";
+import ChatHeader from "@/components/chatbot/ChatHeader";
+import MedicalDisclaimer from "@/components/chatbot/MedicalDisclaimer";
+import WelcomeState from "@/components/chatbot/WelcomeState";
+import MessageList from "@/components/chatbot/MessageList";
+import ChatComposer from "@/components/chatbot/ChatComposer";
+import type { ChatMessage } from "@/components/chatbot/types";
 
 export default function Chatbot() {
   const { t } = useTranslation();
@@ -38,20 +25,13 @@ export default function Chatbot() {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const [isPending, setIsPending] = useState(false);
-  const [optimisticMessages, setOptimisticMessages] = useState<Message[]>([]);
+  const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
   const { userInfo } = useUserStore();
   const userId = userInfo?.id ?? 0;
-  // Cùng cách lấy chữ cái đầu làm fallback avatar như PatientLayout.tsx
-  // (trang Dashboard) — đồng bộ khi user chưa có ảnh đại diện, thay vì rơi
-  // về icon người chung chung không liên quan tới tài khoản.
-  const userInitial =
-    userInfo?.fullname?.charAt(0)?.toUpperCase() ??
-    userInfo?.username?.charAt(0)?.toUpperCase() ??
-    "B";
-  const { data, hasNextPage, fetchNextPage, isFetching } =
+  const { data, hasNextPage, fetchNextPage, isFetching, isLoading, isError, refetch } =
     useGetMessagesChatbotInfinite(userId);
   const queryClient = useQueryClient();
-  const messages: Message[] = useMemo(() => {
+  const messages: ChatMessage[] = useMemo(() => {
     const merged =
       data?.pages
         .slice()
@@ -61,21 +41,13 @@ export default function Chatbot() {
       new Map(merged.map((m) => [m.id, m])).values()
     );
     // Việc dọn optimisticMessages được xử lý tường minh theo id trong
-    // handleSend (sau khi invalidateQueries đưa dòng thật vào serverMessages)
+    // runSend (sau khi invalidateQueries đưa dòng thật vào serverMessages)
     // — không còn so khớp theo (role, content) ở đây nữa, vì cách đó ẩn nhầm
     // tin nhắn vừa gửi khi trùng nội dung với 1 tin nhắn cũ trong lịch sử
     // (vd gửi lại "hello" nhiều lần).
-    const combinedMessages = [...serverMessages, ...optimisticMessages];
-    return combinedMessages.length > 0
-      ? combinedMessages
-      : [
-          {
-            id: 1,
-            role: "ai",
-            content: t("chatbot.welcomeMessage"),
-          },
-        ];
-  }, [data, optimisticMessages, t]);
+    return [...serverMessages, ...optimisticMessages];
+  }, [data, optimisticMessages]);
+  const hasMessages = messages.length > 0;
 
   useEffect(() => {
     if (!userInfo) {
@@ -84,11 +56,14 @@ export default function Chatbot() {
   }, [userInfo, navigate]);
 
   useEffect(() => {
+    // MessageList (và ScrollArea bên trong) chỉ mount khi hasMessages=true
+    // (welcome state thay chỗ khi rỗng) — dò lại viewport mỗi khi trạng thái
+    // này đổi từ false sang true.
     const viewport = scrollAreaWrapperRef.current?.querySelector<HTMLDivElement>(
       '[data-slot="scroll-area-viewport"]'
     );
     viewportRef.current = viewport ?? null;
-  }, []);
+  }, [hasMessages]);
 
   useEffect(() => {
     viewportRef.current?.scrollTo({
@@ -117,11 +92,7 @@ export default function Chatbot() {
     if (!container) return;
     container.addEventListener("scroll", handleScroll);
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
-
-  const handleInputContent = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-  };
+  }, [handleScroll, hasMessages]);
 
   const clearTypingInterval = () => {
     if (typingIntervalRef.current) {
@@ -130,33 +101,33 @@ export default function Chatbot() {
     }
   };
 
-  const handleSend = async () => {
-    if (!input.trim() || isPending || !userId) return;
-
-    const question = input;
-    setInput("");
+  // Logic dùng chung cho gửi tin nhắn mới và bấm "Thử lại" trên 1 tin nhắn
+  // lỗi — humanId/aiId là cặp id được tạo liền kề (aiId = humanId + 1) từ
+  // lúc optimistic message được thêm vào, giữ nguyên để filter đúng cặp khi
+  // gửi thành công.
+  const runSend = async (question: string, humanId: number, aiId: number) => {
     setIsPending(true);
-
-    const tempId = Date.now();
     const startTime = Date.now();
 
-    setOptimisticMessages((prev) => [
-      ...prev,
-      { id: tempId, content: question, role: "human" },
-      {
-        id: tempId + 1,
-        content: "",
-        role: "ai",
-        isTyping: true,
-        startTypingAt: startTime,
-        elapsed: 0,
-      },
-    ]);
+    setOptimisticMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === aiId
+          ? {
+              ...msg,
+              content: "",
+              isTyping: true,
+              isError: false,
+              startTypingAt: startTime,
+              elapsed: 0,
+            }
+          : msg
+      )
+    );
 
     typingIntervalRef.current = setInterval(() => {
       setOptimisticMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempId + 1
+          msg.id === aiId
             ? {
                 ...msg,
                 elapsed: (Date.now() - (msg.startTypingAt ?? Date.now())) / 1000,
@@ -171,12 +142,8 @@ export default function Chatbot() {
       clearTypingInterval();
       setOptimisticMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempId + 1
-            ? {
-                ...msg,
-                isTyping: false,
-                content: answer,
-              }
+          msg.id === aiId
+            ? { ...msg, isTyping: false, isError: false, content: answer }
             : msg
         )
       );
@@ -187,17 +154,19 @@ export default function Chatbot() {
         queryKey: ["messages-chatbot", userId],
       });
       setOptimisticMessages((prev) =>
-        prev.filter((msg) => msg.id !== tempId && msg.id !== tempId + 1)
+        prev.filter((msg) => msg.id !== humanId && msg.id !== aiId)
       );
     } catch (error) {
       clearTypingInterval();
       setOptimisticMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempId + 1
+          msg.id === aiId
             ? {
                 ...msg,
                 isTyping: false,
+                isError: true,
                 content: t("chatbot.requestFailed"),
+                retryQuestion: question,
               }
             : msg
         )
@@ -208,146 +177,76 @@ export default function Chatbot() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleSend();
-    }
+  const handleSend = () => {
+    if (!input.trim() || isPending || !userId) return;
+
+    const question = input;
+    setInput("");
+
+    const humanId = Date.now();
+    const aiId = humanId + 1;
+
+    setOptimisticMessages((prev) => [
+      ...prev,
+      { id: humanId, content: question, role: "human" },
+      {
+        id: aiId,
+        content: "",
+        role: "ai",
+        isTyping: true,
+        startTypingAt: Date.now(),
+        elapsed: 0,
+      },
+    ]);
+
+    runSend(question, humanId, aiId);
+  };
+
+  const handleRetry = (aiId: number, question: string) => {
+    if (isPending) return;
+    runSend(question, aiId - 1, aiId);
   };
 
   return (
-    <section className="w-full h-full flex justify-center items-center overflow-hidden">
-      <Card className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl h-full flex flex-col gap-0 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 dark:border-[#293548] bg-white dark:bg-[#172033]">
-        <CardHeader className="shrink-0 px-5 py-3.5 border-b border-slate-100 dark:border-[#293548] flex flex-row items-center justify-between bg-white dark:bg-[#111827] rounded-t-2xl shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <img
-                src="/logo.jpg"
-                alt="LifeHealth Logo"
-                className="size-11 object-cover rounded-2xl shadow-xs border border-primary/20"
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#111827]">
-                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-              </span>
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-bold text-slate-900 dark:text-[#F1F5F9] text-base sm:text-lg flex items-center gap-1.5">
-                  LifeHealth MedAI
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="w-4 h-4 text-sky-500"
-                  >
-                    <path d="M22.5 12c0 5.79-4.71 10.5-10.5 10.5S1.5 17.79 1.5 12 6.21 1.5 12 1.5 22.5 6.21 22.5 12zM10.94 17.25l7.31-7.31-1.06-1.06-6.25 6.25-2.81-2.81-1.06 1.06 3.87 3.87z" />
-                  </svg>
-                </h1>
-                <span className="rounded-md bg-gradient-to-r from-emerald-500/15 to-teal-500/15 dark:from-emerald-500/25 dark:to-teal-500/25 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                  {t("common.officialAi")}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-[#94A3B8] font-medium">
-                {t("chatbot.pageSubtitle")}
-              </p>
-            </div>
-          </div>
-        </CardHeader>
-
-        {/* Mandatory Amber Medical Disclaimer */}
-        <div className="shrink-0 px-4 py-2 bg-amber-50/90 dark:bg-amber-950/30 border-b border-amber-200/80 dark:border-amber-900/40 flex items-center gap-2.5 text-xs text-amber-900 dark:text-amber-300">
-          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
-          <p className="leading-tight text-[11px] sm:text-xs">
-            <strong>{t("chatbot.disclaimerStrong")}</strong> {t("chatbot.disclaimerText")}
-          </p>
+    <section className="w-full h-full flex flex-col items-center overflow-hidden">
+      <div className="w-full h-full max-w-4xl lg:max-w-5xl 2xl:max-w-6xl flex flex-col gap-2 sm:gap-3 min-h-0">
+        <div className="shrink-0 mx-auto w-full max-w-[900px] px-3 sm:px-4 flex flex-col gap-2">
+          <ChatHeader />
+          <MedicalDisclaimer />
         </div>
 
-        <CardContent className="flex-1 min-h-0 p-0 bg-slate-50/60 dark:bg-[#0B1220]/60 overflow-hidden">
-          <div ref={scrollAreaWrapperRef} className="h-full w-full overflow-hidden">
-            <ScrollArea className="h-full w-full">
-              <div className="p-3 sm:p-4 space-y-3.5">
-                {messages.map(({ id, content, role, isTyping, elapsed }) => (
-                  <div
-                    key={id}
-                    className={`flex items-start gap-3 ${
-                      role === "human" ? "justify-end" : "justify-start"
-                    }`}
-                  >
-                    {/* Avatar Bot — Robot AI Y tế */}
-                    {role === "ai" && (
-                      <div className="relative shrink-0">
-                        {isTyping && (
-                          <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                        )}
-                        <Avatar className="relative w-9 h-9 bg-white dark:bg-[#1E293B] border border-slate-200 dark:border-[#293548] shadow-xs">
-                          <AvatarImage src="" alt="Bot" />
-                          <AvatarFallback>
-                            <MedicalRobotAvatar active={!!isTyping} />
-                          </AvatarFallback>
-                        </Avatar>
-                      </div>
-                    )}
-
-                    {/* Bubble */}
-                    <div
-                      className={`max-w-[80%] min-w-0 px-4 py-2.5 rounded-2xl break-words text-sm md:text-base shadow-xs
-                        ${
-                          role === "human"
-                            ? "bg-primary text-primary-foreground dark:bg-teal-500/25 dark:text-teal-100 dark:border dark:border-teal-500/35 rounded-br-none whitespace-pre-wrap font-medium"
-                            : "bg-white dark:bg-[#172033] border border-slate-200/80 dark:border-[#293548] text-slate-800 dark:text-[#F1F5F9] rounded-bl-none"
-                        }`}
-                    >
-                      {isTyping ? (
-                        <MedicalAILoading elapsed={elapsed ?? 0} />
-                      ) : role === "human" ? (
-                        content
-                      ) : (
-                        <MarkdownMessage content={content} />
-                      )}
-                    </div>
-
-                    {/* Avatar User */}
-                    {role === "human" && (
-                      <Avatar className="w-9 h-9 bg-primary/10 border border-primary/20 shadow-xs shrink-0">
-                        <AvatarImage src={userInfo?.picture || ""} alt="User" />
-                        <AvatarFallback className="font-bold text-primary text-xs">
-                          {userInitial}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
+        {isLoading ? (
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <Loading size={28} />
           </div>
-        </CardContent>
+        ) : isError ? (
+          <div className="flex-1 min-h-0 flex items-center justify-center">
+            <ErrorState
+              description={t("chatbot.historyLoadFailed")}
+              onRetry={() => refetch()}
+            />
+          </div>
+        ) : !hasMessages ? (
+          <div className="flex-1 min-h-0">
+            <WelcomeState onQuickAction={setInput} />
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0">
+            <MessageList
+              messages={messages}
+              scrollAreaWrapperRef={scrollAreaWrapperRef}
+              onRetry={handleRetry}
+            />
+          </div>
+        )}
 
-        {/* Input */}
-        <CardFooter className="shrink-0 p-3 sm:p-4 border-t border-slate-100 dark:border-[#293548] bg-white dark:bg-[#111827] flex gap-2.5">
-          <Input
-            value={input}
-            onInput={handleInputContent}
-            onKeyDown={handleKeyDown}
-            disabled={isPending}
-            className="flex-1 rounded-xl border border-slate-200 dark:border-[#293548] bg-white dark:bg-[#1E293B] px-3.5 py-2 text-sm text-slate-900 dark:text-[#F1F5F9] focus-visible:ring-primary/20"
-            placeholder={isPending ? t("chatbot.inputThinkingPlaceholder") : t("chatbot.inputPlaceholder")}
-          />
-          <Button
-            disabled={isPending || !input.trim()}
-            onClick={handleSend}
-            className="rounded-xl px-5 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-sm shadow-xs cursor-pointer gap-1.5"
-          >
-            {isPending ? (
-              <Loading size={10} />
-            ) : (
-              <>
-                <Send className="w-3.5 h-3.5" />
-                <span>{t("chatbot.sendBtn")}</span>
-              </>
-            )}
-          </Button>
-        </CardFooter>
-      </Card>
+        <ChatComposer
+          value={input}
+          onChange={setInput}
+          onSend={handleSend}
+          isPending={isPending}
+        />
+      </div>
     </section>
   );
 }
