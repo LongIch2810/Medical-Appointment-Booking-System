@@ -25,7 +25,7 @@ Use two-space indentation and TypeScript. Backend Prettier requires single quote
 
 ## Testing Guidelines
 
-Backend tests use Jest and Nest testing utilities, under `backend/test/unit/` (mirroring `src/`) and `backend/test/integration/`; run with `npm --prefix backend run test:cov`. `frontend/` has Playwright end-to-end specs under `frontend/test/e2e/` — run with `npm --prefix frontend run test:e2e` (or `test:e2e:ui` for the interactive runner). `admin/` and `chatbot/` still have no test runner, so lint and build affected clients.
+Backend tests use Jest and Nest testing utilities, under `backend/test/unit/` (mirroring `src/`) and `backend/test/integration/`; run with `npm --prefix backend run test:cov`. `frontend/` has Playwright end-to-end specs under `frontend/test/e2e/` — run with `npm --prefix frontend run test:e2e` (or `test:e2e:ui` for the interactive runner). `chatbot/` uses Node's built-in test runner (not Jest) — `npm --prefix chatbot run test` / `test:cov`, specs under `chatbot/test/unit/` mirroring `src/`, with real outbound network calls blocked so tests mock `httpClient`/LLM/Qdrant. `admin/` is the only service still without a test runner — lint and build it instead.
 
 ## Commit & Pull Request Guidelines
 
@@ -34,6 +34,12 @@ Use existing Conventional Commit prefixes: `feat:`, `fix:`, `refactor:`, or `cho
 ## Documentation & Screenshots
 
 Keep product screenshots used by the root `README.md` under `docs/images/` with descriptive kebab-case names. Capture real Admin, Doctor, and Patient screens with demo or anonymized data only; never expose credentials, tokens, API keys, or real medical records. Optimize images for repository use, reference them with relative paths, and verify links render correctly after moving or renaming an asset.
+
+## Known Pitfalls
+
+- `chatbot/package.json` must keep `@qdrant/js-client-rest` pinned at `1.18.0`. `@langchain/qdrant@0.1.2` still calls the client's `.search()` method, removed in `1.19.0` in favor of `.query()`; bumping it silently breaks `rag_tool` with a generic `ChatbotOperationError INTERNAL_ERROR` (the shared `logSafeError` helper redacts the real error message, so this needs a direct repro to diagnose, not just re-reading logs).
+- `frontend/vercel.json` and `admin/vercel.json`'s SPA rewrite must exclude `/assets/` (`"/((?!assets/).*)"`) rather than matching everything. Vite fingerprints `React.lazy()` chunk filenames per build, so a tab left open across a redeploy can request a deleted chunk; a bare catch-all rewrite serves `index.html` for that request instead of a 404, and the browser rejects it with a module MIME-type error.
+- `frontend/`'s toast on a new real-time notification (`NotificationRealtimeProvider`) fires as soon as the backend emits the socket event — independent of, and often faster than, whatever HTTP response triggered it (e.g. a chatbot reply still needs an LLM turn to compose text). Seeing the toast before the corresponding response is expected, not a bug to "fix" by reordering.
 
 ## Security & Additional Instructions
 
