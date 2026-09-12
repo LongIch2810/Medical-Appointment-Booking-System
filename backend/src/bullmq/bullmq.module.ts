@@ -38,7 +38,7 @@ import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
               : undefined,
           // Upstash supports database 0 only. Use key prefixes to separate
           // BullMQ data from cache/rate-limit data on the shared Redis.
-          db: Number(configService.get<string>('REDIS_DB') ?? 0),
+          db: 0,
         },
       }),
     }),
