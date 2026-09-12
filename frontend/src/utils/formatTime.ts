@@ -1,4 +1,4 @@
-import type { PatientAppointment } from "../types/interface/patient.interface";
+import type { DoctorScheduleAppointmentSlot } from "../types/interface/doctorSchedule.interface";
 import { formatDate } from "./formatDate";
 
 export const formatTime = (date: Date): string => {
@@ -48,11 +48,11 @@ export const checkExpireTime = (
 
 export const checkTimeBooked = (
   selectedDate: Date,
-  appointments: PatientAppointment[],
+  appointments: DoctorScheduleAppointmentSlot[],
 ): boolean => {
   let isBooked = false;
   (Array.isArray(appointments) ? appointments : []).forEach(
-    (appointment: PatientAppointment) => {
+    (appointment: DoctorScheduleAppointmentSlot) => {
       if (
         formatDate(selectedDate, "vi-VN", false) ===
         appointment.appointment_date
