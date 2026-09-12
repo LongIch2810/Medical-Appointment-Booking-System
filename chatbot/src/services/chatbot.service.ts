@@ -25,6 +25,13 @@ import { logSafeError } from "../utils/safeLog.js";
 const BACKEND_REQUEST_TIMEOUT_MS =
   Number(process.env.BACKEND_REQUEST_TIMEOUT_MS) || 10_000;
 
+// Keep the prompt bounded as conversations grow while retaining the complete
+// history in the backend database.
+const CHAT_HISTORY_CONTEXT_LIMIT = Math.max(
+  1,
+  Number(process.env.CHAT_HISTORY_CONTEXT_LIMIT) || 10,
+);
+
 // Đo thời gian tạm thời để xác định bước nào trong pipeline (lưu tin nhắn /
 // lấy lịch sử / agent LLM / lưu trả lời) chiếm phần lớn độ trễ — báo cáo
 // thực tế cho thấy 1 tin nhắn "hello" đơn giản vẫn có thể timeout dù chatbot
@@ -77,11 +84,16 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
       { operation: "chat_history_context", totalTimeoutMs: 20_000 },
     );
     logStep("fetch_history_context", { durationMs: Date.now() - stepStartedAt });
-    const chatHistory = history.data.map((item: any) =>
+    const recentHistory = history.data.slice(-CHAT_HISTORY_CONTEXT_LIMIT);
+    const chatHistory = recentHistory.map((item: any) =>
       item.role === "human"
         ? new HumanMessage(item.content)
         : new AIMessage(item.content),
     );
+    logStep("prepare_history_context", {
+      messageCount: recentHistory.length,
+      historyLimit: CHAT_HISTORY_CONTEXT_LIMIT,
+    });
 
     stepStartedAt = Date.now();
     const result = await agent.invoke({ messages: chatHistory }, {
