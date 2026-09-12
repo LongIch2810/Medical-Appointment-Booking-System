@@ -9,9 +9,14 @@ import { WebsocketGateway } from 'src/websockets/websocket.gateway';
 import { In, Repository } from 'typeorm';
 import { BodyCreateNotificationDto } from './dto/request/bodyCreateNotification.dto';
 import { BodyFilterNotificationsDto } from './dto/request/bodyFilterNotifications.dto';
+import {
+  BodySendNotificationDto,
+  NotificationAudience,
+} from './dto/request/bodySendNotification.dto';
 import { BodyUpdateNotificationDto } from './dto/request/bodyUpdateNotification.dto';
 import { QueryMyNotificationsDto } from './dto/request/queryMyNotifications.dto';
 import { QueryNotificationRecipientsDto } from './dto/request/queryNotificationRecipients.dto';
+import { NotificationResponseDto } from './dto/response/notificationResponse.dto';
 import { NotificationsMapper } from './notifications.mapper';
 import { UsersMapper } from '../users/users.mapper';
 import { isPgDriverError } from 'src/utils/isPgDriverError';
@@ -68,6 +73,25 @@ export class NotificationsService {
       },
     ]);
     return notification;
+  }
+
+  async sendBroadcast(body: BodySendNotificationDto) {
+    const userIds =
+      body.audience === NotificationAudience.ALL
+        ? await this.findActiveUserIds()
+        : body.audience === NotificationAudience.ROLE
+          ? await this.findActiveUserIds(body.roleName)
+          : await this.findActiveUserIdsAmong(body.userIds!);
+
+    const drafts: NotificationDraft[] = userIds.map((userId) => ({
+      userId,
+      title: body.title,
+      content: body.content,
+      type: NotificationType.MANUAL,
+      actionUrl: body.actionUrl ?? null,
+    }));
+    const responses = await this.persistAndEmit(drafts);
+    return { targetedCount: responses.length };
   }
 
   async findRecipients(filters: QueryNotificationRecipientsDto) {
@@ -336,45 +360,64 @@ export class NotificationsService {
     return { message: 'Xóa thông báo thành công.' };
   }
 
+  // Broadcast (gửi ALL/ROLE/nhiều USERS) có thể tạo hàng trăm/nghìn draft cùng
+  // lúc; chunk để tránh một câu INSERT quá nhiều tham số và giữ bộ nhớ ổn định.
+  // Các caller hiện có (create, createAppointmentNotifications,...) chỉ truyền
+  // vài draft nên vòng lặp bên dưới luôn chỉ chạy đúng 1 lần với họ — không đổi
+  // hành vi.
+  private static readonly BROADCAST_CHUNK_SIZE = 500;
+
   private async persistAndEmit(drafts: NotificationDraft[]) {
     if (drafts.length === 0) return [];
-    let saved: Notification[];
-    try {
-      saved = await this.notificationRepo.save(
-        drafts.map((draft) =>
-          this.notificationRepo.create({
-            title: draft.title,
-            content: draft.content,
-            type: draft.type,
-            is_read: false,
-            action_url: draft.actionUrl,
-            metadata: draft.metadata ?? {},
-            dedupe_key: draft.dedupeKey ?? null,
-            user: { id: draft.userId },
-          }),
-        ),
+    const responses: NotificationResponseDto[] = [];
+    for (
+      let i = 0;
+      i < drafts.length;
+      i += NotificationsService.BROADCAST_CHUNK_SIZE
+    ) {
+      const chunk = drafts.slice(
+        i,
+        i + NotificationsService.BROADCAST_CHUNK_SIZE,
       );
-    } catch (error) {
-      if (
-        error instanceof QueryFailedError &&
-        isPgDriverError(error.driverError) &&
-        error.driverError.code === '23505' &&
-        error.driverError.constraint === 'IDX_notifications_dedupe_key'
-      ) {
-        return [];
+      let saved: Notification[];
+      try {
+        saved = await this.notificationRepo.save(
+          chunk.map((draft) =>
+            this.notificationRepo.create({
+              title: draft.title,
+              content: draft.content,
+              type: draft.type,
+              is_read: false,
+              action_url: draft.actionUrl,
+              metadata: draft.metadata ?? {},
+              dedupe_key: draft.dedupeKey ?? null,
+              user: { id: draft.userId },
+            }),
+          ),
+        );
+      } catch (error) {
+        if (
+          error instanceof QueryFailedError &&
+          isPgDriverError(error.driverError) &&
+          error.driverError.code === '23505' &&
+          error.driverError.constraint === 'IDX_notifications_dedupe_key'
+        ) {
+          continue;
+        }
+        throw error;
       }
-      throw error;
+      const hydrated = await this.notificationRepo.find({
+        where: { id: In(saved.map((notification) => notification.id)) },
+        relations: ['user'],
+      });
+      const chunkResponses = NotificationsMapper.toResponseList(hydrated);
+      chunkResponses.forEach((response) => {
+        this.emitSafely(() =>
+          this.gateway.notifyNotificationNew(response.user!.id, response),
+        );
+      });
+      responses.push(...chunkResponses);
     }
-    const hydrated = await this.notificationRepo.find({
-      where: { id: In(saved.map((notification) => notification.id)) },
-      relations: ['user'],
-    });
-    const responses = NotificationsMapper.toResponseList(hydrated);
-    responses.forEach((response) => {
-      this.emitSafely(() =>
-        this.gateway.notifyNotificationNew(response.user!.id, response),
-      );
-    });
     return responses;
   }
 
@@ -428,12 +471,7 @@ export class NotificationsService {
     );
     if (cached) return cached;
 
-    const rows = await this.activeUserWithRoleQuery()
-      .select('user.id', 'id')
-      .andWhere('role.role_name = :role', { role: ROLE_NAME.ADMIN })
-      .distinct(true)
-      .getRawMany<{ id: string }>();
-    const ids = rows.map((row) => Number(row.id));
+    const ids = await this.findActiveUserIds(ROLE_NAME.ADMIN);
     // TTL ngắn: danh sách admin active hiếm khi đổi, nhưng vẫn tự làm mới sau
     // ít giây thay vì phải wiring invalidation cho mọi chỗ có thể đổi role/khóa
     // tài khoản admin.
@@ -443,6 +481,32 @@ export class NotificationsService {
       30,
     );
     return ids;
+  }
+
+  // Dùng cho broadcast (ALL/ROLE) — không cache như findActiveAdminUserIds vì
+  // đây là hành động admin bấm gửi thủ công, tần suất thấp và cần chính xác
+  // ngay tại thời điểm gửi (không chấp nhận độ trễ vài chục giây của cache).
+  private async findActiveUserIds(roleName?: string): Promise<number[]> {
+    const query = this.activeUserWithRoleQuery()
+      .select('user.id', 'id')
+      .distinct(true);
+    if (roleName) {
+      query.andWhere('role.role_name = :role', { role: roleName });
+    }
+    const rows = await query.getRawMany<{ id: string }>();
+    return rows.map((row) => Number(row.id));
+  }
+
+  // Dùng cho broadcast audience USERS — lọc userIds admin chọn xuống còn các
+  // id thực sự đang active/chưa khóa/có role, thay vì báo lỗi toàn bộ request
+  // chỉ vì một id đã lỗi thời (xem sendBroadcast).
+  private async findActiveUserIdsAmong(userIds: number[]): Promise<number[]> {
+    const rows = await this.activeUserWithRoleQuery()
+      .select('user.id', 'id')
+      .andWhere('user.id IN (:...userIds)', { userIds })
+      .distinct(true)
+      .getRawMany<{ id: string }>();
+    return rows.map((row) => Number(row.id));
   }
 
   private buildAppointmentCopy(

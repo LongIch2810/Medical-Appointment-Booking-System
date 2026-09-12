@@ -10,6 +10,7 @@ describe('NotificationsController', () => {
     findRecipients: jest.fn(),
     filterAndPagination: jest.fn(),
     create: jest.fn(),
+    sendBroadcast: jest.fn(),
     findById: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -108,6 +109,17 @@ describe('NotificationsController', () => {
     expect(result).toBe(expected);
   });
 
+  it('sends a broadcast notification', () => {
+    const body = { audience: 'ROLE', roleName: 'DOCTOR' } as never;
+    const expected = { targetedCount: 3 };
+    notificationsService.sendBroadcast.mockReturnValue(expected);
+
+    const result = controller.sendBroadcast(body);
+
+    expect(notificationsService.sendBroadcast).toHaveBeenCalledWith(body);
+    expect(result).toBe(expected);
+  });
+
   it('finds a notification by id', () => {
     const expected = { id: 3 };
     notificationsService.findById.mockReturnValue(expected);
@@ -149,6 +161,7 @@ describe('NotificationsController authorization metadata', () => {
     ['findRecipients', PERMISSIONS.NOTIFICATION_CREATE],
     ['filterAndPagination', PERMISSIONS.NOTIFICATION_MANAGE],
     ['create', PERMISSIONS.NOTIFICATION_CREATE],
+    ['sendBroadcast', PERMISSIONS.NOTIFICATION_SEND],
     ['findById', PERMISSIONS.NOTIFICATION_MANAGE],
     ['update', PERMISSIONS.NOTIFICATION_UPDATE],
     ['remove', PERMISSIONS.NOTIFICATION_DELETE],

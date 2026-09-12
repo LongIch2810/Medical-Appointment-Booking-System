@@ -2,6 +2,7 @@
 import { NotFoundException } from '@nestjs/common';
 import Notification from 'src/entities/notification.entity';
 import User from 'src/entities/user.entity';
+import { NotificationAudience } from 'src/modules/notifications/dto/request/bodySendNotification.dto';
 import { NotificationType } from 'src/shared/enums/notificationType';
 import { WebsocketGateway } from 'src/websockets/websocket.gateway';
 import { Repository } from 'typeorm';
@@ -267,6 +268,141 @@ describe('NotificationsService', () => {
     expect(savedDrafts.map((draft) => draft.user.id)).toEqual([7, 9, 8]);
     expect(savedDrafts.every((draft) => draft.is_read === false)).toBe(true);
     expect(gateway.notifyNotificationNew).toHaveBeenCalledTimes(3);
+  });
+
+  it('sendBroadcast với audience ALL lấy toàn bộ user active, không lọc role', async () => {
+    const query = createQueryBuilderMock();
+    query.getRawMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+    userRepo.createQueryBuilder.mockReturnValue(query as never);
+    notificationRepo.create.mockImplementation(
+      (value) => value as Notification,
+    );
+    (notificationRepo.save as jest.Mock).mockImplementation((value) => {
+      const drafts = value as Notification[];
+      return Promise.resolve(
+        drafts.map((draft, index) => ({ ...draft, id: index + 1 })),
+      );
+    });
+    notificationRepo.find.mockResolvedValue([
+      notificationEntity(1, 1),
+      notificationEntity(2, 2),
+    ]);
+
+    const result = await service.sendBroadcast({
+      audience: NotificationAudience.ALL,
+      title: 'Thông báo chung',
+      content: 'Nội dung',
+    } as never);
+
+    expect(result).toEqual({ targetedCount: 2 });
+    expect(
+      query.andWhere.mock.calls.some(([condition]) =>
+        String(condition).includes('role.role_name'),
+      ),
+    ).toBe(false);
+    expect(gateway.notifyNotificationNew).toHaveBeenCalledTimes(2);
+  });
+
+  it('sendBroadcast với audience ROLE lọc đúng theo role_name', async () => {
+    const query = createQueryBuilderMock();
+    query.getRawMany.mockResolvedValue([{ id: '5' }]);
+    userRepo.createQueryBuilder.mockReturnValue(query as never);
+    notificationRepo.create.mockImplementation(
+      (value) => value as Notification,
+    );
+    (notificationRepo.save as jest.Mock).mockImplementation((value) => {
+      const drafts = value as Notification[];
+      return Promise.resolve(
+        drafts.map((draft, index) => ({ ...draft, id: index + 10 })),
+      );
+    });
+    notificationRepo.find.mockResolvedValue([notificationEntity(10, 5)]);
+
+    const result = await service.sendBroadcast({
+      audience: NotificationAudience.ROLE,
+      roleName: 'DOCTOR',
+      title: 'Thông báo bác sĩ',
+      content: 'Nội dung',
+    } as never);
+
+    expect(result).toEqual({ targetedCount: 1 });
+    expect(query.andWhere).toHaveBeenCalledWith('role.role_name = :role', {
+      role: 'DOCTOR',
+    });
+  });
+
+  it('sendBroadcast với audience USERS chỉ tính những id thực sự active, không fail toàn bộ vì id lỗi thời', async () => {
+    const query = createQueryBuilderMock();
+    // Yêu cầu [1, 2, 3] nhưng chỉ 1 và 2 còn active/chưa khóa/có role.
+    query.getRawMany.mockResolvedValue([{ id: '1' }, { id: '2' }]);
+    userRepo.createQueryBuilder.mockReturnValue(query as never);
+    notificationRepo.create.mockImplementation(
+      (value) => value as Notification,
+    );
+    (notificationRepo.save as jest.Mock).mockImplementation((value) => {
+      const drafts = value as Notification[];
+      return Promise.resolve(
+        drafts.map((draft, index) => ({ ...draft, id: index + 20 })),
+      );
+    });
+    notificationRepo.find.mockResolvedValue([
+      notificationEntity(20, 1),
+      notificationEntity(21, 2),
+    ]);
+
+    const result = await service.sendBroadcast({
+      audience: NotificationAudience.USERS,
+      userIds: [1, 2, 3],
+      title: 'Thông báo riêng',
+      content: 'Nội dung',
+    } as never);
+
+    expect(result).toEqual({ targetedCount: 2 });
+    expect(query.andWhere).toHaveBeenCalledWith('user.id IN (:...userIds)', {
+      userIds: [1, 2, 3],
+    });
+  });
+
+  it('sendBroadcast chunk broadcast lớn để tránh một câu insert quá nhiều tham số', async () => {
+    const totalUsers = 600;
+    const query = createQueryBuilderMock();
+    query.getRawMany.mockResolvedValue(
+      Array.from({ length: totalUsers }, (_, i) => ({ id: String(i + 1) })),
+    );
+    userRepo.createQueryBuilder.mockReturnValue(query as never);
+    notificationRepo.create.mockImplementation(
+      (value) => value as Notification,
+    );
+
+    let nextId = 1;
+    let lastSavedIds: number[] = [];
+    (notificationRepo.save as jest.Mock).mockImplementation((value) => {
+      const drafts = value as Notification[];
+      const saved = drafts.map((draft) => ({ ...draft, id: nextId++ }));
+      lastSavedIds = saved.map((entity) => entity.id);
+      return Promise.resolve(saved);
+    });
+    (notificationRepo.find as jest.Mock).mockImplementation(() =>
+      Promise.resolve(
+        lastSavedIds.map((id) => notificationEntity(id, id)),
+      ),
+    );
+
+    const result = await service.sendBroadcast({
+      audience: NotificationAudience.ALL,
+      title: 'Thông báo toàn hệ thống',
+      content: 'Nội dung',
+    } as never);
+
+    expect(result).toEqual({ targetedCount: totalUsers });
+    expect(notificationRepo.save).toHaveBeenCalledTimes(2);
+    expect(
+      (notificationRepo.save as jest.Mock).mock.calls[0][0],
+    ).toHaveLength(500);
+    expect(
+      (notificationRepo.save as jest.Mock).mock.calls[1][0],
+    ).toHaveLength(100);
+    expect(gateway.notifyNotificationNew).toHaveBeenCalledTimes(totalUsers);
   });
 
   it('filterAndPagination áp dụng đúng bộ lọc admin và trả về danh sách đã map', async () => {

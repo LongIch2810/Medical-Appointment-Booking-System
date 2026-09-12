@@ -21,6 +21,7 @@ import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 import { BodyCreateNotificationDto } from './dto/request/bodyCreateNotification.dto';
 import { BodyFilterNotificationsDto } from './dto/request/bodyFilterNotifications.dto';
+import { BodySendNotificationDto } from './dto/request/bodySendNotification.dto';
 import { BodyUpdateNotificationDto } from './dto/request/bodyUpdateNotification.dto';
 import { QueryMyNotificationsDto } from './dto/request/queryMyNotifications.dto';
 import { QueryNotificationRecipientsDto } from './dto/request/queryNotificationRecipients.dto';
@@ -97,6 +98,15 @@ export class NotificationsController {
   @AuditLogAction({ action: 'CREATE', entityName: 'notifications' })
   create(@Body() body: BodyCreateNotificationDto) {
     return this.notificationsService.create(body);
+  }
+
+  @ApiOperation({ summary: 'Gửi thông báo hàng loạt theo nhóm đối tượng' })
+  @Post('send')
+  @HttpCode(HttpStatus.CREATED)
+  @Permissions(PERMISSIONS.NOTIFICATION_SEND)
+  @AuditLogAction({ action: 'CREATE', entityName: 'notifications' })
+  sendBroadcast(@Body() body: BodySendNotificationDto) {
+    return this.notificationsService.sendBroadcast(body);
   }
 
   @ApiOperation({ summary: 'Chi tiết thông báo quản trị' })
