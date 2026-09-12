@@ -181,6 +181,17 @@ export class DoctorsService {
     const cachedData = await this.redisCacheService.getData(cacheKey);
     if (cachedData) return cachedData;
     const { entities, raw } = await this.baseDoctorQuery()
+      .leftJoinAndSelect(
+        'doctor_schedules.appointments',
+        'schedule_appointments',
+        'schedule_appointments.status IN (:...occupiedStatuses)',
+        {
+          occupiedStatuses: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+          ],
+        },
+      )
       .where('doctor.id = :doctorId', { doctorId })
       .getRawAndEntities();
 

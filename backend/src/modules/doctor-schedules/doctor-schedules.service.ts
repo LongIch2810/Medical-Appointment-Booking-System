@@ -12,6 +12,7 @@ import { BodyCreateScheduleDto } from './dto/request/bodyCreateSchedule.dto';
 import { toMinutes } from 'src/utils/toMinutes';
 import { DoctorScheduleMapper } from './doctor-schedules.mapper';
 import { DoctorsService } from '../doctors/doctors.service';
+import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 
 @Injectable()
 export class DoctorSchedulesService {
@@ -172,7 +173,17 @@ export class DoctorSchedulesService {
 
     const schedules = await this.doctorScheduleRepo
       .createQueryBuilder('schedule')
-      .leftJoinAndSelect('schedule.appointments', 'appointment')
+      .leftJoinAndSelect(
+        'schedule.appointments',
+        'appointment',
+        'appointment.status IN (:...occupiedStatuses)',
+        {
+          occupiedStatuses: [
+            AppointmentStatus.PENDING,
+            AppointmentStatus.CONFIRMED,
+          ],
+        },
+      )
       .where('schedule.doctor_id = :doctorId', { doctorId })
       .select([
         'schedule.id',

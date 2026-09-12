@@ -342,7 +342,12 @@ export class AppointmentsService {
       },
     );
 
-    await this.redisCacheService.delByPrefix('appointments:');
+    const doctorId = appointmentDetail.doctor.id;
+    await Promise.all([
+      this.redisCacheService.delByPrefix('appointments:'),
+      this.redisCacheService.delData(`doctorSchedules:doctor:${doctorId}`),
+      this.redisCacheService.delData(`doctor:${doctorId}`),
+    ]);
 
     return appointmentDetail;
   }

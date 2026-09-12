@@ -166,7 +166,6 @@ export class WebsocketGateway
       booking_mode: data.booking_mode,
       created_at: data.created_at,
       updated_at: data.updated_at,
-      deleted_at: data.deleted_at,
     });
   }
 
