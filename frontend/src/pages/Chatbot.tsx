@@ -60,15 +60,12 @@ export default function Chatbot() {
     const serverMessages = Array.from(
       new Map(merged.map((m) => [m.id, m])).values()
     );
-    const pendingMessages = optimisticMessages.filter((message) => {
-      if (message.isTyping) return true;
-      return !serverMessages.some(
-        (serverMessage) =>
-          serverMessage.role === message.role &&
-          serverMessage.content === message.content
-      );
-    });
-    const combinedMessages = [...serverMessages, ...pendingMessages];
+    // Việc dọn optimisticMessages được xử lý tường minh theo id trong
+    // handleSend (sau khi invalidateQueries đưa dòng thật vào serverMessages)
+    // — không còn so khớp theo (role, content) ở đây nữa, vì cách đó ẩn nhầm
+    // tin nhắn vừa gửi khi trùng nội dung với 1 tin nhắn cũ trong lịch sử
+    // (vd gửi lại "hello" nhiều lần).
+    const combinedMessages = [...serverMessages, ...optimisticMessages];
     return combinedMessages.length > 0
       ? combinedMessages
       : [
@@ -183,9 +180,15 @@ export default function Chatbot() {
             : msg
         )
       );
-      queryClient.invalidateQueries({
+      // invalidateQueries đợi refetch xong (mặc định refetchType: "active")
+      // rồi mới resolve, nên serverMessages đã có 2 dòng thật trước khi ta
+      // dọn optimisticMessages — tránh nhấp nháy mất tin nhắn giữa 2 bước.
+      await queryClient.invalidateQueries({
         queryKey: ["messages-chatbot", userId],
       });
+      setOptimisticMessages((prev) =>
+        prev.filter((msg) => msg.id !== tempId && msg.id !== tempId + 1)
+      );
     } catch (error) {
       clearTypingInterval();
       setOptimisticMessages((prev) =>
@@ -214,7 +217,7 @@ export default function Chatbot() {
 
   return (
     <section className="w-full h-full flex justify-center items-center overflow-hidden">
-      <Card className="w-full max-w-3xl h-full flex flex-col gap-0 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 dark:border-[#293548] bg-white dark:bg-[#172033]">
+      <Card className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl 2xl:max-w-6xl h-full flex flex-col gap-0 p-0 overflow-hidden rounded-2xl shadow-xl border border-slate-200/90 dark:border-[#293548] bg-white dark:bg-[#172033]">
         <CardHeader className="shrink-0 px-5 py-3.5 border-b border-slate-100 dark:border-[#293548] flex flex-row items-center justify-between bg-white dark:bg-[#111827] rounded-t-2xl shadow-2xs">
           <div className="flex items-center gap-3">
             <div className="relative">

@@ -5,10 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronLeft, ChevronRight, Newspaper } from "lucide-react";
-import { useArticles, useTopics } from "@/hooks/useArticles";
+import { ArrowLeft, Newspaper } from "lucide-react";
+import { useArticlesInfinite, useTopics } from "@/hooks/useArticles";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import MedicalAiLoading from "@/components/loading/MedicalAiLoading";
+import Loading from "@/components/loading/Loading";
 import ErrorState from "@/components/notification/ErrorState";
 import NotFoundResult from "@/components/notification/NotFoundResult";
 import type { Article } from "@/types/interface/article.interface";
@@ -33,39 +35,50 @@ const News = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const [topicSlug, setTopicSlug] = useState<string | undefined>();
   const debouncedSearch = useDebounce(search, 400);
 
   const filters = useMemo(
     () => ({
-      page,
       limit: ARTICLE_LIMIT,
       search: debouncedSearch.trim() || undefined,
       topic_slug: topicSlug,
     }),
-    [page, debouncedSearch, topicSlug],
+    [debouncedSearch, topicSlug],
   );
 
-  const { data: articleData, isLoading, isError, refetch } = useArticles(filters);
+  const {
+    data: articleData,
+    isLoading,
+    isError,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useArticlesInfinite(filters);
   const { data: topicData } = useTopics({
     page: 1,
     limit: TOPIC_LIMIT,
     arrange: "asc",
   });
 
-  const articles = articleData?.data.articles ?? [];
-  const totalPages = articleData?.data.totalPages ?? 1;
+  const articles = useMemo(
+    () => articleData?.pages.flatMap((page) => page.data.articles) ?? [],
+    [articleData],
+  );
   const topics = topicData?.data.topics ?? [];
+
+  const loadMoreRef = useInfiniteScroll<HTMLDivElement>({
+    hasNextPage,
+    fetchNextPage,
+  });
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
-    setPage(1);
   };
 
   const handleSelectTopic = (slug?: string) => {
     setTopicSlug(slug);
-    setPage(1);
   };
 
   return (
@@ -114,13 +127,13 @@ const News = () => {
       {/* Topic Filter Pills */}
       {topics.length > 0 && (
         <div className="container mx-auto px-4 pt-6">
-          <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             <Button
               type="button"
               variant={!topicSlug ? "default" : "outline"}
               size="sm"
               className={cn(
-                "rounded-full text-xs font-semibold px-4 cursor-pointer",
+                "rounded-full text-xs font-semibold px-4 cursor-pointer shrink-0",
                 !topicSlug
                   ? "!bg-primary !text-primary-foreground shadow-xs"
                   : "bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#293548] hover:border-primary/40",
@@ -138,7 +151,7 @@ const News = () => {
                   variant={active ? "default" : "outline"}
                   size="sm"
                   className={cn(
-                    "rounded-full text-xs font-semibold px-4 cursor-pointer",
+                    "rounded-full text-xs font-semibold px-4 cursor-pointer shrink-0",
                     active
                       ? "!bg-primary !text-primary-foreground shadow-xs"
                       : "bg-white dark:bg-[#1E293B] text-slate-700 dark:text-[#CBD5E1] border-slate-200 dark:border-[#293548] hover:border-primary/40",
@@ -174,7 +187,6 @@ const News = () => {
             onReset={() => {
               setSearch("");
               setTopicSlug(undefined);
-              setPage(1);
             }}
           />
         ) : (
@@ -247,35 +259,11 @@ const News = () => {
               ))}
             </div>
 
-            {totalPages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  className="rounded-xl gap-1"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                  {t("news.prevPage")}
-                </Button>
-                <span className="text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 px-2">
-                  {t("news.pageCount", { page, totalPages })}
-                </span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() =>
-                    setPage((current) => Math.min(totalPages, current + 1))
-                  }
-                  className="rounded-xl gap-1"
-                >
-                  {t("news.nextPage")}
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            {/* Sentinel cho infinite scroll — quan sát bằng IntersectionObserver
+                (useInfiniteScroll), tự gọi fetchNextPage khi lọt vào viewport */}
+            {hasNextPage && (
+              <div ref={loadMoreRef} className="mt-10 flex items-center justify-center">
+                {isFetchingNextPage && <Loading size={20} />}
               </div>
             )}
           </>
