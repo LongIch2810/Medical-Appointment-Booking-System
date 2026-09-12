@@ -15,12 +15,17 @@ export function useLogin() {
     mutationFn: login,
     onSuccess: async () => {
       toast.success("Đăng nhập thành công!");
+      // Điều hướng ngay — Home không cần userInfo để render. Trước đây
+      // navigate() đợi xong fetchQuery(profile) mới chạy, khiến người dùng
+      // thấy toast thành công xong phải chờ thêm 1 round-trip mạng mới
+      // được chuyển trang, tạo cảm giác app bị khựng lại sau khi báo thành
+      // công. Profile giờ được nạp nền, Header tự cập nhật khi có dữ liệu.
+      navigate("/");
       const query = await queryClient.fetchQuery({
         queryKey: ["profile"],
         queryFn: fetchUserInfo,
       });
       setUserInfo(query.data);
-      navigate("/");
     },
     onError: (error) => {
       toast.error(
