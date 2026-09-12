@@ -86,6 +86,10 @@ test("prepends the product safety SystemMessage to every model call, ahead of co
     (firstCallMessages[0] as { content: string }).content,
     /115/,
   );
+  assert.match(
+    (firstCallMessages[0] as { content: string }).content,
+    /CHỈ hỗ trợ các nội dung liên quan đến sức khỏe/,
+  );
   assert.equal((firstCallMessages[1] as HumanMessage).content, "hi");
 });
 
