@@ -1,12 +1,15 @@
 import { useId } from "react";
+import { Clock } from "lucide-react";
 
 // Chữ chờ kết quả xoay vòng theo elapsed (3 giây/câu, dùng luôn bộ đếm giây
 // có sẵn ở Chatbot.tsx thay vì tạo thêm 1 interval riêng).
+// Dấu "..." được render riêng bằng animate-ai-dot (nhấp nháy tuần tự) nên
+// các câu ở đây không tự có "..." ở cuối, tránh bị lặp dấu chấm tĩnh + động.
 const LOADING_MESSAGES = [
-  "Đang phân tích triệu chứng của bạn...",
-  "Đang xử lý dữ liệu y tế...",
-  "Đang tìm bác sĩ và chuyên khoa phù hợp...",
-  "Sắp có kết quả, bạn chờ chút nhé...",
+  "Đang phân tích triệu chứng của bạn",
+  "Đang xử lý dữ liệu y tế",
+  "Đang tìm bác sĩ và chuyên khoa phù hợp",
+  "Sắp có kết quả, bạn chờ chút nhé",
 ];
 
 // Chatbot service backend chạy trên free-tier tự "ngủ" sau thời gian dài
@@ -14,7 +17,7 @@ const LOADING_MESSAGES = [
 // thích sau ngưỡng này để người dùng không tưởng nhầm là app bị treo/lỗi.
 const COLD_START_HINT_THRESHOLD_SECONDS = 12;
 const COLD_START_HINT =
-  "Hệ thống AI có thể đang khởi động lại sau thời gian nghỉ, việc này đôi khi mất đến 1 phút...";
+  "Hệ thống AI có thể đang khởi động lại sau thời gian nghỉ, việc này đôi khi mất đến 1 phút";
 
 // Hiệu ứng loading "máy y tế đang phân tích" — SVG thuần + CSS @keyframes
 // (mrx-ecg-scroll/mrx-scan-sweep/mrx-cross-glow, xem frontend/src/index.css),
@@ -85,8 +88,24 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
       </div>
 
       <div className="flex flex-col min-w-0">
-        <span className="text-sm text-gray-700">{message}</span>
-        <span className="text-xs text-gray-400">{elapsed}s</span>
+        <span className="text-sm text-gray-700 inline-flex items-baseline">
+          {message}
+          <span className="inline-flex ml-0.5" aria-hidden="true">
+            {[0, 1, 2].map((dot) => (
+              <span
+                key={dot}
+                className="animate-ai-dot"
+                style={{ animationDelay: `${dot * 0.2}s` }}
+              >
+                .
+              </span>
+            ))}
+          </span>
+        </span>
+        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+          <Clock className="w-3 h-3" aria-hidden="true" />
+          {elapsed}s
+        </span>
       </div>
     </div>
   );
