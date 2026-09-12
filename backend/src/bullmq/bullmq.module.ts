@@ -36,7 +36,9 @@ import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
             configService.get<string>('REDIS_TLS') === 'true'
               ? {}
               : undefined,
-          db: 1,
+          // Upstash supports database 0 only. Use key prefixes to separate
+          // BullMQ data from cache/rate-limit data on the shared Redis.
+          db: Number(configService.get<string>('REDIS_DB') ?? 0),
         },
       }),
     }),

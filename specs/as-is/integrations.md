@@ -10,7 +10,7 @@ Một instance Redis dùng cho 2 mục đích tách biệt logic (khác DB index
 
 - **Cache** (`backend/src/redis-cache/`, DB mặc định/0): session version, refresh-token session list, blacklist token, permission resolved theo user (TTL 3600s), cache danh sách/chi tiết bác sĩ/lịch/lịch hẹn/bài viết/chuyên khoa/hồ sơ sức khỏe/coach-profile (đa số TTL 3600s), cache system settings (TTL 60s), cache danh sách admin active (TTL 30s dùng cho fan-out thông báo).
 - **BullMQ** (`bullmq.module.ts`, DB index 1 — cấu hình riêng, tách biệt hoàn toàn khỏi cache ở trên dù cùng Redis instance).
-- **Chatbot rate-limit** (`chatbot/src/configs/redis.ts`, DB index riêng theo `REDIS_DB` env, mặc định 2 theo `.env.example`) — dùng chung Redis server với backend (đúng theo `docker-compose.dev.yml`) nhưng DB index khác để tránh đụng độ key.
+- **Chatbot rate-limit** (`chatbot/src/configs/redis.ts`, dùng Redis DB `0` theo `REDIS_DB`) — dùng chung Redis với backend; các workload được tách bằng key prefix vì Upstash chỉ hỗ trợ DB `0`.
 
 Docker cung cấp thêm RedisInsight để kiểm tra thủ công lúc dev.
 
