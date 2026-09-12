@@ -4,6 +4,8 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
   createNotification,
@@ -15,10 +17,12 @@ import {
   fetchUnreadNotificationCount,
   markAllMyNotificationsAsRead,
   markMyNotificationAsRead,
+  sendNotificationBroadcast,
   updateNotification,
 } from "@/api/notificationApi";
 import type {
   MyNotificationListPayload,
+  Notification,
   NotificationListPayload,
   NotificationRecipientListPayload,
   UpdateNotificationPayload,
@@ -110,6 +114,18 @@ export function useCreateNotification() {
   });
 }
 
+export function useSendNotificationBroadcast() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: sendNotificationBroadcast,
+    onSuccess: (response) => {
+      toast.success(`Đã gửi thông báo đến ${response.data.targetedCount} người dùng`);
+      void queryClient.invalidateQueries({ queryKey: notificationQueryKeys.all });
+    },
+    onError: () => toast.error("Gửi thông báo thất bại"),
+  });
+}
+
 export function useUpdateNotification() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -159,4 +175,25 @@ export function useDeleteNotification() {
     },
     onError: () => toast.error("Xóa thông báo thất bại"),
   });
+}
+
+export function isInternalPath(path: string | null): path is string {
+  return Boolean(path && /^\/(?!\/)/.test(path));
+}
+
+export function useOpenNotification() {
+  const navigate = useNavigate();
+  const markRead = useMarkMyNotificationAsRead();
+
+  return useCallback(
+    async (notification: Notification) => {
+      if (!notification.isRead) {
+        await markRead.mutateAsync(notification.id);
+      }
+      if (isInternalPath(notification.actionUrl)) {
+        navigate(notification.actionUrl);
+      }
+    },
+    [markRead, navigate],
+  );
 }

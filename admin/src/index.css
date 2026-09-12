@@ -243,3 +243,23 @@
   }
 }
 
+/* Real-time notification toast (NotificationRealtimeProvider) — scoped override,
+   does not affect any other toast.* call site in the app. */
+.Toastify__toast.notification-realtime-toast {
+  --toastify-toast-width: min(92vw, 400px);
+  align-items: flex-start;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media only screen and (max-width: 480px) {
+  .Toastify__toast.notification-realtime-toast {
+    --toastify-toast-width: calc(100vw - 1.5rem);
+    margin-inline: 0.75rem;
+  }
+}
+

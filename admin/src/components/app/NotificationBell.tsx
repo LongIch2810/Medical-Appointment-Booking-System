@@ -12,33 +12,19 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   useMarkAllMyNotificationsAsRead,
-  useMarkMyNotificationAsRead,
   useMyNotifications,
+  useOpenNotification,
   useUnreadNotificationCount,
 } from "@/hooks/useNotifications";
-import type { Notification } from "@/types/interface/notification.interface";
-
-function isInternalPath(path: string | null): path is string {
-  return Boolean(path && /^\/(?!\/)/.test(path));
-}
 
 export function NotificationBell() {
   const navigate = useNavigate();
   const notificationsQuery = useMyNotifications({ page: 1, limit: 5 });
   const unreadQuery = useUnreadNotificationCount();
-  const markRead = useMarkMyNotificationAsRead();
   const markAll = useMarkAllMyNotificationsAsRead();
   const notifications = notificationsQuery.data?.data.notifications ?? [];
   const unreadCount = unreadQuery.data?.data.count ?? 0;
-
-  const openNotification = async (notification: Notification) => {
-    if (!notification.isRead) {
-      await markRead.mutateAsync(notification.id);
-    }
-    if (isInternalPath(notification.actionUrl)) {
-      navigate(notification.actionUrl);
-    }
-  };
+  const openNotification = useOpenNotification();
 
   return (
     <DropdownMenu>

@@ -1,4 +1,8 @@
-import { notificationQueryKeys } from "@/hooks/useNotifications";
+import {
+  NotificationToast,
+  NotificationToastCloseButton,
+} from "@/components/app/NotificationToast";
+import { notificationQueryKeys, useOpenNotification } from "@/hooks/useNotifications";
 import { useSocket } from "@/hooks/useSocket";
 import type { ApiResponse } from "@/types/interface/api.interface";
 import type {
@@ -25,6 +29,7 @@ export function NotificationRealtimeProvider({
   const settingsQuery = useUserSettings(enabled);
   const realtimeToastsEnabled =
     settingsQuery.data?.data.realtimeToastsEnabled ?? true;
+  const openNotification = useOpenNotification();
 
   useEffect(() => {
     if (!enabled || !socket) return;
@@ -87,7 +92,21 @@ export function NotificationRealtimeProvider({
         if (oldestId !== undefined) toastedIds.current.delete(oldestId);
       }
       if (realtimeToastsEnabled) {
-        toast.info(`${notification.title}: ${notification.content}`);
+        toast(
+          <NotificationToast
+            notification={notification}
+            onOpen={openNotification}
+            openLabel="Mở thông báo"
+          />,
+          {
+            icon: false,
+            closeButton: NotificationToastCloseButton,
+            closeOnClick: true,
+            autoClose: 6000,
+            hideProgressBar: true,
+            className: "notification-realtime-toast",
+          },
+        );
       }
     };
     const handleUpdated = (notification: Notification) => {
@@ -160,7 +179,7 @@ export function NotificationRealtimeProvider({
       socket.off("notification:deleted", handleDeleted);
       socket.off("notification:read-all", handleReadAll);
     };
-  }, [enabled, queryClient, realtimeToastsEnabled, socket]);
+  }, [enabled, openNotification, queryClient, realtimeToastsEnabled, socket]);
 
   return children;
 }
