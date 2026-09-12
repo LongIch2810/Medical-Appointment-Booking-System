@@ -5,8 +5,11 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisCacheService {
   private client: Redis;
+  private rateLimitClient?: Redis;
+  private readonly configService: ConfigService;
 
   constructor(configService: ConfigService) {
+    this.configService = configService;
     const configuredRedisDb = Number(
       configService.get<string>('REDIS_CACHE_DB') ??
         configService.get<string>('REDIS_DB') ??
@@ -17,12 +20,16 @@ export class RedisCacheService {
         ? configuredRedisDb
         : 0;
 
-    this.client = new Redis({
-      host: configService.get<string>('REDIS_HOST'),
-      port: configService.get<number>('REDIS_PORT'),
-      password: configService.get<string>('REDIS_PASSWORD'),
+    this.client = this.createClient(redisDb);
+  }
+
+  private createClient(redisDb: number): Redis {
+    return new Redis({
+      host: this.configService.get<string>('REDIS_HOST'),
+      port: this.configService.get<number>('REDIS_PORT'),
+      password: this.configService.get<string>('REDIS_PASSWORD'),
       tls:
-        configService.get<string>('REDIS_TLS') === 'true'
+        this.configService.get<string>('REDIS_TLS') === 'true'
           ? {}
           : undefined,
       db: redisDb,
@@ -31,6 +38,22 @@ export class RedisCacheService {
 
   getClient(): Redis {
     return this.client;
+  }
+
+  getRateLimitClient(): Redis {
+    if (!this.rateLimitClient) {
+      const configuredRedisDb = Number(
+        this.configService.get<string>('REDIS_RATE_LIMIT_DB') ??
+          this.configService.get<string>('REDIS_DB') ??
+          0,
+      );
+      const redisDb =
+        Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
+          ? configuredRedisDb
+          : 0;
+      this.rateLimitClient = this.createClient(redisDb);
+    }
+    return this.rateLimitClient;
   }
 
   async setData<T>(key: string, value: T, ttl?: number): Promise<void> {

@@ -6,6 +6,8 @@ import { FailOpenThrottlerStorage } from './fail-open-throttler-storage';
 @Injectable()
 export class RedisRateLimitStorage extends FailOpenThrottlerStorage {
   constructor(redisCacheService: RedisCacheService) {
-    super(new ThrottlerStorageRedisService(redisCacheService.getClient()));
+    const client =
+      redisCacheService.getRateLimitClient?.() ?? redisCacheService.getClient();
+    super(new ThrottlerStorageRedisService(client));
   }
 }
