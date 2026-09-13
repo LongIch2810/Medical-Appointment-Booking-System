@@ -48,6 +48,7 @@ const vi = {
     logout: "Đăng xuất",
     loggingOut: "Đang đăng xuất...",
     processing: "Đang xử lý...",
+    new: "Mới",
   },
   demoNotice: {
     text: "Đây là dự án học tập & phi thương mại — quy trình đặt lịch khám chỉ mô phỏng, không kết nối với bác sĩ/phòng khám thật ngoài đời.",

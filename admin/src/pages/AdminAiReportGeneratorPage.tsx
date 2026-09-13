@@ -1,10 +1,16 @@
 import { useState } from "react";
-import { FileDown, FileText, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  ExternalLink,
+  FileDown,
+  FileText,
+  Sparkles,
+} from "lucide-react";
 
 import { AiReportLoadingOverlay } from "@/components/app/AiReportLoadingOverlay";
 import { AiReportHistory } from "@/components/app/AiReportHistory";
 import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
-import { EmptyState } from "@/components/app/EmptyState";
 import { ErrorState } from "@/components/app/ErrorState";
 import { GenericList } from "@/components/app/GenericList";
 import { PageHeader } from "@/components/app/PageHeader";
@@ -12,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGenerateAdminReport } from "@/hooks/useAdminReport";
-import { backendOrigin } from "@/configs/axios";
+import axiosInstance, { backendOrigin } from "@/configs/axios";
 import { exportReportCsv } from "@/lib/exportReportCsv";
 import type {
   AdminReportRangePreset,
@@ -116,23 +122,76 @@ export function AdminAiReportGeneratorPage() {
     );
   };
 
+  const handleDownloadPdf = async () => {
+    if (!report?.pdfUrl) return;
+    try {
+      const apiPath = report.pdfUrl.replace(/^\/api\/v1/, "");
+      const res = await axiosInstance.get<Blob>(apiPath, {
+        params: { download: true },
+        responseType: "blob",
+      });
+      const url = URL.createObjectURL(res.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `bao-cao-${report.id || "ai"}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      window.open(
+        `${backendOrigin}${report.pdfUrl}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }
+  };
+
+  const handleOpenPdf = () => {
+    if (!report?.pdfUrl) return;
+    window.open(
+      `${backendOrigin}${report.pdfUrl}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
   return (
     <>
       <AiReportLoadingOverlay isLoading={mutation.isPending} />
-      <div className="space-y-8">
+      <div className="space-y-6">
         <PageHeader
           eyebrow="Admin reports"
           title="AI Hỗ Trợ Tạo Báo Cáo Doanh Nghiệp"
           description="Chọn loại báo cáo và khoảng thời gian để AI phân tích dữ liệu thật, sinh biểu đồ và báo cáo chuyên sâu."
         />
 
-        <div className="space-y-3">
-          <div className="flex flex-wrap items-end gap-3 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex flex-col gap-1.5 min-w-[240px]">
-              <label className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400">
+        {/* Generator Configuration Card */}
+        <Card className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
+                <Sparkles className="size-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">
+                  Cấu hình & Tạo báo cáo AI
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                  Chọn nhóm chỉ số và khoảng thời gian để AI trích xuất dữ liệu, tổng hợp xu hướng và sinh biểu đồ.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
+            <div className="flex flex-col gap-1.5 md:col-span-5">
+              <label
+                htmlFor="report-type-select"
+                className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400"
+              >
                 Loại báo cáo
               </label>
               <select
+                id="report-type-select"
                 className={filterInputClass}
                 value={reportType}
                 onChange={(e) =>
@@ -140,7 +199,11 @@ export function AdminAiReportGeneratorPage() {
                 }
               >
                 {REPORT_TYPE_GROUPS.map((group) => (
-                  <optgroup key={group.groupLabel} label={group.groupLabel} className="dark:bg-slate-900">
+                  <optgroup
+                    key={group.groupLabel}
+                    label={group.groupLabel}
+                    className="dark:bg-slate-900"
+                  >
                     {group.options.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -151,11 +214,15 @@ export function AdminAiReportGeneratorPage() {
               </select>
             </div>
 
-            <div className="flex flex-col gap-1.5 min-w-[180px]">
-              <label className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400">
+            <div className="flex flex-col gap-1.5 md:col-span-4">
+              <label
+                htmlFor="range-preset-select"
+                className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400"
+              >
                 Khoảng thời gian
               </label>
               <select
+                id="range-preset-select"
                 className={filterInputClass}
                 value={rangePreset}
                 onChange={(e) =>
@@ -170,97 +237,148 @@ export function AdminAiReportGeneratorPage() {
               </select>
             </div>
 
-            {rangePreset === "CUSTOM" ? (
-              <>
-                <div className="flex flex-col gap-1.5">
-                  <label className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                    Từ ngày
-                  </label>
-                  <input
-                    type="date"
-                    className={filterInputClass}
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                    Đến ngày
-                  </label>
-                  <input
-                    type="date"
-                    className={filterInputClass}
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                  />
-                </div>
-              </>
-            ) : null}
-
-            <Button
-              className="gap-2 rounded-xl shadow-xs"
-              onClick={handleGenerate}
-              disabled={mutation.isPending}
-            >
-              <Sparkles className="size-4" />
-              {mutation.isPending ? "Đang tạo báo cáo..." : "Tạo Báo cáo AI"}
-            </Button>
+            <div className="md:col-span-3">
+              <Button
+                className="h-10 w-full gap-2 rounded-xl font-bold shadow-xs hover:shadow-md transition-all cursor-pointer"
+                onClick={handleGenerate}
+                disabled={mutation.isPending}
+              >
+                <Sparkles className="size-4" />
+                <span>
+                  {mutation.isPending ? "Đang tạo báo cáo..." : "Tạo Báo cáo AI"}
+                </span>
+              </Button>
+            </div>
           </div>
 
-          {rangeError ? (
-            <p className="text-sm font-semibold text-rose-600">{rangeError}</p>
+          {rangePreset === "CUSTOM" ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="from-date-input"
+                  className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                >
+                  Từ ngày
+                </label>
+                <input
+                  id="from-date-input"
+                  type="date"
+                  className={filterInputClass}
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="to-date-input"
+                  className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                >
+                  Đến ngày
+                </label>
+                <input
+                  id="to-date-input"
+                  type="date"
+                  className={filterInputClass}
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+            </div>
           ) : null}
-          <p className="text-xs text-slate-400 dark:text-slate-400">
-            Mỗi lượt tạo báo cáo có thể mất 15 giây đến vài phút do AI phân tích
-            dữ liệu, sinh biểu đồ và xuất PDF tuần tự.
+
+          {rangeError ? (
+            <p className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+              <AlertCircle className="size-3.5" />
+              <span>{rangeError}</span>
+            </p>
+          ) : null}
+
+          <p className="text-xs text-slate-400 dark:text-slate-400 pt-1">
+            Mỗi lượt tạo báo cáo có thể mất 15 giây đến vài phút do AI phân tích dữ liệu, sinh biểu đồ và xuất PDF tuần tự.
           </p>
-        </div>
+        </Card>
 
         {mutation.isError ? (
           <ErrorState
             title="Không thể tạo báo cáo"
-            description="Đã xảy ra lỗi khi gọi AI Coach để tạo báo cáo. Vui lòng thử lại."
+            description="Đã xảy ra lỗi khi gọi AI để tạo báo cáo. Vui lòng thử lại."
             onRetry={handleGenerate}
           />
         ) : null}
 
         {!report && !mutation.isPending && !mutation.isError ? (
-          <EmptyState
-            title="Chưa có báo cáo nào"
-            description="Chọn loại báo cáo và khoảng thời gian ở trên, sau đó nhấn 'Tạo Báo cáo AI' để hệ thống phân tích dữ liệu thật và tạo báo cáo trực quan."
-          />
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-950/30">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <FileText className="size-5" />
+              </div>
+              <div className="space-y-0.5 text-center sm:text-left">
+                <p className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                  Chưa có kết quả báo cáo trong phiên này
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Chọn loại báo cáo và khoảng thời gian ở trên rồi nhấn &quot;Tạo Báo cáo AI&quot;, hoặc xem lại các báo cáo đã lưu trong mục Lịch sử bên dưới.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleGenerate}
+              className="rounded-xl text-xs font-semibold shrink-0 cursor-pointer"
+            >
+              <Sparkles className="size-3.5 mr-1.5 text-primary" />
+              Bắt đầu phân tích
+            </Button>
+          </div>
         ) : null}
 
         {report && !mutation.isPending ? (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <Badge variant="info" className="text-xs font-bold px-3 py-1">{report.rangeLabel}</Badge>
-              <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="info" className="text-xs font-bold px-3 py-1">
+                  {report.rangeLabel}
+                </Badge>
+                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {report.report?.title || "Kết quả báo cáo AI"}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  className="gap-1.5 rounded-xl font-semibold"
+                  className="gap-1.5 rounded-xl font-semibold text-xs cursor-pointer"
                   onClick={handleExportCsv}
                   disabled={report.tableRows.length === 0}
+                  aria-label="Xuất dữ liệu chi tiết ra file CSV"
                 >
-                  <FileDown className="size-4" />
+                  <FileDown className="size-3.5" />
                   Xuất CSV
                 </Button>
                 {report.pdfUrl ? (
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 rounded-xl font-semibold"
-                    asChild
+                    className="gap-1.5 rounded-xl font-semibold text-xs cursor-pointer"
+                    onClick={handleOpenPdf}
+                    aria-label="Mở file PDF trong tab mới"
                   >
-                    <a
-                      href={`${backendOrigin}${report.pdfUrl}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <FileText className="size-4" />
-                      Mở PDF
-                    </a>
+                    <ExternalLink className="size-3.5" />
+                    Mở PDF
+                  </Button>
+                ) : null}
+                {report.pdfUrl ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 rounded-xl font-semibold text-xs cursor-pointer"
+                    onClick={() => void handleDownloadPdf()}
+                    aria-label="Tải file PDF về máy"
+                  >
+                    <Download className="size-3.5" />
+                    Tải PDF
                   </Button>
                 ) : null}
               </div>
@@ -331,7 +449,9 @@ export function AdminAiReportGeneratorPage() {
             {report.chartConfig ? (
               <Card className="rounded-3xl border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
                 <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
-                  <CardTitle className="text-base font-bold dark:text-slate-100">Biểu đồ trực quan</CardTitle>
+                  <CardTitle className="text-base font-bold dark:text-slate-100">
+                    Biểu đồ trực quan
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 pt-4">
                   <ChartConfigRenderer chartConfig={report.chartConfig} />

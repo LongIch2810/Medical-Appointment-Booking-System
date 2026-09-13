@@ -2,6 +2,9 @@ import { useForm, Controller } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-toastify";
+import { AlertCircle, Check, Plus, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -25,7 +28,6 @@ import {
 } from "@/hooks/useCoachProfile";
 import type { CoachProfile } from "@/types/interface/coachProfile.interface";
 import HealthAILoading from "@/components/animation/HealthAILoading";
-import { useEffect, useState } from "react";
 
 function toFormValues(profile?: CoachProfile | null): CoachProfileFormValues {
   return {
@@ -38,8 +40,7 @@ function toFormValues(profile?: CoachProfile | null): CoachProfileFormValues {
   };
 }
 
-// Bộ đếm giây riêng cho HealthAILoading trong lúc submit — cùng cách làm
-// với typing-interval của Chatbot.tsx.
+// Bộ đếm giây riêng cho HealthAILoading trong lúc submit
 function useElapsedWhile(active: boolean) {
   const [elapsed, setElapsed] = useState(0);
   useEffect(() => {
@@ -107,129 +108,251 @@ export default function CreateCoachProfileForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="bg-white rounded-3xl shadow-lg p-8 md:p-10 text-left space-y-6 dark:bg-slate-900 dark:border dark:border-slate-800"
-    >
-      <div className="space-y-2">
-        <Label htmlFor="displayName">{t("aiCoach.displayNameLabel")}</Label>
-        <Input
-          id="displayName"
-          placeholder={t("aiCoach.displayNamePlaceholder")}
-          error={errors.display_name?.message}
-          {...register("display_name")}
-        />
-      </div>
+    <div className="w-full flex justify-center py-2 px-1 sm:px-0">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="w-full max-w-2xl rounded-3xl border border-slate-200/80 bg-white p-6 sm:p-8 md:p-9 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6 text-left transition-all"
+      >
+        {/* Form Header */}
+        <div className="border-b border-slate-100 pb-5 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary dark:bg-primary/20">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div className="space-y-0.5">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">
+                {isEditMode
+                  ? t("aiCoach.editCoachProfileBtn")
+                  : t("aiCoach.createCoachProfileBtn")}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                Thiết lập thông số thể trạng và sở thích để AI thiết kế lộ trình rèn luyện, dinh dưỡng chuẩn xác.
+              </p>
+            </div>
+          </div>
+        </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="healthGoal">{t("aiCoach.healthGoalSelectLabel")}</Label>
-        <Controller
-          name="health_goal"
-          control={control}
-          render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
-              <SelectTrigger id="healthGoal" className="w-full">
-                <SelectValue placeholder={t("aiCoach.healthGoalPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                {HEALTH_GOAL_OPTIONS.map((goal) => (
-                  <SelectItem key={goal} value={goal}>
-                    {goal}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        />
-        {errors.health_goal?.message && (
-          <p className="text-rose-600 dark:text-rose-400 text-sm">{errors.health_goal.message}</p>
-        )}
-      </div>
+        {/* Display Name Field */}
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="displayName"
+            className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1"
+          >
+            <span>{t("aiCoach.displayNameLabel")}</span>
+            <span className="text-rose-500">*</span>
+          </Label>
+          <Input
+            id="displayName"
+            placeholder={t("aiCoach.displayNamePlaceholder")}
+            error={errors.display_name?.message}
+            className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+            aria-invalid={!!errors.display_name}
+            {...register("display_name")}
+          />
+        </div>
 
-      <div className="space-y-2">
-        <Label>{t("aiCoach.preferencesLabel")}</Label>
-        <Controller
-          name="preferences"
-          control={control}
-          render={({ field }) => (
-            <div className="flex flex-wrap gap-2">
-              {PREFERENCE_OPTIONS.map((option) => {
-                const selected = field.value?.includes(option);
-                return (
-                  <button
-                    key={option}
-                    type="button"
-                    onClick={() =>
-                      field.onChange(
+        {/* Health Goal Select */}
+        <div className="space-y-1.5">
+          <Label
+            htmlFor="healthGoal"
+            className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1"
+          >
+            <span>{t("aiCoach.healthGoalSelectLabel")}</span>
+            <span className="text-rose-500">*</span>
+          </Label>
+          <Controller
+            name="health_goal"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger
+                  id="healthGoal"
+                  className={cn(
+                    "h-10 w-full rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-sm transition-all focus:ring-2 focus:ring-primary/20",
+                    errors.health_goal &&
+                      "border-rose-400 dark:border-rose-800 focus:ring-rose-200",
+                  )}
+                >
+                  <SelectValue placeholder={t("aiCoach.healthGoalPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  {HEALTH_GOAL_OPTIONS.map((goal) => (
+                    <SelectItem
+                      key={goal}
+                      value={goal}
+                      className="rounded-lg text-sm"
+                    >
+                      {goal}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.health_goal?.message ? (
+            <p className="text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1 pt-0.5">
+              <AlertCircle className="size-3 shrink-0" />
+              <span>{errors.health_goal.message}</span>
+            </p>
+          ) : null}
+        </div>
+
+        {/* Preferences */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1">
+              <span>{t("aiCoach.preferencesLabel")}</span>
+              <span className="text-rose-500">*</span>
+            </Label>
+            <span className="text-[11px] text-slate-400">Chọn ít nhất 1 sở thích</span>
+          </div>
+
+          <Controller
+            name="preferences"
+            control={control}
+            render={({ field }) => (
+              <div className="flex flex-wrap gap-2 pt-0.5">
+                {PREFERENCE_OPTIONS.map((option) => {
+                  const selected = field.value?.includes(option);
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      onClick={() =>
+                        field.onChange(
+                          selected
+                            ? field.value.filter((v) => v !== option)
+                            : [...(field.value ?? []), option],
+                        )
+                      }
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all cursor-pointer select-none",
                         selected
-                          ? field.value.filter((v) => v !== option)
-                          : [...(field.value ?? []), option],
-                      )
-                    }
-                    className={cn(
-                      "rounded-full border px-4 py-2 text-sm font-semibold transition-colors",
-                      selected
-                        ? "bg-primary text-white border-primary"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-primary dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:border-primary",
-                    )}
-                  >
-                    {option}
-                  </button>
-                );
-              })}
+                          ? "bg-primary text-white border-primary shadow-xs ring-2 ring-primary/20 scale-[1.02]"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:bg-slate-800/80 dark:border-slate-700 dark:text-slate-300 dark:hover:border-primary/50",
+                      )}
+                      aria-pressed={selected}
+                    >
+                      {selected ? (
+                        <Check className="size-3.5 text-white stroke-[2.5]" />
+                      ) : (
+                        <Plus className="size-3.5 opacity-60" />
+                      )}
+                      <span>{option}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          />
+          {errors.preferences?.message ? (
+            <p className="text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-1 pt-0.5">
+              <AlertCircle className="size-3 shrink-0" />
+              <span>{errors.preferences.message}</span>
+            </p>
+          ) : null}
+        </div>
+
+        {/* Biometrics Grid: Age, Height, Weight */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {/* Age */}
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="age"
+              className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200"
+            >
+              {t("aiCoach.ageLabel")}
+            </Label>
+            <Input
+              id="age"
+              type="number"
+              min="1"
+              max="120"
+              placeholder="VD: 28"
+              error={errors.age?.message}
+              className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+              {...register("age")}
+            />
+          </div>
+
+          {/* Height */}
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="height"
+              className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200"
+            >
+              {t("aiCoach.heightLabel")}{" "}
+              <span className="text-xs font-normal text-slate-400">(cm)</span>
+            </Label>
+            <Input
+              id="height"
+              type="number"
+              min="30"
+              max="300"
+              placeholder="VD: 170"
+              error={errors.height?.message}
+              className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+              {...register("height")}
+            />
+          </div>
+
+          {/* Weight */}
+          <div className="space-y-1.5">
+            <Label
+              htmlFor="weight"
+              className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200"
+            >
+              {t("aiCoach.weightLabel")}{" "}
+              <span className="text-xs font-normal text-slate-400">(kg)</span>
+            </Label>
+            <Input
+              id="weight"
+              type="number"
+              min="1"
+              max="500"
+              placeholder="VD: 65"
+              error={errors.weight?.message}
+              className="h-10 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 text-sm focus-visible:ring-2 focus-visible:ring-primary/20"
+              {...register("weight")}
+            />
+          </div>
+        </div>
+
+        {/* Submit Actions */}
+        <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+          {isPending ? (
+            <div className="flex justify-center py-2">
+              <HealthAILoading elapsed={elapsed} />
+            </div>
+          ) : (
+            <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3">
+              {isEditMode ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onDone}
+                  disabled={isPending}
+                  className="w-full sm:w-auto h-11 px-5 rounded-xl font-semibold text-xs sm:text-sm border-slate-200 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  {t("common.cancel")}
+                </Button>
+              ) : null}
+              <Button
+                type="submit"
+                disabled={isPending}
+                className="w-full sm:w-auto h-11 px-7 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold text-sm shadow-xs hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <Sparkles className="h-4 w-4 text-white" />
+                <span>
+                  {isEditMode
+                    ? t("common.save")
+                    : t("aiCoach.createCoachProfileBtn")}
+                </span>
+              </Button>
             </div>
           )}
-        />
-        {errors.preferences?.message && (
-          <p className="text-rose-600 dark:text-rose-400 text-sm">{errors.preferences.message}</p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="age">{t("aiCoach.ageLabel")}</Label>
-          <Input
-            id="age"
-            type="number"
-            min="0"
-            error={errors.age?.message}
-            {...register("age")}
-          />
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="height">{t("aiCoach.heightLabel")} (cm)</Label>
-          <Input
-            id="height"
-            type="number"
-            min="0"
-            error={errors.height?.message}
-            {...register("height")}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="weight">{t("aiCoach.weightLabel")} (kg)</Label>
-          <Input
-            id="weight"
-            type="number"
-            min="0"
-            error={errors.weight?.message}
-            {...register("weight")}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-4 pt-2">
-        {isPending ? (
-          <HealthAILoading elapsed={elapsed} />
-        ) : (
-          <Button
-            type="submit"
-            className="rounded-2xl bg-primary text-white font-semibold px-6 py-3 shadow-md hover:bg-primary/90 transition"
-          >
-            {isEditMode ? t("common.save") : t("aiCoach.createCoachProfileBtn")}
-          </Button>
-        )}
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

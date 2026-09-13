@@ -106,7 +106,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       name: t("nav.aiCoachHealth"),
       to: "/patient/ai-coach-health",
       icon: Sparkles,
-      badge: t("common.new"),
+      badge: t("common.new", { defaultValue: "Mới" }),
     },
     {
       name: t("nav.healthRecords"),
@@ -369,7 +369,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                                   "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
                                   isActive
                                     ? "bg-white text-primary"
-                                    : "bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 dark:border dark:border-violet-800/60",
+                                    : "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border dark:border-emerald-800/60",
                                 )}
                               >
                                 {item.badge}
@@ -519,7 +519,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                       <span>{item.name}</span>
                     </div>
                     {item.badge && (
-                      <span className="rounded-full bg-violet-100 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300 dark:border dark:border-violet-800/60 text-[9px] font-bold px-1.5 py-0.2">
+                      <span className="rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border dark:border-emerald-800/60 text-[9px] font-extrabold px-1.5 py-0.5">
                         {item.badge}
                       </span>
                     )}
