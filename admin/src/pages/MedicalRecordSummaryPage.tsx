@@ -25,6 +25,21 @@ export function MedicalRecordSummaryPage() {
   // Ref to track current files for clean memory release on unmount
   const filesRef = useRef<UploadedMedicalFile[]>(files);
   filesRef.current = files;
+  const resultSectionRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectHistory = (
+    data: MedicalRecordSummaryData & {
+      id: number;
+      createdAt: string;
+      inputMode: string;
+    },
+  ) => {
+    setSelectedHistory(data);
+    resultSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   const {
     mutate: summarize,
@@ -180,7 +195,7 @@ export function MedicalRecordSummaryPage() {
         </div>
 
         {/* Right Column: AI Summary Result */}
-        <div className="space-y-5 lg:col-span-7">
+        <div ref={resultSectionRef} className="space-y-5 lg:col-span-7">
           <MedicalRecordSummaryResult
             summary={displayedSummary}
             isLoading={isPending}
@@ -190,10 +205,15 @@ export function MedicalRecordSummaryPage() {
             onRegenerate={handleRegenerate}
             document={selectedHistory?.document ?? generatedDocument}
             onDownloadFile={downloadFile}
+            isViewingHistory={!!selectedHistory}
+            onClearHistory={() => setSelectedHistory(null)}
           />
         </div>
       </div>
-      <MedicalRecordSummaryHistory onSelect={setSelectedHistory} />
+      <MedicalRecordSummaryHistory
+        onSelect={handleSelectHistory}
+        selectedId={selectedHistory?.id}
+      />
     </div>
   );
 }

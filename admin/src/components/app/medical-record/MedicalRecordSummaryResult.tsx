@@ -28,6 +28,8 @@ interface MedicalRecordSummaryResultProps {
   onRegenerate: () => void;
   document?: MedicalRecordDocument;
   onDownloadFile?: (path: string, fileName: string) => void;
+  isViewingHistory?: boolean;
+  onClearHistory?: () => void;
 }
 
 function formatGenerationTime(date: Date | null): string {
@@ -49,6 +51,8 @@ export function MedicalRecordSummaryResult({
   onRegenerate,
   document,
   onDownloadFile,
+  isViewingHistory,
+  onClearHistory,
 }: MedicalRecordSummaryResultProps) {
   const [hasCopied, setHasCopied] = useState(false);
 
@@ -204,6 +208,29 @@ export function MedicalRecordSummaryResult({
     <div className="space-y-4">
       {/* Result Card */}
       <Card className="rounded-3xl border border-slate-200/80 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+        {/* History Banner */}
+        {isViewingHistory ? (
+          <div className="flex items-center justify-between gap-3 border-b border-primary/20 bg-primary/5 px-4 py-2.5 sm:px-5 dark:border-primary/30 dark:bg-primary/10">
+            <div className="flex items-center gap-2 text-xs font-medium text-primary">
+              <Clock className="size-3.5 shrink-0" />
+              <span>
+                Đang hiển thị bản tóm tắt lưu từ lịch sử ({generatedAt ? formatGenerationTime(generatedAt) : ""})
+              </span>
+            </div>
+            {onClearHistory ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={onClearHistory}
+                className="h-7 rounded-lg text-xs font-bold text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+              >
+                Tạo tóm tắt mới
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
+
         {/* Card Header & Actions */}
         <CardHeader className="border-b border-slate-100 bg-slate-50/60 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/80">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -379,7 +406,31 @@ export function MedicalRecordSummaryResult({
             </ReactMarkdown>
           </div>
         </CardContent>
-        {document?.sourceFiles?.length && onDownloadFile ? <div className="border-t border-slate-100 px-4 pb-5 sm:px-6 dark:border-slate-800"><p className="mb-2 pt-4 text-xs font-bold text-slate-600 dark:text-slate-300">File bệnh án gốc đã lưu</p><div className="flex flex-wrap gap-2">{document.sourceFiles.map((file) => <Button key={file.id || file.fileName} type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs" onClick={() => onDownloadFile(file.fileUrl || "", file.fileName)}><Download className="size-3.5" />{file.fileName}</Button>)}</div></div> : null}
+        {document?.sourceFiles?.length && onDownloadFile ? (
+          <div className="border-t border-slate-100 px-4 pb-5 sm:px-6 dark:border-slate-800">
+            <p className="mb-2.5 pt-4 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <FileSearch className="size-3.5 text-primary" />
+              <span>File bệnh án gốc đã lưu ({document.sourceFiles.length} tệp)</span>
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {document.sourceFiles.map((file) => (
+                <Button
+                  key={file.id || file.fileName}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 rounded-xl text-xs font-medium hover:border-primary/40 hover:bg-primary/5 hover:text-primary transition-colors cursor-pointer"
+                  onClick={() => onDownloadFile(file.fileUrl || "", file.fileName)}
+                  title={`Tải xuống file gốc: ${file.fileName}`}
+                  aria-label={`Tải xuống file bệnh án gốc: ${file.fileName}`}
+                >
+                  <Download className="size-3.5 text-slate-500" />
+                  <span className="max-w-[180px] truncate">{file.fileName}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </Card>
     </div>
   );

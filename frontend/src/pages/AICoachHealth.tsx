@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import {
@@ -19,9 +19,14 @@ import HealthAILoading from "@/components/animation/HealthAILoading";
 import NutritionAnimation from "@/components/animation/NutritionAnimation";
 import PlankAnimation from "@/components/animation/PlankAnimation";
 import CreateCoachProfileForm from "@/components/coach/CreateCoachProfileForm";
-import { HealthRoadmapHistory } from "@/components/coach/HealthRoadmapHistory";
 import LazyViewport from "@/components/lazy/LazyViewport";
 import { backendOrigin } from "@/configs/axios";
+
+const HealthRoadmapHistory = lazy(() =>
+  import("@/components/coach/HealthRoadmapHistory").then((m) => ({
+    default: m.HealthRoadmapHistory,
+  })),
+);
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -636,7 +641,9 @@ export default function AICoachHealth() {
         </CardContent>
       </Card>
       <LazyViewport minHeight="420px" fallback={<div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" />}>
-        <HealthRoadmapHistory relativeId={selectedProfileObj?.id} />
+        <Suspense fallback={<div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" />}>
+          <HealthRoadmapHistory relativeId={selectedProfileObj?.id} />
+        </Suspense>
       </LazyViewport>
     </div>
   );
