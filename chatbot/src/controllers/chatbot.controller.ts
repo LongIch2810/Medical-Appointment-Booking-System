@@ -59,14 +59,17 @@ const handleCreateReportController = async (
   req: Request,
   res: Response,
 ): Promise<any> => {
-  const { question } = req.body;
+  const { question, fileName } = req.body;
   if (!isNonEmptyString(question, MAX_REPORT_QUESTION_LENGTH)) {
     return res
       .status(400)
       .json({ success: false, message: "Question is invalid or too long." });
   }
 
-  const result = await handleCreateReportService({ question: question.trim() });
+  const result = await handleCreateReportService({
+    question: question.trim(),
+    ...(isNonEmptyString(fileName, 200) ? { fileName: fileName.trim() } : {}),
+  });
   return res.status(200).json({ success: true, data: result });
 };
 
@@ -74,7 +77,7 @@ const handleBuildHealthRoadMapController = async (
   req: Request,
   res: Response,
 ): Promise<any> => {
-  const { relative_id, token } = req.body;
+  const { relative_id, token, fileName } = req.body;
   const relativeId = parsePositiveInteger(relative_id);
 
   if (!relativeId || !isNonEmptyString(token, MAX_TOKEN_LENGTH)) {
@@ -86,6 +89,7 @@ const handleBuildHealthRoadMapController = async (
   const result = await handleBuildHealthRoadMapService({
     relative_id: relativeId,
     token,
+    ...(isNonEmptyString(fileName, 200) ? { fileName: fileName.trim() } : {}),
   });
 
   return res.status(200).json({ success: true, data: result });

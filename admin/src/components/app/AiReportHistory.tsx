@@ -219,7 +219,7 @@ function ReportDetailView({ report }: { report: AdminReport }) {
             onClick={() =>
               void openOrDownload(
                 report.pdfUrl!,
-                `bao-cao-${report.id}.pdf`,
+                report.fileName || `bao-cao-${report.id}.pdf`,
                 false,
               )
             }
@@ -235,7 +235,7 @@ function ReportDetailView({ report }: { report: AdminReport }) {
             onClick={() =>
               void openOrDownload(
                 report.pdfUrl!,
-                `bao-cao-${report.id}.pdf`,
+                report.fileName || `bao-cao-${report.id}.pdf`,
                 true,
               )
             }
@@ -452,7 +452,7 @@ export function AiReportHistory({
                         onClick={() =>
                           void openOrDownload(
                             item.pdfUrl!,
-                            `bao-cao-${item.id}.pdf`,
+                            item.fileName || `bao-cao-${item.id}.pdf`,
                             false,
                           )
                         }
@@ -472,7 +472,7 @@ export function AiReportHistory({
                         onClick={() =>
                           void openOrDownload(
                             item.pdfUrl!,
-                            `bao-cao-${item.id}.pdf`,
+                            item.fileName || `bao-cao-${item.id}.pdf`,
                             true,
                           )
                         }

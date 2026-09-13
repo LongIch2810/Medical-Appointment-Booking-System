@@ -29,6 +29,7 @@ import {
   ReportType,
 } from './dto/request/bodyGenerateAdminReport.dto';
 import { AdminReportsMapper } from './admin-reports.mapper';
+import { buildAdminReportFileName } from 'src/utils/aiDocumentFileName';
 
 type FixedDateRangeResolver = (now: Date) => { from: Date; to: Date };
 const FIXED_DATE_RANGE_RESOLVERS: Record<
@@ -152,6 +153,11 @@ export class AdminReportsService {
     const userId = typeof userIdOrDto === 'number' ? userIdOrDto : undefined;
     const dto = (typeof userIdOrDto === 'number' ? dtoArg : userIdOrDto)!;
     const range = this.resolveDateRange(dto);
+    const outputFileName = buildAdminReportFileName(
+      dto.reportType,
+      range.fromDate,
+      range.toDate,
+    );
     const question = REPORT_QUESTION_BUILDERS[dto.reportType](
       range.from,
       range.to,
@@ -160,7 +166,7 @@ export class AdminReportsService {
     try {
       const response = await axios.post(
         `${this.configService.get<string>('CHATBOT_URL')}/chatbot/create-report`,
-        { question },
+        { question, fileName: outputFileName },
         {
           timeout: 240_000,
           headers: {
@@ -176,9 +182,13 @@ export class AdminReportsService {
           dto.reportType,
           range.rangeLabel,
           data,
+          { fileName: outputFileName },
         );
       }
       asset = data?.asset ?? data?.pdfAsset;
+      asset = asset
+        ? { ...asset, fileName: asset.fileName || outputFileName }
+        : asset;
       if (!asset?.publicId)
         throw new HttpException('AI không trả về tài liệu PDF hợp lệ.', 502);
       const raw = data?.raw ?? {};

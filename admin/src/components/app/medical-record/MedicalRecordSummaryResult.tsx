@@ -253,7 +253,7 @@ export function MedicalRecordSummaryResult({
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-center">
-              {document?.pdfUrl && onDownloadFile ? <Button type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl" onClick={() => onDownloadFile(document.pdfUrl, `tom-tat-benh-an-${document.id}.pdf`)}><Download className="size-3.5" />PDF</Button> : null}
+              {document?.pdfUrl && onDownloadFile ? <Button type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl" onClick={() => onDownloadFile(document.pdfUrl, document.fileName || `tom-tat-benh-an-${document.id}.pdf`)}><Download className="size-3.5" />PDF</Button> : null}
               <Button
                 type="button"
                 variant="outline"

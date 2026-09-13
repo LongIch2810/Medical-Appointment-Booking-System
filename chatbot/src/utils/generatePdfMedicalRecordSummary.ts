@@ -2,11 +2,18 @@ import PDFDocument from "pdfkit";
 import fs from "fs";
 import path from "path";
 import { uploadPdfToCloudinary } from "./cloudnaryUploadPdf.js";
+import { sanitizeAiDocumentFileName } from "./aiDocumentFileName.js";
 
-export const generatePdfMedicalRecordSummary = async (summary: string) => {
+export const generatePdfMedicalRecordSummary = async (
+  summary: string,
+  fileName?: string,
+) => {
   const tmpDir = path.resolve(process.cwd(), "tmp");
   if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-  const outputPath = path.join(tmpDir, `medical-record-summary-${Date.now()}.pdf`);
+  const outputPath = path.join(
+    tmpDir,
+    sanitizeAiDocumentFileName(fileName, `tom-tat-benh-an-${Date.now()}`),
+  );
   try {
     const doc = new PDFDocument({ margin: 50 });
     const stream = fs.createWriteStream(outputPath);

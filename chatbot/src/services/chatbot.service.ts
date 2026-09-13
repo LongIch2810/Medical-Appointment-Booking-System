@@ -134,11 +134,16 @@ const handleChatService = async ({ question, userId, token }: ChatInput) => {
 
 const handleCreateReportService = async ({
   question,
+  fileName,
 }: {
   question: string;
+  fileName?: string;
 }) => {
   try {
-    const result: any = await createReportGraph.invoke({ question });
+    const result: any = await createReportGraph.invoke({
+      question,
+      ...(fileName ? { file_name: fileName } : {}),
+    });
     const asset = result?.pdf_asset;
     const legacyPdfUrl = result?.pdf_url;
 
@@ -194,9 +199,11 @@ const handleCreateReportService = async ({
 const handleBuildHealthRoadMapService = async ({
   relative_id,
   token,
+  fileName,
 }: {
   relative_id: number;
   token: string;
+  fileName?: string;
 }) => {
   const requestId = randomUUID();
   const startedAt = Date.now();
@@ -211,6 +218,7 @@ const handleBuildHealthRoadMapService = async ({
       request_id: requestId,
       relative_id,
       token,
+      ...(fileName ? { file_name: fileName } : {}),
     });
 
     const errorKeys = [
@@ -331,7 +339,10 @@ const handleSummaryMedicalRecordService = async (
       ("imageFiles" in fileParams && fileParams.imageFiles.length > 0) ||
       ("pdfFile" in fileParams && Boolean(fileParams.pdfFile));
     if (!hasFiles) return summary;
-    const asset = await generatePdfMedicalRecordSummary(summary);
+    const asset = await generatePdfMedicalRecordSummary(
+      summary,
+      fileParams.outputFileName,
+    );
     return { summary, asset };
   } catch (error) {
     throw normalizeChatbotError(error);

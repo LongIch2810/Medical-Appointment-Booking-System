@@ -18,6 +18,7 @@ export interface MedicalRecordDocument {
   id: number;
   createdAt: string;
   pdfUrl: string;
+  fileName?: string | null;
   sourceFiles: Array<{ id?: string; fileName: string; bytes: number; format: string | null; fileUrl?: string }>;
 }
 

@@ -9,10 +9,13 @@ import { uploadPdfToCloudinary } from "../../../src/utils/cloudnaryUploadPdf.js"
 // mock.module(), so object/prototype-method mocking is the established
 // pattern here — see diagnosis.graph.spec.ts.)
 
-test("uploads the given file path as a raw PDF and returns its secure URL/public_id", async (t) => {
+test("uploads an authenticated raw PDF and returns its filename descriptor", async (t) => {
   const uploadMock = t.mock.method(cloudinary.uploader, "upload", async () => ({
-    secure_url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/report.pdf",
-    public_id: "pdfs/report",
+    original_filename: "requested-report.pdf",
+    public_id: "ai-documents/results/requested-report",
+    resource_type: "raw",
+    format: "pdf",
+    bytes: 321,
   }));
 
   const result = await uploadPdfToCloudinary("/tmp/report.pdf");
@@ -22,7 +25,8 @@ test("uploads the given file path as a raw PDF and returns its secure URL/public
   assert.equal(filePath, "/tmp/report.pdf");
   assert.deepEqual(options, {
     resource_type: "raw",
-    folder: "pdfs",
+    type: "authenticated",
+    folder: "ai-documents/results",
     format: "pdf",
     use_filename: true,
     unique_filename: true,
@@ -30,8 +34,11 @@ test("uploads the given file path as a raw PDF and returns its secure URL/public
   });
 
   assert.deepEqual(result, {
-    url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/report.pdf",
-    public_id: "pdfs/report",
+    publicId: "ai-documents/results/requested-report",
+    resourceType: "raw",
+    format: "pdf",
+    fileName: "requested-report.pdf",
+    bytes: 321,
   });
 });
 

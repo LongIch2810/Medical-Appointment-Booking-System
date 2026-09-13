@@ -4,6 +4,7 @@ import { z } from "zod";
 import path from "path";
 import { HealthRoadmapReportSchema } from "../tools/write_health_roadmap.tool.js";
 import { uploadPdfToCloudinary } from "./cloudnaryUploadPdf.js";
+import { sanitizeAiDocumentFileName } from "./aiDocumentFileName.js";
 
 type HealthRoadmapReport = z.infer<typeof HealthRoadmapReportSchema>;
 
@@ -13,12 +14,13 @@ const ensureDir = (dir: string) => {
 export const generatePdfHealthRoadmap = async (
   HealthRoadmapReportData: HealthRoadmapReport,
   chartImagePath: string,
+  fileName?: string,
 ): Promise<{ publicId: string; resourceType: string; format: string; fileName: string; bytes: number }> => {
   const tmpDir = path.resolve(process.cwd(), "tmp");
   ensureDir(tmpDir);
   const outputPath = path.join(
     tmpDir,
-    `report_health_roadmap-${Date.now()}.pdf`,
+    sanitizeAiDocumentFileName(fileName, `lo-trinh-suc-khoe-${Date.now()}`),
   );
 
   try {

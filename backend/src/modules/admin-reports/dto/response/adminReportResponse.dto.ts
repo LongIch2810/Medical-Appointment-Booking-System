@@ -60,6 +60,9 @@ export class AdminReportResponseDto {
   pdfUrl!: string | null;
 
   @Expose()
+  fileName!: string | null;
+
+  @Expose()
   @Type(() => ReportContentDto)
   report!: ReportContentDto | null;
 

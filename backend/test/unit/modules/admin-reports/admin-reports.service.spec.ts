@@ -47,7 +47,10 @@ describe('AdminReportsService', () => {
 
         expect(mockedAxios.post).toHaveBeenCalledWith(
           expect.any(String),
-          { question: expect.stringContaining('01/01/2026') },
+          expect.objectContaining({
+            question: expect.stringContaining('01/01/2026'),
+            fileName: expect.stringMatching(/\.pdf$/),
+          }),
           expect.any(Object),
         );
       },
@@ -71,9 +74,12 @@ describe('AdminReportsService', () => {
       });
 
       expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-      expect(mockedAxios.post.mock.calls[0][1]).toEqual({
-        question: expect.stringContaining('2026'),
-      });
+      expect(mockedAxios.post.mock.calls[0][1]).toEqual(
+        expect.objectContaining({
+          question: expect.stringContaining('2026'),
+          fileName: expect.stringMatching(/\.pdf$/),
+        }),
+      );
     });
 
     it('resolves a TODAY preset range and posts the built question to the chatbot service', async () => {
@@ -100,9 +106,10 @@ describe('AdminReportsService', () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         'http://chatbot.local/chatbot/create-report',
-        {
+        expect.objectContaining({
           question: expect.stringContaining('15/03/2026 đến 15/03/2026'),
-        },
+          fileName: expect.stringMatching(/\.pdf$/),
+        }),
         {
           timeout: 240_000,
           headers: { 'x-chatbot-internal-key': 'internal-key' },
@@ -132,9 +139,10 @@ describe('AdminReportsService', () => {
 
       expect(mockedAxios.post).toHaveBeenCalledWith(
         expect.any(String),
-        {
+        expect.objectContaining({
           question: expect.stringContaining('10/01/2026 đến 15/01/2026'),
-        },
+          fileName: expect.stringMatching(/\.pdf$/),
+        }),
         expect.any(Object),
       );
       expect(result.rangeLabel).toBe('10/01/2026 - 15/01/2026');
@@ -167,9 +175,7 @@ describe('AdminReportsService', () => {
         rangePreset: DateRangePreset.THIS_MONTH,
       };
 
-      await expect(service.generate(dto)).rejects.toBeInstanceOf(
-        HttpException,
-      );
+      await expect(service.generate(dto)).rejects.toBeInstanceOf(HttpException);
       await expect(service.generate(dto)).rejects.toMatchObject({
         message: 'Chatbot unavailable',
         status: 502,
@@ -185,7 +191,8 @@ describe('AdminReportsService', () => {
       };
 
       await expect(service.generate(dto)).rejects.toMatchObject({
-        message: 'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
+        message:
+          'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
         status: 500,
       });
     });

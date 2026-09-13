@@ -16,7 +16,8 @@ import {
 dotenv.config();
 
 export type FileParams =
-  { imageFiles: Express.Multer.File[] } | { pdfFile: Express.Multer.File };
+  | { imageFiles: Express.Multer.File[]; outputFileName?: string }
+  | { pdfFile: Express.Multer.File; outputFileName?: string };
 
 const SummaryMedicalRecordState = Annotation.Root({
   fileParams: Annotation<FileParams>(),

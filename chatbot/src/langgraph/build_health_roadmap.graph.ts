@@ -46,6 +46,7 @@ const HealthRoadMapState = Annotation.Root({
   request_id: Annotation<string>(),
   relative_id: Annotation<number>(),
   token: Annotation<string>(),
+  file_name: Annotation<string | undefined>(),
   health_profile: Annotation<HealthProfile>(),
   health_metric: Annotation<HealthMetric>(),
   progress_data: Annotation<ProgressData>(),
@@ -474,7 +475,8 @@ async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
     );
     const asset = await generatePdfHealthRoadmap(
       state.merged_data.health_roadmap_report,
-      outputPathImage
+      outputPathImage,
+      state.file_name,
     );
 
     if (!asset?.publicId && !(asset as any)?.url) {

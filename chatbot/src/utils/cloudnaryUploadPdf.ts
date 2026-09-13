@@ -10,11 +10,14 @@ export const uploadPdfToCloudinary = async (filePath: string) => {
     unique_filename: true,
     overwrite: false,
   });
+  const originalFileName = result.original_filename || "ai-document";
   return {
     publicId: result.public_id,
     resourceType: result.resource_type,
     format: result.format || "pdf",
-    fileName: `${result.original_filename || "ai-document"}.pdf`,
+    fileName: originalFileName.toLowerCase().endsWith(".pdf")
+      ? originalFileName
+      : `${originalFileName}.pdf`,
     bytes: result.bytes,
   };
 };

@@ -3,6 +3,7 @@ export interface HealthRoadmapResult {
   createdAt: string;
   title?: string;
   pdfUrl: string | null;
+  fileName?: string | null;
   raw?: unknown;
 }
 
@@ -12,4 +13,5 @@ export interface HealthRoadmapHistoryItem {
   title: string;
   relative: { id: number; fullname: string | null } | null;
   pdfUrl: string;
+  fileName?: string | null;
 }

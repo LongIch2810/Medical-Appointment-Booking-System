@@ -23,6 +23,10 @@ import Relative from 'src/entities/relative.entity';
 import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
 import { AiDocumentStorageService } from '../ai-documents/ai-document-storage.service';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import {
+  buildHealthRoadmapFileName,
+  buildMedicalRecordSummaryFileName,
+} from 'src/utils/aiDocumentFileName';
 
 // Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu chatbot
@@ -247,12 +251,14 @@ export class ChatHistoryService {
       throw new UnauthorizedException('Không có token xác thực.');
     }
 
+    const outputFileName = buildHealthRoadmapFileName(relativeId);
     try {
       const response = await axios.post(
         `${this.configService.get<string>('CHATBOT_URL')}/chatbot/build-health-roadmap`,
         {
           relative_id: relativeId,
           token,
+          fileName: outputFileName,
         },
         {
           headers: {
@@ -268,8 +274,11 @@ export class ChatHistoryService {
         asset?: AiDocumentAsset;
         title?: string;
         pdfUrl?: string;
+        fileName?: string;
       };
-      if (!data?.asset?.publicId && data?.pdfUrl) return data;
+      if (!data?.asset?.publicId && data?.pdfUrl) {
+        return { ...data, fileName: data.fileName || outputFileName };
+      }
       if (!data?.asset?.publicId) {
         throw new HttpException(
           'Chatbot không trả về tài liệu lộ trình hợp lệ.',
@@ -283,12 +292,16 @@ export class ChatHistoryService {
           title:
             data.title ||
             `Lộ trình sức khỏe của ${relative?.fullname || 'hồ sơ'}`,
-          output_asset: data.asset,
+          output_asset: {
+            ...data.asset,
+            fileName: data.asset.fileName || outputFileName,
+          },
         });
         return {
           id: saved.id,
           createdAt: saved.created_at,
           title: saved.title,
+          fileName: saved.output_asset.fileName,
           pdfUrl: `/api/v1/health-roadmaps/${saved.id}/file`,
         };
       } catch (saveError) {
@@ -366,6 +379,7 @@ export class ChatHistoryService {
       id: number;
       createdAt: Date;
       pdfUrl: string;
+      fileName: string;
       sourceFiles: Array<
         Pick<AiDocumentAsset, 'id' | 'fileName' | 'bytes' | 'format'> & {
           fileUrl?: string;
@@ -382,6 +396,8 @@ export class ChatHistoryService {
     }
 
     const form = new FormData();
+    const outputFileName = buildMedicalRecordSummaryFileName();
+    form.append('outputFileName', outputFileName);
     for (const file of upload.files) {
       const fileBytes = Uint8Array.from(file.buffer);
       form.append(
@@ -443,7 +459,10 @@ export class ChatHistoryService {
           summary,
           input_mode: upload.fieldName,
           source_assets: sourceAssets,
-          output_asset: data.asset,
+          output_asset: {
+            ...data.asset,
+            fileName: data.asset.fileName || outputFileName,
+          },
         });
         return {
           summary,
@@ -451,6 +470,7 @@ export class ChatHistoryService {
             id: saved.id,
             createdAt: saved.created_at,
             pdfUrl: `/api/v1/medical-record-summaries/${saved.id}/file`,
+            fileName: saved.output_asset.fileName,
             sourceFiles: sourceAssets.map(
               ({ id, fileName, bytes, format }) => ({
                 id,
@@ -555,6 +575,7 @@ export class ChatHistoryService {
           ? { id: row.relative.id, fullname: row.relative.fullname }
           : null,
         pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
+        fileName: row.output_asset.fileName,
       })),
       total,
       page,
@@ -574,6 +595,7 @@ export class ChatHistoryService {
       createdAt: row.created_at,
       relative: { id: row.relative.id, fullname: row.relative.fullname },
       pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
+      fileName: row.output_asset.fileName,
     };
   }
 
@@ -611,6 +633,7 @@ export class ChatHistoryService {
         createdAt: row.created_at,
         inputMode: row.input_mode,
         pdfUrl: `/api/v1/medical-record-summaries/${row.id}/file`,
+        fileName: row.output_asset.fileName,
         sourceFiles: row.source_assets.map(
           ({ id, fileName, bytes, format }) => ({
             id,
@@ -636,6 +659,7 @@ export class ChatHistoryService {
       id: row.id,
       createdAt: row.created_at,
       pdfUrl: `/api/v1/medical-record-summaries/${row.id}/file`,
+      fileName: row.output_asset.fileName,
       sourceFiles: row.source_assets.map(({ id, fileName, bytes, format }) => ({
         id,
         fileName,

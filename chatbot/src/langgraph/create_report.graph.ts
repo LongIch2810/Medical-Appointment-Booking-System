@@ -24,6 +24,7 @@ const CreateReportState = Annotation.Root({
   result: Annotation<string>(),
   chartConfig: Annotation<ChartConfig>(),
   report: Annotation<Report>(),
+  file_name: Annotation<string | undefined>(),
   pdf_asset: Annotation<any>(),
   pdf_url: Annotation<string>(),
   errorAnalyzeData: Annotation<{
@@ -341,7 +342,11 @@ async function CreateFilePdfNode(state: typeof CreateReportState.State) {
 
     const outputPathImage = await renderChartToImage(state.chartConfig);
 
-    const asset = await generatePdfReport(state.report, outputPathImage);
+    const asset = await generatePdfReport(
+      state.report,
+      outputPathImage,
+      state.file_name,
+    );
 
     return {
       pdf_asset: asset,

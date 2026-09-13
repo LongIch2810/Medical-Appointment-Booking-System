@@ -41,9 +41,14 @@ export function xorValidate(req: Request, res: Response, next: NextFunction) {
     }
   }
 
+  const outputFileName =
+    typeof req.body?.outputFileName === "string"
+      ? req.body.outputFileName
+      : undefined;
+
   (req as any).fileParams = hasImages
-    ? { imageFiles: images }
-    : { pdfFile: pdfs[0] };
+    ? { imageFiles: images, ...(outputFileName ? { outputFileName } : {}) }
+    : { pdfFile: pdfs[0], ...(outputFileName ? { outputFileName } : {}) };
 
   next();
 }

@@ -109,7 +109,8 @@ export function AdminAiReportGeneratorPage() {
   const handleExportCsv = () => {
     if (!report) return;
     exportReportCsv(
-      `ai-coach-report-${report.reportType.toLowerCase()}.csv`,
+      report.fileName?.replace(/\.pdf$/i, ".csv") ||
+        `ai-coach-report-${report.reportType.toLowerCase()}.csv`,
       report.tableColumns,
       report.tableRows,
     );

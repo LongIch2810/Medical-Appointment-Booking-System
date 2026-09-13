@@ -49,6 +49,7 @@ export type AdminReport = {
   reportType: AdminReportType;
   rangeLabel: string;
   pdfUrl: string | null;
+  fileName?: string | null;
   report: AdminReportContent | null;
   // Cấu hình Chart.js do AI sinh ra (type/data/options) — không định kiểu chặt
   // vì AI tự quyết định cấu trúc chi tiết, chỉ ChartConfigRenderer đọc field

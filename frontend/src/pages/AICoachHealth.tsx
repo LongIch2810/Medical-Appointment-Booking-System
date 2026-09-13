@@ -20,7 +20,7 @@ import NutritionAnimation from "@/components/animation/NutritionAnimation";
 import PlankAnimation from "@/components/animation/PlankAnimation";
 import CreateCoachProfileForm from "@/components/coach/CreateCoachProfileForm";
 import LazyViewport from "@/components/lazy/LazyViewport";
-import { backendOrigin } from "@/configs/axios";
+import axiosInstance, { backendOrigin } from "@/configs/axios";
 
 const HealthRoadmapHistory = lazy(() =>
   import("@/components/coach/HealthRoadmapHistory").then((m) => ({
@@ -251,6 +251,7 @@ export default function AICoachHealth() {
   const [status, setStatus] = useState<"idle" | "processing" | "completed" | "failed">("idle");
   const [error, setError] = useState("");
   const [pdfUrl, setPdfUrl] = useState("");
+  const [pdfFileName, setPdfFileName] = useState("");
   const [completedProfileKey, setCompletedProfileKey] = useState<string | null>(null);
 
   const generateElapsed = useElapsedWhile(status === "processing");
@@ -282,6 +283,7 @@ export default function AICoachHealth() {
   const handleProfileChange = (key: string) => {
     setSelectedProfileKey(key);
     setPdfUrl("");
+    setPdfFileName("");
     setError("");
     setStatus("idle");
     setCompletedProfileKey(null);
@@ -297,6 +299,7 @@ export default function AICoachHealth() {
   const handleGenerate = async () => {
     setError("");
     setPdfUrl("");
+    setPdfFileName("");
 
     if (!selectedProfileObj) {
       setError(t("aiCoach.selectPromptError"));
@@ -325,6 +328,9 @@ export default function AICoachHealth() {
       }
 
       setPdfUrl(generatedPdfUrl);
+      setPdfFileName(
+        result?.fileName || `lo-trinh-suc-khoe-${selectedProfileObj.id}.pdf`,
+      );
       setStatus("completed");
       setCompletedProfileKey(selectedProfileObj.key);
     } catch (requestError) {
@@ -338,6 +344,24 @@ export default function AICoachHealth() {
       );
       setStatus("failed");
       setCompletedProfileKey(null);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!pdfUrl) return;
+    try {
+      const response = await axiosInstance.get<Blob>(
+        pdfUrl.replace(/^\/api\/v1/, ""),
+        { params: { download: true }, responseType: "blob" },
+      );
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = pdfFileName || "lo-trinh-suc-khoe.pdf";
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setError(t("aiCoach.genericError"));
     }
   };
 
@@ -629,7 +653,7 @@ export default function AICoachHealth() {
                   <Button
                     variant="outline"
                     className="rounded-xl border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 text-sm font-semibold gap-2 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                    onClick={() => window.open(`${backendOrigin}${pdfUrl}`, "_blank", "noopener,noreferrer")}
+                    onClick={() => void handleDownloadPdf()}
                   >
                     <Download className="h-4 w-4" />
                     {t("aiCoach.downloadBtn")}

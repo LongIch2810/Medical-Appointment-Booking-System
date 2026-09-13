@@ -34,6 +34,7 @@ export class AdminReportsMapper {
       createdAt?: Date;
       createdBy?: { id: number; fullname: string | null };
       pdfUrl?: string | null;
+      fileName?: string | null;
     } = {},
   ): AdminReportResponseDto {
     const raw = chatbotData?.raw ?? {};
@@ -54,6 +55,11 @@ export class AdminReportsMapper {
         reportType,
         rangeLabel,
         pdfUrl: metadata.pdfUrl ?? chatbotData?.pdfUrl ?? null,
+        fileName:
+          metadata.fileName ??
+          chatbotData?.asset?.fileName ??
+          chatbotData?.pdfAsset?.fileName ??
+          null,
         report: raw.report ?? null,
         chartConfig: raw.chartConfig ?? null,
         tableColumns,

@@ -316,7 +316,7 @@ export function MedicalRecordSummaryHistory({
                         onClick={() =>
                           void downloadFile(
                             item.pdfUrl,
-                            `tom-tat-benh-an-${item.id}.pdf`,
+                            item.fileName || `tom-tat-benh-an-${item.id}.pdf`,
                           )
                         }
                         aria-label={`Tải tệp PDF kết quả tóm tắt #${item.id}`}

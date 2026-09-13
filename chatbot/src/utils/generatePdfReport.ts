@@ -4,6 +4,7 @@ import path from "path";
 import { z } from "zod";
 import { ReportSchema as ReportZodSchema } from "../tools/write_professional_report.tool.js";
 import { uploadPdfToCloudinary } from "./cloudnaryUploadPdf.js";
+import { sanitizeAiDocumentFileName } from "./aiDocumentFileName.js";
 
 type Report = z.infer<typeof ReportZodSchema>;
 
@@ -17,10 +18,14 @@ const ensureDir = (dir: string) => {
 export const generatePdfReport = async (
   reportData: Report,
   chartImagePath: string,
+  fileName?: string,
 ): Promise<{ publicId: string; resourceType: string; format: string; fileName: string; bytes: number }> => {
   const tmpDir = path.resolve(process.cwd(), "tmp");
   ensureDir(tmpDir);
-  const outputPath = path.join(tmpDir, `report-${Date.now()}.pdf`);
+  const outputPath = path.join(
+    tmpDir,
+    sanitizeAiDocumentFileName(fileName, `bao-cao-${Date.now()}`),
+  );
 
   try {
     const doc = new PDFDocument({ margin: 50 });

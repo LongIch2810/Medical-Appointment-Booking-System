@@ -290,7 +290,7 @@ export function HealthRoadmapHistory({ relativeId }: { relativeId?: number }) {
                         onClick={() =>
                           void download(
                             item.pdfUrl,
-                            `lo-trinh-suc-khoe-${item.id}.pdf`,
+                            item.fileName || `lo-trinh-suc-khoe-${item.id}.pdf`,
                           )
                         }
                         aria-label={`Tải xuống file PDF lộ trình ${item.title}`}
