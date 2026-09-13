@@ -42,6 +42,15 @@ export class TableColumnDto {
 @Exclude()
 export class AdminReportResponseDto {
   @Expose()
+  id!: number;
+
+  @Expose()
+  createdAt!: Date;
+
+  @Expose()
+  createdBy?: { id: number; fullname: string | null };
+
+  @Expose()
   reportType!: string;
 
   @Expose()

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 
 import {
@@ -19,6 +19,7 @@ export interface SummarizeMedicalRecordVariables {
 }
 
 export function useMedicalRecordSummary() {
+  const queryClient = useQueryClient();
   const [generatedAt, setGeneratedAt] = useState<Date | null>(null);
 
   const mutation = useMutation<
@@ -29,6 +30,7 @@ export function useMedicalRecordSummary() {
     mutationFn: ({ files, mode }) => summarizeMedicalRecord(files, mode),
     onSuccess: () => {
       setGeneratedAt(new Date());
+      void queryClient.invalidateQueries({ queryKey: ["medical-record-summary-history"] });
     },
   });
 
@@ -38,6 +40,7 @@ export function useMedicalRecordSummary() {
   };
 
   const summary = mutation.data?.data?.summary ?? null;
+  const generatedDocument = mutation.data?.data?.document;
   const friendlyError = mutation.error
     ? getMedicalRecordErrorMessage(mutation.error)
     : null;
@@ -45,6 +48,7 @@ export function useMedicalRecordSummary() {
   return {
     ...mutation,
     summary,
+    document: generatedDocument,
     friendlyError,
     generatedAt,
     resetSummary,

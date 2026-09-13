@@ -19,6 +19,7 @@ import {
 } from "../utils/healthRoadmapRuntime.js";
 import { normalizeChatbotError, withRetry } from "../utils/retry.js";
 import { logSafeError } from "../utils/safeLog.js";
+import { generatePdfMedicalRecordSummary } from "../utils/generatePdfMedicalRecordSummary.js";
 
 // Mọi call ra backend đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu backend
@@ -138,7 +139,8 @@ const handleCreateReportService = async ({
 }) => {
   try {
     const result: any = await createReportGraph.invoke({ question });
-    const { pdf_url: pdfUrl } = result || {};
+    const asset = result?.pdf_asset;
+    const legacyPdfUrl = result?.pdf_url;
 
     const errorKeys = [
       "errorAnalyzeData",
@@ -166,14 +168,23 @@ const handleCreateReportService = async ({
       throw e;
     }
 
-    return {
-      pdfUrl: pdfUrl ?? null,
-      raw: {
-        result: result?.result ?? null,
-        report: result?.report ?? null,
-        chartConfig: result?.chartConfig ?? null,
-      },
-    };
+    return asset?.publicId
+      ? {
+          asset,
+          raw: {
+            result: result?.result ?? null,
+            report: result?.report ?? null,
+            chartConfig: result?.chartConfig ?? null,
+          },
+        }
+      : {
+          pdfUrl: legacyPdfUrl ?? null,
+          raw: {
+            result: result?.result ?? null,
+            report: result?.report ?? null,
+            chartConfig: result?.chartConfig ?? null,
+          },
+        };
   } catch (error) {
     logSafeError("Create report failed", error);
     throw normalizeChatbotError(error);
@@ -227,7 +238,7 @@ const handleBuildHealthRoadMapService = async ({
       throw e;
     }
 
-    if (!result?.pdf_url) {
+    if (!result?.pdf_asset?.publicId && !result?.pdf_url) {
       const e = new Error("Không nhận được đường dẫn PDF từ chatbot.");
       (e as any).status = 500;
       throw e;
@@ -241,9 +252,9 @@ const handleBuildHealthRoadMapService = async ({
       status: 200,
     });
 
-    return {
-      pdfUrl: result.pdf_url,
-    };
+    return result.pdf_asset?.publicId
+      ? { asset: result.pdf_asset }
+      : { pdfUrl: result.pdf_url };
   } catch (error: unknown) {
     const status =
       typeof error === "object" && error
@@ -312,10 +323,16 @@ const handleDiagnosisService = async ({
 
 const handleSummaryMedicalRecordService = async (
   fileParams: FileParams,
-): Promise<string> => {
+): Promise<{ summary: string; asset: Awaited<ReturnType<typeof generatePdfMedicalRecordSummary>> } | string> => {
   try {
     const result = await summaryMedicalRecordGraph.invoke({ fileParams });
-    return result.summary.answer;
+    const summary = result.summary.answer;
+    const hasFiles =
+      ("imageFiles" in fileParams && fileParams.imageFiles.length > 0) ||
+      ("pdfFile" in fileParams && Boolean(fileParams.pdfFile));
+    if (!hasFiles) return summary;
+    const asset = await generatePdfMedicalRecordSummary(summary);
+    return { summary, asset };
   } catch (error) {
     throw normalizeChatbotError(error);
   }

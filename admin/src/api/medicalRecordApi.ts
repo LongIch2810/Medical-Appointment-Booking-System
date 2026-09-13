@@ -6,6 +6,7 @@ import type { ApiError } from "@/types/interface/apiError.interface";
 import type {
   MedicalRecordSummaryData,
   MedicalRecordUploadMode,
+  MedicalRecordSummaryHistoryItem,
 } from "@/types/interface/medicalRecord.interface";
 
 export async function summarizeMedicalRecord(
@@ -34,6 +35,24 @@ export async function summarizeMedicalRecord(
     },
   );
 
+  return response.data;
+}
+
+export async function getMedicalRecordSummaryHistory(page = 1, limit = 10) {
+  const response = await axiosInstance.get<ApiResponse<{ summaries: MedicalRecordSummaryHistoryItem[]; total: number; page: number; limit: number; totalPages: number }>>(
+    "/medical-record-summaries",
+    { params: { page, limit } },
+  );
+  return response.data;
+}
+
+export async function getMedicalRecordSummary(id: number) {
+  const response = await axiosInstance.get<ApiResponse<MedicalRecordSummaryData & { id: number; createdAt: string; inputMode: string }>>(`/medical-record-summaries/${id}`);
+  return response.data;
+}
+
+export async function deleteMedicalRecordSummary(id: number) {
+  const response = await axiosInstance.delete<ApiResponse<{ success: boolean }>>(`/medical-record-summaries/${id}`);
   return response.data;
 }
 

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   HttpCode,
@@ -10,6 +11,7 @@ import {
   Post,
   Query,
   Request,
+  Res,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -30,6 +32,7 @@ import {
   MedicalRecordUploadFields,
   parseMedicalRecordUpload,
 } from './medical-record-upload';
+import type { Response } from 'express';
 
 @ApiTags('chat-history')
 @ApiCookieAuth()
@@ -125,12 +128,119 @@ export class ChatHistoryController {
     const { userId } = req.user;
     const { accessToken: token } = req.cookies;
     const upload = parseMedicalRecordUpload(files ?? {});
-    const summary = await this.chatHistoryService.summarizeMedicalRecord(
+    const result = await this.chatHistoryService.summarizeMedicalRecord(
       userId,
       token,
       upload,
     );
-    return { summary };
+    return result;
+  }
+
+  @Get('health-roadmaps')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  getHealthRoadmapHistory(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+    @Query('relativeId') relativeId?: string,
+  ) {
+    return this.chatHistoryService.getHealthRoadmapHistory(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+      relativeId ? Number(relativeId) : undefined,
+    );
+  }
+
+  @Get('health-roadmaps/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  getHealthRoadmap(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.chatHistoryService.getHealthRoadmap(req.user.userId, id);
+  }
+
+  @Get('health-roadmaps/:id/file')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  async getHealthRoadmapFile(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('download') download: string,
+    @Res() response: Response,
+  ) {
+    response.redirect(
+      await this.chatHistoryService.getHealthRoadmapFile(
+        req.user.userId,
+        id,
+        download === 'true',
+      ),
+    );
+  }
+
+  @Delete('health-roadmaps/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  deleteHealthRoadmap(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.chatHistoryService.deleteHealthRoadmap(req.user.userId, id);
+  }
+
+  @Get('medical-record-summaries')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  getMedicalSummaryHistory(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '10',
+  ) {
+    return this.chatHistoryService.getMedicalSummaryHistory(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Get('medical-record-summaries/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  getMedicalSummary(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.chatHistoryService.getMedicalSummary(req.user.userId, id);
+  }
+
+  @Get('medical-record-summaries/:id/file')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  async getMedicalSummaryFile(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('download') download: string,
+    @Res() response: Response,
+  ) {
+    response.redirect(
+      await this.chatHistoryService.getMedicalSummaryFile(
+        req.user.userId,
+        id,
+        download === 'true',
+      ),
+    );
+  }
+
+  @Get('medical-record-summaries/:id/sources/:sourceId/file')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  async getMedicalSummarySourceFile(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('sourceId') sourceId: string,
+    @Query('download') download: string,
+    @Res() response: Response,
+  ) {
+    response.redirect(
+      await this.chatHistoryService.getMedicalSummarySourceFile(
+        req.user.userId,
+        id,
+        sourceId,
+        download === 'true',
+      ),
+    );
+  }
+
+  @Delete('medical-record-summaries/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  deleteMedicalSummary(@Request() req, @Param('id', ParseIntPipe) id: number) {
+    return this.chatHistoryService.deleteMedicalSummary(req.user.userId, id);
   }
 
   @ApiOperation({ summary: 'Lịch sử hội thoại của người dùng' })

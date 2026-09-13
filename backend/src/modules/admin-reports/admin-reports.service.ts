@@ -1,5 +1,11 @@
-import { HttpException, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  Injectable,
+  NotFoundException,
+  Optional,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import {
   endOfDay,
@@ -11,6 +17,11 @@ import {
   startOfWeek,
   startOfYear,
 } from 'date-fns';
+import { Repository } from 'typeorm';
+import AiAdminReport from 'src/entities/aiAdminReport.entity';
+import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { AiDocumentStorageService } from '../ai-documents/ai-document-storage.service';
 import { formatDateDDMMYYYY } from 'src/utils/formatDate';
 import {
   BodyGenerateAdminReportDto,
@@ -20,7 +31,6 @@ import {
 import { AdminReportsMapper } from './admin-reports.mapper';
 
 type FixedDateRangeResolver = (now: Date) => { from: Date; to: Date };
-
 const FIXED_DATE_RANGE_RESOLVERS: Record<
   Exclude<DateRangePreset, DateRangePreset.CUSTOM>,
   FixedDateRangeResolver
@@ -69,7 +79,14 @@ const REPORT_QUESTION_BUILDERS: Record<
 
 @Injectable()
 export class AdminReportsService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    @Optional()
+    @InjectRepository(AiAdminReport)
+    private readonly reportRepo: Repository<AiAdminReport> = undefined as any,
+    @Optional()
+    private readonly storage: AiDocumentStorageService = undefined as any,
+  ) {}
 
   private resolveDateRange(dto: BodyGenerateAdminReportDto) {
     const now = new Date();
@@ -80,30 +97,66 @@ export class AdminReportsService {
             to: endOfDay(new Date(dto.toDate!)),
           }
         : FIXED_DATE_RANGE_RESOLVERS[dto.rangePreset](now);
-
-    // formatDateDDMMYYYY (dd/MM/yyyy) để khớp định dạng ngày hiển thị chung
-    // của toàn app (DateFormatInterceptor / các response DTO khác).
+    const fromDate = from.toISOString().slice(0, 10);
+    const toDate = to.toISOString().slice(0, 10);
     const fromLabel = formatDateDDMMYYYY(from)!;
     const toLabel = formatDateDDMMYYYY(to)!;
     return {
       from: fromLabel,
       to: toLabel,
+      fromDate,
+      toDate,
       rangeLabel: `${fromLabel} - ${toLabel}`,
     };
   }
 
-  private buildQuestion(
-    reportType: ReportType,
-    from: string,
-    to: string,
-  ): string {
-    return REPORT_QUESTION_BUILDERS[reportType](from, to);
+  private parseTableRows(
+    rawResult: unknown,
+  ): Record<string, string | number>[] {
+    if (typeof rawResult !== 'string') return [];
+    try {
+      const parsed = JSON.parse(rawResult);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
   }
 
-  async generate(dto: BodyGenerateAdminReportDto) {
-    const { from, to, rangeLabel } = this.resolveDateRange(dto);
-    const question = this.buildQuestion(dto.reportType, from, to);
+  private toResponse(entity: AiAdminReport) {
+    return AdminReportsMapper.toResponse(
+      entity.report_type as ReportType,
+      entity.range_label,
+      {
+        asset: entity.output_asset,
+        raw: {
+          report: entity.report,
+          chartConfig: entity.chart_config,
+          result: JSON.stringify(entity.table_rows),
+        },
+      },
+      {
+        id: entity.id,
+        createdAt: entity.created_at,
+        createdBy: entity.createdBy
+          ? { id: entity.createdBy.id, fullname: entity.createdBy.fullname }
+          : undefined,
+        pdfUrl: `/api/v1/admin-reports/history/${entity.id}/file`,
+      },
+    );
+  }
 
+  async generate(
+    userIdOrDto: number | BodyGenerateAdminReportDto,
+    dtoArg?: BodyGenerateAdminReportDto,
+  ) {
+    const userId = typeof userIdOrDto === 'number' ? userIdOrDto : undefined;
+    const dto = (typeof userIdOrDto === 'number' ? dtoArg : userIdOrDto)!;
+    const range = this.resolveDateRange(dto);
+    const question = REPORT_QUESTION_BUILDERS[dto.reportType](
+      range.from,
+      range.to,
+    );
+    let asset: AiDocumentAsset | undefined;
     try {
       const response = await axios.post(
         `${this.configService.get<string>('CHATBOT_URL')}/chatbot/create-report`,
@@ -117,12 +170,43 @@ export class AdminReportsService {
           },
         },
       );
-      return AdminReportsMapper.toResponse(
-        dto.reportType,
-        rangeLabel,
-        response.data?.data,
-      );
+      const data = response.data?.data;
+      if (!this.reportRepo || !userId) {
+        return AdminReportsMapper.toResponse(
+          dto.reportType,
+          range.rangeLabel,
+          data,
+        );
+      }
+      asset = data?.asset ?? data?.pdfAsset;
+      if (!asset?.publicId)
+        throw new HttpException('AI không trả về tài liệu PDF hợp lệ.', 502);
+      const raw = data?.raw ?? {};
+      const tableRows = this.parseTableRows(raw.result);
+      const tableColumns = tableRows.length
+        ? Object.keys(tableRows[0]).map((key) => ({
+            key,
+            label: key.replace(/_/g, ' '),
+          }))
+        : [];
+      const entity = await this.reportRepo.save({
+        createdBy: { id: userId },
+        report_type: dto.reportType,
+        range_preset: dto.rangePreset,
+        from_date: range.fromDate,
+        to_date: range.toDate,
+        range_label: range.rangeLabel,
+        report: raw.report ?? null,
+        chart_config: raw.chartConfig ?? null,
+        table_columns: tableColumns,
+        table_rows: tableRows,
+        output_asset: asset,
+      });
+      return this.toResponse(entity);
     } catch (error: any) {
+      if (asset && this.storage)
+        await this.storage.deleteAsset(asset).catch(() => undefined);
+      if (error instanceof HttpException) throw error;
       console.error('AdminReports create-report error:', {
         status: error?.response?.status,
         code: error?.code,
@@ -133,5 +217,53 @@ export class AdminReportsService {
         error?.response?.status || 500,
       );
     }
+  }
+
+  async history(page = 1, limit = 10, reportType?: string) {
+    page = Math.max(1, page);
+    limit = Math.min(50, Math.max(1, limit));
+    const where = reportType ? { report_type: reportType } : {};
+    const [rows, total] = await this.reportRepo.findAndCount({
+      where,
+      relations: { createdBy: true },
+      order: { created_at: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return new PaginationResultDto(
+      'reports',
+      rows.map((row) => this.toResponse(row)),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  async detail(id: number) {
+    const row = await this.reportRepo.findOne({
+      where: { id },
+      relations: { createdBy: true },
+    });
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    return this.toResponse(row);
+  }
+
+  async file(id: number, download = false) {
+    const row = await this.reportRepo.findOne({ where: { id } });
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    return this.storage.getDownloadUrl(row.output_asset, download);
+  }
+
+  async remove(id: number, userId: number, roles: string[]) {
+    const row = await this.reportRepo.findOne({
+      where: { id },
+      relations: { createdBy: true },
+    });
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    if (row.createdBy.id !== userId && !roles.includes('ADMIN'))
+      throw new HttpException('Bạn không có quyền xóa báo cáo này.', 403);
+    await this.storage.deleteAsset(row.output_asset);
+    await this.reportRepo.softDelete(id);
+    return { success: true };
   }
 }

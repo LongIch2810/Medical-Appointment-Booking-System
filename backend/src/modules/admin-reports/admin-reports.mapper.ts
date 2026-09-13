@@ -1,6 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { AdminReportResponseDto } from './dto/response/adminReportResponse.dto';
 import { ReportType } from './dto/request/bodyGenerateAdminReport.dto';
+import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
 
 function humanizeKey(key: string): string {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
@@ -21,7 +22,19 @@ export class AdminReportsMapper {
     reportType: ReportType,
     rangeLabel: string,
     chatbotData:
-      { pdfUrl?: string | null; raw?: Record<string, any> } | undefined,
+      | {
+          asset?: AiDocumentAsset;
+          pdfAsset?: AiDocumentAsset;
+          pdfUrl?: string | null;
+          raw?: Record<string, any>;
+        }
+      | undefined,
+    metadata: {
+      id?: number;
+      createdAt?: Date;
+      createdBy?: { id: number; fullname: string | null };
+      pdfUrl?: string | null;
+    } = {},
   ): AdminReportResponseDto {
     const raw = chatbotData?.raw ?? {};
     const tableRows = parseTableRows(raw.result);
@@ -35,9 +48,12 @@ export class AdminReportsMapper {
     return plainToInstance(
       AdminReportResponseDto,
       {
+        id: metadata.id,
+        createdAt: metadata.createdAt,
+        createdBy: metadata.createdBy,
         reportType,
         rangeLabel,
-        pdfUrl: chatbotData?.pdfUrl ?? null,
+        pdfUrl: metadata.pdfUrl ?? chatbotData?.pdfUrl ?? null,
         report: raw.report ?? null,
         chartConfig: raw.chartConfig ?? null,
         tableColumns,

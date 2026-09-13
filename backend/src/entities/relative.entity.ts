@@ -15,6 +15,7 @@ import User from './user.entity';
 import HealthProfile from './healthProfile.entity';
 import Relationship from './relationship.entity';
 import Appointment from './appointment.entity';
+import AiHealthRoadmap from './aiHealthRoadmap.entity';
 
 @Entity('relatives')
 export default class Relative {
@@ -49,6 +50,9 @@ export default class Relative {
 
   @OneToMany(() => Appointment, (a) => a.patient)
   appointments!: Relation<Appointment[]>;
+
+  @OneToMany(() => AiHealthRoadmap, (roadmap) => roadmap.relative)
+  ai_health_roadmaps!: Relation<AiHealthRoadmap[]>;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;

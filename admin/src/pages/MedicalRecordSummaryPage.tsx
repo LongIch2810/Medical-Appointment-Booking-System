@@ -13,10 +13,14 @@ import type {
 import { MedicalRecordFilePreview } from "@/components/app/medical-record/MedicalRecordFilePreview";
 import { MedicalRecordSummaryResult } from "@/components/app/medical-record/MedicalRecordSummaryResult";
 import { MedicalRecordUploader } from "@/components/app/medical-record/MedicalRecordUploader";
+import { MedicalRecordSummaryHistory } from "@/components/app/MedicalRecordSummaryHistory";
+import axiosInstance from "@/configs/axios";
+import type { MedicalRecordSummaryData } from "@/types/interface/medicalRecord.interface";
 
 export function MedicalRecordSummaryPage() {
   const [mode, setMode] = useState<MedicalRecordUploadMode>("images");
   const [files, setFiles] = useState<UploadedMedicalFile[]>([]);
+  const [selectedHistory, setSelectedHistory] = useState<(MedicalRecordSummaryData & { id: number; createdAt: string; inputMode: string }) | null>(null);
 
   // Ref to track current files for clean memory release on unmount
   const filesRef = useRef<UploadedMedicalFile[]>(files);
@@ -26,6 +30,7 @@ export function MedicalRecordSummaryPage() {
     mutate: summarize,
     isPending,
     summary,
+    document: generatedDocument,
     friendlyError,
     generatedAt,
     resetSummary,
@@ -79,8 +84,23 @@ export function MedicalRecordSummaryPage() {
     if (isPending || files.length === 0) return;
 
     const rawFiles = files.map((item) => item.file);
+    setSelectedHistory(null);
     summarize({ files: rawFiles, mode });
   };
+
+  const downloadFile = async (path: string, fileName: string) => {
+    if (!path) return;
+    const response = await axiosInstance.get<Blob>(path.replace(/^\/api\/v1/, ""), { responseType: "blob" });
+    const url = URL.createObjectURL(response.data);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const displayedSummary = selectedHistory?.summary ?? summary;
+  const displayedGeneratedAt = selectedHistory ? new Date(selectedHistory.createdAt) : generatedAt;
 
   const handleRegenerate = () => {
     resetSummary();
@@ -162,15 +182,18 @@ export function MedicalRecordSummaryPage() {
         {/* Right Column: AI Summary Result */}
         <div className="space-y-5 lg:col-span-7">
           <MedicalRecordSummaryResult
-            summary={summary}
+            summary={displayedSummary}
             isLoading={isPending}
             error={friendlyError}
-            generatedAt={generatedAt}
+            generatedAt={displayedGeneratedAt}
             onRetry={handleGenerate}
             onRegenerate={handleRegenerate}
+            document={selectedHistory?.document ?? generatedDocument}
+            onDownloadFile={downloadFile}
           />
         </div>
       </div>
+      <MedicalRecordSummaryHistory onSelect={setSelectedHistory} />
     </div>
   );
 }

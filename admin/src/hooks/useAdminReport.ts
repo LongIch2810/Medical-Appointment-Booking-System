@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { toast } from "react-toastify";
 
@@ -24,10 +24,14 @@ function readAdminReportError(error: unknown) {
 }
 
 export function useGenerateAdminReport() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: generateAdminReport,
     onError: (error) => {
       toast.error(readAdminReportError(error));
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["admin-report-history"] });
     },
   });
 }

@@ -3,6 +3,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -15,6 +16,13 @@ import axios from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { MedicalRecordUpload } from './medical-record-upload';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import { randomUUID } from 'crypto';
+import AiHealthRoadmap from 'src/entities/aiHealthRoadmap.entity';
+import AiMedicalRecordSummary from 'src/entities/aiMedicalRecordSummary.entity';
+import Relative from 'src/entities/relative.entity';
+import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
+import { AiDocumentStorageService } from '../ai-documents/ai-document-storage.service';
+import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 
 // Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu chatbot
@@ -42,6 +50,16 @@ export class ChatHistoryService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly redisCacheService: RedisCacheService,
+    @Optional()
+    @InjectRepository(AiHealthRoadmap)
+    private readonly roadmapRepo: Repository<AiHealthRoadmap>,
+    @Optional()
+    @InjectRepository(AiMedicalRecordSummary)
+    private readonly summaryRepo: Repository<AiMedicalRecordSummary>,
+    @Optional()
+    @InjectRepository(Relative)
+    private readonly relativeRepo: Repository<Relative>,
+    @Optional() private readonly documentStorage: AiDocumentStorageService,
   ) {}
 
   private getChatHistoryCacheKey(userId: number) {
@@ -209,6 +227,17 @@ export class ChatHistoryService {
   }
 
   async buildHealthRoadmap(userId: number, relativeId: number, token: string) {
+    const relative = this.relativeRepo
+      ? await this.relativeRepo.findOne({
+          where: { id: relativeId, user: { id: userId } },
+        })
+      : null;
+    if (this.relativeRepo && !relative) {
+      throw new NotFoundException(
+        'Hồ sơ người thân không thuộc tài khoản này.',
+      );
+    }
+
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại!');
@@ -235,7 +264,40 @@ export class ChatHistoryService {
         },
       );
 
-      return response.data?.data;
+      const data = response.data?.data as {
+        asset?: AiDocumentAsset;
+        title?: string;
+        pdfUrl?: string;
+      };
+      if (!data?.asset?.publicId && data?.pdfUrl) return data;
+      if (!data?.asset?.publicId) {
+        throw new HttpException(
+          'Chatbot không trả về tài liệu lộ trình hợp lệ.',
+          HttpStatus.BAD_GATEWAY,
+        );
+      }
+      try {
+        const saved = await this.roadmapRepo.save({
+          user: { id: userId },
+          relative: { id: relativeId },
+          title:
+            data.title ||
+            `Lộ trình sức khỏe của ${relative?.fullname || 'hồ sơ'}`,
+          output_asset: data.asset,
+        });
+        return {
+          id: saved.id,
+          createdAt: saved.created_at,
+          title: saved.title,
+          pdfUrl: `/api/v1/health-roadmaps/${saved.id}/file`,
+        };
+      } catch (saveError) {
+        if (this.documentStorage)
+          await this.documentStorage
+            .deleteAsset(data.asset)
+            .catch(() => undefined);
+        throw saveError;
+      }
     } catch (error: unknown) {
       if (!axios.isAxiosError(error)) {
         throw new HttpException(
@@ -298,7 +360,19 @@ export class ChatHistoryService {
     userId: number,
     token: string,
     upload: MedicalRecordUpload,
-  ): Promise<string> {
+  ): Promise<{
+    summary: string;
+    document: {
+      id: number;
+      createdAt: Date;
+      pdfUrl: string;
+      sourceFiles: Array<
+        Pick<AiDocumentAsset, 'id' | 'fileName' | 'bytes' | 'format'> & {
+          fileUrl?: string;
+        }
+      >;
+    };
+  }> {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại!');
@@ -333,8 +407,18 @@ export class ChatHistoryService {
           maxContentLength: Infinity,
         },
       );
-      const summary = response.data?.data;
-      if (typeof summary !== 'string' || summary.trim().length === 0) {
+      const data = response.data?.data as {
+        summary?: unknown;
+        asset?: AiDocumentAsset;
+      };
+      const summary = data?.summary;
+      if (typeof response.data?.data === 'string')
+        return response.data.data as any;
+      if (
+        typeof summary !== 'string' ||
+        summary.trim().length === 0 ||
+        !data?.asset?.publicId
+      ) {
         throw new HttpException(
           {
             code: 'CHATBOT_SUMMARY_INVALID_RESPONSE',
@@ -343,7 +427,52 @@ export class ChatHistoryService {
           HttpStatus.BAD_GATEWAY,
         );
       }
-      return summary;
+      const sourceAssets: AiDocumentAsset[] = [];
+      try {
+        for (const file of upload.files) {
+          const asset = await this.documentStorage.uploadBuffer(
+            file.buffer,
+            file.originalname,
+            file.mimetype,
+            'ai-documents/sources',
+          );
+          sourceAssets.push({ ...asset, id: randomUUID() });
+        }
+        const saved = await this.summaryRepo.save({
+          user: { id: userId },
+          summary,
+          input_mode: upload.fieldName,
+          source_assets: sourceAssets,
+          output_asset: data.asset,
+        });
+        return {
+          summary,
+          document: {
+            id: saved.id,
+            createdAt: saved.created_at,
+            pdfUrl: `/api/v1/medical-record-summaries/${saved.id}/file`,
+            sourceFiles: sourceAssets.map(
+              ({ id, fileName, bytes, format }) => ({
+                id,
+                fileName,
+                bytes,
+                format,
+                fileUrl: `/api/v1/medical-record-summaries/${saved.id}/sources/${id}/file`,
+              }),
+            ),
+          },
+        };
+      } catch (saveError) {
+        if (this.documentStorage) {
+          await this.documentStorage
+            .deleteAssets(sourceAssets)
+            .catch(() => undefined);
+          await this.documentStorage
+            .deleteAsset(data.asset)
+            .catch(() => undefined);
+        }
+        throw saveError;
+      }
     } catch (error: unknown) {
       if (error instanceof HttpException) throw error;
 
@@ -391,6 +520,175 @@ export class ChatHistoryService {
         HttpStatus.BAD_GATEWAY,
       );
     }
+  }
+
+  async getHealthRoadmapHistory(
+    userId: number,
+    page = 1,
+    limit = 10,
+    relativeId?: number,
+  ) {
+    page = Math.max(1, page);
+    limit = Math.min(50, Math.max(1, limit));
+    const query = this.roadmapRepo
+      .createQueryBuilder('roadmap')
+      .leftJoinAndSelect('roadmap.relative', 'relative')
+      .where('roadmap.user_id = :userId', { userId });
+    if (relativeId)
+      query.andWhere('roadmap.relative_id = :relativeId', { relativeId });
+    const [rows, total] = await Promise.all([
+      query
+        .clone()
+        .orderBy('roadmap.created_at', 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getMany(),
+      query.getCount(),
+    ]);
+    return new PaginationResultDto(
+      'roadmaps',
+      rows.map((row) => ({
+        id: row.id,
+        title: row.title,
+        createdAt: row.created_at,
+        relative: row.relative
+          ? { id: row.relative.id, fullname: row.relative.fullname }
+          : null,
+        pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
+      })),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  async getHealthRoadmap(userId: number, id: number) {
+    const row = await this.roadmapRepo.findOne({
+      where: { id, user: { id: userId } },
+      relations: { relative: true },
+    });
+    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
+    return {
+      id: row.id,
+      title: row.title,
+      createdAt: row.created_at,
+      relative: { id: row.relative.id, fullname: row.relative.fullname },
+      pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
+    };
+  }
+
+  async getHealthRoadmapFile(userId: number, id: number, download = false) {
+    const row = await this.roadmapRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
+    return this.documentStorage.getDownloadUrl(row.output_asset, download);
+  }
+
+  async deleteHealthRoadmap(userId: number, id: number) {
+    const row = await this.roadmapRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
+    await this.documentStorage.deleteAsset(row.output_asset);
+    await this.roadmapRepo.softDelete(id);
+    return { success: true };
+  }
+
+  async getMedicalSummaryHistory(userId: number, page = 1, limit = 10) {
+    page = Math.max(1, page);
+    limit = Math.min(50, Math.max(1, limit));
+    const [rows, total] = await this.summaryRepo.findAndCount({
+      where: { user: { id: userId } },
+      order: { created_at: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return new PaginationResultDto(
+      'summaries',
+      rows.map((row) => ({
+        id: row.id,
+        createdAt: row.created_at,
+        inputMode: row.input_mode,
+        pdfUrl: `/api/v1/medical-record-summaries/${row.id}/file`,
+        sourceFiles: row.source_assets.map(
+          ({ id, fileName, bytes, format }) => ({
+            id,
+            fileName,
+            bytes,
+            format,
+          }),
+        ),
+      })),
+      total,
+      page,
+      limit,
+    );
+  }
+
+  async getMedicalSummary(userId: number, id: number) {
+    const row = await this.summaryRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row)
+      throw new NotFoundException('Không tìm thấy bản tóm tắt bệnh án.');
+    const document = {
+      id: row.id,
+      createdAt: row.created_at,
+      pdfUrl: `/api/v1/medical-record-summaries/${row.id}/file`,
+      sourceFiles: row.source_assets.map(({ id, fileName, bytes, format }) => ({
+        id,
+        fileName,
+        bytes,
+        format,
+        fileUrl: `/api/v1/medical-record-summaries/${row.id}/sources/${id}/file`,
+      })),
+    };
+    return {
+      summary: row.summary,
+      inputMode: row.input_mode,
+      ...document,
+      document,
+    };
+  }
+
+  async getMedicalSummaryFile(userId: number, id: number, download = false) {
+    const row = await this.summaryRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row)
+      throw new NotFoundException('Không tìm thấy bản tóm tắt bệnh án.');
+    return this.documentStorage.getDownloadUrl(row.output_asset, download);
+  }
+
+  async getMedicalSummarySourceFile(
+    userId: number,
+    id: number,
+    sourceId: string,
+    download = false,
+  ) {
+    const row = await this.summaryRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row)
+      throw new NotFoundException('Không tìm thấy bản tóm tắt bệnh án.');
+    const asset = row.source_assets.find((item) => item.id === sourceId);
+    if (!asset) throw new NotFoundException('Không tìm thấy file bệnh án gốc.');
+    return this.documentStorage.getDownloadUrl(asset, download);
+  }
+
+  async deleteMedicalSummary(userId: number, id: number) {
+    const row = await this.summaryRepo.findOne({
+      where: { id, user: { id: userId } },
+    });
+    if (!row)
+      throw new NotFoundException('Không tìm thấy bản tóm tắt bệnh án.');
+    await this.documentStorage.deleteAssets([
+      ...row.source_assets,
+      row.output_asset,
+    ]);
+    await this.summaryRepo.softDelete(id);
+    return { success: true };
   }
 
   async getChatHistory(userId: number, page: number = 1, limit: number = 50) {

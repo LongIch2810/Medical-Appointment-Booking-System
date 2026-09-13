@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FileDown, FileText, Sparkles } from "lucide-react";
 
 import { AiReportLoadingOverlay } from "@/components/app/AiReportLoadingOverlay";
+import { AiReportHistory } from "@/components/app/AiReportHistory";
 import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
 import { EmptyState } from "@/components/app/EmptyState";
 import { ErrorState } from "@/components/app/ErrorState";
@@ -11,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGenerateAdminReport } from "@/hooks/useAdminReport";
+import { backendOrigin } from "@/configs/axios";
 import { exportReportCsv } from "@/lib/exportReportCsv";
 import type {
   AdminReportRangePreset,
@@ -251,7 +253,7 @@ export function AdminAiReportGeneratorPage() {
                     asChild
                   >
                     <a
-                      href={report.pdfUrl}
+                      href={`${backendOrigin}${report.pdfUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
@@ -360,6 +362,7 @@ export function AdminAiReportGeneratorPage() {
           </div>
         ) : null}
       </div>
+      <AiReportHistory reportType={reportType} />
     </>
   );
 }

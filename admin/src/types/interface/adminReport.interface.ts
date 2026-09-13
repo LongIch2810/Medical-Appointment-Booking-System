@@ -43,6 +43,9 @@ export type AdminReportTableColumn = {
 };
 
 export type AdminReport = {
+  id: number;
+  createdAt: string;
+  createdBy?: { id: number; fullname: string | null };
   reportType: AdminReportType;
   rangeLabel: string;
   pdfUrl: string | null;
@@ -53,4 +56,12 @@ export type AdminReport = {
   chartConfig: Record<string, unknown> | null;
   tableColumns: AdminReportTableColumn[];
   tableRows: Record<string, string | number>[];
+};
+
+export type AdminReportHistoryResponse = {
+  reports: AdminReport[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 };

@@ -40,6 +40,7 @@ import { SettingsModule } from './modules/settings/settings.module';
 import { RateLimitModule } from './common/rate-limit/rate-limit.module';
 import { HealthController } from './health/health.controller';
 import { HealthService } from './health/health.service';
+import { AiDocumentsModule } from './modules/ai-documents/ai-documents.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { HealthService } from './health/health.service';
     ComplaintsModule,
     NotificationsModule,
     SettingsModule,
+    AiDocumentsModule,
   ],
   providers: [
     {

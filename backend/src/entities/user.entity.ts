@@ -23,6 +23,9 @@ import Relative from './relative.entity';
 import { AuditLog } from './auditLog.entity';
 import { UserSetting } from './userSetting.entity';
 import Complaint from './complaint.entity';
+import AiAdminReport from './aiAdminReport.entity';
+import AiHealthRoadmap from './aiHealthRoadmap.entity';
+import AiMedicalRecordSummary from './aiMedicalRecordSummary.entity';
 
 @Entity('users')
 export default class User {
@@ -103,6 +106,15 @@ export default class User {
 
   @OneToOne(() => UserSetting, (us) => us.user)
   user_setting!: Relation<UserSetting>;
+
+  @OneToMany(() => AiAdminReport, (report) => report.createdBy)
+  ai_admin_reports!: Relation<AiAdminReport[]>;
+
+  @OneToMany(() => AiHealthRoadmap, (roadmap) => roadmap.user)
+  ai_health_roadmaps!: Relation<AiHealthRoadmap[]>;
+
+  @OneToMany(() => AiMedicalRecordSummary, (summary) => summary.user)
+  ai_medical_record_summaries!: Relation<AiMedicalRecordSummary[]>;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;

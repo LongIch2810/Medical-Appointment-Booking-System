@@ -11,6 +11,18 @@ export interface UploadedMedicalFile {
 
 export interface MedicalRecordSummaryData {
   summary: string;
+  document: MedicalRecordDocument;
+}
+
+export interface MedicalRecordDocument {
+  id: number;
+  createdAt: string;
+  pdfUrl: string;
+  sourceFiles: Array<{ id?: string; fileName: string; bytes: number; format: string | null; fileUrl?: string }>;
+}
+
+export interface MedicalRecordSummaryHistoryItem extends MedicalRecordDocument {
+  inputMode: string;
 }
 
 export const MAX_MEDICAL_RECORD_IMAGES = 5;

@@ -1,6 +1,12 @@
 import { buildHealthRoadmap } from "@/api/healthRoadmapApi";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function useBuildHealthRoadmap() {
-  return useMutation({ mutationFn: buildHealthRoadmap });
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: buildHealthRoadmap,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["health-roadmap-history"] });
+    },
+  });
 }

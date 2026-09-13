@@ -5,6 +5,7 @@ import {
   Check,
   Clock,
   Copy,
+  Download,
   FileSearch,
   RotateCcw,
   ShieldAlert,
@@ -16,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { MedicalRecordDocument } from "@/types/interface/medicalRecord.interface";
 
 interface MedicalRecordSummaryResultProps {
   summary: string | null;
@@ -24,6 +26,8 @@ interface MedicalRecordSummaryResultProps {
   generatedAt: Date | null;
   onRetry: () => void;
   onRegenerate: () => void;
+  document?: MedicalRecordDocument;
+  onDownloadFile?: (path: string, fileName: string) => void;
 }
 
 function formatGenerationTime(date: Date | null): string {
@@ -43,6 +47,8 @@ export function MedicalRecordSummaryResult({
   generatedAt,
   onRetry,
   onRegenerate,
+  document,
+  onDownloadFile,
 }: MedicalRecordSummaryResultProps) {
   const [hasCopied, setHasCopied] = useState(false);
 
@@ -220,6 +226,7 @@ export function MedicalRecordSummaryResult({
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-center">
+              {document?.pdfUrl && onDownloadFile ? <Button type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl" onClick={() => onDownloadFile(document.pdfUrl, `tom-tat-benh-an-${document.id}.pdf`)}><Download className="size-3.5" />PDF</Button> : null}
               <Button
                 type="button"
                 variant="outline"
@@ -372,6 +379,7 @@ export function MedicalRecordSummaryResult({
             </ReactMarkdown>
           </div>
         </CardContent>
+        {document?.sourceFiles?.length && onDownloadFile ? <div className="border-t border-slate-100 px-4 pb-5 sm:px-6 dark:border-slate-800"><p className="mb-2 pt-4 text-xs font-bold text-slate-600 dark:text-slate-300">File bệnh án gốc đã lưu</p><div className="flex flex-wrap gap-2">{document.sourceFiles.map((file) => <Button key={file.id || file.fileName} type="button" variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs" onClick={() => onDownloadFile(file.fileUrl || "", file.fileName)}><Download className="size-3.5" />{file.fileName}</Button>)}</div></div> : null}
       </Card>
     </div>
   );

@@ -17,7 +17,7 @@ const ensureDir = (dir: string) => {
 export const generatePdfReport = async (
   reportData: Report,
   chartImagePath: string,
-): Promise<{ url: string; public_id: string }> => {
+): Promise<{ publicId: string; resourceType: string; format: string; fileName: string; bytes: number }> => {
   const tmpDir = path.resolve(process.cwd(), "tmp");
   ensureDir(tmpDir);
   const outputPath = path.join(tmpDir, `report-${Date.now()}.pdf`);
@@ -144,8 +144,7 @@ export const generatePdfReport = async (
       stream.on("error", reject);
     });
 
-    const { url, public_id } = await uploadPdfToCloudinary(outputPath);
-    return { url, public_id };
+    return uploadPdfToCloudinary(outputPath);
   } finally {
     try {
       if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);

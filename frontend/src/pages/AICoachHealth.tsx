@@ -19,6 +19,9 @@ import HealthAILoading from "@/components/animation/HealthAILoading";
 import NutritionAnimation from "@/components/animation/NutritionAnimation";
 import PlankAnimation from "@/components/animation/PlankAnimation";
 import CreateCoachProfileForm from "@/components/coach/CreateCoachProfileForm";
+import { HealthRoadmapHistory } from "@/components/coach/HealthRoadmapHistory";
+import LazyViewport from "@/components/lazy/LazyViewport";
+import { backendOrigin } from "@/configs/axios";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -155,8 +158,8 @@ function CoachProfileGate() {
               >
                 {t("aiCoach.editCoachProfileBtn")}
               </Button>
-            </div>
-          </div>
+      </div>
+    </div>
         </div>
       </div>
     </Card>
@@ -610,7 +613,7 @@ export default function AICoachHealth() {
 
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
                   <a
-                    href={pdfUrl}
+                    href={`${backendOrigin}${pdfUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 transition"
@@ -621,7 +624,7 @@ export default function AICoachHealth() {
                   <Button
                     variant="outline"
                     className="rounded-xl border-emerald-200 bg-white text-emerald-800 hover:bg-emerald-50 text-sm font-semibold gap-2 dark:border-emerald-800 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                    onClick={() => window.open(pdfUrl, "_blank")}
+                    onClick={() => window.open(`${backendOrigin}${pdfUrl}`, "_blank", "noopener,noreferrer")}
                   >
                     <Download className="h-4 w-4" />
                     {t("aiCoach.downloadBtn")}
@@ -632,6 +635,9 @@ export default function AICoachHealth() {
           </div>
         </CardContent>
       </Card>
+      <LazyViewport minHeight="420px" fallback={<div className="h-64 animate-pulse rounded-3xl bg-slate-100 dark:bg-slate-900" />}>
+        <HealthRoadmapHistory relativeId={selectedProfileObj?.id} />
+      </LazyViewport>
     </div>
   );
 }

@@ -52,6 +52,7 @@ const HealthRoadMapState = Annotation.Root({
   chartConfig: Annotation<Chart>(),
   health_plan: Annotation<HealthPlan>(),
   health_roadmap_report: Annotation<HealthRoadmapReport>(),
+  pdf_asset: Annotation<any>(),
   pdf_url: Annotation<string>(),
   errorHealthProfile: Annotation<{
     status: number;
@@ -471,13 +472,13 @@ async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
     const outputPathImage = await renderChartToImage(
       state.merged_data.chartConfig
     );
-    const { url } = await generatePdfHealthRoadmap(
+    const asset = await generatePdfHealthRoadmap(
       state.merged_data.health_roadmap_report,
       outputPathImage
     );
 
-    if (!url) {
-      throw new Error("PDF URL was not returned");
+    if (!asset?.publicId && !(asset as any)?.url) {
+      throw new Error("PDF asset was not returned");
     }
 
     logHealthRoadmapEvent({
@@ -487,7 +488,8 @@ async function CreateFilePdfNode(state: typeof HealthRoadMapState.State) {
     });
 
     return {
-      pdf_url: url,
+      pdf_asset: asset,
+      pdf_url: (asset as any)?.url,
       nextNodePdf: "__end__",
       final_result: {
         status: 200,
