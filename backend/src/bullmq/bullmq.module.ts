@@ -14,6 +14,7 @@ import { ArticlesModule } from 'src/modules/articles/articles.module';
 import { AuditLogsModule } from 'src/modules/audit-logs/audit-logs.module';
 import { AuditLogsProcessor } from './queues/auditLogs/auditLogs.processor';
 import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
+import { getRedisConnectionOptions } from 'src/config/redisConnectionOptions';
 
 @Module({
   imports: [
@@ -27,30 +28,9 @@ import { AuditLogsProducer } from './queues/auditLogs/auditLogs.producer';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const configuredRedisDb = Number(
-          configService.get<string>('REDIS_BULLMQ_DB') ?? 0,
-        );
-        const redisDb =
-          Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
-            ? configuredRedisDb
-            : 0;
-
-        return {
-          connection: {
-            host: configService.get<string>('REDIS_HOST'),
-            port: configService.get<number>('REDIS_PORT'),
-            password: configService.get<string>('REDIS_PASSWORD'),
-            tls:
-              configService.get<string>('REDIS_TLS') === 'true'
-                ? {}
-                : undefined,
-            // Upstash supports database 0 only. Use key prefixes to separate
-            // BullMQ data from cache/rate-limit data on the shared Redis.
-            db: redisDb,
-          },
-        };
-      },
+      useFactory: (configService: ConfigService) => ({
+        connection: getRedisConnectionOptions(configService, 'REDIS_BULLMQ_DB'),
+      }),
     }),
     BullModule.registerQueue({ name: 'email-queue' }),
     BullModule.registerQueue({ name: 'upload-file-queue' }),

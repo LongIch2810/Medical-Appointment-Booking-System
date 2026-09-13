@@ -334,7 +334,7 @@ cp chatbot/.env.example chatbot/.env
 | `frontend/.env` | `VITE_BACKEND_URL` | Backend API base URL (e.g. `http://localhost:3000` or `http://localhost:3010`) |
 | `admin/.env` | `VITE_BACKEND_URL` | Backend API base URL for administrator portal |
 | `backend/.env` | `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | PostgreSQL connection parameters |
-| `backend/.env` | `REDIS_HOST`, `REDIS_PORT` | Redis cache and queue connection |
+| `backend/.env`, `chatbot/.env` | `REDIS_URL` | Redis cache, queue, and rate-limit connection; use Render's Internal Redis URL |
 | `backend/.env` | `JWT_SECRET`, `JWT_EXPIRES_IN` | Session token signing secret and duration |
 | `backend/.env` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALL_BACK` | Google OAuth credentials (optional for dev) |
 | `chatbot/.env` | `OPENAI_API_KEY` / `GEMINI_API_KEY` | LLM provider API credentials |

@@ -12,6 +12,7 @@ const mockRedisInstance = {
   get: jest.fn(),
   del: jest.fn(),
   exists: jest.fn(),
+  on: jest.fn(),
 };
 
 jest.mock('ioredis', () => {

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { getRedisConnectionOptions } from 'src/config/redisConnectionOptions';
 
 @Injectable()
 export class RedisCacheService {
@@ -10,26 +11,22 @@ export class RedisCacheService {
 
   constructor(configService: ConfigService) {
     this.configService = configService;
-    const configuredRedisDb = Number(
-      configService.get<string>('REDIS_CACHE_DB') ?? 0,
-    );
-    const redisDb =
-      Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
-        ? configuredRedisDb
-        : 0;
-
-    this.client = this.createClient(redisDb);
+    this.client = this.createClient('REDIS_CACHE_DB');
   }
 
-  private createClient(redisDb: number): Redis {
-    return new Redis({
-      host: this.configService.get<string>('REDIS_HOST'),
-      port: this.configService.get<number>('REDIS_PORT'),
-      password: this.configService.get<string>('REDIS_PASSWORD'),
-      tls:
-        this.configService.get<string>('REDIS_TLS') === 'true' ? {} : undefined,
-      db: redisDb,
+  private createClient(databaseEnvKey: string): Redis {
+    const client = new Redis(
+      getRedisConnectionOptions(this.configService, databaseEnvKey),
+    );
+    client.on('error', (error: NodeJS.ErrnoException) => {
+      console.error(
+        JSON.stringify({
+          scope: 'backend_redis_error',
+          code: error.code || 'REDIS_CONNECTION_ERROR',
+        }),
+      );
     });
+    return client;
   }
 
   getClient(): Redis {
@@ -38,14 +35,7 @@ export class RedisCacheService {
 
   getRateLimitClient(): Redis {
     if (!this.rateLimitClient) {
-      const configuredRedisDb = Number(
-        this.configService.get<string>('REDIS_RATE_LIMIT_DB') ?? 0,
-      );
-      const redisDb =
-        Number.isInteger(configuredRedisDb) && configuredRedisDb >= 0
-          ? configuredRedisDb
-          : 0;
-      this.rateLimitClient = this.createClient(redisDb);
+      this.rateLimitClient = this.createClient('REDIS_RATE_LIMIT_DB');
     }
     return this.rateLimitClient;
   }
