@@ -248,12 +248,18 @@ const normalizedArrSchema = z
   )
   .min(1);
 type NormalizedArr = z.infer<typeof normalizedArrSchema>;
+
+export const buildOcrImageParts = (normalizedArr: NormalizedArr) =>
+  normalizedArr.map((file) => ({
+    type: "image_url" as const,
+    image_url: {
+      url: extractImgUrl(file),
+    },
+  }));
+
 export const ocrTool = tool(
   async (normalizedArr: NormalizedArr) => {
-    const parts = normalizedArr.map((i) => ({
-      type: "image_url",
-      image_url: extractImgUrl(i),
-    }));
+    const parts = buildOcrImageParts(normalizedArr);
     const input = [
       new SystemMessage(SystemPrompt),
       new HumanMessage({

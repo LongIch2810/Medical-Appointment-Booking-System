@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { z } from "zod";
-import { BenhAnSchema, ocrTool } from "../../../src/tools/ocr.tool.js";
+import {
+  BenhAnSchema,
+  buildOcrImageParts,
+  ocrTool,
+} from "../../../src/tools/ocr.tool.js";
 
 // BenhAnSchema is a large, fully-required nested object (every leaf is a
 // required z.string(), per the "empty field => \"\"" contract documented in
@@ -46,6 +50,20 @@ test("ocr_tool's input schema rejects an item missing mimetype/base64", () => {
   assert.equal(
     ocrTool.schema.safeParse([{ base64: "abc123" }]).success,
     false,
+  );
+});
+
+test("ocr_tool builds OpenAI image parts with image_url as an object", () => {
+  assert.deepEqual(
+    buildOcrImageParts([{ mimetype: "image/png", base64: "abc123" }]),
+    [
+      {
+        type: "image_url",
+        image_url: {
+          url: "data:image/png;base64,abc123",
+        },
+      },
+    ],
   );
 });
 
