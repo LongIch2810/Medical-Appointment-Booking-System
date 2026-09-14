@@ -125,14 +125,22 @@ const LamSangSchema = z.object({
   hoi_benh: z.object({
     qua_trinh_benh_ly: z.string().describe("Quá trình bệnh lý"),
     tien_su: z.object({
-      ban_than: z.string().describe("Tiền sử bản thân"),
+      ban_than: z
+        .string()
+        .describe(
+          "Tiền sử bản thân (bệnh lý nền, thuốc đang dùng trước khi nhập viện và mức độ tuân thủ nếu tài liệu có ghi)",
+        ),
       dac_diem_lien_quan: z.object({
         di_ung: z.string().describe("Dị ứng (thời gian)"),
         ma_tuy: z.string().describe("Ma túy (thời gian)"),
         ruou_bia: z.string().describe("Rượu bia (thời gian)"),
         thuoc_la: z.string().describe("Thuốc lá (thời gian)"),
         thuoc_lao: z.string().describe("Thuốc lào (thời gian)"),
-        khac: z.string().describe("Đặc điểm khác"),
+        khac: z
+          .string()
+          .describe(
+            "Đặc điểm khác (vd: chế độ ăn, mức độ vận động, các yếu tố nguy cơ khác nếu tài liệu có ghi)",
+          ),
       }),
       gia_dinh: z.string().describe("Tiền sử gia đình"),
     }),
@@ -231,11 +239,19 @@ QUY TẮC BẮT BUỘC:
 5) Nếu có nhiều trang: tổng hợp tất cả trang, tránh trùng lặp; nếu có xung đột, ưu tiên giá trị rõ ràng hơn hoặc xuất hiện ở phần tổng kết/ra viện.
 6) Không thêm bất kỳ khóa (key) nào ngoài schema. Không đổi tên key. Không bỏ thiếu cấu trúc.
 7) Output cuối cùng: CHỈ trả về JSON theo schema. Không kèm markdown, không kèm text ngoài JSON.
+8) TUYỆT ĐỐI không lấy giá trị của một trường/nhãn khác (dù cùng chủ đề hoặc đứng gần nhau) để điền thay cho
+   trường đang xét, kể cả khi có vẻ liên quan. Chỉ điền đúng loại dữ liệu và đúng đơn vị theo mô tả (description)
+   của chính trường đó.
+   Ví dụ SAI: tài liệu không có mục "Vào khoa" riêng mà chỉ có "Ngày vào viện"/"Ngày ra viện" -> KHÔNG được lấy
+   giờ ra viện điền vào trường "Vào khoa". Tài liệu chỉ ghi BMI (kg/m²), không ghi cân nặng (kg) -> KHÔNG được
+   lấy giá trị BMI điền vào trường "Cân nặng (kg)".
+   -> Nếu tài liệu không có đúng dữ liệu cho trường đang xét, trả về "" theo quy tắc 2, dù trường khác có dữ liệu
+   trông có vẻ dùng thay được.
 
 CÁCH LÀM:
 - Quét toàn bộ tài liệu.
 - Ghép thông tin theo đúng vị trí/nhãn của form tương ứng với schema.
-- Điền giá trị chính xác vào từng trường.
+- Điền giá trị chính xác vào từng trường, đúng loại dữ liệu/đơn vị mô tả của trường đó (xem quy tắc 8).
 - Ô trống => "" ; chữ mờ => dùng "[mờ]".
 `;
 
