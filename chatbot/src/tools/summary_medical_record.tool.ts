@@ -22,7 +22,13 @@ Bạn CHỈ được dựa vào dữ liệu trong JSON, KHÔNG bịa, KHÔNG suy
 
 YÊU CẦU OUTPUT:
 - Trả về DUY NHẤT 1 chuỗi Markdown (không kèm JSON).
-- Nếu trường rỗng/thiếu: ghi "Chưa rõ" hoặc "Không có thông tin".
+- Nếu trường rỗng/thiếu (chuỗi ""): ghi "Chưa rõ". Trường rỗng nghĩa là KHÔNG trích xuất được dữ liệu, KHÔNG
+  đồng nghĩa với "đã xác nhận là không có". TUYỆT ĐỐI không tự diễn giải trường rỗng thành câu khẳng định phủ
+  định lâm sàng như "Không ghi nhận X" / "Không có X" — chỉ được viết "Không ghi nhận X" / "Không có X" khi
+  chính dữ liệu JSON có nội dung xác nhận rõ điều đó (ví dụ trường ghi đúng "không có", "chưa ghi nhận",
+  hoặc mô tả phủ định tương đương). Quy tắc này đặc biệt quan trọng với các yếu tố nguy cơ/lối sống (dị ứng,
+  rượu bia, thuốc lá, thuốc lào, ma túy): nếu một trong các trường này rỗng, phải ghi "Chưa rõ" cho đúng mục đó,
+  không được gộp thành một câu "Không ghi nhận ..." áp dụng cho tất cả.
 - Không đưa lời khuyên điều trị mới; chỉ tóm tắt thông tin đã có.
 
 FORMAT MARKDOWN (BẮT BUỘC):
@@ -50,9 +56,11 @@ FORMAT MARKDOWN (BẮT BUỘC):
 ## Lâm sàng
 - Lý do vào viện: ...
 - Bệnh sử: ...
-- Tiền sử: ... (bệnh lý bản thân; yếu tố nguy cơ/lối sống nếu có ghi nhận: dị ứng, rượu bia, thuốc lá, thuốc lào,
-  ma túy, đặc điểm khác (chế độ ăn, mức độ vận động, tuân thủ điều trị...); tiền sử gia đình — liệt kê đầy đủ các
-  yếu tố nguy cơ đã ghi nhận trong dữ liệu, không được bỏ sót chỉ vì không liên quan trực tiếp đến chẩn đoán chính)
+- Tiền sử: ... (bệnh lý bản thân; yếu tố nguy cơ/lối sống: dị ứng, rượu bia, thuốc lá, thuốc lào, ma túy, đặc điểm
+  khác (chế độ ăn, mức độ vận động, tuân thủ điều trị...); tiền sử gia đình — liệt kê đầy đủ các yếu tố nguy cơ đã
+  ghi nhận trong dữ liệu, không được bỏ sót chỉ vì không liên quan trực tiếp đến chẩn đoán chính. Với mỗi yếu tố
+  nguy cơ rỗng, ghi "Chưa rõ" cho riêng mục đó — không viết một câu "Không ghi nhận ..." dùng chung cho nhiều
+  mục nếu không chắc tất cả đều thực sự rỗng)
 - Dấu hiệu sinh tồn: ... (mạch, nhiệt, HA, nhịp thở, cân nặng)
 - Khám các cơ quan (tóm tắt ngắn): ...
 - Cận lâm sàng: ...

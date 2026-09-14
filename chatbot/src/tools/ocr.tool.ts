@@ -131,11 +131,31 @@ const LamSangSchema = z.object({
           "Tiền sử bản thân (bệnh lý nền, thuốc đang dùng trước khi nhập viện và mức độ tuân thủ nếu tài liệu có ghi)",
         ),
       dac_diem_lien_quan: z.object({
-        di_ung: z.string().describe("Dị ứng (thời gian)"),
-        ma_tuy: z.string().describe("Ma túy (thời gian)"),
-        ruou_bia: z.string().describe("Rượu bia (thời gian)"),
-        thuoc_la: z.string().describe("Thuốc lá (thời gian)"),
-        thuoc_lao: z.string().describe("Thuốc lào (thời gian)"),
+        di_ung: z
+          .string()
+          .describe(
+            "Dị ứng, kèm mô tả thời gian/mức độ nếu tài liệu có ghi (giữ nguyên văn, không phải bắt buộc là một ngày tháng cụ thể)",
+          ),
+        ma_tuy: z
+          .string()
+          .describe(
+            "Sử dụng ma túy, kèm tần suất/thời lượng nếu tài liệu có ghi (vd: '3-4 lần/tuần', '10 năm') — không phải bắt buộc là một ngày tháng cụ thể",
+          ),
+        ruou_bia: z
+          .string()
+          .describe(
+            "Uống rượu bia, kèm tần suất/thời lượng nếu tài liệu có ghi (vd: '3-4 lần/tuần') — không phải bắt buộc là một ngày tháng cụ thể",
+          ),
+        thuoc_la: z
+          .string()
+          .describe(
+            "Hút thuốc lá, kèm tần suất/thời lượng nếu tài liệu có ghi (vd: '10 điếu/ngày trong 25 năm') — không phải bắt buộc là một ngày tháng cụ thể",
+          ),
+        thuoc_lao: z
+          .string()
+          .describe(
+            "Hút thuốc lào, kèm tần suất/thời lượng nếu tài liệu có ghi — không phải bắt buộc là một ngày tháng cụ thể",
+          ),
         khac: z
           .string()
           .describe(
