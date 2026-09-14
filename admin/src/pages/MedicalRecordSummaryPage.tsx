@@ -14,7 +14,7 @@ import { MedicalRecordFilePreview } from "@/components/app/medical-record/Medica
 import { MedicalRecordSummaryResult } from "@/components/app/medical-record/MedicalRecordSummaryResult";
 import { MedicalRecordUploader } from "@/components/app/medical-record/MedicalRecordUploader";
 import { MedicalRecordSummaryHistory } from "@/components/app/MedicalRecordSummaryHistory";
-import axiosInstance from "@/configs/axios";
+import { openBackendDocument } from "@/utils/open-backend-document";
 import type { MedicalRecordSummaryData } from "@/types/interface/medicalRecord.interface";
 
 export function MedicalRecordSummaryPage() {
@@ -103,15 +103,9 @@ export function MedicalRecordSummaryPage() {
     summarize({ files: rawFiles, mode });
   };
 
-  const downloadFile = async (path: string, fileName: string) => {
+  const downloadFile = (path: string) => {
     if (!path) return;
-    const response = await axiosInstance.get<Blob>(path.replace(/^\/api\/v1/, ""), { responseType: "blob" });
-    const url = URL.createObjectURL(response.data);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(url);
+    openBackendDocument(path, true);
   };
 
   const displayedSummary = selectedHistory?.summary ?? summary;

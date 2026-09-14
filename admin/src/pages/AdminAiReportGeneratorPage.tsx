@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGenerateAdminReport } from "@/hooks/useAdminReport";
-import axiosInstance, { backendOrigin } from "@/configs/axios";
+import { openBackendDocument } from "@/utils/open-backend-document";
 import { exportReportCsv } from "@/lib/exportReportCsv";
 import type {
   AdminReportRangePreset,
@@ -122,36 +122,14 @@ export function AdminAiReportGeneratorPage() {
     );
   };
 
-  const handleDownloadPdf = async () => {
+  const handleDownloadPdf = () => {
     if (!report?.pdfUrl) return;
-    try {
-      const apiPath = report.pdfUrl.replace(/^\/api\/v1/, "");
-      const res = await axiosInstance.get<Blob>(apiPath, {
-        params: { download: true },
-        responseType: "blob",
-      });
-      const url = URL.createObjectURL(res.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `bao-cao-${report.id || "ai"}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      window.open(
-        `${backendOrigin}${report.pdfUrl}`,
-        "_blank",
-        "noopener,noreferrer",
-      );
-    }
+    openBackendDocument(report.pdfUrl, true);
   };
 
   const handleOpenPdf = () => {
     if (!report?.pdfUrl) return;
-    window.open(
-      `${backendOrigin}${report.pdfUrl}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
+    openBackendDocument(report.pdfUrl);
   };
 
   return (
@@ -482,8 +460,8 @@ export function AdminAiReportGeneratorPage() {
             ) : null}
           </div>
         ) : null}
+        <AiReportHistory reportType={reportType} />
       </div>
-      <AiReportHistory reportType={reportType} />
     </>
   );
 }

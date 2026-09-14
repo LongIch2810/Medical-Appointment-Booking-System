@@ -16,7 +16,7 @@ import {
 import { toast } from "react-toastify";
 
 import { deleteAdminReport, getAdminReportHistory } from "@/api/adminReportApi";
-import axiosInstance from "@/configs/axios";
+import { openBackendDocument } from "@/utils/open-backend-document";
 import { ConfirmDialog } from "@/components/app/ConfirmDialog";
 import { DetailDialog } from "@/components/app/DetailDialog";
 import { EmptyState } from "@/components/app/EmptyState";
@@ -97,22 +97,8 @@ function formatViDateTime(dateStr: string): string {
   }
 }
 
-async function openOrDownload(path: string, fileName: string, download: boolean) {
-  const apiPath = path.replace(/^\/api\/v1/, "");
-  const response = await axiosInstance.get<Blob>(apiPath, {
-    params: { download },
-    responseType: "blob",
-  });
-  const url = URL.createObjectURL(response.data);
-  if (download) {
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = fileName;
-    link.click();
-    URL.revokeObjectURL(url);
-  } else {
-    window.open(url, "_blank", "noopener,noreferrer");
-  }
+function openOrDownload(path: string, download: boolean) {
+  openBackendDocument(path, download);
 }
 
 function ReportDetailView({ report }: { report: AdminReport }) {
@@ -219,7 +205,6 @@ function ReportDetailView({ report }: { report: AdminReport }) {
             onClick={() =>
               void openOrDownload(
                 report.pdfUrl!,
-                report.fileName || `bao-cao-${report.id}.pdf`,
                 false,
               )
             }
@@ -235,7 +220,6 @@ function ReportDetailView({ report }: { report: AdminReport }) {
             onClick={() =>
               void openOrDownload(
                 report.pdfUrl!,
-                report.fileName || `bao-cao-${report.id}.pdf`,
                 true,
               )
             }
@@ -452,7 +436,6 @@ export function AiReportHistory({
                         onClick={() =>
                           void openOrDownload(
                             item.pdfUrl!,
-                            item.fileName || `bao-cao-${item.id}.pdf`,
                             false,
                           )
                         }
@@ -472,7 +455,6 @@ export function AiReportHistory({
                         onClick={() =>
                           void openOrDownload(
                             item.pdfUrl!,
-                            item.fileName || `bao-cao-${item.id}.pdf`,
                             true,
                           )
                         }

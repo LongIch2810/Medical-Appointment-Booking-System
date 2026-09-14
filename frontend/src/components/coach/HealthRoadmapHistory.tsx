@@ -21,7 +21,7 @@ import {
   getHealthRoadmapHistory,
 } from "@/api/healthRoadmapApi";
 import { usePatientRelatives } from "@/hooks/usePatientPortalApi";
-import axiosInstance, { backendOrigin } from "@/configs/axios";
+import { openBackendDocument } from "@/utils/open-backend-document";
 import ErrorState from "@/components/notification/ErrorState";
 import NotFoundResult from "@/components/notification/NotFoundResult";
 import StateCard from "@/components/notification/StateCard";
@@ -91,29 +91,13 @@ export function HealthRoadmapHistory({ relativeId }: { relativeId?: number }) {
     onError: () => toast.error("Không thể xóa lộ trình này."),
   });
 
-  const download = async (path: string, fileName: string) => {
-    try {
-      const response = await axiosInstance.get<Blob>(
-        path.replace(/^\/api\/v1/, ""),
-        { responseType: "blob" },
-      );
-      const url = URL.createObjectURL(response.data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error("Không thể tải tệp PDF.");
-    }
+  const download = (path: string) => {
+    openBackendDocument(path, true);
   };
 
   const viewPdf = (path: string) => {
     if (!path) return;
-    const fullUrl = path.startsWith("http")
-      ? path
-      : `${backendOrigin}${path.startsWith("/") ? "" : "/"}${path}`;
-    window.open(fullUrl, "_blank", "noopener,noreferrer");
+    openBackendDocument(path);
   };
 
   const roadmaps = query.data?.data.roadmaps ?? [];
@@ -288,10 +272,7 @@ export function HealthRoadmapHistory({ relativeId }: { relativeId?: number }) {
                         size="sm"
                         className="min-h-10 gap-1.5 rounded-xl text-xs font-semibold transition-colors"
                         onClick={() =>
-                          void download(
-                            item.pdfUrl,
-                            item.fileName || `lo-trinh-suc-khoe-${item.id}.pdf`,
-                          )
+                          void download(item.pdfUrl)
                         }
                         aria-label={`Tải xuống file PDF lộ trình ${item.title}`}
                       >
