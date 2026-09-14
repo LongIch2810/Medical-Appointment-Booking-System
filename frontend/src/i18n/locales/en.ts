@@ -61,6 +61,7 @@ const en = {
     contact: "Contact",
     medAi: "LifeHealth MedAI",
     dashboard: "Medical Overview",
+    notifications: "Notifications",
     profile: "Personal Profile",
     appointments: "Appointments",
     relatives: "Family Members",

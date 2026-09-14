@@ -61,6 +61,7 @@ const vi = {
     contact: "Liên hệ",
     medAi: "LifeHealth MedAI",
     dashboard: "Tổng quan y tế",
+    notifications: "Thông báo",
     profile: "Thông tin cá nhân",
     appointments: "Lịch khám",
     relatives: "Hồ sơ người thân",
