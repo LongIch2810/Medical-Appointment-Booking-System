@@ -56,11 +56,12 @@ FORMAT MARKDOWN (BẮT BUỘC):
 ## Lâm sàng
 - Lý do vào viện: ...
 - Bệnh sử: ...
-- Tiền sử: ... (bệnh lý bản thân; yếu tố nguy cơ/lối sống: dị ứng, rượu bia, thuốc lá, thuốc lào, ma túy, đặc điểm
-  khác (chế độ ăn, mức độ vận động, tuân thủ điều trị...); tiền sử gia đình — liệt kê đầy đủ các yếu tố nguy cơ đã
-  ghi nhận trong dữ liệu, không được bỏ sót chỉ vì không liên quan trực tiếp đến chẩn đoán chính. Với mỗi yếu tố
-  nguy cơ rỗng, ghi "Chưa rõ" cho riêng mục đó — không viết một câu "Không ghi nhận ..." dùng chung cho nhiều
-  mục nếu không chắc tất cả đều thực sự rỗng)
+- Tiền sử: ... (bệnh lý bản thân; thuốc đang dùng trước khi nhập viện (nếu có ghi); tiền sử phẫu thuật trước lần
+  nhập viện này (nếu có ghi); yếu tố nguy cơ/lối sống: dị ứng, rượu bia, thuốc lá, thuốc lào, ma túy, đặc điểm
+  khác (chế độ ăn, mức độ vận động, tuân thủ điều trị...); tiền sử gia đình — liệt kê đầy đủ các mục đã ghi nhận
+  trong dữ liệu, không được bỏ sót chỉ vì không liên quan trực tiếp đến chẩn đoán chính. Với mỗi mục rỗng, ghi
+  "Chưa rõ" cho riêng mục đó — không viết một câu "Không ghi nhận ..." dùng chung cho nhiều mục nếu không chắc
+  tất cả đều thực sự rỗng)
 - Dấu hiệu sinh tồn: ... (mạch, nhiệt, HA, nhịp thở, cân nặng)
 - Khám các cơ quan (tóm tắt ngắn): ...
 - Cận lâm sàng: ...

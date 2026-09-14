@@ -54,7 +54,12 @@ const QuanLyNguoiBenhSchema = z.object({
     noi_gioi_thieu: z.string().describe("Nơi giới thiệu"),
     lan_thu: z.string().describe("Vào viện do bệnh này lần thứ"),
   }),
-  vao_khoa: z.string().describe("Thời gian vào khoa"),
+  vao_khoa: z
+    .string()
+    .describe(
+      "Thời gian vào khoa — CHỈ điền nếu tài liệu có mục 'vào khoa' ghi thời gian riêng biệt với 'vào viện'; " +
+        "không tự lấy lại giá trị của 'vào viện' hay 'ra viện' khi không có mục này",
+    ),
   chuyen_khoa: z
     .array(
       z.object({
@@ -70,7 +75,12 @@ const QuanLyNguoiBenhSchema = z.object({
   ra_vien: z.object({
     thoi_gian: z.string().describe("Thời gian ra viện"),
     hinh_thuc: z.string().describe("Ra viện/Xin về/Bỏ về/Đưa về"),
-    tong_so_ngay_dieu_tri: z.string().describe("Tổng số ngày điều trị"),
+    tong_so_ngay_dieu_tri: z
+      .string()
+      .describe(
+        "Tổng số ngày điều trị — CHỈ điền nếu tài liệu ghi thẳng con số này bằng chữ/số; " +
+          "KHÔNG tự tính bằng cách trừ ngày ra viện cho ngày vào viện",
+      ),
   }),
 });
 
@@ -107,7 +117,11 @@ const ChanDoanSchema = z.object({
 const TinhTrangRaVienSchema = z.object({
   ket_qua_dieu_tri: z
     .string()
-    .describe("Kết quả (Khỏi/Đỡ/Không đổi/Nặng hơn/Tử vong)"),
+    .describe(
+      "Kết quả (chỉ chọn 1 trong 5 nhãn: Khỏi/Đỡ/Không đổi/Nặng hơn/Tử vong) — CHỈ chọn khi tài liệu diễn đạt " +
+        "đủ rõ để khớp chắc chắn với đúng 1 nhãn (vd tài liệu dùng đúng từ đó, hoặc mô tả không thể hiểu khác " +
+        "được); nếu mô tả chung chung/mơ hồ hoặc có thể khớp nhiều hơn 1 nhãn, để trống '' thay vì đoán",
+    ),
   giai_phau_benh: z
     .string()
     .describe("Giải phẫu bệnh (Lành tính/Nghi ngờ/Ác tính)"),
@@ -127,8 +141,17 @@ const LamSangSchema = z.object({
     tien_su: z.object({
       ban_than: z
         .string()
+        .describe("Tiền sử bệnh lý nền của bản thân (nếu tài liệu có ghi)"),
+      thuoc_dang_dung_truoc_nhap_vien: z
+        .string()
         .describe(
-          "Tiền sử bản thân (bệnh lý nền, thuốc đang dùng trước khi nhập viện và mức độ tuân thủ nếu tài liệu có ghi)",
+          "Thuốc đang dùng trước khi nhập viện: tên thuốc, liều dùng, mức độ tuân thủ nếu tài liệu có ghi",
+        ),
+      tien_su_phau_thuat: z
+        .string()
+        .describe(
+          "Tiền sử phẫu thuật/thủ thuật đã thực hiện TRƯỚC lần nhập viện này (khác với mục phẫu thuật/thủ thuật " +
+            "trong lần điều trị hiện tại ở phần chẩn đoán), kèm thời gian nếu tài liệu có ghi",
         ),
       dac_diem_lien_quan: z.object({
         di_ung: z
@@ -267,11 +290,21 @@ QUY TẮC BẮT BUỘC:
    lấy giá trị BMI điền vào trường "Cân nặng (kg)".
    -> Nếu tài liệu không có đúng dữ liệu cho trường đang xét, trả về "" theo quy tắc 2, dù trường khác có dữ liệu
    trông có vẻ dùng thay được.
+9) TUYỆT ĐỐI không tự tính toán, suy diễn hay quy đổi để tạo ra một giá trị mà tài liệu không ghi thẳng ra bằng
+   chữ/số cụ thể. Cụ thể:
+   - KHÔNG tự tính "tổng số ngày điều trị" bằng cách trừ ngày ra viện cho ngày vào viện nếu tài liệu không ghi
+     thẳng con số đó — để trống "".
+   - KHÔNG tự gán giá trị "vào khoa" bằng ngày/giờ "vào viện" (hay bất kỳ mốc thời gian nào khác) khi tài liệu
+     không có mục "vào khoa" ghi thời gian riêng — để trống "".
+   - Với các trường mà mô tả (description) yêu cầu chọn 1 trong danh sách nhãn chuẩn (vd "Khỏi/Đỡ/Không đổi/
+     Nặng hơn/Tử vong"): chỉ chọn nhãn khi tài liệu diễn đạt đủ rõ để khớp chắc chắn với đúng 1 nhãn; nếu mô tả
+     trong tài liệu chung chung/mơ hồ hoặc có thể khớp nhiều hơn 1 nhãn, để trống "" thay vì tự suy ra.
 
 CÁCH LÀM:
 - Quét toàn bộ tài liệu.
 - Ghép thông tin theo đúng vị trí/nhãn của form tương ứng với schema.
 - Điền giá trị chính xác vào từng trường, đúng loại dữ liệu/đơn vị mô tả của trường đó (xem quy tắc 8).
+- Không tự tính toán/suy diễn giá trị còn thiếu (xem quy tắc 9).
 - Ô trống => "" ; chữ mờ => dùng "[mờ]".
 `;
 
