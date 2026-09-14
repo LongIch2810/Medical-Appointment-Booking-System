@@ -11,12 +11,6 @@ export function getBackendDocumentUrl(path: string, download = false) {
 
 export function openBackendDocument(path: string, download = false) {
   const url = getBackendDocumentUrl(path, download);
-  if (download) {
-    window.location.assign(url);
-    return;
-  }
-
   const openedWindow = window.open(url, "_blank");
   if (openedWindow) openedWindow.opener = null;
-  else window.location.assign(url);
 }
