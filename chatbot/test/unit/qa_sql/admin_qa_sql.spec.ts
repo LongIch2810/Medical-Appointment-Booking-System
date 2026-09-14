@@ -8,7 +8,8 @@ import { resetState, state } from "./qaSqlTestControl.mjs";
 
 const ADMIN_TABLES = [
   "chatbot_report_users_view",
-  "chatbot_report_coach_profiles_view",
+  "chatbot_report_health_profiles_view",
+  "chatbot_report_health_roadmaps_view",
   "chatbot_report_audit_view",
   "chatbot_report_appointments_view",
   "chatbot_report_doctor_schedules_view",

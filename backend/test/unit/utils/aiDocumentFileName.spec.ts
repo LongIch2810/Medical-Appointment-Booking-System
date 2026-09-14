@@ -21,7 +21,6 @@ describe('AI document file names', () => {
 
   it.each([
     [ReportType.NEW_USER_REGISTRATIONS, 'dang-ky-nguoi-dung'],
-    [ReportType.HEALTH_GOAL_SUMMARY, 'muc-tieu-suc-khoe'],
     [ReportType.AI_COACH_ACTIVITY, 'hoat-dong-ai-coach'],
     [ReportType.HEALTH_TRENDS, 'xu-huong-suc-khoe'],
     [ReportType.BOOKING_CANCELLATION_NOSHOW, 'dat-lich-huy-no-show'],

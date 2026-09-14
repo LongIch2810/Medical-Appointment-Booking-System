@@ -63,12 +63,10 @@ const REPORT_QUESTION_BUILDERS: Record<
 > = {
   [ReportType.NEW_USER_REGISTRATIONS]: (from, to) =>
     `Thống kê số lượng người dùng đăng ký mới từ view chatbot_report_users_view, lọc registration_date trong khoảng ${from} đến ${to}; dùng SUM(user_count), phân loại theo roles và từng ngày.`,
-  [ReportType.HEALTH_GOAL_SUMMARY]: (from, to) =>
-    `Thống kê health_goal từ view chatbot_report_coach_profiles_view, lọc profile_date trong khoảng ${from} đến ${to}; dùng SUM(profile_count), liệt kê số lượng và tỷ lệ phần trăm theo từng mục tiêu.`,
   [ReportType.AI_COACH_ACTIVITY]: (from, to) =>
-    `Thống kê hoạt động AI Coach từ view chatbot_report_audit_view, lọc entity_name = 'coach-profile' và activity_date trong khoảng ${from} đến ${to}; trả về event_count và actor_count theo ngày, action, is_success.`,
+    `Thống kê số lộ trình sức khỏe AI được tạo từ view chatbot_report_health_roadmaps_view, lọc roadmap_date trong khoảng ${from} đến ${to}; dùng SUM(roadmap_count), đồng thời phân tích user_count và profile_count theo ngày.`,
   [ReportType.HEALTH_TRENDS]: (from, to) =>
-    `Phân tích xu hướng tổng hợp từ view chatbot_report_coach_profiles_view, lọc profile_date trong khoảng ${from} đến ${to}: average_age, average_height, average_weight và SUM(profile_count) theo ngày; giá trị NULL là nhóm chưa đủ 5 hồ sơ và phải được bỏ qua.`,
+    `Phân tích xu hướng tổng hợp từ view chatbot_report_health_profiles_view, lọc profile_date trong khoảng ${from} đến ${to}: average_height, average_weight, average_heart_rate, average_glucose_level, average_cholesterol_level và SUM(profile_count) theo ngày; giá trị NULL là nhóm chưa đủ 5 hồ sơ và phải được bỏ qua.`,
   [ReportType.BOOKING_CANCELLATION_NOSHOW]: (from, to) =>
     `Thống kê từ view chatbot_report_appointments_view, lọc appointment_date trong khoảng ${from} đến ${to}: dùng SUM(appointment_count) để tính tổng số lịch, tỷ lệ status = 'CANCELLED', tỷ lệ status = 'ABSENT', và số lượng theo status.`,
   [ReportType.PATIENT_FLOW_BY_TIMESLOT]: (from, to) =>

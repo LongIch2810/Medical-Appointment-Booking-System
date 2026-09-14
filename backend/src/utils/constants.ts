@@ -110,7 +110,6 @@ export const PERMISSIONS = {
   HEALTH_PROFILE_UPDATE: 'health-profile:update',
   HEALTH_PROFILE_DELETE: 'health-profile:delete',
   HEALTH_PROFILE_MANAGE: 'health-profile:manage',
-  COACH_PROFILE_MANAGE: 'coach-profile:manage',
   AI_COACH_REPORT_READ: 'ai-coach-report:read',
   ENTERPRISE_REPORT_READ: 'enterprise-report:read',
   EXAMINATION_RESULT_CREATE: 'examination-result:create',

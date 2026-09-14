@@ -14,11 +14,9 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
-import AIHealthCoachAvatar from "@/components/animation/AIHealthCoachAvatar";
 import HealthAILoading from "@/components/animation/HealthAILoading";
 import NutritionAnimation from "@/components/animation/NutritionAnimation";
 import PlankAnimation from "@/components/animation/PlankAnimation";
-import CreateCoachProfileForm from "@/components/coach/CreateCoachProfileForm";
 import LazyViewport from "@/components/lazy/LazyViewport";
 import { getBackendDocumentUrl, openBackendDocument } from "@/utils/open-backend-document";
 
@@ -39,12 +37,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCoachProfile } from "@/hooks/useCoachProfile";
 import { useBuildHealthRoadmap } from "@/hooks/useHealthRoadmap";
 import { usePatientRelatives } from "@/hooks/usePatientPortalApi";
 import { useProfile } from "@/hooks/useProfile";
 import { cn } from "@/lib/utils";
-import { useUserStore } from "@/store/useUserStore";
 import type { PatientUser } from "@/types/interface/patient.interface";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 
@@ -63,112 +59,6 @@ function useElapsedWhile(active: boolean) {
     return () => clearInterval(interval);
   }, [active]);
   return elapsed;
-}
-
-function CoachProfileGate() {
-  const { t } = useTranslation();
-  const { userInfo } = useUserStore();
-  const { data, isLoading, isError, error } = useCoachProfile(!!userInfo);
-  const [isEditing, setIsEditing] = useState(false);
-
-  if (isLoading) {
-    return (
-      <Card className="border-slate-200/80 bg-white p-6 shadow-sm flex justify-center dark:border-slate-800 dark:bg-slate-900">
-        <HealthAILoading elapsed={0} />
-      </Card>
-    );
-  }
-
-  const notFound =
-    isError &&
-    (error as { response?: { status?: number } })?.response?.status === 404;
-  const coachProfile = data?.data ?? null;
-
-  if (!coachProfile || notFound) {
-    return <CreateCoachProfileForm />;
-  }
-
-  if (isEditing) {
-    return (
-      <CreateCoachProfileForm
-        existingProfile={coachProfile}
-        onDone={() => setIsEditing(false)}
-      />
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden border-slate-200/80 bg-white py-0 shadow-sm transition-all dark:border-slate-800/80 dark:bg-slate-900">
-      <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-50/70 via-teal-50/40 to-slate-50/20 p-6 md:p-8 dark:border-slate-800 dark:from-emerald-950/20 dark:via-teal-950/10 dark:to-slate-900">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-          <AIHealthCoachAvatar />
-          <div className="flex-1 space-y-2.5 text-center md:text-left min-w-0">
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-100">
-                {coachProfile.display_name}
-              </h2>
-              <Badge className="bg-emerald-600 hover:bg-emerald-700 text-xs font-semibold gap-1">
-                <Sparkles className="h-3 w-3" />
-                {t("aiCoach.coachBadge")}
-              </Badge>
-            </div>
-
-            <p className="text-sm text-slate-700 dark:text-slate-300">
-              {t("aiCoach.healthGoalLabel")}{" "}
-              <span className="font-bold text-primary">
-                {coachProfile.health_goal}
-              </span>
-            </p>
-
-            {coachProfile.preferences && coachProfile.preferences.length > 0 && (
-              <div className="flex flex-wrap items-center justify-center md:justify-start gap-1.5 pt-0.5">
-                <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 mr-1">
-                  {t("aiCoach.preferencesLabel")}
-                </span>
-                {coachProfile.preferences.map((pref) => (
-                  <span
-                    key={pref}
-                    className="inline-block rounded-full bg-white border border-slate-200 px-2.5 py-0.5 text-xs font-medium text-slate-700 shadow-2xs dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
-                  >
-                    {pref}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
-              {coachProfile.age != null && (
-                <span>
-                  {t("aiCoach.ageLabel")} <strong>{coachProfile.age}</strong>
-                </span>
-              )}
-              {coachProfile.height != null && (
-                <span>
-                  {t("aiCoach.heightLabel")} <strong>{coachProfile.height} cm</strong>
-                </span>
-              )}
-              {coachProfile.weight != null && (
-                <span>
-                  {t("aiCoach.weightLabel")} <strong>{coachProfile.weight} kg</strong>
-                </span>
-              )}
-            </div>
-
-            <div className="pt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-xl border-slate-200 text-xs font-semibold hover:border-primary hover:text-primary dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-200"
-                onClick={() => setIsEditing(true)}
-              >
-                {t("aiCoach.editCoachProfileBtn")}
-              </Button>
-      </div>
-    </div>
-        </div>
-      </div>
-    </Card>
-  );
 }
 
 export default function AICoachHealth() {
@@ -380,9 +270,6 @@ export default function AICoachHealth() {
           </div>
         </div>
       </Card>
-
-      {/* Hồ sơ huấn luyện viên AI (Gate) */}
-      <CoachProfileGate />
 
       {/* Animations Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">

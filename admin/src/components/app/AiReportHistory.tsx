@@ -39,7 +39,6 @@ const REPORT_TYPE_LABELS: Record<AdminReportType, string> = {
   NEW_USER_REGISTRATIONS: "Đăng ký người dùng mới",
   USER_DEMOGRAPHICS: "Nhân khẩu học người dùng",
   AI_COACH_ACTIVITY: "Hoạt động AI Coach",
-  HEALTH_GOAL_SUMMARY: "Tóm tắt mục tiêu sức khỏe",
   HEALTH_TRENDS: "Xu hướng sức khỏe tổng hợp",
 };
 
@@ -71,10 +70,6 @@ const ALL_REPORT_TYPES: { value: AdminReportType; label: string }[] = [
   {
     value: "AI_COACH_ACTIVITY",
     label: "Hoạt động AI Coach",
-  },
-  {
-    value: "HEALTH_GOAL_SUMMARY",
-    label: "Tóm tắt mục tiêu sức khỏe",
   },
   {
     value: "HEALTH_TRENDS",

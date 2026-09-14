@@ -59,7 +59,6 @@ const REPORT_TYPE_GROUPS: {
       { value: "NEW_USER_REGISTRATIONS", label: "Đăng ký người dùng mới" },
       { value: "USER_DEMOGRAPHICS", label: "Nhân khẩu học người dùng" },
       { value: "AI_COACH_ACTIVITY", label: "Hoạt động AI Coach" },
-      { value: "HEALTH_GOAL_SUMMARY", label: "Tóm tắt mục tiêu sức khỏe" },
       { value: "HEALTH_TRENDS", label: "Xu hướng sức khỏe tổng hợp" },
     ],
   },

@@ -1,19 +1,17 @@
 import { useId } from "react";
 
-// Chữ chờ kết quả xoay vòng theo elapsed (3 giây/câu), dùng cho cả lúc
-// "đang tạo hồ sơ" (API create) lẫn lúc "AI đang phân tích" (mock generate
-// plan) trên trang AICoachHealth.tsx — cùng 1 component cho nhất quán hình
-// ảnh, đúng yêu cầu "thay thế các component loading cũ".
+// Chữ chờ kết quả xoay vòng theo elapsed (3 giây/câu) trong lúc AI tạo
+// lộ trình sức khỏe trên trang AICoachHealth.tsx.
 const LOADING_MESSAGES = [
-  "Đang phân tích mục tiêu sức khỏe...",
-  "Đang tạo hồ sơ huấn luyện viên...",
+  "Đang phân tích hồ sơ sức khỏe...",
+  "Đang tổng hợp dữ liệu thể trạng...",
   "Đang cá nhân hoá lộ trình...",
   "Sắp xong rồi...",
 ];
 
 // Hiệu ứng loading riêng cho AI Coach — SVG thuần + CSS @keyframes (không
 // Framer Motion), cùng phong cách "màn hình mặt tối + mắt cười LED" với
-// AIHealthCoachAvatar.tsx. 3 hiệu ứng: (1) ECG chạy trong màn hình ngực,
+// 3 hiệu ứng: (1) ECG chạy trong màn hình ngực,
 // tái dùng animate-mrx-ecg-scroll; (2) các điểm dữ liệu + icon DNA nhỏ
 // xoay quanh đầu (Data Orbiting, keyframe mrx-orbit mới); (3) chữ thập y
 // tế toả sáng nhịp nhàng, tái dùng animate-mrx-cross-glow. Kích thước cố

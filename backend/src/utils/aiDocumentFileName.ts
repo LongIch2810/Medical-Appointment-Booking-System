@@ -5,7 +5,6 @@ const MAX_AI_FILE_NAME_LENGTH = 150;
 
 const REPORT_TYPE_FILE_SLUGS: Record<ReportType, string> = {
   NEW_USER_REGISTRATIONS: 'dang-ky-nguoi-dung',
-  HEALTH_GOAL_SUMMARY: 'muc-tieu-suc-khoe',
   AI_COACH_ACTIVITY: 'hoat-dong-ai-coach',
   HEALTH_TRENDS: 'xu-huong-suc-khoe',
   BOOKING_CANCELLATION_NOSHOW: 'dat-lich-huy-no-show',

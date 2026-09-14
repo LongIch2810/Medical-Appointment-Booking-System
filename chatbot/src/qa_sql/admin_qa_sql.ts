@@ -20,7 +20,8 @@ const db = await SqlDatabase.fromDataSourceParams({
   appDataSource: AdminReportDatasource,
   includesTables: [
     "chatbot_report_users_view",
-    "chatbot_report_coach_profiles_view",
+    "chatbot_report_health_profiles_view",
+    "chatbot_report_health_roadmaps_view",
     "chatbot_report_audit_view",
     "chatbot_report_appointments_view",
     "chatbot_report_doctor_schedules_view",
@@ -31,7 +32,8 @@ const db = await SqlDatabase.fromDataSourceParams({
 
 const ADMIN_REPORT_TABLES = [
   "chatbot_report_users_view",
-  "chatbot_report_coach_profiles_view",
+  "chatbot_report_health_profiles_view",
+  "chatbot_report_health_roadmaps_view",
   "chatbot_report_audit_view",
   "chatbot_report_appointments_view",
   "chatbot_report_doctor_schedules_view",

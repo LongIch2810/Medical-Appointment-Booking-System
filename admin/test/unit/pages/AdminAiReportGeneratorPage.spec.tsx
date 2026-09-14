@@ -35,7 +35,7 @@ afterEach(() => {
 });
 
 describe("AdminAiReportGeneratorPage", () => {
-  it("exposes exactly nine report types and five date presets", () => {
+  it("exposes exactly eight report types and five date presets", () => {
     renderPage();
 
     const [reportTypeSelect, rangePresetSelect] = screen.getAllByRole(
@@ -52,7 +52,6 @@ describe("AdminAiReportGeneratorPage", () => {
       "NEW_USER_REGISTRATIONS",
       "USER_DEMOGRAPHICS",
       "AI_COACH_ACTIVITY",
-      "HEALTH_GOAL_SUMMARY",
       "HEALTH_TRENDS",
     ]);
     expect(
