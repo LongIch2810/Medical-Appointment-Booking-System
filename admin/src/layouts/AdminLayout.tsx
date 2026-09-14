@@ -162,19 +162,19 @@ export function AdminLayout() {
         <div className="flex min-h-screen min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-950/90">
             {/* Top real-time ticker */}
-            <div className="flex h-8 items-center justify-between bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950 border-b border-slate-800">
-              <div className="flex items-center gap-2 text-[11px] font-semibold text-emerald-400">
+            <div className="flex h-8 items-center justify-between gap-4 bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950 border-b border-slate-800">
+              <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>LifeHealth Command Center v2.5</span>
               </div>
-              <div className="text-[11px] text-slate-400 hidden sm:block">
+              <div className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
                 Hệ thống đồng bộ dữ liệu y tế trực tuyến &amp; Quản trị bảo mật RBAC
               </div>
             </div>
 
             {/* Main Header Bar */}
-            <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-6">
-              <div className="flex items-center gap-2.5">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 lg:px-6 xl:grid-cols-[auto_minmax(220px,1fr)_auto]">
+              <div className="flex min-w-0 items-center gap-2.5">
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="icon" className="xl:hidden rounded-xl border-slate-200 dark:border-slate-800 dark:bg-slate-900">
@@ -200,13 +200,13 @@ export function AdminLayout() {
                   )}
                 </Button>
 
-                <div>
+                <div className="min-w-0">
                   <div className="mono-label text-[10px] font-bold text-slate-400 dark:text-slate-400">
                     {activeMenu?.section ?? "Workspace"}
                   </div>
-                  <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <div className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100 sm:text-base">
                     {isDoctor ? <Stethoscope className="size-4 text-primary shrink-0" /> : <Shield className="size-4 text-primary shrink-0" />}
-                    <span>{activeMenu?.label ?? "LifeHealth Admin"}</span>
+                    <span className="truncate">{activeMenu?.label ?? "LifeHealth Admin"}</span>
                   </div>
                 </div>
               </div>
@@ -214,16 +214,18 @@ export function AdminLayout() {
               {/* Quick Search Trigger Button */}
               <button
                 onClick={() => setCommandPaletteOpen(true)}
-                className="hidden md:flex items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs text-slate-500 transition-all hover:border-primary/40 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 cursor-pointer shadow-2xs"
+                className="hidden min-w-0 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-500 shadow-2xs transition-all hover:border-primary/40 hover:bg-white md:col-span-2 md:row-start-2 md:flex md:w-full dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800 xl:col-span-1 xl:row-start-auto xl:max-w-md xl:justify-self-center"
               >
                 <Search className="size-3.5 text-slate-400" />
-                <span>Tìm kiếm nhanh trang hoặc câu lệnh...</span>
-                <kbd className="flex items-center gap-0.5 rounded-lg bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 shadow-2xs border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                <span className="min-w-0 flex-1 truncate text-left">
+                  Tìm kiếm nhanh trang hoặc câu lệnh...
+                </span>
+                <kbd className="flex shrink-0 items-center gap-0.5 rounded-lg bg-white px-2 py-0.5 text-[10px] font-bold text-slate-700 shadow-2xs border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                   <Command className="size-2.5" /> K
                 </kbd>
               </button>
 
-              <div className="flex items-center gap-2.5">
+              <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
                 <NotificationBell />
                 <ThemeToggle />
 
@@ -236,7 +238,7 @@ export function AdminLayout() {
                       navigate("/account/settings");
                     }
                   }}
-                  className="hidden cursor-pointer rounded-2xl border-slate-200/80 px-3.5 py-1.5 md:flex md:flex-row md:items-center md:gap-3 dark:border-slate-800 dark:bg-slate-900 shadow-none"
+                  className="hidden max-w-[220px] cursor-pointer rounded-2xl border-slate-200/80 px-3.5 py-1.5 shadow-none dark:border-slate-800 dark:bg-slate-900 xl:flex xl:flex-row xl:items-center xl:gap-3"
                 >
                   <Avatar className="size-8.5 border border-primary/30">
                     <AvatarImage
