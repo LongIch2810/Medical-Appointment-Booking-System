@@ -10,7 +10,13 @@ export function getBackendDocumentUrl(path: string, download = false) {
 }
 
 export function openBackendDocument(path: string, download = false) {
-  const url = getBackendDocumentUrl(path, download);
-  const openedWindow = window.open(url, "_blank");
-  if (openedWindow) openedWindow.opener = null;
+  const link = document.createElement("a");
+  link.href = getBackendDocumentUrl(path, download);
+  link.target = "_blank";
+  link.rel = "noopener noreferrer";
+  link.hidden = true;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
 }
