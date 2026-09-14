@@ -299,6 +299,12 @@ QUY TẮC BẮT BUỘC:
    - Với các trường mà mô tả (description) yêu cầu chọn 1 trong danh sách nhãn chuẩn (vd "Khỏi/Đỡ/Không đổi/
      Nặng hơn/Tử vong"): chỉ chọn nhãn khi tài liệu diễn đạt đủ rõ để khớp chắc chắn với đúng 1 nhãn; nếu mô tả
      trong tài liệu chung chung/mơ hồ hoặc có thể khớp nhiều hơn 1 nhãn, để trống "" thay vì tự suy ra.
+   NGOẠI LỆ của quy tắc 9: các trường có mô tả yêu cầu "tóm tắt"/"tổng hợp" (vd: tom_tat_benh_an,
+   tom_tat_kq_xet_nghiem, qua_trinh_dien_bien, phuong_phap_dieu_tri, tinh_trang_ra_vien, huong_dieu_tri_tiep)
+   ĐƯỢC PHÉP tổng hợp/diễn giải lại thông tin đã có ở nơi khác trong CHÍNH tài liệu này (vd tóm tắt bảng thuốc
+   thành câu văn, gộp các dòng xét nghiệm bất thường thành 1 đoạn) — đó là đúng nhiệm vụ tóm tắt của trường đó,
+   KHÔNG phải suy diễn/bịa. Ranh giới: được tổng hợp lại sự kiện/số liệu đã có trong tài liệu; TUYỆT ĐỐI không
+   được thêm sự kiện, số liệu, hay kết luận nào không có trong tài liệu.
 
 CÁCH LÀM:
 - Quét toàn bộ tài liệu.
