@@ -15,7 +15,13 @@ export const generatePdfHealthRoadmap = async (
   HealthRoadmapReportData: HealthRoadmapReport,
   chartImagePath: string,
   fileName?: string,
-): Promise<{ publicId: string; resourceType: string; format: string; fileName: string; bytes: number }> => {
+): Promise<{
+  publicId: string;
+  resourceType: string;
+  format: string;
+  fileName: string;
+  bytes: number;
+}> => {
   const tmpDir = path.resolve(process.cwd(), "tmp");
   ensureDir(tmpDir);
   const outputPath = path.join(
@@ -157,7 +163,7 @@ export const generatePdfHealthRoadmap = async (
       stream.on("error", reject);
     });
 
-    return uploadPdfToCloudinary(outputPath);
+    return await uploadPdfToCloudinary(outputPath);
   } finally {
     try {
       if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath);

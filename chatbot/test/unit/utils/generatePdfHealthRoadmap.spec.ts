@@ -33,6 +33,7 @@ test("renders a PDF, uploads it to Cloudinary, and cleans up the local temp file
     cloudinary.uploader,
     "upload",
     async (filePath: string) => {
+      await new Promise<void>((resolve) => setImmediate(resolve));
       // Assert the file actually exists (real PDF written to disk) at the moment of upload.
       assert.equal(fs.existsSync(filePath), true);
       assert.equal(path.extname(filePath), ".pdf");
