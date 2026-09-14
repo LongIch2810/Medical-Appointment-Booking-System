@@ -930,7 +930,7 @@ export class AppointmentsService {
       .getOne();
 
     if (!appointment) {
-      throw new NotFoundException('Lịch hẹn không tồn tại.');
+      return null;
     }
 
     return AppointmentsMapper.toAppointmentResponseDto(appointment);

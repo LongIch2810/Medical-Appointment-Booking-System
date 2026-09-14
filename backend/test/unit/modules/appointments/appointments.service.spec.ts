@@ -207,6 +207,47 @@ describe('AppointmentsService', () => {
     });
   });
 
+  describe('getAppoitnmentToDayEarlyOfDoctor', () => {
+    it('returns null instead of throwing when the doctor has no appointment scheduled today', async () => {
+      // Regression test: the doctor dashboard (GET /dashboard/doctor) calls this
+      // to populate an optional "today's next appointment" card. No appointment
+      // today is a normal empty state, not an error — throwing here used to
+      // break the whole dashboard endpoint with a 404.
+      const result = await service.getAppoitnmentToDayEarlyOfDoctor(9, 20);
+
+      expect(result).toBeNull();
+    });
+
+    it("returns the mapped appointment when one exists for today", async () => {
+      const mockAppointment = {
+        id: 3,
+        status: AppointmentStatus.CONFIRMED,
+        booked_by_user: { id: 9 },
+        doctor_schedule: {
+          start_time: '00:00:00',
+          end_time: '01:00:00',
+          day_of_week: 'MON',
+          is_active: true,
+          doctor: { user: { id: 20 }, specialty: {} },
+        },
+        appointment_date: new Date(0),
+        booking_mode: 'USER_SELECT',
+        patient: {},
+        examination_result: null,
+        satisfaction_rating: null,
+        created_at: new Date(0),
+        updated_at: new Date(0),
+      };
+      appointmentRepo.createQueryBuilder.mockReturnValue(
+        makeQb({ getOne: jest.fn().mockResolvedValue(mockAppointment) }),
+      );
+
+      const result = await service.getAppoitnmentToDayEarlyOfDoctor(9, 20);
+
+      expect(result).toMatchObject({ id: 3 });
+    });
+  });
+
   describe('sendAppointmentReminders', () => {
     it('creates a reminder once for an opted-in patient in the configured window', async () => {
       jest.useFakeTimers().setSystemTime(new Date('2026-09-01T01:00:00.000Z'));
