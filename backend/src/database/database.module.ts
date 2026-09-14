@@ -25,6 +25,7 @@ import { AddMessagingIndices1787500000001 } from './migrations/1787500000001-add
 import { CreateAiDocumentTables1787600000000 } from './migrations/1787600000000-createAiDocumentTables';
 import { RepairAiReportPersistence1787700000000 } from './migrations/1787700000000-repairAiReportPersistence';
 import { RemoveCoachProfile1787800000000 } from './migrations/1787800000000-removeCoachProfile';
+import { SeedMedicalNewsArticles1787900000000 } from './migrations/1787900000000-seedMedicalNewsArticles';
 
 // Listed explicitly (not a glob) so Vercel's serverless file tracer, which
 // only bundles statically imported files, actually includes these in the
@@ -55,6 +56,7 @@ const migrations = [
   CreateAiDocumentTables1787600000000,
   RepairAiReportPersistence1787700000000,
   RemoveCoachProfile1787800000000,
+  SeedMedicalNewsArticles1787900000000,
 ];
 
 @Module({
