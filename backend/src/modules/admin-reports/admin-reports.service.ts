@@ -1,6 +1,7 @@
 import {
   HttpException,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
@@ -30,6 +31,8 @@ import {
 } from './dto/request/bodyGenerateAdminReport.dto';
 import { AdminReportsMapper } from './admin-reports.mapper';
 import { buildAdminReportFileName } from 'src/utils/aiDocumentFileName';
+import { getDatabaseErrorMetadata } from 'src/utils/databaseErrorMetadata';
+import { getChatbotUpstreamError } from 'src/utils/chatbotUpstreamError';
 
 type FixedDateRangeResolver = (now: Date) => { from: Date; to: Date };
 const FIXED_DATE_RANGE_RESOLVERS: Record<
@@ -80,6 +83,8 @@ const REPORT_QUESTION_BUILDERS: Record<
 
 @Injectable()
 export class AdminReportsService {
+  private readonly logger = new Logger(AdminReportsService.name);
+
   constructor(
     private readonly configService: ConfigService,
     @Optional()
@@ -162,7 +167,7 @@ export class AdminReportsService {
       range.from,
       range.to,
     );
-    let asset: AiDocumentAsset | undefined;
+    let data: any;
     try {
       const response = await axios.post(
         `${this.configService.get<string>('CHATBOT_URL')}/chatbot/create-report`,
@@ -176,29 +181,66 @@ export class AdminReportsService {
           },
         },
       );
-      const data = response.data?.data;
-      if (!this.reportRepo || !userId) {
-        return AdminReportsMapper.toResponse(
-          dto.reportType,
-          range.rangeLabel,
-          data,
-          { fileName: outputFileName },
-        );
-      }
-      asset = data?.asset ?? data?.pdfAsset;
-      asset = asset
-        ? { ...asset, fileName: asset.fileName || outputFileName }
-        : asset;
-      if (!asset?.publicId)
-        throw new HttpException('AI không trả về tài liệu PDF hợp lệ.', 502);
-      const raw = data?.raw ?? {};
-      const tableRows = this.parseTableRows(raw.result);
-      const tableColumns = tableRows.length
-        ? Object.keys(tableRows[0]).map((key) => ({
-            key,
-            label: key.replace(/_/g, ' '),
-          }))
-        : [];
+      data = response.data?.data;
+    } catch (error: unknown) {
+      const upstream = getChatbotUpstreamError(error);
+      this.logger.error(
+        JSON.stringify({
+          scope: 'ai_admin_report',
+          event: 'chatbot_request_failed',
+          reportType: dto.reportType,
+          status: upstream.status,
+          code: upstream.code,
+        }),
+      );
+      throw new HttpException(
+        {
+          code:
+            upstream.code ||
+            (upstream.status === 504
+              ? 'AI_REPORT_TIMEOUT'
+              : 'AI_REPORT_GENERATION_FAILED'),
+          message:
+            upstream.message ||
+            'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
+        },
+        upstream.status,
+      );
+    }
+
+    if (!this.reportRepo || !userId) {
+      return AdminReportsMapper.toResponse(
+        dto.reportType,
+        range.rangeLabel,
+        data,
+        { fileName: outputFileName },
+      );
+    }
+
+    let asset: AiDocumentAsset | undefined = data?.asset ?? data?.pdfAsset;
+    asset = asset
+      ? { ...asset, fileName: asset.fileName || outputFileName }
+      : asset;
+    if (!asset?.publicId) {
+      throw new HttpException(
+        {
+          code: 'AI_REPORT_INVALID_RESPONSE',
+          message: 'AI không trả về tài liệu PDF hợp lệ.',
+        },
+        502,
+      );
+    }
+
+    const raw = data?.raw ?? {};
+    const tableRows = this.parseTableRows(raw.result);
+    const tableColumns = tableRows.length
+      ? Object.keys(tableRows[0]).map((key) => ({
+          key,
+          label: key.replace(/_/g, ' '),
+        }))
+      : [];
+
+    try {
       const entity = await this.reportRepo.save({
         createdBy: { id: userId },
         report_type: dto.reportType,
@@ -213,18 +255,24 @@ export class AdminReportsService {
         output_asset: asset,
       });
       return this.toResponse(entity);
-    } catch (error: any) {
-      if (asset && this.storage)
+    } catch (error: unknown) {
+      if (this.storage)
         await this.storage.deleteAsset(asset).catch(() => undefined);
-      if (error instanceof HttpException) throw error;
-      console.error('AdminReports create-report error:', {
-        status: error?.response?.status,
-        code: error?.code,
-      });
+      this.logger.error(
+        JSON.stringify({
+          scope: 'ai_admin_report',
+          event: 'persistence_failed',
+          userId,
+          reportType: dto.reportType,
+          ...getDatabaseErrorMetadata(error),
+        }),
+      );
       throw new HttpException(
-        error?.response?.data?.message ||
-          'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
-        error?.response?.status || 500,
+        {
+          code: 'AI_REPORT_PERSISTENCE_FAILED',
+          message: 'Không thể lưu báo cáo AI lúc này. Vui lòng thử lại sau.',
+        },
+        500,
       );
     }
   }

@@ -2,6 +2,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   NotFoundException,
   Optional,
   UnauthorizedException,
@@ -27,6 +28,8 @@ import {
   buildHealthRoadmapFileName,
   buildMedicalRecordSummaryFileName,
 } from 'src/utils/aiDocumentFileName';
+import { getDatabaseErrorMetadata } from 'src/utils/databaseErrorMetadata';
+import { getChatbotUpstreamError } from 'src/utils/chatbotUpstreamError';
 
 // Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu chatbot
@@ -48,6 +51,8 @@ type CachedChatMessage = {
 
 @Injectable()
 export class ChatHistoryService {
+  private readonly logger = new Logger(ChatHistoryService.name);
+
   constructor(
     @InjectRepository(Conversation)
     private readonly conversationRepo: Repository<Conversation>,
@@ -196,8 +201,9 @@ export class ChatHistoryService {
       );
       return response.data.answer;
     } catch (error: any) {
+      const upstream = getChatbotUpstreamError(error);
       console.error('Chatbot request failed:', {
-        status: error?.response?.status,
+        status: upstream.status,
         code: error?.code,
       });
       if (axios.isAxiosError(error)) {
@@ -224,8 +230,11 @@ export class ChatHistoryService {
         }
       }
       throw new HttpException(
-        'Không thể lấy phản hồi từ chatbot.',
-        error?.response?.status || 500,
+        {
+          code: upstream.code || 'CHATBOT_CHAT_FAILED',
+          message: upstream.message || 'Không thể lấy phản hồi từ chatbot.',
+        },
+        upstream.status,
       );
     }
   }
@@ -309,25 +318,39 @@ export class ChatHistoryService {
           await this.documentStorage
             .deleteAsset(data.asset)
             .catch(() => undefined);
-        throw saveError;
+        this.logger.error(
+          JSON.stringify({
+            scope: 'ai_health_roadmap',
+            event: 'persistence_failed',
+            userId,
+            relativeId,
+            ...getDatabaseErrorMetadata(saveError),
+          }),
+        );
+        throw new HttpException(
+          {
+            code: 'AI_HEALTH_ROADMAP_PERSISTENCE_FAILED',
+            message:
+              'Không thể lưu lộ trình sức khỏe lúc này. Vui lòng thử lại sau.',
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
     } catch (error: unknown) {
+      if (error instanceof HttpException) throw error;
+
       if (!axios.isAxiosError(error)) {
         throw new HttpException(
-          'Không thể tạo lộ trình sức khỏe từ chatbot.',
-          500,
+          {
+            code: 'CHATBOT_HEALTH_ROADMAP_FAILED',
+            message: 'Không thể tạo lộ trình sức khỏe từ chatbot.',
+          },
+          HttpStatus.INTERNAL_SERVER_ERROR,
         );
       }
 
-      const status = error.response?.status ?? 500;
-      const responseData = error.response?.data as
-        | {
-            message?: string;
-            err?: string;
-            details?: string | string[];
-            error?: { details?: string | string[] };
-          }
-        | undefined;
+      const upstream = getChatbotUpstreamError(error);
+      const status = upstream.status;
 
       if (
         status === 504 ||
@@ -349,20 +372,11 @@ export class ChatHistoryService {
         );
       }
 
-      const downstreamDetails =
-        responseData?.error?.details ?? responseData?.details;
-      const message =
-        responseData?.message ||
-        responseData?.err ||
-        (typeof downstreamDetails === 'string'
-          ? downstreamDetails
-          : downstreamDetails?.[0]) ||
-        'Không thể tạo lộ trình sức khỏe từ chatbot.';
-
       throw new HttpException(
         {
-          code: 'CHATBOT_HEALTH_ROADMAP_FAILED',
-          message,
+          code: upstream.code || 'CHATBOT_HEALTH_ROADMAP_FAILED',
+          message:
+            upstream.message || 'Không thể tạo lộ trình sức khỏe từ chatbot.',
         },
         status,
       );

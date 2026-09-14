@@ -29,26 +29,37 @@ const reportData = {
 };
 
 test("renders a PDF, uploads it to Cloudinary, and cleans up the local temp file", async (t) => {
-  const uploadMock = t.mock.method(cloudinary.uploader, "upload", async (filePath: string) => {
-    // Assert the file actually exists (real PDF written to disk) at the moment of upload.
-    assert.equal(fs.existsSync(filePath), true);
-    assert.equal(path.extname(filePath), ".pdf");
-    return {
-      secure_url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/roadmap.pdf",
-      public_id: "pdfs/roadmap",
-    };
-  });
+  const uploadMock = t.mock.method(
+    cloudinary.uploader,
+    "upload",
+    async (filePath: string) => {
+      // Assert the file actually exists (real PDF written to disk) at the moment of upload.
+      assert.equal(fs.existsSync(filePath), true);
+      assert.equal(path.extname(filePath), ".pdf");
+      return {
+        public_id: "pdfs/roadmap",
+        resource_type: "raw",
+        format: "pdf",
+        original_filename: "health-roadmap",
+        bytes: 321,
+      };
+    },
+  );
 
   const result = await generatePdfHealthRoadmap(
     reportData,
     path.resolve(process.cwd(), "tmp", "does-not-exist-chart.png"),
+    "health-roadmap.pdf",
   );
 
   assert.equal(uploadMock.mock.callCount(), 1);
   const uploadedPath = uploadMock.mock.calls[0].arguments[0] as string;
   assert.deepEqual(result, {
-    url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/roadmap.pdf",
-    public_id: "pdfs/roadmap",
+    publicId: "pdfs/roadmap",
+    resourceType: "raw",
+    format: "pdf",
+    fileName: "health-roadmap.pdf",
+    bytes: 321,
   });
 
   // The function deletes its own temp output file in a `finally` block.

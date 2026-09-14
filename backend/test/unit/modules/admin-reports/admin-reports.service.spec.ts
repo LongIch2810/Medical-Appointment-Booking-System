@@ -35,6 +35,14 @@ describe('AdminReportsService', () => {
   });
 
   describe('generate', () => {
+    const asset = {
+      publicId: 'ai-documents/results/report',
+      resourceType: 'raw',
+      format: 'pdf',
+      fileName: 'report.pdf',
+      bytes: 123,
+    };
+
     it.each(Object.values(ReportType))(
       'builds a question for every report type: %s',
       async (reportType) => {
@@ -191,10 +199,107 @@ describe('AdminReportsService', () => {
       };
 
       await expect(service.generate(dto)).rejects.toMatchObject({
-        message:
-          'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
+        response: expect.objectContaining({
+          code: 'AI_REPORT_GENERATION_FAILED',
+        }),
         status: 500,
       });
+    });
+
+    it('persists a generated report and returns its history URL', async () => {
+      const reportRepo = {
+        save: jest.fn().mockImplementation(async (value) => ({
+          ...value,
+          id: 41,
+          created_at: new Date('2026-09-14T00:00:00.000Z'),
+        })),
+      };
+      const storage = { deleteAsset: jest.fn() };
+      service = new AdminReportsService(
+        configService as unknown as ConfigService,
+        reportRepo as never,
+        storage as never,
+      );
+      mockedAxios.post.mockResolvedValue({
+        data: {
+          data: {
+            asset,
+            raw: {
+              report: { title: 'Report' },
+              chartConfig: { type: 'bar' },
+              result: '[{"total":3}]',
+            },
+          },
+        },
+      });
+
+      const result = await service.generate(9, {
+        reportType: ReportType.NEW_USER_REGISTRATIONS,
+        rangePreset: DateRangePreset.TODAY,
+      });
+
+      expect(reportRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          createdBy: { id: 9 },
+          output_asset: asset,
+          table_rows: [{ total: 3 }],
+        }),
+      );
+      expect(result.pdfUrl).toBe('/api/v1/admin-reports/history/41/file');
+      expect(storage.deleteAsset).not.toHaveBeenCalled();
+    });
+
+    it('returns a stable persistence error and deletes the uploaded asset when saving fails', async () => {
+      const reportRepo = {
+        save: jest.fn().mockRejectedValue(new Error('insert failed')),
+      };
+      const storage = { deleteAsset: jest.fn().mockResolvedValue(undefined) };
+      service = new AdminReportsService(
+        configService as unknown as ConfigService,
+        reportRepo as never,
+        storage as never,
+      );
+      mockedAxios.post.mockResolvedValue({
+        data: { data: { asset, raw: {} } },
+      });
+
+      try {
+        await service.generate(9, {
+          reportType: ReportType.HEALTH_TRENDS,
+          rangePreset: DateRangePreset.THIS_MONTH,
+        });
+        throw new Error('Expected generate to reject');
+      } catch (error) {
+        expect(error).toBeInstanceOf(HttpException);
+        expect((error as HttpException).getResponse()).toEqual({
+          code: 'AI_REPORT_PERSISTENCE_FAILED',
+          message: 'Không thể lưu báo cáo AI lúc này. Vui lòng thử lại sau.',
+        });
+      }
+      expect(storage.deleteAsset).toHaveBeenCalledWith(asset);
+    });
+
+    it('reads chatbot err/code fields instead of replacing the upstream error', async () => {
+      mockedAxios.post.mockRejectedValue({
+        response: {
+          status: 503,
+          data: { code: 'UPSTREAM_UNAVAILABLE', err: 'Chatbot unavailable' },
+        },
+      });
+
+      try {
+        await service.generate({
+          reportType: ReportType.AI_COACH_ACTIVITY,
+          rangePreset: DateRangePreset.THIS_MONTH,
+        });
+        throw new Error('Expected generate to reject');
+      } catch (error) {
+        expect((error as HttpException).getStatus()).toBe(503);
+        expect((error as HttpException).getResponse()).toEqual({
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Chatbot unavailable',
+        });
+      }
     });
   });
 });

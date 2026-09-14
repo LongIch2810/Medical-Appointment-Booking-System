@@ -47,7 +47,11 @@ const toolModule = (exportName: string, step: Step, name: string) => `
 `;
 
 registerEsmMocks(subjectDirUrl, {
-  "../tools/admin_qa_sql.tool.js": toolModule("AdminQaSqlTool", "sql", "admin_qa_sql_tool"),
+  "../tools/admin_qa_sql.tool.js": toolModule(
+    "AdminQaSqlTool",
+    "sql",
+    "admin_qa_sql_tool",
+  ),
   "../tools/generate_chat_config.tool.js": toolModule(
     "GenerateChartConfigTool",
     "chart",
@@ -92,15 +96,17 @@ registerEsmMocks(subjectDirUrl, {
   `,
 });
 
-const { default: createReportGraph } = await import(
-  "../../../src/langgraph/create_report.graph.js"
-);
+const { default: createReportGraph } =
+  await import("../../../src/langgraph/create_report.graph.js");
 
 test.beforeEach(resetStub);
 
 test("runs SQL, chart, content, and PDF nodes end to end", async (t) => {
   t.mock.method(console, "log", () => undefined);
-  const result = await createReportGraph.invoke({ question: "monthly totals" });
+  const result = await createReportGraph.invoke({
+    question: "monthly totals",
+    file_name: "monthly-report.pdf",
+  });
   const stub = globals.__CREATE_REPORT_GRAPH_STUB__;
 
   assert.equal(result.pdf_url, "https://cdn.example/report.pdf");
@@ -117,6 +123,7 @@ test("runs SQL, chart, content, and PDF nodes end to end", async (t) => {
   assert.deepEqual(stub.calls.pdf[0], [
     stub.results.report,
     "chart.png",
+    "monthly-report.pdf",
   ]);
 });
 

@@ -22,33 +22,47 @@ const fullReportData = {
 };
 
 test("renders a PDF, uploads it to Cloudinary, and cleans up the local temp file", async (t) => {
-  const uploadMock = t.mock.method(cloudinary.uploader, "upload", async (filePath: string) => {
-    assert.equal(fs.existsSync(filePath), true);
-    assert.equal(path.extname(filePath), ".pdf");
-    return {
-      secure_url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/report.pdf",
-      public_id: "pdfs/report",
-    };
-  });
+  const uploadMock = t.mock.method(
+    cloudinary.uploader,
+    "upload",
+    async (filePath: string) => {
+      assert.equal(fs.existsSync(filePath), true);
+      assert.equal(path.extname(filePath), ".pdf");
+      return {
+        public_id: "pdfs/report",
+        resource_type: "raw",
+        format: "pdf",
+        original_filename: "quarterly-report",
+        bytes: 123,
+      };
+    },
+  );
 
   const result = await generatePdfReport(
     fullReportData,
     path.resolve(process.cwd(), "tmp", "does-not-exist-chart.png"),
+    "quarterly-report.pdf",
   );
 
   assert.equal(uploadMock.mock.callCount(), 1);
   const uploadedPath = uploadMock.mock.calls[0].arguments[0] as string;
   assert.deepEqual(result, {
-    url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/report.pdf",
-    public_id: "pdfs/report",
+    publicId: "pdfs/report",
+    resourceType: "raw",
+    format: "pdf",
+    fileName: "quarterly-report.pdf",
+    bytes: 123,
   });
   assert.equal(fs.existsSync(uploadedPath), false);
 });
 
 test("renders successfully when the optional insight/recommendation/context sections are empty", async (t) => {
   const uploadMock = t.mock.method(cloudinary.uploader, "upload", async () => ({
-    secure_url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/minimal.pdf",
     public_id: "pdfs/minimal",
+    resource_type: "raw",
+    format: "pdf",
+    original_filename: "minimal",
+    bytes: 45,
   }));
 
   const minimalReportData = {
@@ -67,8 +81,11 @@ test("renders successfully when the optional insight/recommendation/context sect
 
   assert.equal(uploadMock.mock.callCount(), 1);
   assert.deepEqual(result, {
-    url: "https://res.cloudinary.com/demo/raw/upload/v1/pdfs/minimal.pdf",
-    public_id: "pdfs/minimal",
+    publicId: "pdfs/minimal",
+    resourceType: "raw",
+    format: "pdf",
+    fileName: "minimal.pdf",
+    bytes: 45,
   });
 });
 

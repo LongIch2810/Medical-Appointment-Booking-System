@@ -8,15 +8,13 @@ import {
 
 describe('AdminReportsController', () => {
   const adminReportsService = { generate: jest.fn() };
-  const controller = new AdminReportsController(
-    adminReportsService as never,
-  );
+  const controller = new AdminReportsController(adminReportsService as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('delegates report generation to the service with the request body', async () => {
+  it('delegates report generation with the authenticated user id', async () => {
     const body: BodyGenerateAdminReportDto = {
       reportType: ReportType.NEW_USER_REGISTRATIONS,
       rangePreset: DateRangePreset.TODAY,
@@ -24,9 +22,10 @@ describe('AdminReportsController', () => {
     const expected = { reportType: ReportType.NEW_USER_REGISTRATIONS };
     adminReportsService.generate.mockResolvedValue(expected);
 
-    const result = await controller.generate(body);
+    const request = { user: { userId: 9 } };
+    const result = await controller.generate(request, body);
 
-    expect(adminReportsService.generate).toHaveBeenCalledWith(body);
+    expect(adminReportsService.generate).toHaveBeenCalledWith(9, body);
     expect(result).toBe(expected);
   });
 
