@@ -37,11 +37,11 @@ registerEsmMocks(subjectDirUrl, {
       return { mimetype: "image/png", buffer: Buffer.from("normalized-" + file.originalname) };
     }
   `,
-  "../utils/renderMedicalRecordPdf.js": `
-    export async function renderMedicalRecordPdf(file) {
+  "../utils/prepareMedicalRecordPdf.js": `
+    export async function prepareMedicalRecordPdf(file) {
       const state = globalThis.__SUMMARY_GRAPH_STUB__;
       state.calls.pdf.push(file);
-      return [{ mimetype: "image/png", buffer: Buffer.from("rendered-pdf") }];
+      return { mimetype: "application/pdf", base64: Buffer.from(file.buffer).toString("base64") };
     }
   `,
   "../tools/ocr.tool.js": `
@@ -110,7 +110,7 @@ test("normalizes images, runs OCR, and summarizes the record end to end", async 
   assert.deepEqual(result.summary, { answer: "medical summary" });
 });
 
-test("renders a PDF to PNG inputs before OCR", async (t) => {
+test("sends the PDF directly to OCR without rasterizing it", async (t) => {
   t.mock.method(console, "log", () => undefined);
   const pdfFile = {
     mimetype: "application/pdf",
@@ -122,12 +122,10 @@ test("renders a PDF to PNG inputs before OCR", async (t) => {
   const stub = globals.__SUMMARY_GRAPH_STUB__;
   assert.equal(stub.calls.normalize.length, 0);
   assert.equal(stub.calls.pdf.length, 1);
-  assert.deepEqual(stub.calls.ocr[0], [
-    {
-      mimetype: "image/png",
-      base64: Buffer.from("rendered-pdf").toString("base64"),
-    },
-  ]);
+  assert.deepEqual(stub.calls.ocr[0], {
+    mimetype: "application/pdf",
+    base64: Buffer.from("pdf").toString("base64"),
+  });
 });
 
 test("stops before summarization when OCR fails", async (t) => {

@@ -8,10 +8,7 @@ import {
   SummaryMedicalRecordSchema,
   summarizeMedicalRecordTool,
 } from "../tools/summary_medical_record.tool.js";
-import {
-  NormalizedMedicalRecordFile,
-  renderMedicalRecordPdf,
-} from "../utils/renderMedicalRecordPdf.js";
+import { prepareMedicalRecordPdf } from "../utils/prepareMedicalRecordPdf.js";
 
 dotenv.config();
 
@@ -21,7 +18,10 @@ export type FileParams =
 
 const SummaryMedicalRecordState = Annotation.Root({
   fileParams: Annotation<FileParams>(),
-  normalizedInput: Annotation<Array<{ mimetype: string; base64: string }>>(),
+  normalizedInput: Annotation<
+    | Array<{ mimetype: string; base64: string }>
+    | { mimetype: "application/pdf"; base64: string }
+  >(),
   ocr: Annotation<BenhAn>(),
   summary: Annotation<BanGhiTomTat>(),
 });
@@ -37,19 +37,21 @@ async function runTool<T extends DynamicStructuredTool>(
 async function NormalizeInputNode(
   state: typeof SummaryMedicalRecordState.State,
 ) {
-  const objFileArr: NormalizedMedicalRecordFile[] =
-    "imageFiles" in state.fileParams
-      ? await Promise.all(
-          state.fileParams.imageFiles.map((imgFile) =>
-            normalizedImage(imgFile),
-          ),
-        )
-      : await renderMedicalRecordPdf(state.fileParams.pdfFile);
+  if ("imageFiles" in state.fileParams) {
+    const images = await Promise.all(
+      state.fileParams.imageFiles.map((imgFile) => normalizedImage(imgFile)),
+    );
+    const normalizedInput = images.map((i) => ({
+      mimetype: i.mimetype,
+      base64: i.buffer.toString("base64"),
+    }));
 
-  const normalizedInput = objFileArr.map((i) => ({
-    mimetype: i.mimetype,
-    base64: i.buffer.toString("base64"),
-  }));
+    return { normalizedInput };
+  }
+
+  const normalizedInput = await prepareMedicalRecordPdf(
+    state.fileParams.pdfFile,
+  );
 
   return { normalizedInput };
 }

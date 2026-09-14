@@ -239,7 +239,7 @@ CÁCH LÀM:
 - Ô trống => "" ; chữ mờ => dùng "[mờ]".
 `;
 
-const normalizedArrSchema = z
+const imageArrSchema = z
   .array(
     z.object({
       mimetype: z.string(),
@@ -247,9 +247,15 @@ const normalizedArrSchema = z
     })
   )
   .min(1);
+const pdfFileSchema = z.object({
+  mimetype: z.literal("application/pdf"),
+  base64: z.string(),
+});
+const normalizedArrSchema = z.union([imageArrSchema, pdfFileSchema]);
 type NormalizedArr = z.infer<typeof normalizedArrSchema>;
+type PdfFile = z.infer<typeof pdfFileSchema>;
 
-export const buildOcrImageParts = (normalizedArr: NormalizedArr) =>
+export const buildOcrImageParts = (normalizedArr: z.infer<typeof imageArrSchema>) =>
   normalizedArr.map((file) => ({
     type: "image_url" as const,
     image_url: {
@@ -257,9 +263,19 @@ export const buildOcrImageParts = (normalizedArr: NormalizedArr) =>
     },
   }));
 
+export const buildOcrFilePart = (file: PdfFile) => ({
+  type: "file" as const,
+  source_type: "base64" as const,
+  mime_type: file.mimetype,
+  data: file.base64,
+  metadata: { filename: "medical-record.pdf" },
+});
+
 export const ocrTool = tool(
   async (normalizedArr: NormalizedArr) => {
-    const parts = buildOcrImageParts(normalizedArr);
+    const parts = Array.isArray(normalizedArr)
+      ? buildOcrImageParts(normalizedArr)
+      : [buildOcrFilePart(normalizedArr)];
     const input = [
       new SystemMessage(SystemPrompt),
       new HumanMessage({

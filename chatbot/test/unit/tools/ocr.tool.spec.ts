@@ -3,6 +3,7 @@ import test from "node:test";
 import { z } from "zod";
 import {
   BenhAnSchema,
+  buildOcrFilePart,
   buildOcrImageParts,
   ocrTool,
 } from "../../../src/tools/ocr.tool.js";
@@ -64,6 +65,29 @@ test("ocr_tool builds OpenAI image parts with image_url as an object", () => {
         },
       },
     ],
+  );
+});
+
+test("ocr_tool's input schema accepts a single PDF file object", () => {
+  const validInput = { mimetype: "application/pdf", base64: "abc123" };
+  assert.equal(ocrTool.schema.safeParse(validInput).success, true);
+});
+
+test("ocr_tool's input schema rejects a PDF object with the wrong mimetype", () => {
+  const invalidInput = { mimetype: "application/msword", base64: "abc123" };
+  assert.equal(ocrTool.schema.safeParse(invalidInput).success, false);
+});
+
+test("ocr_tool builds a LangChain standard file content block for a PDF", () => {
+  assert.deepEqual(
+    buildOcrFilePart({ mimetype: "application/pdf", base64: "abc123" }),
+    {
+      type: "file",
+      source_type: "base64",
+      mime_type: "application/pdf",
+      data: "abc123",
+      metadata: { filename: "medical-record.pdf" },
+    },
   );
 });
 

@@ -3,8 +3,8 @@ import test from "node:test";
 import { createCanvas } from "canvas";
 import {
   MAX_MEDICAL_RECORD_PDF_PAGES,
-  renderMedicalRecordPdf,
-} from "../../../src/utils/renderMedicalRecordPdf.js";
+  prepareMedicalRecordPdf,
+} from "../../../src/utils/prepareMedicalRecordPdf.js";
 
 function pdfWithPages(pageCount: number): Buffer {
   const canvas = createCanvas(100, 100, "pdf");
@@ -24,28 +24,32 @@ function pdfFile(buffer: Buffer): Express.Multer.File {
   } as Express.Multer.File;
 }
 
-test("renders every accepted PDF page as a PNG vision input", async () => {
-  const pages = await renderMedicalRecordPdf(pdfFile(pdfWithPages(2)));
-  assert.equal(pages.length, 2);
-  for (const page of pages) {
-    assert.equal(page.mimetype, "image/png");
-    assert.ok(
-      page.buffer
-        .subarray(0, 8)
-        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])),
-    );
-  }
+test("returns the original PDF bytes as base64 for a valid PDF within the page limit", async () => {
+  const buffer = pdfWithPages(2);
+  const result = await prepareMedicalRecordPdf(pdfFile(buffer));
+
+  assert.deepEqual(result, {
+    mimetype: "application/pdf",
+    base64: buffer.toString("base64"),
+  });
 });
 
 test("rejects unreadable PDFs and PDFs over the page limit", async () => {
   await assert.rejects(
-    renderMedicalRecordPdf(pdfFile(Buffer.from("not a PDF"))),
+    prepareMedicalRecordPdf(pdfFile(Buffer.from("not a PDF"))),
     { code: "INVALID_MEDICAL_RECORD_PDF" },
   );
   await assert.rejects(
-    renderMedicalRecordPdf(
+    prepareMedicalRecordPdf(
       pdfFile(pdfWithPages(MAX_MEDICAL_RECORD_PDF_PAGES + 1)),
     ),
+    { code: "INVALID_MEDICAL_RECORD_PDF" },
+  );
+});
+
+test("rejects an empty PDF buffer", async () => {
+  await assert.rejects(
+    prepareMedicalRecordPdf(pdfFile(Buffer.alloc(0))),
     { code: "INVALID_MEDICAL_RECORD_PDF" },
   );
 });
