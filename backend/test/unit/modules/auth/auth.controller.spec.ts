@@ -133,7 +133,7 @@ describe('AuthController', () => {
       expect(res.cookie).toHaveBeenCalledWith(
         'accessToken',
         'access',
-        expect.objectContaining({ secure: true, sameSite: 'strict' }),
+        expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
     });
 
@@ -148,11 +148,11 @@ describe('AuthController', () => {
 
       expect(res.clearCookie).toHaveBeenCalledWith(
         'accessToken',
-        expect.objectContaining({ secure: true, sameSite: 'strict' }),
+        expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
       expect(res.clearCookie).toHaveBeenCalledWith(
         'refreshToken',
-        expect.objectContaining({ secure: true, sameSite: 'strict' }),
+        expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
     });
   });
