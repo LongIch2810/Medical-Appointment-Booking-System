@@ -4535,17 +4535,15 @@ function DoctorScheduleFormDialog({
   trigger,
   initial,
   mode,
-  initialDayOfWeek,
 }: {
   trigger: ReactNode;
   initial?: Partial<DoctorSchedule>;
   mode: "create" | "edit";
-  initialDayOfWeek?: string;
 }) {
   const create = useCreateDoctorSchedule();
   const update = useUpdateDoctorSchedule();
   const [dayOfWeek, setDayOfWeek] = useState(
-    initial?.day_of_week ?? initialDayOfWeek ?? DAYS_OF_WEEK[0].value,
+    initial?.day_of_week ?? DAYS_OF_WEEK[0].value,
   );
   const [startTime, setStartTime] = useState(initial?.start_time ?? "");
   const [endTime, setEndTime] = useState(initial?.end_time ?? "");
@@ -4616,183 +4614,6 @@ function DoctorScheduleFormDialog({
   );
 }
 
-type ScheduleCardData = Pick<
-  DoctorSchedule,
-  "id" | "start_time" | "end_time" | "is_active"
-> & { day_of_week: string };
-
-function ShiftCard({
-  schedule,
-  canEdit,
-  canUpdateStatus,
-  canDelete,
-  isMutating,
-  isDeleting,
-  onUpdateStatus,
-  onDelete,
-}: {
-  schedule: ScheduleCardData;
-  canEdit: boolean;
-  canUpdateStatus: boolean;
-  canDelete: boolean;
-  isMutating: boolean;
-  isDeleting: boolean;
-  onUpdateStatus: (scheduleId: number, isActive: boolean) => void;
-  onDelete: (scheduleId: number) => Promise<unknown>;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3 text-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="font-medium text-slate-800 dark:text-slate-200">
-        {schedule.start_time ?? "-"} - {schedule.end_time ?? "-"}
-      </div>
-      <div className="mt-1.5">
-        {schedule.is_active ? (
-          <Badge variant="success">Active</Badge>
-        ) : (
-          <Badge variant="outline">Inactive</Badge>
-        )}
-      </div>
-      <div className="mt-2">
-        <ActionCell>
-          {canEdit ? (
-            <DoctorScheduleFormDialog
-              mode="edit"
-              initial={schedule}
-              trigger={
-                <Button type="button" variant="outline" size="sm">
-                  Sửa
-                </Button>
-              }
-            />
-          ) : null}
-          <ViewDetailButton
-            title={`Ca khám #${schedule.id}`}
-            description={`${schedule.day_of_week} · ${schedule.start_time ?? "-"} - ${schedule.end_time ?? "-"}`}
-            rows={[
-              { label: "ID", value: schedule.id },
-              { label: "Ngày", value: schedule.day_of_week },
-              {
-                label: "Khung giờ",
-                value: `${schedule.start_time ?? "-"} - ${schedule.end_time ?? "-"}`,
-              },
-              {
-                label: "Trạng thái",
-                value: schedule.is_active ? (
-                  <Badge variant="success">Active</Badge>
-                ) : (
-                  <Badge variant="outline">Inactive</Badge>
-                ),
-              },
-            ]}
-          />
-          {canUpdateStatus ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={isMutating}
-              onClick={() => onUpdateStatus(schedule.id, !schedule.is_active)}
-            >
-              {schedule.is_active ? "Tạm ngưng" : "Kích hoạt"}
-            </Button>
-          ) : null}
-          {canDelete ? (
-            <ConfirmDialog
-              trigger={
-                <Button type="button" variant="destructive" size="sm">
-                  Xóa
-                </Button>
-              }
-              title="Xóa ca khám"
-              description={`Xóa ca khám #${schedule.id} (${schedule.start_time} - ${schedule.end_time})?`}
-              destructive
-              isSubmitting={isDeleting}
-              onConfirm={() => onDelete(schedule.id)}
-            />
-          ) : null}
-        </ActionCell>
-      </div>
-    </div>
-  );
-}
-
-function DayColumn({
-  day,
-  schedules,
-  canCreate,
-  canEdit,
-  canUpdateStatus,
-  canDelete,
-  isMutating,
-  isDeleting,
-  onUpdateStatus,
-  onDelete,
-}: {
-  day: { value: string; label: string };
-  schedules: Pick<DoctorSchedule, "id" | "start_time" | "end_time" | "is_active">[];
-  canCreate: boolean;
-  canEdit: boolean;
-  canUpdateStatus: boolean;
-  canDelete: boolean;
-  isMutating: boolean;
-  isDeleting: boolean;
-  onUpdateStatus: (scheduleId: number, isActive: boolean) => void;
-  onDelete: (scheduleId: number) => Promise<unknown>;
-}) {
-  return (
-    <div className="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/40">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-            {day.label}
-          </span>
-          <span className="rounded-full bg-slate-200 px-1.5 text-[10px] text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-            {schedules.length}
-          </span>
-        </div>
-        {canCreate ? (
-          <DoctorScheduleFormDialog
-            mode="create"
-            initialDayOfWeek={day.value}
-            trigger={
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-7 w-7 p-0"
-                aria-label={`Thêm ca cho ${day.label}`}
-              >
-                +
-              </Button>
-            }
-          />
-        ) : null}
-      </div>
-      <div className="mt-3 space-y-2">
-        {schedules.length === 0 ? (
-          <p className="text-xs text-slate-400 dark:text-slate-500">
-            Chưa có ca
-          </p>
-        ) : (
-          schedules.map((schedule) => (
-            <ShiftCard
-              key={schedule.id}
-              schedule={{ ...schedule, day_of_week: day.value }}
-              canEdit={canEdit}
-              canUpdateStatus={canUpdateStatus}
-              canDelete={canDelete}
-              isMutating={isMutating}
-              isDeleting={isDeleting}
-              onUpdateStatus={onUpdateStatus}
-              onDelete={onDelete}
-            />
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 function DoctorSchedulesModule() {
   const { data, isLoading, isError, refetch } = usePersonalSchedules();
   const createSchedule = useCreateDoctorSchedule();
@@ -4835,6 +4656,9 @@ function DoctorSchedulesModule() {
     [availableDays],
   );
 
+  // null = no filter applied, show every day's shifts in one table.
+  const [dayFilter, setDayFilter] = useState<string | null>(null);
+
   const isMutating =
     createSchedule.isPending ||
     updateStatus.isPending ||
@@ -4843,43 +4667,210 @@ function DoctorSchedulesModule() {
   if (isLoading) return <LoadingState />;
   if (isError) return <ErrorState onRetry={() => refetch()} />;
 
+  const allRows = orderedDays.flatMap((day) =>
+    (groups[day.value] ?? []).map((schedule) => ({
+      ...schedule,
+      day_of_week: day.value,
+      day_label: day.label,
+    })),
+  );
+  const rows = dayFilter
+    ? allRows.filter((row) => row.day_of_week === dayFilter)
+    : allRows;
+
   return (
     <Card className="rounded-2xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
       <CardHeader>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <CardTitle>Lịch khám cá nhân</CardTitle>
-          {canCreate ? (
-            <DoctorScheduleFormDialog
-              mode="create"
-              trigger={
-                <Button size="sm" variant="outline">
-                  + Thêm ca
-                </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {canCreate ? (
+              <DoctorScheduleFormDialog
+                mode="create"
+                trigger={
+                  <Button size="sm" variant="outline">
+                    + Thêm ca
+                  </Button>
+                }
+              />
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setDayFilter(null)}
+              className={
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                (dayFilter === null
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
               }
-            />
-          ) : null}
+            >
+              <span>Tất cả</span>
+              <span
+                className={
+                  "rounded-full px-1.5 text-[10px] " +
+                  (dayFilter === null
+                    ? "bg-primary-foreground/20 text-primary-foreground"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
+                }
+              >
+                {allRows.length}
+              </span>
+            </button>
+            {orderedDays.map((day) => {
+              const count = groups[day.value]?.length ?? 0;
+              const active = day.value === dayFilter;
+              return (
+                <button
+                  key={day.value}
+                  type="button"
+                  onClick={() => setDayFilter(active ? null : day.value)}
+                  className={
+                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                    (active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
+                  }
+                >
+                  <span>{day.label}</span>
+                  <span
+                    className={
+                      "rounded-full px-1.5 text-[10px] " +
+                      (active
+                        ? "bg-primary-foreground/20 text-primary-foreground"
+                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
+                    }
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3">
-          {orderedDays.map((day) => (
-            <DayColumn
-              key={day.value}
-              day={day}
-              schedules={groups[day.value] ?? []}
-              canCreate={canCreate}
-              canEdit={canEdit}
-              canUpdateStatus={canUpdateStatus}
-              canDelete={canDelete}
-              isMutating={isMutating}
-              isDeleting={deleteSchedule.isPending}
-              onUpdateStatus={(scheduleId, isActive) =>
-                updateStatus.mutate({ scheduleId, isActive })
-              }
-              onDelete={(scheduleId) => deleteSchedule.mutateAsync(scheduleId)}
-            />
-          ))}
-        </div>
+      <CardContent className="space-y-4 overflow-x-auto">
+        {rows.length === 0 ? (
+          <EmptyState
+            title="Chưa có ca khám"
+            description={
+              dayFilter
+                ? `Không có ca khám nào cho ${
+                    orderedDays.find((day) => day.value === dayFilter)
+                      ?.label ?? dayFilter
+                  }.`
+                : "Chưa có ca khám nào trong tuần."
+            }
+          />
+        ) : (
+          <table className="min-w-full divide-y divide-slate-200 text-left dark:divide-slate-800">
+            <thead>
+              <tr>
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  ID
+                </th>
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  Ngày
+                </th>
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  Giờ
+                </th>
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  Trạng thái
+                </th>
+                <th className="mono-label px-3 py-3 text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  Thao tác
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
+              {rows.map((row) => (
+                <tr key={row.id} className="align-top hover:bg-slate-50 dark:hover:bg-slate-800/60">
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.id}</td>
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.day_label}</td>
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">
+                    {row.start_time ?? "-"} - {row.end_time ?? "-"}
+                  </td>
+                  <td className="px-3 py-4 text-sm">
+                    {row.is_active ? (
+                      <Badge variant="success">Active</Badge>
+                    ) : (
+                      <Badge variant="outline">Inactive</Badge>
+                    )}
+                  </td>
+                  <td className="px-3 py-4 text-sm">
+                    <ActionCell>
+                      {canEdit ? (
+                        <DoctorScheduleFormDialog
+                          mode="edit"
+                          initial={row}
+                          trigger={
+                            <Button type="button" variant="outline" size="sm">
+                              Sửa
+                            </Button>
+                          }
+                        />
+                      ) : null}
+                      <ViewDetailButton
+                        title={`Ca khám #${row.id}`}
+                        description={`${row.day_label} · ${row.start_time ?? "-"} - ${row.end_time ?? "-"}`}
+                        rows={[
+                          { label: "ID", value: row.id },
+                          { label: "Ngày", value: row.day_label },
+                          {
+                            label: "Khung giờ",
+                            value: `${row.start_time ?? "-"} - ${row.end_time ?? "-"}`,
+                          },
+                          {
+                            label: "Trạng thái",
+                            value: row.is_active ? (
+                              <Badge variant="success">Active</Badge>
+                            ) : (
+                              <Badge variant="outline">Inactive</Badge>
+                            ),
+                          },
+                        ]}
+                      />
+                      {canUpdateStatus ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() =>
+                            updateStatus.mutate({
+                              scheduleId: row.id,
+                              isActive: !row.is_active,
+                            })
+                          }
+                        >
+                          {row.is_active ? "Tạm ngưng" : "Kích hoạt"}
+                        </Button>
+                      ) : null}
+                      {canDelete ? (
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="sm"
+                            >
+                              Xóa
+                            </Button>
+                          }
+                          title="Xóa ca khám"
+                          description={`Xóa ca khám #${row.id} (${row.start_time} - ${row.end_time})?`}
+                          destructive
+                          isSubmitting={deleteSchedule.isPending}
+                          onConfirm={() => deleteSchedule.mutateAsync(row.id)}
+                        />
+                      ) : null}
+                    </ActionCell>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </CardContent>
     </Card>
   );
