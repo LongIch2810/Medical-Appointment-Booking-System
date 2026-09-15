@@ -198,6 +198,17 @@
   .scrollbar-soft::-webkit-scrollbar-thumb:hover {
     background: rgba(100, 116, 139, 0.6);
   }
+
+  input[type="time"]::-webkit-calendar-picker-indicator,
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    border-radius: 0.25rem;
+  }
+
+  .dark input[type="time"]::-webkit-calendar-picker-indicator,
+  .dark input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5);
+  }
 }
 
 /* AI Report Animations */

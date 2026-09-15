@@ -4681,73 +4681,73 @@ function DoctorSchedulesModule() {
 
   return (
     <Card className="rounded-2xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-      <CardHeader>
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <CardHeader className="space-y-4">
+        <div className="flex items-center justify-between gap-3">
           <CardTitle>Lịch khám cá nhân</CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            {canCreate ? (
-              <DoctorScheduleFormDialog
-                mode="create"
-                trigger={
-                  <Button size="sm" variant="outline">
-                    <Plus className="mr-1 size-3" />
-                    Thêm ca
-                  </Button>
-                }
-              />
-            ) : null}
-            <button
-              type="button"
-              onClick={() => setDayFilter(null)}
+          {canCreate ? (
+            <DoctorScheduleFormDialog
+              mode="create"
+              trigger={
+                <Button size="sm" variant="outline">
+                  <Plus className="mr-1 size-3" />
+                  Thêm ca
+                </Button>
+              }
+            />
+          ) : null}
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setDayFilter(null)}
+            className={
+              "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+              (dayFilter === null
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
+            }
+          >
+            <span>Tất cả</span>
+            <span
               className={
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                "rounded-full px-1.5 text-[10px] " +
                 (dayFilter === null
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
+                  ? "bg-primary-foreground/20 text-primary-foreground"
+                  : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
               }
             >
-              <span>Tất cả</span>
-              <span
+              {allRows.length}
+            </span>
+          </button>
+          {orderedDays.map((day) => {
+            const count = groups[day.value]?.length ?? 0;
+            const active = day.value === dayFilter;
+            return (
+              <button
+                key={day.value}
+                type="button"
+                onClick={() => setDayFilter(active ? null : day.value)}
                 className={
-                  "rounded-full px-1.5 text-[10px] " +
-                  (dayFilter === null
-                    ? "bg-primary-foreground/20 text-primary-foreground"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors " +
+                  (active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
                 }
               >
-                {allRows.length}
-              </span>
-            </button>
-            {orderedDays.map((day) => {
-              const count = groups[day.value]?.length ?? 0;
-              const active = day.value === dayFilter;
-              return (
-                <button
-                  key={day.value}
-                  type="button"
-                  onClick={() => setDayFilter(active ? null : day.value)}
+                <span>{day.label}</span>
+                <span
                   className={
-                    "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                    "rounded-full px-1.5 text-[10px] " +
                     (active
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
+                      ? "bg-primary-foreground/20 text-primary-foreground"
+                      : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
                   }
                 >
-                  <span>{day.label}</span>
-                  <span
-                    className={
-                      "rounded-full px-1.5 text-[10px] " +
-                      (active
-                        ? "bg-primary-foreground/20 text-primary-foreground"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400")
-                    }
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </CardHeader>
       <CardContent className="space-y-4 overflow-x-auto">
