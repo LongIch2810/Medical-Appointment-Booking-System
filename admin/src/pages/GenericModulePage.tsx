@@ -4542,8 +4542,8 @@ function DoctorScheduleFormDialog({
 }) {
   const create = useCreateDoctorSchedule();
   const update = useUpdateDoctorSchedule();
-  const [appointmentDate, setAppointmentDate] = useState(
-    initial?.appointment_date ?? "",
+  const [dayOfWeek, setDayOfWeek] = useState(
+    initial?.day_of_week ?? DAYS_OF_WEEK[0].value,
   );
   const [startTime, setStartTime] = useState(initial?.start_time ?? "");
   const [endTime, setEndTime] = useState(initial?.end_time ?? "");
@@ -4555,7 +4555,7 @@ function DoctorScheduleFormDialog({
       isSubmitting={create.isPending || update.isPending}
       onOpen={() => {
         if (mode === "edit") {
-          setAppointmentDate(initial?.appointment_date ?? "");
+          setDayOfWeek(initial?.day_of_week ?? DAYS_OF_WEEK[0].value);
           setStartTime(initial?.start_time ?? "");
           setEndTime(initial?.end_time ?? "");
         }
@@ -4563,28 +4563,34 @@ function DoctorScheduleFormDialog({
       onSubmit={() =>
         mode === "create"
           ? create.mutateAsync({
-              appointment_date: appointmentDate,
+              day_of_week: dayOfWeek,
               start_time: startTime,
               end_time: endTime,
             })
           : update.mutateAsync({
               scheduleId: initial!.id!,
               payload: {
-                appointment_date: appointmentDate || undefined,
+                day_of_week: dayOfWeek || undefined,
                 start_time: startTime || undefined,
                 end_time: endTime || undefined,
               },
             })
       }
     >
-      <FormField label="Ngày" htmlFor="schedule-date" required>
-        <Input
-          id="schedule-date"
+      <FormField label="Thứ trong tuần" htmlFor="schedule-day" required>
+        <select
+          id="schedule-day"
           required
-          type="date"
-          value={appointmentDate}
-          onChange={(e) => setAppointmentDate(e.target.value)}
-        />
+          value={dayOfWeek}
+          onChange={(e) => setDayOfWeek(e.target.value)}
+          className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        >
+          {DAYS_OF_WEEK.map((day) => (
+            <option key={day.value} value={day.value}>
+              {day.label}
+            </option>
+          ))}
+        </select>
       </FormField>
       <FormField label="Giờ bắt đầu" htmlFor="start-time" required>
         <Input
