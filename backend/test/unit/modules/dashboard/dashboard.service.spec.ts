@@ -6,6 +6,7 @@ import { AppointmentsService } from 'src/modules/appointments/appointments.servi
 import { ExaminationResultService } from 'src/modules/examination-result/examination-result.service';
 import { MessagesService } from 'src/modules/messages/messages.service';
 import { RelativesService } from 'src/modules/relatives/relatives.service';
+import { DoctorsService } from 'src/modules/doctors/doctors.service';
 
 describe('DashboardService', () => {
   let service: DashboardService;
@@ -32,6 +33,7 @@ describe('DashboardService', () => {
   };
   let messagesService: { numberOfMessagesUnreadInAllChannel: jest.Mock };
   let relativesService: { numberOfRelativesByUserId: jest.Mock };
+  let doctorsService: { findDoctorByUserId: jest.Mock };
 
   beforeEach(() => {
     usersService = {
@@ -63,6 +65,9 @@ describe('DashboardService', () => {
     relativesService = {
       numberOfRelativesByUserId: jest.fn().mockResolvedValue(9),
     };
+    doctorsService = {
+      findDoctorByUserId: jest.fn().mockResolvedValue({ id: 20 }),
+    };
 
     service = new DashboardService(
       usersService as unknown as UsersService,
@@ -71,6 +76,7 @@ describe('DashboardService', () => {
       examinationResultService as unknown as ExaminationResultService,
       messagesService as unknown as MessagesService,
       relativesService as unknown as RelativesService,
+      doctorsService as unknown as DoctorsService,
     );
   });
 
@@ -115,15 +121,26 @@ describe('DashboardService', () => {
     it('throws NotFoundException when the user does not exist', async () => {
       usersService.isUserExists.mockResolvedValue(false);
 
-      await expect(
-        service.getDoctorDashboard(1, 2),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.getDoctorDashboard(1)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
-    it('aggregates doctor-scoped stats using doctorId and user-scoped stats using userId', async () => {
-      const result = await service.getDoctorDashboard(9, 20);
+    it('throws when the user has no linked doctor profile', async () => {
+      doctorsService.findDoctorByUserId.mockRejectedValue(
+        new NotFoundException('Bác sĩ không tồn tại.'),
+      );
+
+      await expect(service.getDoctorDashboard(9)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+
+    it('resolves doctorId from userId via DoctorsService and aggregates doctor-scoped stats', async () => {
+      const result = await service.getDoctorDashboard(9);
 
       expect(usersService.isUserExists).toHaveBeenCalledWith(9);
+      expect(doctorsService.findDoctorByUserId).toHaveBeenCalledWith(9);
       expect(
         appointmentsService.numberOfAppointmentsToDayActiveByDoctorId,
       ).toHaveBeenCalledWith(20);

@@ -38,8 +38,7 @@ export class DashboardController {
   @Permissions(PERMISSIONS.DASHBOARD_DOCTOR)
   async getDoctorDashboard(@Req() req): Promise<DoctorDashboardResponseDto> {
     const { userId } = req.user;
-    const doctorId = req.user?.doctorId ?? req.user?.doctor?.id;
-    return this.dashboardService.getDoctorDashboard(userId, doctorId);
+    return this.dashboardService.getDoctorDashboard(userId);
   }
 
   @ApiOperation({ summary: 'Thống kê dashboard admin' })

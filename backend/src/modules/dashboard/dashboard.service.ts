@@ -5,6 +5,7 @@ import { AppointmentsService } from '../appointments/appointments.service';
 import { RelativesService } from '../relatives/relatives.service';
 import { ExaminationResultService } from '../examination-result/examination-result.service';
 import { MessagesService } from '../messages/messages.service';
+import { DoctorsService } from '../doctors/doctors.service';
 import { DashboardMapper } from './dashboard.mapper';
 import { AdminDashboardResponseDto } from './dto/response/adminDashboardResponse.dto';
 import { DoctorDashboardResponseDto } from './dto/response/doctorDashboardResponse.dto';
@@ -19,6 +20,7 @@ export class DashboardService {
     private readonly examinationResultService: ExaminationResultService,
     private readonly messagesService: MessagesService,
     private readonly relativesService: RelativesService,
+    private readonly doctorsService: DoctorsService,
   ) {}
 
   async getPatientDashboard(
@@ -53,12 +55,16 @@ export class DashboardService {
 
   async getDoctorDashboard(
     userId: number,
-    doctorId: number,
   ): Promise<DoctorDashboardResponseDto> {
     const isUserExist = await this.usersService.isUserExists(userId);
     if (!isUserExist) {
       throw new NotFoundException('Người dùng không tồn tại.');
     }
+    // JwtStrategy.validate() only puts {userId, roles} on req.user — it never
+    // carries doctorId, so it must be resolved here from the doctor profile
+    // linked to this user rather than trusted from the request.
+    const doctor = await this.doctorsService.findDoctorByUserId(userId);
+    const doctorId = doctor.id;
     const totalAppointmentsToDayCount =
       await this.appointmentsService.numberOfAppointmentsToDayActiveByDoctorId(
         doctorId,

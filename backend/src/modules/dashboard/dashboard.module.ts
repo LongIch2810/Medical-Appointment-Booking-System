@@ -7,6 +7,7 @@ import { AppointmentsModule } from '../appointments/appointments.module';
 import { RelativesModule } from '../relatives/relatives.module';
 import { ExaminationResultModule } from '../examination-result/examination-result.module';
 import { MessagesModule } from '../messages/messages.module';
+import { DoctorsModule } from '../doctors/doctors.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MessagesModule } from '../messages/messages.module';
     ExaminationResultModule,
     RelativesModule,
     MessagesModule,
+    DoctorsModule,
   ],
   controllers: [DashboardController],
   providers: [DashboardService],

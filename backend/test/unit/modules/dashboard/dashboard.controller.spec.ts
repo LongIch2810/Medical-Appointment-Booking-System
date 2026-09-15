@@ -25,26 +25,19 @@ describe('DashboardController', () => {
     expect(result).toBe(expected);
   });
 
-  it('fetches the doctor dashboard using doctorId from the request user', async () => {
+  it('fetches the doctor dashboard for the authenticated user, resolving doctorId server-side', async () => {
+    // JwtStrategy.validate() only ever puts {userId, roles} on req.user, so
+    // the controller must not depend on a req.user.doctorId/doctor.id that
+    // never gets set — the service resolves it from userId instead.
     const expected = { totalAppointmentsToDayCount: 4 };
     dashboardService.getDoctorDashboard.mockResolvedValue(expected);
 
     const result = await controller.getDoctorDashboard({
-      user: { userId: 7, doctorId: 20 },
+      user: { userId: 7 },
     });
 
-    expect(dashboardService.getDoctorDashboard).toHaveBeenCalledWith(7, 20);
+    expect(dashboardService.getDoctorDashboard).toHaveBeenCalledWith(7);
     expect(result).toBe(expected);
-  });
-
-  it('falls back to req.user.doctor.id when doctorId is absent on the request user', async () => {
-    dashboardService.getDoctorDashboard.mockResolvedValue({});
-
-    await controller.getDoctorDashboard({
-      user: { userId: 7, doctor: { id: 33 } },
-    });
-
-    expect(dashboardService.getDoctorDashboard).toHaveBeenCalledWith(7, 33);
   });
 
   it('fetches the admin dashboard for the authenticated user', async () => {
