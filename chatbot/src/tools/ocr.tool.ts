@@ -8,8 +8,49 @@ import { extractImgUrl } from "../utils/extractImgUrl.js";
 
 dotenv.config();
 
+const TruongBoSungSchema = z.object({
+  nhom: z
+    .string()
+    .describe("Tên phần/nhóm chứa thông tin, giữ theo tiêu đề trong tài liệu"),
+  nhan: z.string().describe("Nhãn trường hoặc tên mục như được ghi trong tài liệu"),
+  gia_tri: z.string().describe("Giá trị nguyên văn tương ứng với nhãn"),
+  trang: z
+    .string()
+    .describe("Số trang chứa thông tin nếu xác định được, nếu không thì để trống"),
+});
+
+const KetQuaCanLamSangSchema = z.object({
+  thoi_gian: z.string().describe("Ngày/giờ thực hiện hoặc trả kết quả"),
+  nhom: z
+    .string()
+    .describe("Nhóm xét nghiệm, chẩn đoán hình ảnh hoặc thăm dò chức năng"),
+  ten: z.string().describe("Tên xét nghiệm hoặc thăm dò"),
+  ket_qua: z.string().describe("Kết quả nguyên văn, không tự diễn giải"),
+  don_vi: z.string().describe("Đơn vị được in trong tài liệu"),
+  khoang_tham_chieu: z.string().describe("Khoảng tham chiếu/ngưỡng tham chiếu"),
+  nhan_xet: z
+    .string()
+    .describe("Nhận xét/kết luận do tài liệu ghi, không tự tạo nhận xét mới"),
+});
+
+const ThuocSchema = z.object({
+  ten: z.string().describe("Tên thuốc"),
+  ham_luong: z.string().describe("Hàm lượng/nồng độ"),
+  lieu_dung: z.string().describe("Liều dùng mỗi lần hoặc tổng liều"),
+  duong_dung: z.string().describe("Đường dùng"),
+  tan_suat: z.string().describe("Tần suất và thời điểm dùng"),
+  thoi_gian: z.string().describe("Thời gian dùng hoặc số ngày cấp thuốc"),
+  ghi_chu: z.string().describe("Chỉ định khi cần, cảnh báo hoặc lưu ý đi kèm"),
+});
+
 // 1. Phần Đầu trang (Header)
 const HeaderSchema = z.object({
+  loai_tai_lieu: z
+    .string()
+    .describe(
+      "Loại tài liệu được ghi trên hồ sơ, ví dụ bệnh án nội trú, phiếu khám, giấy ra viện, đơn thuốc, kết quả xét nghiệm",
+    ),
+  ngay_lap: z.string().describe("Ngày/giờ lập, ký hoặc phát hành tài liệu"),
   so_y_te: z
     .string()
     .describe(
@@ -22,10 +63,19 @@ const HeaderSchema = z.object({
   ma_so_benh_an: z
     .string()
     .describe(
-      "Mã số MẪU của biểu mẫu bệnh án in sẵn trên form (vd 'Mẫu số: 01/BV-01') — KHÔNG phải mã hồ sơ/mã bệnh " +
-        "án/mã bệnh nhân riêng của từng bệnh nhân. Nếu tài liệu chỉ có một mã định danh chung của hồ sơ hoặc " +
-        "bệnh nhân (vd 'Mã hồ sơ: ...', 'Mã bệnh nhân: ...') mà không phải mã mẫu form in sẵn, để trống ''.",
+      "Mã/số bệnh án của lần khám hoặc đợt điều trị, chỉ lấy khi nhãn nguồn thể hiện rõ là Mã BA, Mã bệnh án hoặc Số bệnh án",
     ),
+  ma_ho_so: z
+    .string()
+    .describe("Mã hồ sơ, chỉ lấy từ trường được ghi rõ là Mã hồ sơ hoặc tương đương"),
+  ma_benh_nhan: z
+    .string()
+    .describe("Mã bệnh nhân/MRN, chỉ lấy từ trường có nhãn tương ứng"),
+  so_vao_vien: z.string().describe("Số vào viện/số nhập viện/encounter number"),
+  ma_mau_bieu: z.string().describe("Mã hoặc số hiệu mẫu biểu in sẵn"),
+  bac_si_phu_trach: z
+    .string()
+    .describe("Bác sĩ phụ trách, bác sĩ điều trị hoặc người lập tài liệu"),
   so_luu_tru: z
     .string()
     .describe(
@@ -48,6 +98,8 @@ const HanhChinhSchema = z.object({
   nghe_nghiep: z.string().describe("Nghề nghiệp"),
   dan_toc: z.string().describe("Dân tộc"),
   ngoai_kieu: z.string().describe("Ngoại kiều (Quốc tịch)"),
+  nhom_mau: z.string().describe("Nhóm máu"),
+  so_dien_thoai: z.string().describe("Số điện thoại của người bệnh"),
   dia_chi: z.object({
     chi_tiet: z.string().describe("Số nhà, thôn, xóm"),
     huyen_quan: z.string().describe("Huyện (Quận, Tx)"),
@@ -107,6 +159,22 @@ const QuanLyNguoiBenhSchema = z.object({
 
 // 4. Phần III - Chẩn đoán (Bao gồm cả mã ICD)
 const ChanDoanSchema = z.object({
+  danh_sach_chan_doan: z
+    .array(
+      z.object({
+        giai_doan: z
+          .string()
+          .describe("Thời điểm/nguồn chẩn đoán: tiếp nhận, sơ bộ, vào khoa, sau thủ thuật, ra viện hoặc khác"),
+        vai_tro: z
+          .string()
+          .describe("Vai trò được ghi: chính, kèm theo, phân biệt, biến chứng hoặc khác"),
+        ten_benh: z.string().describe("Tên chẩn đoán nguyên văn"),
+        ma: z.string().describe("Mã ICD hoặc mã chẩn đoán đi kèm"),
+      }),
+    )
+    .describe(
+      "Danh sách đầy đủ các chẩn đoán có nhãn rõ, dùng được cho tài liệu không theo các ô chẩn đoán chuẩn bên dưới",
+    ),
   noi_chuyen_den: z.object({
     ten_benh: z.string().describe("Chẩn đoán nơi chuyển đến"),
     ma: z.string().describe("Mã bệnh nơi chuyển đến"),
@@ -216,6 +284,10 @@ const LamSangSchema = z.object({
       huyet_ap: z.string().describe("Huyết áp (mmHg)"),
       nhip_tho: z.string().describe("Nhịp thở (lần/ph)"),
       can_nang: z.string().describe("Cân nặng (kg)"),
+      chieu_cao: z.string().describe("Chiều cao"),
+      bmi: z.string().describe("Chỉ số BMI"),
+      spo2: z.string().describe("SpO2/độ bão hòa oxy"),
+      muc_do_dau: z.string().describe("Mức độ đau hoặc thang điểm đau"),
       mo_ta_chung: z.string().describe("Mô tả khám toàn thân"),
     }),
     cac_co_quan: z.object({
@@ -232,6 +304,11 @@ const LamSangSchema = z.object({
     }),
   }),
   can_lam_sang: z.string().describe("Các xét nghiệm cận lâm sàng cần làm"),
+  ket_qua_can_lam_sang: z
+    .array(KetQuaCanLamSangSchema)
+    .describe(
+      "Tất cả kết quả xét nghiệm, chẩn đoán hình ảnh và thăm dò chức năng có trong tài liệu; mỗi kết quả là một phần tử riêng",
+    ),
   tom_tat_benh_an: z.string().describe("Tóm tắt bệnh án"),
   chan_doan_so_bo: z.object({
     benh_chinh: z.string().describe("Chẩn đoán bệnh chính"),
@@ -272,6 +349,37 @@ const TongKetSchema = z.object({
   bac_si_dieu_tri: z.string().describe("Họ tên bác sĩ điều trị ký tên"),
 });
 
+const DieuTriSchema = z.object({
+  thuoc_trong_dot_dieu_tri: z
+    .array(ThuocSchema)
+    .describe("Thuốc đã dùng trong lần khám/đợt điều trị hiện tại"),
+  thuoc_ra_vien: z
+    .array(ThuocSchema)
+    .describe("Thuốc kê khi ra viện hoặc thuốc tiếp tục dùng tại nhà"),
+  phau_thuat_thu_thuat: z
+    .array(
+      z.object({
+        thoi_gian: z.string().describe("Ngày/giờ thực hiện"),
+        ten: z.string().describe("Tên phẫu thuật, thủ thuật hoặc can thiệp"),
+        ket_qua: z.string().describe("Kết quả hoặc ghi chú được tài liệu ghi"),
+      }),
+    )
+    .describe("Các phẫu thuật, thủ thuật và can thiệp trong đợt hiện tại"),
+  dieu_tri_khac: z
+    .string()
+    .describe("Điều trị không dùng thuốc, chăm sóc, tư vấn và can thiệp khác"),
+});
+
+const KeHoachTheoDoiSchema = z.object({
+  tai_kham: z.string().describe("Lịch và nơi tái khám"),
+  xet_nghiem_theo_doi: z.string().describe("Xét nghiệm/thăm dò cần theo dõi"),
+  thuoc_va_tuan_thu: z.string().describe("Hướng dẫn sử dụng thuốc và tuân thủ"),
+  che_do_sinh_hoat: z.string().describe("Chế độ ăn, vận động và sinh hoạt"),
+  dau_hieu_canh_bao: z
+    .string()
+    .describe("Dấu hiệu phải khám sớm hoặc cấp cứu và cách xử trí được dặn"),
+});
+
 export const BenhAnSchema = z.object({
   thong_tin_chung: HeaderSchema,
   hanh_chinh: HanhChinhSchema,
@@ -280,6 +388,13 @@ export const BenhAnSchema = z.object({
   tinh_trang_ra_vien: TinhTrangRaVienSchema,
   benh_an: LamSangSchema,
   tong_ket: TongKetSchema,
+  dieu_tri_chi_tiet: DieuTriSchema,
+  ke_hoach_theo_doi: KeHoachTheoDoiSchema,
+  thong_tin_bo_sung: z
+    .array(TruongBoSungSchema)
+    .describe(
+      "Các thông tin có ý nghĩa trong tài liệu nhưng không có trường chuyên biệt ở schema; không lặp lại dữ liệu đã ánh xạ",
+    ),
 });
 
 export type BenhAn = z.infer<typeof BenhAnSchema>;
@@ -288,69 +403,46 @@ const visionLLM = getVisionModel({ temperature: 0 });
 
 const structuredOutput = visionLLM.withStructuredOutput(BenhAnSchema);
 
-const SystemPrompt = `
-Bạn là hệ thống OCR (Optical Character Recognition) chuyên trích xuất dữ liệu từ hồ sơ bệnh án nội khoa (ảnh hoặc PDF).
-Bạn CHỈ được làm nhiệm vụ OCR + trích xuất đúng theo schema đã cung cấp. Không làm bất kỳ nhiệm vụ nào khác.
+export const OCR_SYSTEM_PROMPT = `
+Bạn là hệ thống trích xuất dữ liệu từ hồ sơ y tế bằng tiếng Việt hoặc ngôn ngữ khác. Tài liệu có thể là bệnh án
+nội trú/ngoại trú, phiếu khám, giấy ra viện, đơn thuốc, phiếu xét nghiệm, chẩn đoán hình ảnh, tóm tắt điều trị
+hoặc một mẫu riêng của cơ sở y tế. Không giả định tài liệu tuân theo một mẫu bệnh án cố định.
 
-MỤC TIÊU DUY NHẤT:
-- Đọc nội dung trong tài liệu và trả về JSON khớp schema (đúng cấu trúc, đúng kiểu dữ liệu).
-- Không giải thích, không tóm tắt, không nhận xét, không suy luận, không đưa lời khuyên y khoa.
+NHIỆM VỤ:
+- Đọc toàn bộ ảnh/PDF và trả về duy nhất JSON đúng schema.
+- Chỉ chép và phân loại thông tin có bằng chứng trực tiếp trong tài liệu; không chẩn đoán, không tư vấn và không
+  tạo dữ kiện mới.
 
-QUY TẮC BẮT BUỘC:
-1) Chỉ trích xuất những gì THỰC SỰ nhìn thấy trong tài liệu. TUYỆT ĐỐI không bịa/điền theo “logic”.
-2) Nếu một trường có nhãn/ô điền nhưng KHÔNG có chữ viết/không có dữ liệu được ghi vào (ô trống):
-   -> Trả về "" (chuỗi rỗng).
-3) Nếu thông tin có nhưng bị mờ/không đọc rõ:
-   -> Giữ nguyên phần đọc được và thay phần không đọc được bằng token "[mờ]" đúng vị trí.
-   Ví dụ: "Nguyễn Văn [mờ]", "[mờ] Văn A", "12/[mờ]/2025".
-4) Giữ nguyên định dạng gốc (ngày/giờ/số/đơn vị/viết tắt/dấu câu). Không tự chuẩn hoá hay đổi format.
-5) Nếu có nhiều trang: tổng hợp tất cả trang, tránh trùng lặp; nếu có xung đột, ưu tiên giá trị rõ ràng hơn hoặc xuất hiện ở phần tổng kết/ra viện.
-6) Không thêm bất kỳ khóa (key) nào ngoài schema. Không đổi tên key. Không bỏ thiếu cấu trúc.
-7) Output cuối cùng: CHỈ trả về JSON theo schema. Không kèm markdown, không kèm text ngoài JSON.
-8) TUYỆT ĐỐI không lấy giá trị của một trường/nhãn khác (dù cùng chủ đề hoặc đứng gần nhau) để điền thay cho
-   trường đang xét, kể cả khi có vẻ liên quan. Chỉ điền đúng loại dữ liệu và đúng đơn vị theo mô tả (description)
-   của chính trường đó.
-   Ví dụ SAI: tài liệu không có mục "Vào khoa" riêng mà chỉ có "Ngày vào viện"/"Ngày ra viện" -> KHÔNG được lấy
-   giờ ra viện điền vào trường "Vào khoa". Tài liệu chỉ ghi BMI (kg/m²), không ghi cân nặng (kg) -> KHÔNG được
-   lấy giá trị BMI điền vào trường "Cân nặng (kg)".
-   Ví dụ SAI cụ thể (đã xảy ra thật, PHẢI tránh lặp lại): tài liệu ghi "Mã hồ sơ: DEMO-MR-2026-001" và
-   "Mã bệnh nhân: DEMO-PAT-001" — đây KHÔNG phải mã mẫu form in sẵn, cũng KHÔNG phải tên Sở Y tế.
-   -> so_y_te PHẢI là "" (không được là "DEMO-MR-2026-001" hay "DEMO-PAT-001").
-   -> ma_so_benh_an PHẢI là "" (không được là "DEMO-MR-2026-001" hay "DEMO-PAT-001").
-   Việc tài liệu có 2 chuỗi mã số này không có nghĩa là chúng thuộc về "Sở Y tế" hay "Mã số hồ sơ (MS: 01/BV-01)"
-   — nếu tài liệu không có mã mẫu form / tên cơ quan y tế viết rõ ràng, hai trường này PHẢI để trống, kể cả khi
-   điều đó khiến JSON có nhiều trường rỗng.
-   -> Nếu tài liệu không có đúng dữ liệu cho trường đang xét, trả về "" theo quy tắc 2, dù trường khác có dữ liệu
-   trông có vẻ dùng thay được.
-9) TUYỆT ĐỐI không tự tính toán, suy diễn hay quy đổi để tạo ra một giá trị mà tài liệu không ghi thẳng ra bằng
-   chữ/số cụ thể. Cụ thể:
-   - KHÔNG tự tính "tổng số ngày điều trị" bằng cách trừ ngày ra viện cho ngày vào viện nếu tài liệu không ghi
-     thẳng con số đó — để trống "". Ví dụ: tài liệu ghi "Ngày vào viện: 10/09/2026" và "Ngày ra viện: 13/09/2026"
-     nhưng KHÔNG có dòng nào ghi thẳng "Tổng số ngày điều trị: ..." bằng chữ/số -> bắt buộc trả về "" cho trường
-     này; TUYỆT ĐỐI không tự trừ ngày để suy ra bất kỳ con số nào (3, 4, 5, ...) rồi điền vào.
-   - KHÔNG tự gán giá trị "vào khoa" bằng ngày/giờ "vào viện" (hay bất kỳ mốc thời gian nào khác) khi tài liệu
-     không có mục "vào khoa" ghi thời gian riêng — để trống "".
-   - Với các trường mà mô tả (description) yêu cầu chọn 1 trong danh sách nhãn chuẩn (vd "Khỏi/Đỡ/Không đổi/
-     Nặng hơn/Tử vong"): chỉ chọn nhãn khi tài liệu diễn đạt đủ rõ để khớp chắc chắn với đúng 1 nhãn; nếu mô tả
-     trong tài liệu chung chung/mơ hồ hoặc có thể khớp nhiều hơn 1 nhãn, để trống "" thay vì tự suy ra.
-   - Ví dụ SAI cụ thể (đã xảy ra thật, PHẢI tránh lặp lại): trường tom_tat_kq_xet_nghiem KHÔNG được điền câu
-     dạng "Chẩn đoán đau thắt ngực ổn định nghi do bệnh động mạch vành, tăng huyết áp..." (đây là NỘI DUNG CHẨN
-     ĐOÁN, thuộc về phần chan_doan, không phải kết quả xét nghiệm) — trường này chỉ được chứa số liệu/kết quả
-     xét nghiệm và cận lâm sàng (vd "Troponin hs không tăng, ECG không ST chênh lên, siêu âm tim EF 62%..."),
-     TUYỆT ĐỐI không chứa tên bệnh/chẩn đoán dù đúng là kết luận từ các xét nghiệm đó.
-   NGOẠI LỆ của quy tắc 9: các trường có mô tả yêu cầu "tóm tắt"/"tổng hợp" (vd: tom_tat_benh_an,
-   tom_tat_kq_xet_nghiem, qua_trinh_dien_bien, phuong_phap_dieu_tri, tinh_trang_ra_vien, huong_dieu_tri_tiep)
-   ĐƯỢC PHÉP tổng hợp/diễn giải lại thông tin đã có ở nơi khác trong CHÍNH tài liệu này (vd tóm tắt bảng thuốc
-   thành câu văn, gộp các dòng xét nghiệm bất thường thành 1 đoạn) — đó là đúng nhiệm vụ tóm tắt của trường đó,
-   KHÔNG phải suy diễn/bịa. Ranh giới: được tổng hợp lại sự kiện/số liệu đã có trong tài liệu; TUYỆT ĐỐI không
-   được thêm sự kiện, số liệu, hay kết luận nào không có trong tài liệu.
+QUY TẮC ÁNH XẠ:
+1. Ánh xạ theo ý nghĩa của NHÃN nguồn, không dựa riêng vào vị trí, thứ tự hoặc sự giống nhau của giá trị. Các mã
+   định danh chỉ được đưa vào đúng loại mã mà nhãn nguồn thể hiện (mã bệnh án, mã hồ sơ, mã bệnh nhân, số vào
+   viện, mã y tế, số lưu trữ, mã mẫu biểu). Không dùng một loại mã thay cho loại khác.
+2. Một thông tin chỉ xuất hiện trong đoạn văn tự do được đưa vào trường chuyên biệt khi câu chữ xác định rõ vai
+   trò của nó. Nếu vai trò không chắc chắn, giữ nguyên trong thong_tin_bo_sung thay vì đoán trường đích.
+3. Chuỗi không có dữ liệu phải là ""; danh sách không có dữ liệu phải là []. Ô trống/không xuất hiện không đồng
+   nghĩa với phủ định. Chỉ ghi "không có", "không ghi nhận" hoặc tương đương khi tài liệu khẳng định như vậy.
+4. Không tự tính tuổi, BMI, số ngày điều trị, liều quy đổi, eGFR, khoảng thời gian hoặc bất kỳ giá trị dẫn xuất nào.
+   Chỉ lấy giá trị đã được tài liệu ghi rõ.
+5. Không dùng giá trị khác đơn vị hoặc khác loại để điền thay: BMI không phải cân nặng; ngày ra viện không phải
+   ngày vào khoa; chẩn đoán không phải kết quả xét nghiệm; tiền sử thủ thuật không phải thủ thuật của đợt hiện tại.
+6. Giữ nguyên tên, số, ngày giờ, đơn vị, dấu bất thường, mã ICD và cách diễn đạt quan trọng. Không âm thầm sửa
+   lỗi chính tả chuyên môn hoặc chuẩn hóa định dạng. Phần không đọc được dùng token "[mờ]" tại đúng vị trí.
+7. Với bảng xét nghiệm/thuốc, tạo một phần tử cho từng dòng có dữ liệu và đặt từng giá trị đúng cột. Không ghép
+   đơn vị, khoảng tham chiếu hoặc ghi chú của dòng liền kề.
+8. Với tài liệu nhiều trang, đọc tất cả trang, ghép đúng các bảng bị ngắt trang và loại bản sao thực sự trùng lặp.
+   Nếu hai nguồn mâu thuẫn, không tự chọn một giá trị rồi xóa giá trị còn lại: ưu tiên trường có nhãn rõ ràng và
+   ghi phần mâu thuẫn còn lại vào thong_tin_bo_sung.
+9. Các trường tóm tắt trong schema chỉ được tổng hợp từ sự kiện đã có trong chính tài liệu. Kết quả cận lâm sàng
+   chỉ chứa số liệu/kết luận thăm dò; chẩn đoán chỉ chứa chẩn đoán được người lập hồ sơ ghi nhận.
+10. Thông tin có ý nghĩa nhưng schema chưa có trường chuyên biệt phải được bảo toàn trong thong_tin_bo_sung với
+    tiêu đề, nhãn, giá trị và trang nếu xác định được. Không lặp lại thông tin đã ánh xạ thành công.
+11. Không thêm khóa ngoài schema, không bỏ khóa bắt buộc và không kèm Markdown hay lời giải thích ngoài JSON.
 
-CÁCH LÀM:
-- Quét toàn bộ tài liệu.
-- Ghép thông tin theo đúng vị trí/nhãn của form tương ứng với schema.
-- Điền giá trị chính xác vào từng trường, đúng loại dữ liệu/đơn vị mô tả của trường đó (xem quy tắc 8).
-- Không tự tính toán/suy diễn giá trị còn thiếu (xem quy tắc 9).
-- Ô trống => "" ; chữ mờ => dùng "[mờ]".
+TỰ KIỂM TRA TRƯỚC KHI TRẢ KẾT QUẢ:
+- Đã đọc hết các trang và các phần tiếp nối của bảng.
+- Mỗi mã, mốc thời gian, thuốc, xét nghiệm và chẩn đoán nằm đúng loại trường.
+- Không có giá trị suy diễn từ kiến thức y khoa hoặc phép tính.
+- Không làm mất dữ liệu quan trọng chỉ vì mẫu tài liệu khác schema chuẩn.
 `;
 
 const imageArrSchema = z
@@ -391,7 +483,7 @@ export const ocrTool = tool(
       ? buildOcrImageParts(normalizedArr)
       : [buildOcrFilePart(normalizedArr)];
     const input = [
-      new SystemMessage(SystemPrompt),
+      new SystemMessage(OCR_SYSTEM_PROMPT),
       new HumanMessage({
         content: [
           {

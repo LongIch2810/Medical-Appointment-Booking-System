@@ -3,6 +3,7 @@ import test from "node:test";
 import { z } from "zod";
 import {
   BenhAnSchema,
+  OCR_SYSTEM_PROMPT,
   buildOcrFilePart,
   buildOcrImageParts,
   ocrTool,
@@ -109,4 +110,54 @@ test("BenhAnSchema rejects a record missing a whole top-level section", () => {
   delete fixture.tong_ket;
   const result = BenhAnSchema.safeParse(fixture);
   assert.equal(result.success, false);
+});
+
+test("BenhAnSchema preserves identifiers, extended vital signs, medications, follow-up, and unmapped fields", () => {
+  const fixture = buildValidFixture(BenhAnSchema) as any;
+  fixture.thong_tin_chung.ma_ho_so = "HS-001";
+  fixture.thong_tin_chung.ma_benh_nhan = "BN-001";
+  fixture.thong_tin_chung.bac_si_phu_trach = "BS. Nguyễn An";
+  fixture.chan_doan.danh_sach_chan_doan = [
+    {
+      giai_doan: "Ra viện",
+      vai_tro: "Bệnh chính",
+      ten_benh: "Chẩn đoán A",
+      ma: "A00",
+    },
+  ];
+  fixture.benh_an.kham_benh.toan_than.spo2 = "98%";
+  fixture.benh_an.ket_qua_can_lam_sang = [
+    {
+      thoi_gian: "01/01/2026",
+      nhom: "Huyết học",
+      ten: "Hemoglobin",
+      ket_qua: "145",
+      don_vi: "g/L",
+      khoang_tham_chieu: "130-170",
+      nhan_xet: "Bình thường",
+    },
+  ];
+  fixture.dieu_tri_chi_tiet.thuoc_ra_vien = [
+    {
+      ten: "Thuốc A",
+      ham_luong: "10 mg",
+      lieu_dung: "1 viên",
+      duong_dung: "Uống",
+      tan_suat: "Mỗi sáng",
+      thoi_gian: "7 ngày",
+      ghi_chu: "Sau ăn",
+    },
+  ];
+  fixture.ke_hoach_theo_doi.tai_kham = "Sau 7 ngày";
+  fixture.thong_tin_bo_sung = [
+    { nhom: "Sản khoa", nhan: "PARA", gia_tri: "2002", trang: "2" },
+  ];
+
+  assert.equal(BenhAnSchema.safeParse(fixture).success, true);
+});
+
+test("OCR prompt is form-agnostic and contains no demo-record patch", () => {
+  assert.match(OCR_SYSTEM_PROMPT, /không giả định tài liệu tuân theo một mẫu/i);
+  assert.match(OCR_SYSTEM_PROMPT, /thong_tin_bo_sung/);
+  assert.doesNotMatch(OCR_SYSTEM_PROMPT, /DEMO-MR|DEMO-PAT/);
 });

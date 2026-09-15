@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { summarizeMedicalRecordTool } from "../../../src/tools/summary_medical_record.tool.js";
+import {
+  SUMMARY_SYSTEM_PROMPT,
+  summarizeMedicalRecordTool,
+} from "../../../src/tools/summary_medical_record.tool.js";
 
 // summarizeMedicalRecordTool is thin LLM-prompt wiring: its func just pipes
 // { benh_an_json } through a fixed ChatPromptTemplate into a structured-output
@@ -32,4 +35,12 @@ test("summary_medical_record_tool's input schema requires a string `benh_an_json
       .success,
     false,
   );
+});
+
+test("summary prompt adapts to different record types and preserves clinical detail", () => {
+  assert.match(SUMMARY_SYSTEM_PROMPT, /nhiều loại tài liệu/i);
+  assert.match(SUMMARY_SYSTEM_PROMPT, /FORMAT MARKDOWN THÍCH ỨNG/);
+  assert.match(SUMMARY_SYSTEM_PROMPT, /thuốc ra viện/i);
+  assert.match(SUMMARY_SYSTEM_PROMPT, /thong_tin_bo_sung/);
+  assert.doesNotMatch(SUMMARY_SYSTEM_PROMPT, /DEMO-MR|DEMO-PAT/);
 });
