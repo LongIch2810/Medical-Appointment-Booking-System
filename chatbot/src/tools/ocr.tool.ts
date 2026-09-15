@@ -312,9 +312,14 @@ QUY TẮC BẮT BUỘC:
    của chính trường đó.
    Ví dụ SAI: tài liệu không có mục "Vào khoa" riêng mà chỉ có "Ngày vào viện"/"Ngày ra viện" -> KHÔNG được lấy
    giờ ra viện điền vào trường "Vào khoa". Tài liệu chỉ ghi BMI (kg/m²), không ghi cân nặng (kg) -> KHÔNG được
-   lấy giá trị BMI điền vào trường "Cân nặng (kg)". Tài liệu chỉ ghi "Mã hồ sơ: ..." và "Mã bệnh nhân: ..."
-   (không phải mã mẫu form in sẵn, không phải tên Sở Y tế) -> KHÔNG được lấy 1 trong 2 mã đó điền vào "Sở Y tế"
-   hay "Mã số hồ sơ (MS: 01/BV-01)" chỉ vì đó là 2 chuỗi mã số duy nhất tìm thấy trong tài liệu.
+   lấy giá trị BMI điền vào trường "Cân nặng (kg)".
+   Ví dụ SAI cụ thể (đã xảy ra thật, PHẢI tránh lặp lại): tài liệu ghi "Mã hồ sơ: DEMO-MR-2026-001" và
+   "Mã bệnh nhân: DEMO-PAT-001" — đây KHÔNG phải mã mẫu form in sẵn, cũng KHÔNG phải tên Sở Y tế.
+   -> so_y_te PHẢI là "" (không được là "DEMO-MR-2026-001" hay "DEMO-PAT-001").
+   -> ma_so_benh_an PHẢI là "" (không được là "DEMO-MR-2026-001" hay "DEMO-PAT-001").
+   Việc tài liệu có 2 chuỗi mã số này không có nghĩa là chúng thuộc về "Sở Y tế" hay "Mã số hồ sơ (MS: 01/BV-01)"
+   — nếu tài liệu không có mã mẫu form / tên cơ quan y tế viết rõ ràng, hai trường này PHẢI để trống, kể cả khi
+   điều đó khiến JSON có nhiều trường rỗng.
    -> Nếu tài liệu không có đúng dữ liệu cho trường đang xét, trả về "" theo quy tắc 2, dù trường khác có dữ liệu
    trông có vẻ dùng thay được.
 9) TUYỆT ĐỐI không tự tính toán, suy diễn hay quy đổi để tạo ra một giá trị mà tài liệu không ghi thẳng ra bằng
@@ -328,6 +333,11 @@ QUY TẮC BẮT BUỘC:
    - Với các trường mà mô tả (description) yêu cầu chọn 1 trong danh sách nhãn chuẩn (vd "Khỏi/Đỡ/Không đổi/
      Nặng hơn/Tử vong"): chỉ chọn nhãn khi tài liệu diễn đạt đủ rõ để khớp chắc chắn với đúng 1 nhãn; nếu mô tả
      trong tài liệu chung chung/mơ hồ hoặc có thể khớp nhiều hơn 1 nhãn, để trống "" thay vì tự suy ra.
+   - Ví dụ SAI cụ thể (đã xảy ra thật, PHẢI tránh lặp lại): trường tom_tat_kq_xet_nghiem KHÔNG được điền câu
+     dạng "Chẩn đoán đau thắt ngực ổn định nghi do bệnh động mạch vành, tăng huyết áp..." (đây là NỘI DUNG CHẨN
+     ĐOÁN, thuộc về phần chan_doan, không phải kết quả xét nghiệm) — trường này chỉ được chứa số liệu/kết quả
+     xét nghiệm và cận lâm sàng (vd "Troponin hs không tăng, ECG không ST chênh lên, siêu âm tim EF 62%..."),
+     TUYỆT ĐỐI không chứa tên bệnh/chẩn đoán dù đúng là kết luận từ các xét nghiệm đó.
    NGOẠI LỆ của quy tắc 9: các trường có mô tả yêu cầu "tóm tắt"/"tổng hợp" (vd: tom_tat_benh_an,
    tom_tat_kq_xet_nghiem, qua_trinh_dien_bien, phuong_phap_dieu_tri, tinh_trang_ra_vien, huong_dieu_tri_tiep)
    ĐƯỢC PHÉP tổng hợp/diễn giải lại thông tin đã có ở nơi khác trong CHÍNH tài liệu này (vd tóm tắt bảng thuốc
