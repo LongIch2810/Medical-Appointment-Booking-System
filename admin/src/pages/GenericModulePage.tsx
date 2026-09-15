@@ -4681,7 +4681,7 @@ function DoctorSchedulesModule() {
 
   return (
     <Card className="rounded-2xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
-      <CardHeader className="space-y-4">
+      <CardHeader className="space-y-4 pt-6">
         <div className="flex items-center justify-between gap-3">
           <CardTitle>Lịch khám cá nhân</CardTitle>
           {canCreate ? (
@@ -4750,7 +4750,7 @@ function DoctorSchedulesModule() {
           })}
         </div>
       </CardHeader>
-      <CardContent className="space-y-4 overflow-x-auto">
+      <CardContent className="space-y-4 overflow-x-auto pb-6">
         {rows.length === 0 ? (
           <EmptyState
             title="Chưa có ca khám"
