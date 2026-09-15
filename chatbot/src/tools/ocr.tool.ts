@@ -43,6 +43,25 @@ const ThuocSchema = z.object({
   ghi_chu: z.string().describe("Chỉ định khi cần, cảnh báo hoặc lưu ý đi kèm"),
 });
 
+const BangChungOcrSchema = z.object({
+  duong_dan: z
+    .string()
+    .min(1)
+    .describe(
+      "Đường dẫn đầy đủ tới một trường giá trị cuối trong JSON, gồm chỉ số mảng khi có",
+    ),
+  trich_dan: z
+    .string()
+    .min(1)
+    .describe(
+      "Đoạn nguyên văn trên tài liệu chứa đầy đủ giá trị đã trích xuất và đủ ngữ cảnh để xác định đúng nhãn/vai trò",
+    ),
+  trang: z
+    .string()
+    .min(1)
+    .describe("Số trang hoặc số thứ tự ảnh chứa trích dẫn, bắt đầu từ 1"),
+});
+
 // 1. Phần Đầu trang (Header)
 const HeaderSchema = z.object({
   loai_tai_lieu: z
@@ -50,14 +69,22 @@ const HeaderSchema = z.object({
     .describe(
       "Loại tài liệu được ghi trên hồ sơ, ví dụ bệnh án nội trú, phiếu khám, giấy ra viện, đơn thuốc, kết quả xét nghiệm",
     ),
-  ngay_lap: z.string().describe("Ngày/giờ lập, ký hoặc phát hành tài liệu"),
+  ngay_lap: z
+    .string()
+    .describe(
+      "Ngày/giờ lập, ký hoặc phát hành tài liệu — chỉ lấy khi có nhãn hoặc câu chữ xác định đúng vai trò này; không dùng ngày nhập viện, ra viện, khám hay xét nghiệm thay thế",
+    ),
   so_y_te: z
     .string()
     .describe(
       "Tên Sở Y tế/cơ quan y tế cấp trên — dạng TÊN cơ quan (chữ), KHÔNG phải mã số/ID. Không lấy bất kỳ mã hồ " +
         "sơ, mã bệnh nhân, hay mã định danh nào khác điền vào đây dù không có tên cơ quan y tế nào được ghi.",
     ),
-  benh_vien: z.string().describe("Tên bệnh viện"),
+  benh_vien: z
+    .string()
+    .describe(
+      "Tên bệnh viện/cơ sở khám chữa bệnh — chỉ lấy khi có nhãn cơ sở hoặc tên đầy đủ thể hiện rõ đây là đơn vị y tế; logo, thương hiệu hay chữ đầu trang đứng riêng không đủ bằng chứng",
+    ),
   khoa: z.string().describe("Tên khoa"),
   giuong: z.string().describe("Số giường"),
   ma_so_benh_an: z
@@ -213,7 +240,9 @@ const TinhTrangRaVienSchema = z.object({
     ),
   giai_phau_benh: z
     .string()
-    .describe("Giải phẫu bệnh (Lành tính/Nghi ngờ/Ác tính)"),
+    .describe(
+      "Kết quả giải phẫu bệnh (Lành tính/Nghi ngờ/Ác tính) — chỉ lấy từ mục/kết quả giải phẫu bệnh được ghi rõ; không suy ra từ tình trạng ra viện hoặc chẩn đoán",
+    ),
   tu_vong: z.object({
     thoi_gian: z.string().describe("Thời gian tử vong"),
     nguyen_nhan_chinh: z.string().describe("Nguyên nhân chính tử vong"),
@@ -395,9 +424,91 @@ export const BenhAnSchema = z.object({
     .describe(
       "Các thông tin có ý nghĩa trong tài liệu nhưng không có trường chuyên biệt ở schema; không lặp lại dữ liệu đã ánh xạ",
     ),
+  bang_chung_ocr: z
+    .array(BangChungOcrSchema)
+    .describe(
+      "Một bằng chứng riêng cho mọi trường giá trị khác rỗng trong JSON; không tạo bằng chứng cho chính mảng này",
+    ),
 });
 
 export type BenhAn = z.infer<typeof BenhAnSchema>;
+
+const normalizeEvidenceText = (value: string) =>
+  value.normalize("NFKC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi");
+
+const evidenceContainsValue = (quote: string, value: string) => {
+  const normalizedQuote = normalizeEvidenceText(quote);
+  const normalizedValue = normalizeEvidenceText(value);
+  return (
+    normalizedQuote.length > 0 &&
+    normalizedValue.length > 0 &&
+    normalizedQuote.includes(normalizedValue)
+  );
+};
+
+export const enforceOcrEvidence = (record: BenhAn): BenhAn => {
+  const evidenceByPath = new Map<string, BenhAn["bang_chung_ocr"]>();
+  for (const evidence of record.bang_chung_ocr) {
+    const path = evidence.duong_dan.trim();
+    const existing = evidenceByPath.get(path) ?? [];
+    existing.push(evidence);
+    evidenceByPath.set(path, existing);
+  }
+
+  const sanitize = (value: unknown, path: string): unknown => {
+    if (typeof value === "string") {
+      if (value.trim().length === 0) return "";
+      const supported = (evidenceByPath.get(path) ?? []).some((evidence) =>
+        evidenceContainsValue(evidence.trich_dan, value),
+      );
+      return supported ? value : "";
+    }
+    if (Array.isArray(value)) {
+      return value.map((item, index) => sanitize(item, `${path}[${index}]`));
+    }
+    if (value !== null && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, child]) => [
+          key,
+          sanitize(child, path ? `${path}.${key}` : key),
+        ]),
+      );
+    }
+    return value;
+  };
+
+  const { bang_chung_ocr: evidence, ...medicalRecord } = record;
+  const sanitized = sanitize(medicalRecord, "") as Omit<
+    BenhAn,
+    "bang_chung_ocr"
+  >;
+  return BenhAnSchema.parse({
+    ...sanitized,
+    bang_chung_ocr: evidence.filter((item) => {
+      const path = item.duong_dan.trim();
+      const segments = path
+        .replace(/\[(\d+)\]/g, ".$1")
+        .split(".")
+        .filter(Boolean);
+      let current: unknown = sanitized;
+      for (const segment of segments) {
+        if (
+          current === null ||
+          typeof current !== "object" ||
+          !Object.prototype.hasOwnProperty.call(current, segment)
+        ) {
+          return false;
+        }
+        current = (current as Record<string, unknown>)[segment];
+      }
+      return (
+        typeof current === "string" &&
+        current.trim().length > 0 &&
+        evidenceContainsValue(item.trich_dan, current)
+      );
+    }),
+  });
+};
 
 const visionLLM = getVisionModel({ temperature: 0 });
 
@@ -432,16 +543,27 @@ QUY TẮC ÁNH XẠ:
 8. Với tài liệu nhiều trang, đọc tất cả trang, ghép đúng các bảng bị ngắt trang và loại bản sao thực sự trùng lặp.
    Nếu hai nguồn mâu thuẫn, không tự chọn một giá trị rồi xóa giá trị còn lại: ưu tiên trường có nhãn rõ ràng và
    ghi phần mâu thuẫn còn lại vào thong_tin_bo_sung.
-9. Các trường tóm tắt trong schema chỉ được tổng hợp từ sự kiện đã có trong chính tài liệu. Kết quả cận lâm sàng
-   chỉ chứa số liệu/kết luận thăm dò; chẩn đoán chỉ chứa chẩn đoán được người lập hồ sơ ghi nhận.
+9. Không tự tổng hợp nội dung mới cho các trường có tên "tóm tắt", "diễn biến", "kết quả" hoặc tương tự. Chỉ
+   điền khi tài liệu có chính phần/đoạn tương ứng để chép lại. Kết quả cận lâm sàng chỉ chứa số liệu/kết luận
+   thăm dò; chẩn đoán chỉ chứa chẩn đoán được người lập hồ sơ ghi nhận.
 10. Thông tin có ý nghĩa nhưng schema chưa có trường chuyên biệt phải được bảo toàn trong thong_tin_bo_sung với
     tiêu đề, nhãn, giá trị và trang nếu xác định được. Không lặp lại thông tin đã ánh xạ thành công.
 11. Không thêm khóa ngoài schema, không bỏ khóa bắt buộc và không kèm Markdown hay lời giải thích ngoài JSON.
+12. Các trường dễ nhầm phải có bằng chứng nhãn/câu chữ trực tiếp: benh_vien không được suy ra từ logo hoặc tên
+    thương hiệu đứng riêng; ngay_lap không được lấy từ ngày nhập viện/ra viện/xét nghiệm; ket_qua_dieu_tri và
+    giai_phau_benh không được suy ra từ mô tả ổn định, hết triệu chứng, chẩn đoán hay kế hoạch theo dõi.
+13. Với MỌI trường giá trị khác "", tạo đúng một phần tử bang_chung_ocr có duong_dan đầy đủ tới trường cuối,
+    trich_dan nguyên văn chứa toàn bộ giá trị và trang/ảnh nguồn. Ví dụ:
+    {"duong_dan":"benh_an.kham_benh.toan_than.nhiet_do","trich_dan":"Nhiệt độ: 36,8°C","trang":"1"}.
+    Trường trong object/mảng phải có bằng chứng riêng cho từng giá trị cuối; không dùng đường dẫn tới cả object,
+    cả mảng hoặc một bằng chứng chung cho nhiều trường. Nếu không thể trích dẫn thì để trường dữ liệu đó rỗng.
 
 TỰ KIỂM TRA TRƯỚC KHI TRẢ KẾT QUẢ:
 - Đã đọc hết các trang và các phần tiếp nối của bảng.
 - Mỗi mã, mốc thời gian, thuốc, xét nghiệm và chẩn đoán nằm đúng loại trường.
 - Không có giá trị suy diễn từ kiến thức y khoa hoặc phép tính.
+- Mọi trường khác rỗng, không riêng trường nhạy cảm, đều có bang_chung_ocr đúng đường dẫn, nguyên văn và trang;
+  nếu không thì đã để trống.
 - Không làm mất dữ liệu quan trọng chỉ vì mẫu tài liệu khác schema chuẩn.
 `;
 
@@ -495,7 +617,7 @@ export const ocrTool = tool(
       }),
     ];
     const result = await structuredOutput.invoke(input);
-    return result;
+    return enforceOcrEvidence(result);
   },
   {
     name: "ocr_tool",

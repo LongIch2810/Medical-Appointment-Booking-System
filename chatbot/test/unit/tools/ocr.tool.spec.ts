@@ -6,6 +6,7 @@ import {
   OCR_SYSTEM_PROMPT,
   buildOcrFilePart,
   buildOcrImageParts,
+  enforceOcrEvidence,
   ocrTool,
 } from "../../../src/tools/ocr.tool.js";
 
@@ -156,8 +157,60 @@ test("BenhAnSchema preserves identifiers, extended vital signs, medications, fol
   assert.equal(BenhAnSchema.safeParse(fixture).success, true);
 });
 
+test("enforceOcrEvidence clears every unsupported leaf, not only sensitive fields", () => {
+  const fixture = buildValidFixture(BenhAnSchema) as any;
+  fixture.hanh_chinh.ho_ten = "NGUYỄN VĂN MINH";
+  fixture.thong_tin_chung.benh_vien = "LIFEHEALTH";
+  fixture.benh_an.kham_benh.toan_than.nhiet_do = "36,8°C";
+  fixture.bang_chung_ocr = [
+    {
+      duong_dan: "hanh_chinh.ho_ten",
+      trich_dan: "Họ tên: NGUYỄN VĂN MINH",
+      trang: "1",
+    },
+    {
+      duong_dan: "thong_tin_chung.benh_vien",
+      trich_dan: "Thương hiệu LIFE",
+      trang: "1",
+    },
+    {
+      duong_dan: "benh_an.kham_benh.toan_than.nhiet_do",
+      trich_dan: "Nhiệt độ: 36,8°C",
+      trang: "2",
+    },
+  ];
+
+  const result = enforceOcrEvidence(BenhAnSchema.parse(fixture));
+  assert.equal(result.hanh_chinh.ho_ten, "NGUYỄN VĂN MINH");
+  assert.equal(result.thong_tin_chung.benh_vien, "");
+  assert.equal(result.benh_an.kham_benh.toan_than.nhiet_do, "36,8°C");
+  assert.deepEqual(
+    result.bang_chung_ocr.map((item) => item.duong_dan),
+    [
+      "hanh_chinh.ho_ten",
+      "benh_an.kham_benh.toan_than.nhiet_do",
+    ],
+  );
+});
+
+test("OCR evidence requires an exact path, quote, and page", () => {
+  const fixture = buildValidFixture(BenhAnSchema) as any;
+  fixture.bang_chung_ocr = [
+    {
+      duong_dan: "hanh_chinh.ho_ten",
+      trich_dan: "NGUYỄN VĂN MINH",
+    },
+  ];
+  assert.equal(BenhAnSchema.safeParse(fixture).success, false);
+});
+
 test("OCR prompt is form-agnostic and contains no demo-record patch", () => {
   assert.match(OCR_SYSTEM_PROMPT, /không giả định tài liệu tuân theo một mẫu/i);
   assert.match(OCR_SYSTEM_PROMPT, /thong_tin_bo_sung/);
+  assert.match(OCR_SYSTEM_PROMPT, /benh_vien không được suy ra từ logo/i);
+  assert.match(OCR_SYSTEM_PROMPT, /ngay_lap không được lấy từ ngày nhập viện/i);
+  assert.match(OCR_SYSTEM_PROMPT, /giai_phau_benh không được suy ra/i);
+  assert.match(OCR_SYSTEM_PROMPT, /MỌI trường giá trị khác ""/);
+  assert.match(OCR_SYSTEM_PROMPT, /bang_chung_ocr/);
   assert.doesNotMatch(OCR_SYSTEM_PROMPT, /DEMO-MR|DEMO-PAT/);
 });
