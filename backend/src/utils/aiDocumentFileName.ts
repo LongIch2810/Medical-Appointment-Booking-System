@@ -69,9 +69,3 @@ export function buildHealthRoadmapFileName(
     `lo-trinh-suc-khoe-ho-so-${relativeId}-${formatVietnamTime(createdAt)}`,
   );
 }
-
-export function buildMedicalRecordSummaryFileName(createdAt = new Date()) {
-  return sanitizeAiDocumentFileName(
-    `tom-tat-benh-an-${formatVietnamTime(createdAt)}`,
-  );
-}

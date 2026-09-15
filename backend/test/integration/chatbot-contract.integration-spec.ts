@@ -83,12 +83,6 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
             },
           });
         }
-        if (path === '/chatbot/upload/summary-medical-record') {
-          return respond(response, 200, {
-            success: true,
-            data: '# Contract medical summary',
-          });
-        }
         return respond(response, 404, { message: 'Not found' });
       });
     });
@@ -214,36 +208,4 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
     });
   });
 
-  it('forwards medical record multipart bytes and security headers to chatbot', async () => {
-    const patient = await registerNewUser(app, dataSource);
-    createdUserIds.push(patient.userId);
-    const login = await loginAs(app, patient);
-    const pngSignature = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ]);
-
-    const response = await request(app.getHttpServer())
-      .post('/api/v1/chat-history/summary-medical-record')
-      .set('Cookie', login.cookieHeader)
-      .attach('images', pngSignature, {
-        filename: 'record.png',
-        contentType: 'image/png',
-      })
-      .expect(200);
-
-    expect(response.body.data).toEqual({
-      summary: '# Contract medical summary',
-    });
-    expect(captured).toHaveLength(1);
-    expect(captured[0].path).toBe('/chatbot/upload/summary-medical-record');
-    expect(captured[0].headers['x-chatbot-internal-key']).toBe(internalKey);
-    expect(captured[0].headers.authorization).toBe(
-      `Bearer ${login.accessToken}`,
-    );
-    expect(captured[0].headers['content-type']).toContain(
-      'multipart/form-data',
-    );
-    expect(captured[0].rawBody.toString('utf8')).toContain('name="images"');
-    expect(captured[0].rawBody.includes(pngSignature)).toBe(true);
-  });
 });

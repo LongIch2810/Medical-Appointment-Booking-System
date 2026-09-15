@@ -1,10 +1,8 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
 import {
   CalendarCheck2,
   CalendarClock,
   MessageCircleHeart,
-  Sparkles,
 } from "lucide-react";
 
 import { ErrorState } from "@/components/app/ErrorState";
@@ -19,7 +17,6 @@ import {
   type StatusSegment,
 } from "@/components/app/SegmentedStatusBar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -172,34 +169,6 @@ export function DoctorDashboardPage() {
         title="Tổng quan công việc bác sĩ"
         description="Số liệu thời gian thực về lịch hẹn khám trong ngày, danh sách sắp tới và tin nhắn cần phản hồi."
       />
-
-      {/* Quick Action: AI Medical Record Summary */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-teal-200/80 bg-gradient-to-r from-teal-500/10 via-emerald-500/5 to-transparent p-5 dark:border-teal-900/60 dark:bg-slate-900 shadow-2xs">
-        <div className="flex items-center gap-3.5">
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-600 text-white shadow-xs">
-            <Sparkles className="size-6" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
-                Tóm tắt bệnh án bằng AI
-              </h2>
-              <Badge variant="default" className="text-[10px] font-bold px-2 py-0.5">
-                AI hỗ trợ
-              </Badge>
-            </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-              Hỗ trợ tải lên ảnh hoặc file PDF bệnh án để AI phân tích tiền sử, triệu chứng và tổng hợp lâm sàng nhanh chóng.
-            </p>
-          </div>
-        </div>
-        <Button asChild size="sm" className="rounded-xl shrink-0 font-bold gap-1.5 self-stretch sm:self-center">
-          <Link to="/doctor/patient-records">
-            <Sparkles className="size-3.5" />
-            <span>Mở công cụ AI</span>
-          </Link>
-        </Button>
-      </div>
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="rounded-3xl border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-hidden relative group hover:border-primary/40 transition-all">
@@ -371,4 +340,3 @@ export function DoctorDashboardPage() {
     </div>
   );
 }
-

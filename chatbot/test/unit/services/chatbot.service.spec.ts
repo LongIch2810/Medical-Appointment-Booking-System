@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { ChatbotOperationError } from "../../../src/utils/retry.js";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type Step = "agent" | "report" | "roadmap" | "diagnosis" | "summary";
+type Step = "agent" | "report" | "roadmap" | "diagnosis";
 type ServiceStub = {
   calls: Record<Step, unknown[]>;
   results: Record<Step, unknown>;
@@ -17,7 +17,7 @@ const globals = globalThis as typeof globalThis & {
 
 function resetStub() {
   globals.__CHATBOT_SERVICE_STUB__ = {
-    calls: { agent: [], report: [], roadmap: [], diagnosis: [], summary: [] },
+    calls: { agent: [], report: [], roadmap: [], diagnosis: [] },
     results: {
       agent: { messages: [{ content: "agent answer", _getType: () => "ai" }] },
       report: {
@@ -28,7 +28,6 @@ function resetStub() {
       },
       roadmap: { pdf_url: "roadmap.pdf" },
       diagnosis: { answer: "diagnosis answer" },
-      summary: { summary: { answer: "summary answer" } },
     },
   };
 }
@@ -57,7 +56,7 @@ resetHttpStub();
 const here = path.dirname(fileURLToPath(import.meta.url));
 const subjectDirUrl =
   pathToFileURL(path.resolve(here, "../../../src/services")).href + "/";
-const graphModule = (step: Step, named = false) => `
+const graphModule = (step: Step) => `
   const graph = {
     invoke: async (...args) => {
       const state = globalThis.__CHATBOT_SERVICE_STUB__;
@@ -70,7 +69,7 @@ const graphModule = (step: Step, named = false) => `
       return state.results.${step};
     },
   };
-  ${named ? "export const summaryMedicalRecordGraph = graph;" : "export default graph;"}
+  export default graph;
 `;
 
 registerEsmMocks(subjectDirUrl, {
@@ -78,7 +77,6 @@ registerEsmMocks(subjectDirUrl, {
   "../langgraph/create_report.graph.js": graphModule("report"),
   "../langgraph/build_health_roadmap.graph.js": graphModule("roadmap"),
   "../langgraph/diagnosis.graph.js": graphModule("diagnosis"),
-  "../langgraph/summary_medical_record.graph.js": graphModule("summary", true),
   "../configs/httpClient.js": `
     export default {
       post: (...args) => globalThis.__CHATBOT_HTTP_STUB__.post(...args),
@@ -229,7 +227,7 @@ test("handleBuildHealthRoadMapService rejects a missing PDF URL", async (t) => {
   );
 });
 
-test("diagnosis and summary services map success and normalize failures", async (t) => {
+test("diagnosis service maps success and normalizes failures", async (t) => {
   t.mock.method(console, "error", () => undefined);
   assert.deepEqual(
     await services.handleDiagnosisService({
@@ -239,11 +237,6 @@ test("diagnosis and summary services map success and normalize failures", async 
     }),
     { answer: "diagnosis answer" },
   );
-  assert.equal(
-    await services.handleSummaryMedicalRecordService({ imageFiles: [] }),
-    "summary answer",
-  );
-
   globals.__CHATBOT_SERVICE_STUB__.errorAt = "diagnosis";
   await assert.rejects(
     services.handleDiagnosisService({

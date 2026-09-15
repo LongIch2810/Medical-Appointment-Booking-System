@@ -5,9 +5,7 @@ import {
   handleCreateReportService,
   handleBuildHealthRoadMapService,
   handleDiagnosisService,
-  handleSummaryMedicalRecordService,
 } from "../services/chatbot.service.js";
-import RequestWithFileParams from "../types/RequestWithFileParams.js";
 
 const MAX_CHAT_QUESTION_LENGTH = 4_000;
 const MAX_REPORT_QUESTION_LENGTH = 2_000;
@@ -122,19 +120,9 @@ const handleDiagnosisController = async (
   return res.status(200).json({ success: true, data: result });
 };
 
-const handleSummaryMedicalRecordController = async (
-  req: Request,
-  res: Response,
-): Promise<any> => {
-  const fileParams = (req as RequestWithFileParams).fileParams;
-  const answer = await handleSummaryMedicalRecordService(fileParams);
-  return res.status(200).json({ success: true, data: answer });
-};
-
 export {
   handleChatController,
   handleCreateReportController,
   handleBuildHealthRoadMapController,
   handleDiagnosisController,
-  handleSummaryMedicalRecordController,
 };

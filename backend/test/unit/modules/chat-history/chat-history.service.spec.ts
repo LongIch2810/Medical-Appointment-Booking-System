@@ -9,7 +9,6 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import axios from 'axios';
 import Conversation from 'src/entities/conversation.entity';
 import AiHealthRoadmap from 'src/entities/aiHealthRoadmap.entity';
-import AiMedicalRecordSummary from 'src/entities/aiMedicalRecordSummary.entity';
 import Relative from 'src/entities/relative.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
@@ -45,10 +44,6 @@ describe('ChatHistoryService', () => {
         {
           provide: getRepositoryToken(AiHealthRoadmap),
           useValue: roadmapRepo,
-        },
-        {
-          provide: getRepositoryToken(AiMedicalRecordSummary),
-          useValue: {},
         },
         { provide: getRepositoryToken(Relative), useValue: relativeRepo },
         { provide: AiDocumentStorageService, useValue: documentStorage },
@@ -345,55 +340,4 @@ describe('ChatHistoryService', () => {
     });
   });
 
-  describe('summarizeMedicalRecord', () => {
-    const imageUpload = {
-      fieldName: 'images' as const,
-      files: [
-        {
-          originalname: 'record.png',
-          mimetype: 'image/png',
-          buffer: Buffer.from('record-bytes'),
-        } as Express.Multer.File,
-      ],
-    };
-
-    it('forwards multipart data with the internal key and bearer token', async () => {
-      postSpy.mockResolvedValue({ data: { data: '# Medical summary' } });
-
-      await expect(
-        service.summarizeMedicalRecord(9, 'access-token', imageUpload),
-      ).resolves.toBe('# Medical summary');
-
-      const [url, body, config] = postSpy.mock.calls[0];
-      expect(url).toBe(
-        'http://chatbot:5000/chatbot/upload/summary-medical-record',
-      );
-      expect(body).toBeInstanceOf(FormData);
-      expect(config).toMatchObject({
-        headers: {
-          Authorization: 'Bearer access-token',
-          'x-chatbot-internal-key': 'test-internal-key',
-        },
-        timeout: 120_000,
-      });
-    });
-
-    it('maps downstream upload rejection and timeouts to stable responses', async () => {
-      postSpy.mockRejectedValueOnce({
-        isAxiosError: true,
-        response: { status: 400, data: { message: 'Invalid PDF' } },
-      });
-      await expect(
-        service.summarizeMedicalRecord(9, 'access-token', imageUpload),
-      ).rejects.toMatchObject({ status: 400 });
-
-      postSpy.mockRejectedValueOnce({
-        isAxiosError: true,
-        code: 'ECONNABORTED',
-      });
-      await expect(
-        service.summarizeMedicalRecord(9, 'access-token', imageUpload),
-      ).rejects.toMatchObject({ status: 504 });
-    });
-  });
 });

@@ -383,7 +383,7 @@ const SpecialtiesSection = lazy(() => import("@/components/section/SpecialtiesSe
 
 ### 4.8. An Toàn Y Tế & Trợ Lý AI (AI Clinical Safety Patterns)
 
-LifeHealth tích hợp các tính năng AI chuyên sâu (MedAI RAG Chatbot, AI Health Coach, Tóm tắt bệnh án). Nhằm đảm bảo an toàn tuyệt đối cho người bệnh và tuân thủ nguyên tắc y tế:
+LifeHealth tích hợp các tính năng AI chuyên sâu (MedAI RAG Chatbot, AI Health Coach). Nhằm đảm bảo an toàn tuyệt đối cho người bệnh và tuân thủ nguyên tắc y tế:
 
 #### A. Khung Cảnh Báo Khuyến Cáo Bắt Buộc (Mandatory Medical Disclaimer Box)
 Bất kỳ màn hình hay section nào hiển thị thông tin do AI sinh ra phải có khối cảnh báo tiêu chuẩn:

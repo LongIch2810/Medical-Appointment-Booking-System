@@ -1,10 +1,5 @@
 import type { ModuleConfig } from "@/types/app";
 
-const attachmentImage =
-  "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=80";
-const attachmentPdf =
-  "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
-
 function buildModule(config: ModuleConfig): ModuleConfig {
   return config;
 }
@@ -143,64 +138,6 @@ export const doctorModuleConfigs: Record<string, ModuleConfig> = {
     emptyDescription: "Hiện không có lịch hẹn khớp với bộ lọc đã chọn.",
     backendModule: "appointments",
     integrationNote: "Backend appointments đã có module; UI đang mock reschedule, check-in và trạng thái.",
-  }),
-  "patient-records": buildModule({
-    id: "patient-records",
-    title: "Tóm tắt bệnh án bệnh nhân",
-    description: "Tổng hợp ảnh, PDF và metadata bệnh án để bác sĩ xem nhanh trước ca khám.",
-    searchPlaceholder: "Tìm theo bệnh nhân, loại tài liệu, trạng thái...",
-    statusLabel: "Doctor records module",
-    metrics: [
-      { label: "Hồ sơ mới nhận", value: "5", delta: "3 ảnh, 2 PDF", tone: "info" },
-      { label: "Cần review", value: "2", delta: "Có cảnh báo thiếu metadata", tone: "warning" },
-      { label: "Đã tóm tắt", value: "19", delta: "Tăng 6 hồ sơ/tuần", tone: "success" },
-    ],
-    columns: [
-      { key: "patient", label: "Bệnh nhân" },
-      { key: "document", label: "Tài liệu" },
-      { key: "createdAt", label: "Ngày nhận" },
-      { key: "status", label: "Trạng thái" },
-    ],
-    rows: [
-      {
-        id: "pr1",
-        cells: {
-          patient: { label: "Trần Minh Khoa", sublabel: "Nam, 42 tuổi" },
-          document: "MRI bụng + báo cáo PDF",
-          createdAt: "03/04/2026 08:42",
-          status: { label: "Ready to review", tone: "info" },
-        },
-        summary: "Bệnh nhân gửi MRI và báo cáo từ cơ sở bên ngoài, cần đọc trước lịch 15:00.",
-        meta: [
-          { label: "Bác sĩ phụ trách", value: "Dr. Truc" },
-          { label: "Loại hồ sơ", value: "Imaging + report" },
-        ],
-        attachments: [
-          { id: "a1", name: "mri-abdomen.jpg", type: "image", url: attachmentImage },
-          { id: "a2", name: "report.pdf", type: "pdf", url: attachmentPdf },
-        ],
-      },
-      {
-        id: "pr2",
-        cells: {
-          patient: { label: "Nguyễn Thu An", sublabel: "Nữ, 35 tuổi" },
-          document: "Kết quả xét nghiệm máu",
-          createdAt: "02/04/2026 18:20",
-          status: { label: "Missing note", tone: "warning" },
-        },
-        summary: "Thiếu thông tin đơn vị xét nghiệm và ghi chú triệu chứng đi kèm.",
-        meta: [
-          { label: "Uploader", value: "Patient portal" },
-          { label: "Số file", value: "1 PDF" },
-        ],
-        attachments: [{ id: "a3", name: "lab-summary.pdf", type: "pdf", url: attachmentPdf }],
-      },
-    ],
-    quickActions: ["Tải lên hồ sơ", "Xem hồ sơ mới", "Xuất tóm tắt"],
-    emptyTitle: "Chưa có bệnh án nào",
-    emptyDescription: "Khi bệnh nhân gửi ảnh hoặc PDF, hồ sơ sẽ xuất hiện tại đây.",
-    backendModule: "health-profile / examination-result / uploads",
-    integrationNote: "Backend có health-profile, examination-result và uploads; cần API aggregate để gom hồ sơ thành workbench cho doctor.",
   }),
   patients: buildModule({
     id: "patients",

@@ -8,10 +8,6 @@ import httpClient from "../configs/httpClient.js";
 import createReportGraph from "../langgraph/create_report.graph.js";
 import buildHealthRoadmapGraph from "../langgraph/build_health_roadmap.graph.js";
 import diagnosisGraph from "../langgraph/diagnosis.graph.js";
-import {
-  FileParams,
-  summaryMedicalRecordGraph,
-} from "../langgraph/summary_medical_record.graph.js";
 import { randomUUID } from "node:crypto";
 import {
   getHealthRoadmapErrorType,
@@ -19,7 +15,6 @@ import {
 } from "../utils/healthRoadmapRuntime.js";
 import { normalizeChatbotError, withRetry } from "../utils/retry.js";
 import { logSafeError } from "../utils/safeLog.js";
-import { generatePdfMedicalRecordSummary } from "../utils/generatePdfMedicalRecordSummary.js";
 
 // Mọi call ra backend đều phải có timeout rõ ràng — trước đây axios dùng
 // default (không timeout), request có thể treo vô thời hạn nếu backend
@@ -329,30 +324,9 @@ const handleDiagnosisService = async ({
   }
 };
 
-const handleSummaryMedicalRecordService = async (
-  fileParams: FileParams,
-): Promise<{ summary: string; asset: Awaited<ReturnType<typeof generatePdfMedicalRecordSummary>> } | string> => {
-  try {
-    const result = await summaryMedicalRecordGraph.invoke({ fileParams });
-    const summary = result.summary.answer;
-    const hasFiles =
-      ("imageFiles" in fileParams && fileParams.imageFiles.length > 0) ||
-      ("pdfFile" in fileParams && Boolean(fileParams.pdfFile));
-    if (!hasFiles) return summary;
-    const asset = await generatePdfMedicalRecordSummary(
-      summary,
-      fileParams.outputFileName,
-    );
-    return { summary, asset };
-  } catch (error) {
-    throw normalizeChatbotError(error);
-  }
-};
-
 export {
   handleChatService,
   handleCreateReportService,
   handleBuildHealthRoadMapService,
   handleDiagnosisService,
-  handleSummaryMedicalRecordService,
 };

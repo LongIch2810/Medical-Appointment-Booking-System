@@ -55,7 +55,7 @@ export const dashboards: Record<"doctor" | "admin", DashboardPayload> = {
       {
         id: "da1",
         title: "Bệnh nhân Trần Minh Khoa gửi MRI mới",
-        description: "2 ảnh + 1 PDF đã vào hộp tóm tắt bệnh án.",
+        description: "2 ảnh + 1 PDF đã được đính kèm vào hồ sơ bệnh nhân.",
         time: "08:45",
         tone: "info",
       },

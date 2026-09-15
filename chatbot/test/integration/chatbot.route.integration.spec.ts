@@ -8,7 +8,7 @@ import request from "supertest";
 import { registerEsmMocks } from "../unit/_helpers/registerMocks.mjs";
 import { InMemoryRateLimitStore } from "../../src/middlewares/rateLimitStore.js";
 
-type ServiceName = "chat" | "report" | "roadmap" | "summary";
+type ServiceName = "chat" | "report" | "roadmap";
 
 type ServiceStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -36,12 +36,11 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_ROUTE_SERVICE_STUB__ = {
-  calls: { chat: [], report: [], roadmap: [], summary: [] },
+  calls: { chat: [], report: [], roadmap: [] },
   results: {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
     roadmap: { pdfUrl: "roadmap.pdf" },
-    summary: "summary answer",
   },
   errors: {},
 };
@@ -66,7 +65,6 @@ registerEsmMocks(controllerDirUrl, {
     export const handleDiagnosisService = () => {
       throw new Error("Diagnosis is not exposed by the production router");
     };
-    export const handleSummaryMedicalRecordService = (args) => invoke("summary", args);
   `,
 });
 
@@ -84,7 +82,6 @@ function resetStub() {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
     roadmap: { pdfUrl: "roadmap.pdf" },
-    summary: "summary answer",
   };
 }
 
@@ -200,95 +197,6 @@ describe("chatbot production router integration", () => {
     assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.roadmap, [
       { relative_id: 8, token: tokenForUser1 },
     ]);
-  });
-
-  it("parses and forwards a valid image upload through Multer and xorValidate", async () => {
-    const pngSignature = Buffer.from([
-      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-    ]);
-    const response = await authenticated(
-      request(buildApp()).post("/chatbot/upload/summary-medical-record"),
-    )
-      .set("Authorization", `Bearer ${tokenForUser1}`)
-      .attach("images", pngSignature, {
-        filename: "scan.png",
-        contentType: "image/png",
-      });
-
-    assert.equal(response.status, 200);
-    assert.deepEqual(response.body, { success: true, data: "summary answer" });
-
-    const [fileParams] = globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls
-      .summary as [{ imageFiles: Express.Multer.File[] }];
-    assert.equal(fileParams.imageFiles.length, 1);
-    assert.equal(fileParams.imageFiles[0].originalname, "scan.png");
-    assert.equal(fileParams.imageFiles[0].mimetype, "image/png");
-    assert.deepEqual(fileParams.imageFiles[0].buffer, pngSignature);
-  });
-
-  it("parses and forwards a valid PDF upload", async () => {
-    const pdf = Buffer.from("%PDF-1.4 integration test");
-    const response = await authenticated(
-      request(buildApp()).post("/chatbot/upload/summary-medical-record"),
-    )
-      .set("Authorization", `Bearer ${tokenForUser1}`)
-      .attach("pdf", pdf, {
-        filename: "record.pdf",
-        contentType: "application/pdf",
-      });
-
-    assert.equal(response.status, 200);
-    const [fileParams] = globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls
-      .summary as [{ pdfFile: Express.Multer.File }];
-    assert.equal(fileParams.pdfFile.originalname, "record.pdf");
-    assert.deepEqual(fileParams.pdfFile.buffer, pdf);
-  });
-
-  it("rejects invalid upload combinations before the service boundary", async () => {
-    const noFile = await authenticated(
-      request(buildApp()).post("/chatbot/upload/summary-medical-record"),
-    );
-    assert.equal(noFile.status, 400);
-
-    const both = await authenticated(
-      request(buildApp()).post("/chatbot/upload/summary-medical-record"),
-    )
-      .attach("images", Buffer.from([0xff, 0xd8, 0xff, 0x00]), {
-        filename: "scan.jpg",
-        contentType: "image/jpeg",
-      })
-      .attach("pdf", Buffer.from("%PDF-1.4"), {
-        filename: "record.pdf",
-        contentType: "application/pdf",
-      });
-
-    assert.equal(both.status, 400);
-    assert.match(both.body.message, /images.*pdf/i);
-    assert.equal(
-      globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.summary.length,
-      0,
-    );
-  });
-
-  it("normalizes Multer limit errors through the application error handler", async () => {
-    let pending = authenticated(
-      request(buildApp()).post("/chatbot/upload/summary-medical-record"),
-    );
-    for (let index = 0; index < 6; index += 1) {
-      pending = pending.attach(
-        "images",
-        Buffer.from([0xff, 0xd8, 0xff, index]),
-        { filename: `scan-${index}.jpg`, contentType: "image/jpeg" },
-      );
-    }
-
-    const response = await pending;
-    assert.equal(response.status, 413);
-    assert.equal(response.body.code, "LIMIT_FILE_COUNT");
-    assert.equal(
-      globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.summary.length,
-      0,
-    );
   });
 
   it("passes business errors through and hides internal service error details", async () => {

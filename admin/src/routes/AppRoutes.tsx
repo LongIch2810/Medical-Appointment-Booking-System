@@ -15,7 +15,6 @@ import { DoctorDashboardPage } from "@/pages/DoctorDashboardPage";
 import { ForbiddenPage } from "@/pages/ForbiddenPage";
 import { GenericModulePage } from "@/pages/GenericModulePage";
 import { LoginPage } from "@/pages/LoginPage";
-import { MedicalRecordSummaryPage } from "@/pages/MedicalRecordSummaryPage";
 import { MessagesPage } from "@/pages/MessagesPage";
 import { MyNotificationsPage } from "@/pages/MyNotificationsPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
@@ -102,14 +101,6 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="doctor/patient-records"
-          element={
-            <PermissionRoute requiredPermissions={[permissions.patientRecords]}>
-              <MedicalRecordSummaryPage />
-            </PermissionRoute>
-          }
-        />
-        <Route
           path="doctor/settings"
           element={<Navigate to="/account/settings" replace />}
         />
@@ -175,8 +166,7 @@ export function AppRoutes() {
             (item) =>
               item.moduleId &&
               item.id !== "admin-role-permissions" &&
-              item.id !== "doctor-messages" &&
-              item.id !== "doctor-records"
+              item.id !== "doctor-messages"
           )
           .map((item) => (
             <Route

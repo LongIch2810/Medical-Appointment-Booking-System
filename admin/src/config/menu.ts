@@ -13,7 +13,6 @@ import {
   MessageSquareHeart,
   ShieldCheck,
   Siren,
-  Sparkles,
   Stethoscope,
   Tags,
   UserCog,
@@ -95,14 +94,6 @@ export const menuItems: MenuItem[] = [
     icon: FileHeart,
     requiredPermissions: [permissions.examResults],
     moduleId: "doctor-exam-results",
-  },
-  {
-    id: "doctor-records",
-    label: "Tóm tắt bệnh án AI",
-    path: "/doctor/patient-records",
-    section: "Clinical comms",
-    icon: Sparkles,
-    requiredPermissions: [permissions.patientRecords],
   },
   {
     id: "doctor-patients",

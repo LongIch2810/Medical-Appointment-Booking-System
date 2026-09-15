@@ -1,7 +1,6 @@
 import {
   buildAdminReportFileName,
   buildHealthRoadmapFileName,
-  buildMedicalRecordSummaryFileName,
   sanitizeAiDocumentFileName,
 } from 'src/utils/aiDocumentFileName';
 import { ReportType } from 'src/modules/admin-reports/dto/request/bodyGenerateAdminReport.dto';
@@ -39,12 +38,9 @@ describe('AI document file names', () => {
     ).toBe(`bao-cao-${slug}-2026-09-01-den-2026-09-13-20260913-143025123.pdf`);
   });
 
-  it('builds health roadmap and medical summary names without personal information', () => {
+  it('builds health roadmap names without personal information', () => {
     expect(buildHealthRoadmapFileName(42, createdAt)).toBe(
       'lo-trinh-suc-khoe-ho-so-42-20260913-143025123.pdf',
-    );
-    expect(buildMedicalRecordSummaryFileName(createdAt)).toBe(
-      'tom-tat-benh-an-20260913-143025123.pdf',
     );
   });
 });

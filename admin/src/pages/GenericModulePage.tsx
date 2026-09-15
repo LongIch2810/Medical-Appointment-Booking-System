@@ -4965,12 +4965,6 @@ const moduleMeta: Record<
     description: "Bài viết chuyên môn của bác sĩ.",
     permissionLevel: permissions.articles,
   },
-  "patient-records": {
-    eyebrow: "Clinical comms",
-    title: "Tóm tắt bệnh án",
-    description: "Tổng hợp kết quả khám gần nhất theo từng bệnh nhân.",
-    permissionLevel: permissions.patientRecords,
-  },
 };
 
 export function GenericModulePage({ moduleId }: { moduleId: string }) {
@@ -5025,8 +5019,6 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
         return <ExamResultsModule {...props} scope="doctor" />;
       case "exam-results":
         return <ExamResultsModule {...props} />;
-      case "patient-records":
-        return <ExamResultsModule {...props} scope="doctor" />;
       case "relatives":
         return <RelativesModule {...props} />;
       case "health-profiles":

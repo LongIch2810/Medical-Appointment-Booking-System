@@ -143,10 +143,9 @@ In addition to the patient experience, LifeHealth includes dedicated portals for
 
 ### Doctor Experience
 
-| Clinical Dashboard & Queue | AI-Assisted Medical Record Summary |
-| :---: | :---: |
-| ![Doctor Dashboard](docs/images/doctor-dashboard.webp) | ![Doctor Medical Summary](docs/images/doctor-medical-summary.webp) |
-| *Daily clinical workspace tracking consultation volume, appointment statuses, and pending patient actions.* | *AI clinical summary tool parsing multi-page documents/PDFs with mandatory verification safeguards.* |
+![Doctor Dashboard](docs/images/doctor-dashboard.webp)
+
+*Daily clinical workspace tracking consultation volume, appointment statuses, and pending patient actions.*
 
 ---
 

@@ -4,12 +4,7 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type ServiceName =
-  | "chat"
-  | "report"
-  | "roadmap"
-  | "diagnosis"
-  | "summary";
+type ServiceName = "chat" | "report" | "roadmap" | "diagnosis";
 
 type ControllerStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -22,13 +17,12 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_CONTROLLER_STUB__ = {
-  calls: { chat: [], report: [], roadmap: [], diagnosis: [], summary: [] },
+  calls: { chat: [], report: [], roadmap: [], diagnosis: [] },
   results: {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
     roadmap: { pdfUrl: "roadmap.pdf" },
     diagnosis: { answer: "diagnosis answer" },
-    summary: "summary answer",
   },
   errors: {},
 };
@@ -49,7 +43,6 @@ registerEsmMocks(subjectDirUrl, {
     export const handleCreateReportService = (args) => invoke("report", args);
     export const handleBuildHealthRoadMapService = (args) => invoke("roadmap", args);
     export const handleDiagnosisService = (args) => invoke("diagnosis", args);
-    export const handleSummaryMedicalRecordService = (args) => invoke("summary", args);
   `,
 });
 
@@ -160,18 +153,6 @@ test("roadmap and diagnosis reject invalid identifiers or tokens", async () => {
   assert.equal(diagnosis.state.status, 400);
   assert.equal(globals.__CHATBOT_CONTROLLER_STUB__.calls.roadmap.length, 0);
   assert.equal(globals.__CHATBOT_CONTROLLER_STUB__.calls.diagnosis.length, 0);
-});
-
-test("handleSummaryMedicalRecordController forwards fileParams", async () => {
-  const { response, state } = createResponse();
-  const fileParams = [{ mimetype: "image/png", base64: "abc" }];
-  await controllers.handleSummaryMedicalRecordController(
-    { fileParams } as never,
-    response as never,
-  );
-
-  assert.deepEqual(globals.__CHATBOT_CONTROLLER_STUB__.calls.summary, [fileParams]);
-  assert.deepEqual(state.body, { success: true, data: "summary answer" });
 });
 
 test("controller lets service failures propagate to the error middleware", async () => {

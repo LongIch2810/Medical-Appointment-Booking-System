@@ -3,10 +3,7 @@ import {
   handleBuildHealthRoadMapController,
   handleChatController,
   handleCreateReportController,
-  handleSummaryMedicalRecordController,
 } from "../controllers/chatbot.controller.js";
-import upload from "../configs/multer.js";
-import { xorValidate } from "../middlewares/xorValidate.js";
 import { requireInternalServiceKey } from "../middlewares/internalServiceAuth.js";
 import { attachVerifiedActor } from "../middlewares/requestIdentity.js";
 import { createRateLimit } from "../middlewares/rateLimit.js";
@@ -21,8 +18,8 @@ export function createChatbotRouter(
 ) {
   const router = express.Router();
 
-  // Bucket riêng cho từng flow — chat là lưu lượng cao/rẻ, report/roadmap/
-  // upload tốn tài nguyên hơn nên giới hạn thấp hơn, và tách riêng để một
+  // Bucket riêng cho từng flow — chat là lưu lượng cao/rẻ, report/roadmap
+  // tốn tài nguyên hơn nên giới hạn thấp hơn, và tách riêng để một
   // flow tốn kém không ăn hết quota của flow khác cho cùng một user.
   const chatRateLimit = createRateLimit({
     bucket: "chat",
@@ -42,13 +39,6 @@ export function createChatbotRouter(
     windowMs: 60_000,
     store: rateLimitStore,
   });
-  const uploadRateLimit = createRateLimit({
-    bucket: "upload",
-    max: 12,
-    windowMs: 60_000,
-    store: rateLimitStore,
-  });
-
   router.use(requireInternalServiceKey);
   router.use(attachVerifiedActor);
 
@@ -59,17 +49,6 @@ export function createChatbotRouter(
     healthRoadmapRateLimit,
     handleBuildHealthRoadMapController,
   );
-  router.post(
-    "/upload/summary-medical-record",
-    uploadRateLimit,
-    upload.fields([
-      { name: "images", maxCount: 5 },
-      { name: "pdf", maxCount: 1 },
-    ]),
-    xorValidate,
-    handleSummaryMedicalRecordController,
-  );
-
   return router;
 }
 

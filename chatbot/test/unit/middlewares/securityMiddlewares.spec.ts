@@ -8,7 +8,6 @@ import {
 } from "../../../src/middlewares/internalServiceAuth.js";
 import { createRateLimit } from "../../../src/middlewares/rateLimit.js";
 import { InMemoryRateLimitStore } from "../../../src/middlewares/rateLimitStore.js";
-import { xorValidate } from "../../../src/middlewares/xorValidate.js";
 
 function createResponse() {
   const result: {
@@ -161,40 +160,4 @@ test("internal auth rejects a missing key and does not call next", () => {
     if (previous === undefined) delete process.env.CHATBOT_INTERNAL_KEY;
     else process.env.CHATBOT_INTERNAL_KEY = previous;
   }
-});
-
-test("invalid upload is rejected without continuing to OCR", () => {
-  const request = { files: {} } as unknown as Request;
-  const { response, result } = createResponse();
-  let nextCalled = false;
-
-  xorValidate(request, response, (() => {
-    nextCalled = true;
-  }) as NextFunction);
-
-  assert.equal(result.status, 400);
-  assert.equal(nextCalled, false);
-});
-
-test("valid PNG signature is accepted", () => {
-  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-  const request = {
-    files: {
-      images: [
-        {
-          mimetype: "image/png",
-          originalname: "record.png",
-          buffer: png,
-        },
-      ],
-    },
-  } as unknown as Request;
-  const { response } = createResponse();
-  let nextCalled = false;
-
-  xorValidate(request, response, (() => {
-    nextCalled = true;
-  }) as NextFunction);
-
-  assert.equal(nextCalled, true);
 });
