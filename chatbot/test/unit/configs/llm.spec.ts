@@ -63,3 +63,43 @@ test("getVisionModel always sets a bounded timeout by default", async () => {
     },
   );
 });
+
+test("GPT-5.6 Luna uses medium reasoning and never sends temperature for OCR or quality summaries", async () => {
+  await withEnv(
+    {
+      OPENAI_API_KEY: "test-key",
+      OPENAI_MODEL: "gpt-5.6-luna",
+      OPENAI_VISION_MODEL: "gpt-5.6-luna",
+    },
+    async () => {
+      const { getChatModel, getVisionModel } = await import(
+        `../../../src/configs/llm.js?case=${Date.now()}-luna`
+      );
+      const visionModel = getVisionModel({ temperature: 0 });
+      const summaryModel = getChatModel({
+        profile: "quality",
+        temperature: 0,
+      });
+
+      assert.deepEqual(visionModel.modelKwargs, {
+        reasoning_effort: "medium",
+      });
+      assert.equal(visionModel.temperature, undefined);
+      assert.equal(visionModel.invocationParams().temperature, undefined);
+      assert.equal(
+        visionModel.invocationParams().reasoning_effort,
+        "medium",
+      );
+
+      assert.deepEqual(summaryModel.modelKwargs, {
+        reasoning_effort: "medium",
+      });
+      assert.equal(summaryModel.temperature, undefined);
+      assert.equal(summaryModel.invocationParams().temperature, undefined);
+      assert.equal(
+        summaryModel.invocationParams().reasoning_effort,
+        "medium",
+      );
+    },
+  );
+});

@@ -24,6 +24,13 @@ function getReasoningEffort(model: string, profile: ChatModelProfile) {
     return profile === "quality" ? "low" : "minimal";
   }
 
+  // Luna is a small, cost-sensitive model. Medium is the balanced default
+  // recommended for extraction work where schema adherence matters.
+  if (/^gpt-5\.6-luna(?:-\d{4}-\d{2}-\d{2})?$/.test(model)) {
+    if (profile === "quality") return "medium";
+    return profile === "fast" ? "none" : "low";
+  }
+
   if (/^gpt-5\.\d+/.test(model)) {
     return profile === "quality" ? "low" : "none";
   }
@@ -81,10 +88,19 @@ export function getVisionModel(opts?: { temperature?: number; timeoutMs?: number
     throw new Error("OPENAI_VISION_MODEL is required");
   }
 
+  const reasoningEffort = getReasoningEffort(model, "quality");
+
   return new ChatOpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     model,
-    temperature: opts?.temperature ?? 0,
+    // Reasoning models reject custom temperature values. Luna uses medium
+    // reasoning here, so omit temperature entirely instead of sending 0.
+    ...(reasoningEffort && reasoningEffort !== "none"
+      ? {}
+      : { temperature: opts?.temperature ?? 0 }),
+    ...(reasoningEffort
+      ? { modelKwargs: { reasoning_effort: reasoningEffort } }
+      : {}),
     maxRetries: 0,
     timeout: opts?.timeoutMs ?? DEFAULT_VISION_TIMEOUT_MS,
     configuration: {
