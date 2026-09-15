@@ -10,13 +10,34 @@ dotenv.config();
 
 // 1. Phần Đầu trang (Header)
 const HeaderSchema = z.object({
-  so_y_te: z.string().describe("Tên Sở Y tế"),
+  so_y_te: z
+    .string()
+    .describe(
+      "Tên Sở Y tế/cơ quan y tế cấp trên — dạng TÊN cơ quan (chữ), KHÔNG phải mã số/ID. Không lấy bất kỳ mã hồ " +
+        "sơ, mã bệnh nhân, hay mã định danh nào khác điền vào đây dù không có tên cơ quan y tế nào được ghi.",
+    ),
   benh_vien: z.string().describe("Tên bệnh viện"),
   khoa: z.string().describe("Tên khoa"),
   giuong: z.string().describe("Số giường"),
-  ma_so_benh_an: z.string().describe("Mã số hồ sơ (MS: 01/BV-01)"),
-  so_luu_tru: z.string().describe("Số lưu trữ"),
-  ma_yt: z.string().describe("Mã Y Tế"),
+  ma_so_benh_an: z
+    .string()
+    .describe(
+      "Mã số MẪU của biểu mẫu bệnh án in sẵn trên form (vd 'Mẫu số: 01/BV-01') — KHÔNG phải mã hồ sơ/mã bệnh " +
+        "án/mã bệnh nhân riêng của từng bệnh nhân. Nếu tài liệu chỉ có một mã định danh chung của hồ sơ hoặc " +
+        "bệnh nhân (vd 'Mã hồ sơ: ...', 'Mã bệnh nhân: ...') mà không phải mã mẫu form in sẵn, để trống ''.",
+    ),
+  so_luu_tru: z
+    .string()
+    .describe(
+      "Số lưu trữ hồ sơ tại kho lưu trữ của bệnh viện — chỉ điền khi tài liệu có ghi riêng mục này, không lấy " +
+        "mã hồ sơ/mã bệnh nhân thay thế",
+    ),
+  ma_yt: z
+    .string()
+    .describe(
+      "Mã Y tế do cơ sở y tế cấp — chỉ điền khi tài liệu có ghi riêng mục này, không lấy mã hồ sơ/mã bệnh nhân " +
+        "thay thế",
+    ),
 });
 
 // 2. Phần I - Hành chính
@@ -228,7 +249,11 @@ const TongKetSchema = z.object({
     .describe("Quá trình bệnh lý và diễn biến lâm sàng"),
   tom_tat_kq_xet_nghiem: z
     .string()
-    .describe("Tóm tắt kết quả xét nghiệm CLS có giá trị"),
+    .describe(
+      "Tóm tắt các kết quả xét nghiệm/cận lâm sàng có giá trị (số liệu, chỉ số, hình ảnh, kết luận thăm dò chức " +
+        "năng...) — CHỈ chứa kết quả xét nghiệm, KHÔNG chứa tên chẩn đoán/bệnh (chẩn đoán đã có ở phần chan_doan " +
+        "riêng, không lặp lại ở đây)",
+    ),
   phuong_phap_dieu_tri: z.string().describe("Phương pháp điều trị"),
   tinh_trang_ra_vien: z.string().describe("Tình trạng người bệnh ra viện"),
   huong_dieu_tri_tiep: z
@@ -287,13 +312,17 @@ QUY TẮC BẮT BUỘC:
    của chính trường đó.
    Ví dụ SAI: tài liệu không có mục "Vào khoa" riêng mà chỉ có "Ngày vào viện"/"Ngày ra viện" -> KHÔNG được lấy
    giờ ra viện điền vào trường "Vào khoa". Tài liệu chỉ ghi BMI (kg/m²), không ghi cân nặng (kg) -> KHÔNG được
-   lấy giá trị BMI điền vào trường "Cân nặng (kg)".
+   lấy giá trị BMI điền vào trường "Cân nặng (kg)". Tài liệu chỉ ghi "Mã hồ sơ: ..." và "Mã bệnh nhân: ..."
+   (không phải mã mẫu form in sẵn, không phải tên Sở Y tế) -> KHÔNG được lấy 1 trong 2 mã đó điền vào "Sở Y tế"
+   hay "Mã số hồ sơ (MS: 01/BV-01)" chỉ vì đó là 2 chuỗi mã số duy nhất tìm thấy trong tài liệu.
    -> Nếu tài liệu không có đúng dữ liệu cho trường đang xét, trả về "" theo quy tắc 2, dù trường khác có dữ liệu
    trông có vẻ dùng thay được.
 9) TUYỆT ĐỐI không tự tính toán, suy diễn hay quy đổi để tạo ra một giá trị mà tài liệu không ghi thẳng ra bằng
    chữ/số cụ thể. Cụ thể:
    - KHÔNG tự tính "tổng số ngày điều trị" bằng cách trừ ngày ra viện cho ngày vào viện nếu tài liệu không ghi
-     thẳng con số đó — để trống "".
+     thẳng con số đó — để trống "". Ví dụ: tài liệu ghi "Ngày vào viện: 10/09/2026" và "Ngày ra viện: 13/09/2026"
+     nhưng KHÔNG có dòng nào ghi thẳng "Tổng số ngày điều trị: ..." bằng chữ/số -> bắt buộc trả về "" cho trường
+     này; TUYỆT ĐỐI không tự trừ ngày để suy ra bất kỳ con số nào (3, 4, 5, ...) rồi điền vào.
    - KHÔNG tự gán giá trị "vào khoa" bằng ngày/giờ "vào viện" (hay bất kỳ mốc thời gian nào khác) khi tài liệu
      không có mục "vào khoa" ghi thời gian riêng — để trống "".
    - Với các trường mà mô tả (description) yêu cầu chọn 1 trong danh sách nhãn chuẩn (vd "Khỏi/Đỡ/Không đổi/
