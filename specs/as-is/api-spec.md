@@ -119,7 +119,6 @@ Mọi path dưới đây cần thêm tiền tố `/api/v1`. Cột "Guard" ghi `J
 | `POST /chat-history` | lưu 1 message |
 | `POST /chat-history/chat` | forward `{question, token}` tới chatbot `POST /chatbot/chat`, timeout 30s |
 | `POST /chat-history/build-health-roadmap` | forward tới `POST /chatbot/build-health-roadmap`, timeout 30s |
-| `POST /chat-history/summary-medical-record` | multipart, forward tới `POST /chatbot/upload/summary-medical-record`, timeout 120s, gửi token dưới dạng Bearer header (khác 2 route kia gửi token trong JSON body — `[UNCERTAIN]` có chủ ý) |
 | `GET /chat-history/:userId` | yêu cầu `userId === req.user.userId` |
 
 ### uploads (class-level Jwt+Perm)
@@ -132,13 +131,12 @@ Mọi path dưới đây cần thêm tiền tố `/api/v1`. Cột "Guard" ghi `J
 | POST | `/chatbot/chat` | `chat`, 120 | Có (nếu `token` gửi kèm) |
 | POST | `/chatbot/create-report` | `report`, 12 | **Không** — chỉ internal-service-key, rate-limit theo IP |
 | POST | `/chatbot/build-health-roadmap` | `health-roadmap`, 12 | Có |
-| POST | `/chatbot/upload/summary-medical-record` | `upload`, 12 | Có (Bearer header) |
 
 Mọi route đều bắt buộc header `x-chatbot-internal-key` khớp `CHATBOT_INTERNAL_KEY` (so sánh hằng thời gian, SHA-256 + `timingSafeEqual`), nếu không → 401/503.
 
-**`POST /chatbot/diagnosis` KHÔNG tồn tại** dù `handleDiagnosisController`/`handleDiagnosisService`/`diagnosisGraph` được implement đầy đủ ở code — route không bao giờ được đăng ký (`chatbot/src/routes/chatbot.route.ts` chỉ đăng ký 4 route trên). Xác nhận `[DEAD CODE]` bởi chính test tích hợp (`test/integration/chatbot.route.integration.spec.ts:66-68` mock hàm này để throw "Diagnosis is not exposed by the production router").
+**`POST /chatbot/diagnosis` KHÔNG tồn tại** dù `handleDiagnosisController`/`handleDiagnosisService`/`diagnosisGraph` được implement đầy đủ ở code — route không bao giờ được đăng ký (`chatbot/src/routes/chatbot.route.ts` chỉ đăng ký 3 route trên). Xác nhận `[DEAD CODE]` bởi chính test tích hợp (`test/integration/chatbot.route.integration.spec.ts:66-68` mock hàm này để throw "Diagnosis is not exposed by the production router").
 
-Upload multipart nhận field `images` (tối đa 5, ≤10MB/file, kiểm tra magic-byte JPEG/PNG/WebP) HOẶC `pdf` (1 file, kiểm tra header `%PDF-`) — XOR bắt buộc (`middlewares/xorValidate.ts`).
+`[REMOVED]` `POST /chatbot/upload/summary-medical-record` (multipart `images`/`pdf`, XOR bắt buộc qua `middlewares/xorValidate.ts`) từng tồn tại nhưng đã bị gỡ bỏ cùng toàn bộ tính năng tóm tắt bệnh án AI — xem `functional-spec.md` mục 4.
 
 ## Cross-service HTTP calls do `chatbot/` chủ động gọi ngược `backend/`
 

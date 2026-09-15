@@ -31,11 +31,10 @@ Bản trước gắn nhãn patient portal là `PARTIAL` vì `PatientPortalContex
 - `admin/src/services/mockApi.ts`: 4/5 method (`getProfiles/getDashboard/getModule/getMessages/getRolePermissions`) không nơi gọi ngoài chính file; chỉ `getEnterpriseReportGroups()` còn được dùng thật (bởi `EnterpriseReportsDashboardPage`).
 - `admin/src/components/app/DataTable.tsx` + `admin/src/mock/modules.ts`/`modules-admin.ts`/`modules-content.ts`/`modules-doctor.ts` — scaffold generic-module thời kỳ trước, bị `GenericModulePage.tsx` + `GenericList.tsx` thay thế, không còn được import.
 - `admin/src/pages/*`: `useRegister`/`useSetNewPassword` định nghĩa ở `useAuth.ts`/`authApi.ts` nhưng không trang nào trong `admin/` gọi (admin không có màn đăng ký/quên-mật-khẩu riêng).
-- `admin/GenericModulePage.tsx`: nhánh `case "patient-records"` (moduleMeta) không thể chạy tới — không menu item hay route nào truyền `moduleId="patient-records"` cho `GenericModulePage` (route `/doctor/patient-records` luôn render thẳng `MedicalRecordSummaryPage`).
 - `backend/src/utils/constants.ts` (`PERMISSIONS`): các permission `role:create/update/delete/manage` không có route CRUD permission tương ứng (chỉ có `POST /permissions` list và `GET /permissions/:id` — không create/update/delete permission qua API, permission hoàn toàn quản lý qua migration).
 - `chatbot/src/tools/doctor_name_analyzer.tool.ts` (`AnalyzeDoctorTool`) — không được import ở bất kỳ graph/agent nào.
 - `chatbot/src/tools/test.tool.ts` — file rỗng (0 byte), placeholder.
-- `chatbot/src/langgraph/diagnosis.graph.ts` + `handleDiagnosisController`/`handleDiagnosisService` — implement đầy đủ nhưng **không route nào** đăng ký gọi tới (`chatbot/src/routes/chatbot.route.ts` chỉ đăng ký 4 route: `/chat`, `/create-report`, `/build-health-roadmap`, `/upload/summary-medical-record`). Xác nhận bởi chính test tích hợp: `chatbot/test/integration/chatbot.route.integration.spec.ts:66-68` mock `handleDiagnosisService` để **throw** "Diagnosis is not exposed by the production router".
+- `chatbot/src/langgraph/diagnosis.graph.ts` + `handleDiagnosisController`/`handleDiagnosisService` — implement đầy đủ nhưng **không route nào** đăng ký gọi tới (`chatbot/src/routes/chatbot.route.ts` chỉ đăng ký 3 route: `/chat`, `/create-report`, `/build-health-roadmap`). Xác nhận bởi chính test tích hợp: `chatbot/test/integration/chatbot.route.integration.spec.ts:66-68` mock `handleDiagnosisService` để **throw** "Diagnosis is not exposed by the production router".
 
 ## `[CONFLICT]` Maximum devices implementation
 

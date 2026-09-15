@@ -115,9 +115,9 @@ Browser -> Socket.IO handshake bằng cookie accessToken
 ## 7. AI flow
 
 ```text
-Frontend/admin -> POST /api/v1/chat-history/chat (hoặc build-health-roadmap, summary-medical-record)
+Frontend/admin -> POST /api/v1/chat-history/chat (hoặc build-health-roadmap)
                -> backend forward kèm x-chatbot-internal-key + access token của user
-               -> chatbot /chatbot/chat|build-health-roadmap|upload/summary-medical-record
+               -> chatbot /chatbot/chat|build-health-roadmap
                -> LangGraph agent chọn tool (RAG/SQL-QA/tư vấn y tế/đặt lịch)
                -> trả lời -> backend lưu vào Conversation -> trả về client
 ```

@@ -89,7 +89,7 @@ Hai menu item dễ nhầm lẫn vì tên gần giống: `admin/ai-coach-reports`
 
 ### Doctor workspace — `CONFIRMED`
 
-Dashboard, lịch làm việc (self-service, `POST /doctor-schedules/personal-schedules` + CRUD riêng, UI dạng tab-theo-ngày không dùng bảng chung), lịch hẹn (dùng chung API admin-appointments filter theo `doctorId` — xem bug đã biết bên dưới), tin nhắn, hồ sơ khám (`ExamResultsModule`), tóm tắt bệnh án AI, settings (dùng chung với admin qua `DoctorSettingsPage`, route `/account/settings` không permission-gate).
+Dashboard, lịch làm việc (self-service, `POST /doctor-schedules/personal-schedules` + CRUD riêng, UI dạng tab-theo-ngày không dùng bảng chung), lịch hẹn (dùng chung API admin-appointments filter theo `doctorId` — xem bug đã biết bên dưới), tin nhắn, hồ sơ khám (`ExamResultsModule`), settings (dùng chung với admin qua `DoctorSettingsPage`, route `/account/settings` không permission-gate). (Tóm tắt bệnh án AI đã bị gỡ bỏ — xem mục 4.)
 
 ### Admin operations — `CONFIRMED`
 
@@ -110,7 +110,7 @@ Dashboard, quản lý user/doctor/patient (patient module chỉ đọc — khôn
 
 ### Chat / RAG / SQL-QA / đặt lịch qua hội thoại — `CONFIRMED`
 
-Chatbot Express mount `/chatbot`, chỉ **4 endpoint thật**: `POST /chat`, `/create-report`, `/build-health-roadmap`, `/upload/summary-medical-record` — tất cả yêu cầu header internal-service-key; `/chat`, `/build-health-roadmap`, `/upload/summary-medical-record` xác thực thêm theo user (JWT access token forward từ backend); `/create-report` **không** xác thực theo user, chỉ theo internal key (rate-limit theo IP). Backend (`chat-history` module) là lớp trung gian duy nhất mà `frontend`/`admin` gọi tới — không client nào gọi thẳng `chatbot/`.
+Chatbot Express mount `/chatbot`, chỉ **3 endpoint thật**: `POST /chat`, `/create-report`, `/build-health-roadmap` — tất cả yêu cầu header internal-service-key; `/chat`, `/build-health-roadmap` xác thực thêm theo user (JWT access token forward từ backend); `/create-report` **không** xác thực theo user, chỉ theo internal key (rate-limit theo IP). Backend (`chat-history` module) là lớp trung gian duy nhất mà `frontend`/`admin` gọi tới — không client nào gọi thẳng `chatbot/`.
 
 Agent hội thoại chính (LangGraph) có 4 tool: RAG (tài liệu nội bộ, Qdrant), SQL-QA (3 view đọc-only hướng bệnh nhân), tư vấn y tế (có bộ dò red-flag khẩn cấp bằng regex, độc lập với LLM, luôn chèn cảnh báo gọi 115 nếu khớp mẫu), và công cụ đặt lịch (gọi ngược `POST /api/v1/appointments/booking` của backend với `booking_mode: "ai_select"`).
 
@@ -122,17 +122,17 @@ CLAUDE.md liệt kê "diagnosis" là một trong các LangGraph flow của `chat
 
 `admin-reports` (backend) forward câu hỏi ngôn ngữ tự nhiên tới `chatbot` `create-report` (SQL-QA trên 7 view báo cáo, sinh biểu đồ + báo cáo văn bản + PDF, PDF **không** stream về mà upload Cloudinary và chỉ trả URL). "Health roadmap" tương tự cho patient (`AICoachHealth.tsx` → `build-health-roadmap`), có 2 bước tạo nội dung (`GenerateHealthPlanNode`, `WriteHealthRoadmapReportNode`) thực chất là **code xác định (deterministic), không gọi LLM** dù nằm trong một graph tên gợi ý AI.
 
-### Medical-record upload/summary — `CONFIRMED`
+### Medical-record upload/summary — `[REMOVED]`
 
-Nhận `images` (≤5) HOẶC `pdf` (1), XOR bắt buộc, kiểm tra magic byte. OCR bằng vision model (không phải "Gemini" như mô tả tool ghi — xem `[CONFLICT]` LLM provider ở `integrations.md`) trích xuất một schema bệnh án tiếng Việt đầy đủ, sau đó tóm tắt thành Markdown theo template cố định — không sinh lời khuyên lâm sàng mới ngoài dữ liệu đã OCR. `admin/`'s `MedicalRecordSummaryPage` (`/doctor/patient-records`) là entry point thật cho bác sĩ.
+Đã tồn tại (nhận `images`/`pdf`, OCR bằng vision model, tóm tắt Markdown, entry point `admin/`'s `MedicalRecordSummaryPage` tại `/doctor/patient-records`), nhưng đã bị gỡ bỏ hoàn toàn (route `/chatbot/upload/summary-medical-record`, `ocr_tool`, `summary_medical_record_tool`/graph, `AiMedicalRecordSummary` entity + bảng DB, toàn bộ UI `admin/`) sau khi liên tục gặp lỗi độ tin cậy khi trích xuất (nhầm field, tự suy diễn/tính toán giá trị, lẫn nội dung chẩn đoán vào tóm tắt xét nghiệm) không ổn định trên `gpt-4o-mini` dù đã nhiều vòng chỉnh prompt. Không còn entry point nào cho tính năng này.
 
 **Implementation Evidence**
 
 - `chatbot/src/routes/chatbot.route.ts`, `chatbot/src/controllers/chatbot.controller.ts`, `chatbot/src/services/chatbot.service.ts`
-- `chatbot/src/langgraph/{booking,diagnosis,create_report,build_health_roadmap,summary_medical_record}.graph.ts`
+- `chatbot/src/langgraph/{booking,diagnosis,create_report,build_health_roadmap}.graph.ts`
 - `chatbot/test/integration/chatbot.route.integration.spec.ts`
 - `backend/src/modules/chat-history/`, `backend/src/modules/admin-reports/`
-- `admin/src/pages/MedicalRecordSummaryPage.tsx`, `AdminAiReportGeneratorPage.tsx`
+- `admin/src/pages/AdminAiReportGeneratorPage.tsx`
 - `frontend/src/pages/Chatbot.tsx`, `AICoachHealth.tsx`
 
 ## 5. Cross-cutting behavior
