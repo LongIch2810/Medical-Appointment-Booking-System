@@ -74,6 +74,10 @@ export function useCreateExaminationResult() {
     onSuccess: () => {
       toast.success("Tạo kết quả khám thành công");
       queryClient.invalidateQueries({ queryKey: ["examination-results"] });
+      // Danh sách lịch hẹn nhúng sẵn examination_result để quyết định hiện
+      // "+ Kết quả khám" hay "Xem KQ" — không invalidate thì bảng vẫn hiện
+      // nút tạo mới sau khi đã tạo xong, phải reload tay mới đúng.
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: () => {
       toast.error("Tạo kết quả khám thất bại");
@@ -111,6 +115,7 @@ export function useDeleteExaminationResult() {
     onSuccess: () => {
       toast.success("Xóa kết quả khám thành công");
       queryClient.invalidateQueries({ queryKey: ["examination-results"] });
+      queryClient.invalidateQueries({ queryKey: ["appointments"] });
     },
     onError: () => {
       toast.error("Xóa kết quả khám thất bại");

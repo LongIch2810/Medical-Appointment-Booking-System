@@ -52,6 +52,13 @@ export class SatisfactionRatingService {
       });
       await this.satisfactionRatingRepo.save(createdSatisfactionRating);
       await this.invalidateDoctorCaches();
+      // Danh sách/chi tiết lịch hẹn nhúng sẵn satisfaction_rating để ẩn nút
+      // "Đánh giá" — không xoá cache này thì bệnh nhân vẫn thấy nút đánh giá
+      // (và endpoint chi tiết vẫn trả bản ghi cũ) tới khi cache hết hạn.
+      await this.redisCacheService.delByPrefix('appointments:');
+      await this.redisCacheService.delData(
+        `user:${userId}:appointment:${appointment_id}`,
+      );
       return { message: 'Đã hoàn thành đánh giá.' };
     } catch (error) {
       if (

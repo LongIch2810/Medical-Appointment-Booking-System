@@ -91,10 +91,11 @@ export class AppointmentsController {
     @Request() req,
     @Param('appointmentId', ParseIntPipe) appointmentId: number,
   ) {
-    const { userId } = req.user;
+    const { userId, roles } = req.user as RequestPaylaod;
     const appointment = await this.appointmentsService.getAppointmentDetail(
       userId,
       appointmentId,
+      roles,
     );
     return appointment;
   }

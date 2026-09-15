@@ -36,7 +36,7 @@ describe('SatisfactionRatingService', () => {
   let repository: any;
   let appointments: any;
   let rolePermissionService: { getPermissionsByRoles: jest.Mock };
-  let redisCacheService: { delByPrefix: jest.Mock };
+  let redisCacheService: { delByPrefix: jest.Mock; delData: jest.Mock };
   let service: SatisfactionRatingService;
 
   beforeEach(() => {
@@ -48,7 +48,10 @@ describe('SatisfactionRatingService', () => {
     };
     appointments = { isAppointmentExistsCompletedAndResult: jest.fn() };
     rolePermissionService = { getPermissionsByRoles: jest.fn() };
-    redisCacheService = { delByPrefix: jest.fn().mockResolvedValue(undefined) };
+    redisCacheService = {
+      delByPrefix: jest.fn().mockResolvedValue(undefined),
+      delData: jest.fn().mockResolvedValue(undefined),
+    };
     service = new SatisfactionRatingService(
       repository,
       appointments,
@@ -89,6 +92,14 @@ describe('SatisfactionRatingService', () => {
     });
     expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('doctor:');
     expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('doctors:');
+    // Regression test: the patient's appointments list/detail cache embeds
+    // satisfaction_rating to decide whether to show the "Đánh giá" button —
+    // without invalidating it, the button kept showing for up to an hour
+    // after a successful rating.
+    expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('appointments:');
+    expect(redisCacheService.delData).toHaveBeenCalledWith(
+      'user:5:appointment:10',
+    );
   });
 
   it('translates a database uniqueness race to ConflictException', async () => {

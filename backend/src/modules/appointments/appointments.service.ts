@@ -899,7 +899,11 @@ export class AppointmentsService {
     );
   }
 
-  async getAppointmentDetail(userId: number, appointmentId: number) {
+  async getAppointmentDetail(
+    userId: number,
+    appointmentId: number,
+    actorRoles: string[] = [],
+  ) {
     const isUserExist = await this.usersService.isUserExists(userId);
     if (!isUserExist) {
       throw new NotFoundException('Không tìm thấy người dùng.');
@@ -910,10 +914,24 @@ export class AppointmentsService {
       return cachedData;
     }
 
-    const appointment = await this.baseAppointmentQuery()
-      .where('appointment.id = :appointmentId', { appointmentId })
-      .andWhere('bookedByUser.id = :userId', { userId })
-      .getOne();
+    // Bệnh nhân chỉ xem được lịch hẹn do chính mình đặt; bác sĩ xem được
+    // lịch hẹn mà mình là bác sĩ phụ trách; admin xem được tất cả — trước
+    // đây endpoint này chỉ cho phép booker, khiến bác sĩ luôn nhận 404 khi
+    // xem lại lịch hẹn của chính mình (vd. dialog tạo kết quả khám).
+    const isAdmin = actorRoles.includes(RoleName.ADMIN);
+    const isDoctor = actorRoles.includes(RoleName.DOCTOR);
+    const query = this.baseAppointmentQuery().where(
+      'appointment.id = :appointmentId',
+      { appointmentId },
+    );
+    if (!isAdmin) {
+      if (isDoctor) {
+        query.andWhere('doctorUser.id = :userId', { userId });
+      } else {
+        query.andWhere('bookedByUser.id = :userId', { userId });
+      }
+    }
+    const appointment = await query.getOne();
 
     if (!appointment) {
       throw new NotFoundException('Lịch hẹn không tồn tại.');

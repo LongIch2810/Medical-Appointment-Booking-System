@@ -67,13 +67,14 @@ describe('AppointmentsController', () => {
     appointmentsService.getAppointmentDetail.mockResolvedValue({ id: 3 });
 
     const result = await controller.getAppointmentDetail(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } } as never,
       3,
     );
 
     expect(appointmentsService.getAppointmentDetail).toHaveBeenCalledWith(
       7,
       3,
+      ['PATIENT'],
     );
     expect(result).toEqual({ id: 3 });
   });

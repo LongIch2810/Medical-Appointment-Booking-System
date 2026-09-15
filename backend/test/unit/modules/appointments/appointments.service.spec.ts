@@ -205,6 +205,56 @@ describe('AppointmentsService', () => {
       expect(result).toBe(cached);
       expect(appointmentRepo.createQueryBuilder).not.toHaveBeenCalled();
     });
+
+    const detailAppointmentStub = {
+      id: 1,
+      status: AppointmentStatus.PENDING,
+      doctor_schedule: { doctor: {}, start_time: '08:00', end_time: '09:00' },
+      patient: {},
+      examination_result: null,
+      satisfaction_rating: null,
+    };
+
+    it('scopes a patient actor to appointments they booked (bookedByUser)', async () => {
+      const qb = makeQb({
+        getOne: jest.fn().mockResolvedValue(detailAppointmentStub),
+      });
+      appointmentRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAppointmentDetail(9, 1, ['PATIENT']);
+
+      expect(qb.andWhere).toHaveBeenCalledWith('bookedByUser.id = :userId', {
+        userId: 9,
+      });
+    });
+
+    it('scopes a doctor actor to appointments they are assigned to (doctorUser), not the booker', async () => {
+      const qb = makeQb({
+        getOne: jest.fn().mockResolvedValue(detailAppointmentStub),
+      });
+      appointmentRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAppointmentDetail(20, 1, ['DOCTOR']);
+
+      expect(qb.andWhere).toHaveBeenCalledWith('doctorUser.id = :userId', {
+        userId: 20,
+      });
+      expect(qb.andWhere).not.toHaveBeenCalledWith(
+        'bookedByUser.id = :userId',
+        expect.anything(),
+      );
+    });
+
+    it('does not scope an admin actor to any particular user', async () => {
+      const qb = makeQb({
+        getOne: jest.fn().mockResolvedValue(detailAppointmentStub),
+      });
+      appointmentRepo.createQueryBuilder.mockReturnValue(qb);
+
+      await service.getAppointmentDetail(1, 1, ['ADMIN']);
+
+      expect(qb.andWhere).not.toHaveBeenCalled();
+    });
   });
 
   describe('getAppoitnmentToDayEarlyOfDoctor', () => {
