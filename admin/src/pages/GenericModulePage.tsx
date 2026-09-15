@@ -42,7 +42,9 @@ import { usePermission } from "@/hooks/usePermission";
 import {
   useApproveArticle,
   useArticles,
+  useCreateArticle,
   useDeleteArticle,
+  useUpdateArticle,
 } from "@/hooks/useArticles";
 import {
   useAdminAppointments,
@@ -137,6 +139,7 @@ import type {
   ComplaintStatus,
 } from "@/types/interface/api.interface";
 import type { AdminAppointmentListPayload } from "@/types/interface/appointment.interface";
+import type { Article } from "@/types/interface/article.interface";
 import type { DoctorSchedule } from "@/types/interface/doctorSchedule.interface";
 import type { Doctor } from "@/types/interface/doctor.interface";
 import type { Specialty } from "@/types/interface/specialty.interface";
@@ -4314,6 +4317,192 @@ function TopicsModule({
   );
 }
 
+type ArticleFormState = {
+  title: string;
+  summary: string;
+  content: string;
+  topicId: number | undefined;
+  tagIds: number[];
+  files: File[];
+};
+
+function ArticleFormDialog({
+  trigger,
+  initial,
+  mode,
+}: {
+  trigger: ReactNode;
+  initial?: Article;
+  mode: "create" | "edit";
+}) {
+  const create = useCreateArticle();
+  const update = useUpdateArticle();
+  const { data: topicsData } = useTopics({ page: 1, limit: 100 });
+  const { data: tagsData } = useTags({ page: 1, limit: 100 });
+  const topics = topicsData?.data?.topics ?? [];
+  const tags = tagsData?.data?.tags ?? [];
+
+  const buildInitialForm = (): ArticleFormState => ({
+    title: initial?.title ?? "",
+    summary: initial?.summary ?? "",
+    content: initial?.content ?? "",
+    topicId: initial?.topic?.id,
+    tagIds: initial?.tags?.map((tag) => tag.id) ?? [],
+    files: [],
+  });
+
+  const [form, setForm] = useState<ArticleFormState>(buildInitialForm);
+
+  const toggleTag = (tagId: number) => {
+    setForm((prev) => ({
+      ...prev,
+      tagIds: prev.tagIds.includes(tagId)
+        ? prev.tagIds.filter((id) => id !== tagId)
+        : [...prev.tagIds, tagId],
+    }));
+  };
+
+  return (
+    <FormDialog
+      trigger={trigger}
+      title={mode === "create" ? "Tạo bài viết" : `Sửa bài viết #${initial?.id}`}
+      isSubmitting={create.isPending || update.isPending}
+      onOpen={() => setForm(buildInitialForm())}
+      onSubmit={() => {
+        if (!form.topicId) {
+          throw new Error("Vui lòng chọn chủ đề");
+        }
+        return mode === "create"
+          ? create.mutateAsync({
+              title: form.title,
+              content: form.content,
+              summary: form.summary,
+              topic_id: form.topicId,
+              tag_ids: form.tagIds,
+              files: form.files,
+            })
+          : update.mutateAsync({
+              articleId: initial!.id,
+              payload: {
+                title: form.title,
+                content: form.content,
+                summary: form.summary,
+                topic_id: form.topicId,
+                tag_ids: form.tagIds,
+              },
+            });
+      }}
+    >
+      <FormField label="Tiêu đề" htmlFor="article-title" required>
+        <Input
+          id="article-title"
+          required
+          value={form.title}
+          onChange={(event) =>
+            setForm((prev) => ({ ...prev, title: event.target.value }))
+          }
+        />
+      </FormField>
+      <FormField label="Tóm tắt" htmlFor="article-summary" required>
+        <Textarea
+          id="article-summary"
+          required
+          rows={2}
+          value={form.summary}
+          onChange={(event) =>
+            setForm((prev) => ({ ...prev, summary: event.target.value }))
+          }
+        />
+      </FormField>
+      <FormField label="Nội dung" htmlFor="article-content" required>
+        <Textarea
+          id="article-content"
+          required
+          rows={8}
+          value={form.content}
+          onChange={(event) =>
+            setForm((prev) => ({ ...prev, content: event.target.value }))
+          }
+        />
+      </FormField>
+      <FormField label="Chủ đề" htmlFor="article-topic" required>
+        <select
+          id="article-topic"
+          required
+          value={form.topicId ?? ""}
+          onChange={(event) =>
+            setForm((prev) => ({
+              ...prev,
+              topicId: event.target.value
+                ? Number(event.target.value)
+                : undefined,
+            }))
+          }
+          className="flex h-11 w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100"
+        >
+          <option value="" disabled>
+            -- Chọn chủ đề --
+          </option>
+          {topics.map((topic) => (
+            <option key={topic.id} value={topic.id}>
+              {topic.name}
+            </option>
+          ))}
+        </select>
+      </FormField>
+      <FormField label="Tags" htmlFor="article-tags">
+        <div
+          id="article-tags"
+          className="flex max-h-40 flex-wrap gap-2 overflow-y-auto rounded-xl border border-slate-200 p-3 dark:border-slate-800"
+        >
+          {tags.length === 0 ? (
+            <span className="text-xs text-slate-400 dark:text-slate-500">
+              Chưa có tag nào.
+            </span>
+          ) : (
+            tags.map((tag) => {
+              const active = form.tagIds.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  onClick={() => toggleTag(tag.id)}
+                  className={
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors " +
+                    (active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800")
+                  }
+                >
+                  {tag.name}
+                </button>
+              );
+            })
+          )}
+        </div>
+      </FormField>
+      {mode === "create" ? (
+        <FormField label="Tệp đính kèm" htmlFor="article-files">
+          <input
+            id="article-files"
+            type="file"
+            multiple
+            onChange={(event) =>
+              setForm((prev) => ({
+                ...prev,
+                files: event.target.files
+                  ? Array.from(event.target.files)
+                  : [],
+              }))
+            }
+            className="text-xs text-slate-900 dark:text-slate-200"
+          />
+        </FormField>
+      ) : null}
+    </FormDialog>
+  );
+}
+
 function ArticlesModule({
   search,
   page,
@@ -4336,6 +4525,14 @@ function ArticlesModule({
   const deleteArticle = useDeleteArticle();
   const isMutating = approveArticle.isPending || deleteArticle.isPending;
   const { can } = usePermission();
+  const canCreate = can(
+    PERMISSIONS.ARTICLE_CREATE,
+    PERMISSIONS.ARTICLE_MANAGE,
+  );
+  const canEdit = can(
+    PERMISSIONS.ARTICLE_UPDATE,
+    PERMISSIONS.ARTICLE_MANAGE,
+  );
   const canApprove = can(
     PERMISSIONS.ARTICLE_APPROVE,
     PERMISSIONS.ARTICLE_MANAGE,
@@ -4384,6 +4581,14 @@ function ArticlesModule({
         isError={isError}
         onRetry={refetch}
         rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <ArticleFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Tạo bài viết</Button>}
+            />
+          ) : null
+        }
         columns={[
           { key: "id", label: "ID", render: (row) => row.id },
           { key: "title", label: "Tiêu đề", render: (row) => row.title },
@@ -4488,6 +4693,17 @@ function ArticlesModule({
                     ) : null
                   }
                 />
+                {canEdit ? (
+                  <ArticleFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
                 {canApprove && !row.is_approved ? (
                   <Button
                     type="button"
