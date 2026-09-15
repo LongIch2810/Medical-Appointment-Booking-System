@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Clock,
   Mail,
+  Plus,
   RotateCcw,
   Search,
   UserRound,
@@ -4689,7 +4690,8 @@ function DoctorSchedulesModule() {
                 mode="create"
                 trigger={
                   <Button size="sm" variant="outline">
-                    + Thêm ca
+                    <Plus className="mr-1 size-3" />
+                    Thêm ca
                   </Button>
                 }
               />
