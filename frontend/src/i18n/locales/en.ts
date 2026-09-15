@@ -535,6 +535,9 @@ const en = {
     emptyChannels: "You have no active conversations",
     emptyChannelsDesc: "Find a specialist and initiate an online consultation today.",
     selectChannelPrompt: "Select a conversation from the left panel to start messaging.",
+    noConversationSelectedTitle: "No conversation selected",
+    emptyConversationTitle: "No messages yet",
+    emptyConversationDesc: "Say hello to start this conversation.",
     inputPlaceholder: "Type your consultation message...",
     sendBtn: "Send",
     notFoundDoctor: "No doctors found",
@@ -855,6 +858,7 @@ const en = {
     appointment: {
       PENDING: "Pending",
       CONFIRMED: "Confirmed",
+      IN_PROGRESS: "In Progress",
       COMPLETED: "Completed",
       CANCELLED: "Cancelled",
       ABSENT: "Absent",

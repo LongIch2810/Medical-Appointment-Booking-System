@@ -113,8 +113,6 @@ export class AuthService {
       }),
     );
 
-    await this.usersService.updateUserField(userId, 'is_active', true);
-
     return {
       accessToken,
       refreshToken,
@@ -179,8 +177,6 @@ export class AuthService {
       }),
     );
 
-    await this.usersService.updateUserField(userId, 'is_active', true);
-
     return {
       accessToken,
       refreshToken,
@@ -227,7 +223,6 @@ export class AuthService {
     const match = list.find((t) => JSON.parse(t).tokenId === decoded.tokenId);
     if (!match) throw new UnauthorizedException('Token không hợp lệ!');
     await this.redisService.lRem(`refresh_tokens:${decoded.sub}`, 0, match);
-    await this.usersService.updateUserField(decoded.sub, 'is_active', false);
     return { message: 'Đăng xuất thành công!' };
   }
 
@@ -240,7 +235,6 @@ export class AuthService {
 
     await this.redisService.incr(`session_version:${decoded.sub}`);
     await this.redisService.delData(`refresh_tokens:${decoded.sub}`);
-    await this.usersService.updateUserField(decoded.sub, 'is_active', false);
     return { message: 'Đăng xuất tất cả các thiết bị thành công!' };
   }
 

@@ -21,6 +21,11 @@ export function useLogin() {
       // được chuyển trang, tạo cảm giác app bị khựng lại sau khi báo thành
       // công. Profile giờ được nạp nền, Header tự cập nhật khi có dữ liệu.
       navigate("/");
+      // Bỏ cache "profile" cũ trước khi fetch — nếu vừa đăng nhập bằng tài
+      // khoản khác mà không qua logout (cache trước đó vẫn còn "fresh" theo
+      // staleTime), fetchQuery sẽ trả thẳng dữ liệu cũ thay vì gọi lại API,
+      // khiến Header hiển thị nhầm người dùng trước đó.
+      queryClient.removeQueries({ queryKey: ["profile"] });
       const query = await queryClient.fetchQuery({
         queryKey: ["profile"],
         queryFn: fetchUserInfo,

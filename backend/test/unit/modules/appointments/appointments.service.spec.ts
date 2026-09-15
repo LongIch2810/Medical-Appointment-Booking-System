@@ -509,6 +509,122 @@ describe('AppointmentsService', () => {
       ).rejects.toBeInstanceOf(BadRequestException);
       expect(appointmentRepo.save).not.toHaveBeenCalled();
     });
+
+    it('rejects starting the exam (IN_PROGRESS) before the scheduled start time', async () => {
+      const future = new Date();
+      future.setDate(future.getDate() + 1);
+      appointmentRepo.createQueryBuilder.mockReturnValue(
+        makeQb({
+          getOne: jest.fn().mockResolvedValue({
+            id: 3,
+            status: AppointmentStatus.CONFIRMED,
+            appointment_date: future,
+            doctor_schedule: {
+              start_time: '08:00:00',
+              end_time: '09:00:00',
+              doctor: { user: { id: 20 } },
+            },
+          }),
+        }),
+      );
+
+      await expect(
+        service.updateStatus(3, AppointmentStatus.IN_PROGRESS, 20, [
+          RoleName.DOCTOR,
+        ]),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(appointmentRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('starts the exam (CONFIRMED -> IN_PROGRESS) once the scheduled start time has passed', async () => {
+      const mockAppointment = {
+        id: 3,
+        status: AppointmentStatus.CONFIRMED,
+        booked_by_user: { id: 9 },
+        appointment_date: new Date(0),
+        doctor_schedule: {
+          start_time: '00:00:00',
+          end_time: '01:00:00',
+          doctor: { user: { id: 20 }, specialty: {} },
+        },
+        patient: {},
+        examination_result: null,
+        satisfaction_rating: null,
+        created_at: new Date(0),
+        updated_at: new Date(0),
+      };
+      appointmentRepo.createQueryBuilder.mockReturnValue(
+        makeQb({ getOne: jest.fn().mockResolvedValue(mockAppointment) }),
+      );
+      appointmentRepo.save.mockImplementation((entity) =>
+        Promise.resolve(entity),
+      );
+
+      await service.updateStatus(3, AppointmentStatus.IN_PROGRESS, 20, [
+        RoleName.DOCTOR,
+      ]);
+
+      expect(appointmentRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: AppointmentStatus.IN_PROGRESS }),
+      );
+    });
+
+    it('rejects marking COMPLETED directly from CONFIRMED (must start the exam first)', async () => {
+      appointmentRepo.createQueryBuilder.mockReturnValue(
+        makeQb({
+          getOne: jest.fn().mockResolvedValue({
+            id: 3,
+            status: AppointmentStatus.CONFIRMED,
+            appointment_date: new Date(0),
+            doctor_schedule: {
+              start_time: '00:00:00',
+              end_time: '01:00:00',
+              doctor: { user: { id: 20 } },
+            },
+          }),
+        }),
+      );
+
+      await expect(
+        service.updateStatus(3, AppointmentStatus.COMPLETED, 20, [
+          RoleName.DOCTOR,
+        ]),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      expect(appointmentRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('completes the exam (IN_PROGRESS -> COMPLETED)', async () => {
+      const mockAppointment = {
+        id: 3,
+        status: AppointmentStatus.IN_PROGRESS,
+        booked_by_user: { id: 9 },
+        appointment_date: new Date(0),
+        doctor_schedule: {
+          start_time: '00:00:00',
+          end_time: '01:00:00',
+          doctor: { user: { id: 20 }, specialty: {} },
+        },
+        patient: {},
+        examination_result: null,
+        satisfaction_rating: null,
+        created_at: new Date(0),
+        updated_at: new Date(0),
+      };
+      appointmentRepo.createQueryBuilder.mockReturnValue(
+        makeQb({ getOne: jest.fn().mockResolvedValue(mockAppointment) }),
+      );
+      appointmentRepo.save.mockImplementation((entity) =>
+        Promise.resolve(entity),
+      );
+
+      await service.updateStatus(3, AppointmentStatus.COMPLETED, 20, [
+        RoleName.DOCTOR,
+      ]);
+
+      expect(appointmentRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ status: AppointmentStatus.COMPLETED }),
+      );
+    });
   });
 
   describe('create', () => {

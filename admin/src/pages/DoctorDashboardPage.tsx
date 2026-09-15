@@ -37,6 +37,7 @@ const STATUS_META: Record<
 > = {
   PENDING: { label: "Chờ xác nhận", color: "#f59e0b" },
   CONFIRMED: { label: "Đã xác nhận", color: "#3b82f6" },
+  IN_PROGRESS: { label: "Đang khám", color: "#8b5cf6" },
   COMPLETED: { label: "Hoàn tất", color: "#10b981" },
   CANCELLED: { label: "Đã hủy", color: "#ef4444" },
   ABSENT: { label: "Vắng mặt", color: "#64748b" },
@@ -46,11 +47,35 @@ const STATUS_META: Record<
 const STATUS_ORDER: AppointmentStatus[] = [
   "PENDING",
   "CONFIRMED",
+  "IN_PROGRESS",
   "COMPLETED",
   "CANCELLED",
   "ABSENT",
   "EXPIRED",
 ];
+
+function parseAppointmentDate(dateStr?: string): Date | null {
+  if (!dateStr) return null;
+  const match = /^(\d{2})[/-](\d{2})[/-](\d{4})$/.exec(dateStr.trim());
+  if (!match) return null;
+  const [, day, month, year] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function isUpcomingAppointment(appointment: Appointment): boolean {
+  if (
+    appointment.appointment_status !== "PENDING" &&
+    appointment.appointment_status !== "CONFIRMED"
+  ) {
+    return false;
+  }
+  const date = parseAppointmentDate(appointment.appointment_date);
+  if (!date) return false;
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  return date >= startOfToday;
+}
 
 function buildStatusSegments(appointments: Appointment[]): StatusSegment[] {
   const counts = STATUS_ORDER.reduce<Record<AppointmentStatus, number>>(
@@ -61,6 +86,7 @@ function buildStatusSegments(appointments: Appointment[]): StatusSegment[] {
     {
       PENDING: 0,
       CONFIRMED: 0,
+      IN_PROGRESS: 0,
       COMPLETED: 0,
       CANCELLED: 0,
       ABSENT: 0,
@@ -160,7 +186,15 @@ export function DoctorDashboardPage() {
     },
   ];
 
-  const upcomingPreview = upcomingAppointments.slice(0, 5);
+  const upcomingPreview = upcomingAppointments
+    .filter(isUpcomingAppointment)
+    .sort((a, b) => {
+      const dateA = parseAppointmentDate(a.appointment_date)?.getTime() ?? 0;
+      const dateB = parseAppointmentDate(b.appointment_date)?.getTime() ?? 0;
+      if (dateA !== dateB) return dateA - dateB;
+      return (a.start_time ?? "").localeCompare(b.start_time ?? "");
+    })
+    .slice(0, 5);
 
   return (
     <div className="space-y-6">

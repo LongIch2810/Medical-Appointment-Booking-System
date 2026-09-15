@@ -22,6 +22,7 @@ export type SortOrder = "asc" | "desc";
 export type AppointmentStatus =
   | "PENDING"
   | "CONFIRMED"
+  | "IN_PROGRESS"
   | "COMPLETED"
   | "CANCELLED"
   | "ABSENT"

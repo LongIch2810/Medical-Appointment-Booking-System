@@ -49,9 +49,11 @@ export function ConfirmDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription className="mt-2 text-sm leading-relaxed">{description}</DialogDescription>
-          ) : null}
+          <DialogDescription
+            className={description ? "mt-2 text-sm leading-relaxed" : "sr-only"}
+          >
+            {description ?? title}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex shrink-0 flex-col-reverse sm:flex-row justify-end gap-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
           <Button

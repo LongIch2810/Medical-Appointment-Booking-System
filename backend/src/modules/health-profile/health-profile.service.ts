@@ -250,7 +250,7 @@ export class HealthProfileService {
       .where('user.id = :userId', { userId })
       .getOne();
     if (!healthProfile) {
-      throw new NotFoundException('Hồ sơ sức khỏe không tồn tại.');
+      return null;
     }
     return HealthProfileMapper.toHealthProfileResponseDto(healthProfile);
   }

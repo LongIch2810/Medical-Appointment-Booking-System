@@ -50,6 +50,7 @@ import {
 } from "@/hooks/useArticles";
 import {
   useAdminAppointments,
+  useAppointmentDetail,
   useCancelAppointment,
   useCreateAppointment,
   useUpdateAppointmentStatus,
@@ -172,8 +173,63 @@ function getNextAppointmentStatus(
   status: AppointmentStatus,
 ): AppointmentStatus | null {
   if (status === "PENDING") return "CONFIRMED";
-  if (status === "CONFIRMED") return "COMPLETED";
+  if (status === "CONFIRMED") return "IN_PROGRESS";
+  if (status === "IN_PROGRESS") return "COMPLETED";
   return null;
+}
+
+const NEXT_STATUS_LABEL: Partial<Record<AppointmentStatus, string>> = {
+  CONFIRMED: "Xác nhận",
+  IN_PROGRESS: "Bắt đầu khám",
+  COMPLETED: "Hoàn tất",
+};
+
+const NEXT_STATUS_CONFIRM_COPY: Partial<
+  Record<AppointmentStatus, { title: string; description: (id: number) => string }>
+> = {
+  CONFIRMED: {
+    title: "Xác nhận lịch hẹn",
+    description: (id) => `Xác nhận lịch hẹn #${id}? Bệnh nhân sẽ nhận được thông báo lịch đã được xác nhận.`,
+  },
+  IN_PROGRESS: {
+    title: "Bắt đầu khám",
+    description: (id) => `Xác nhận bắt đầu khám cho lịch hẹn #${id}?`,
+  },
+  COMPLETED: {
+    title: "Hoàn tất khám",
+    description: (id) => `Xác nhận đã hoàn tất khám cho lịch hẹn #${id}? Sau bước này không thể quay lại trạng thái trước.`,
+  },
+};
+
+function parseAppointmentDateTime(
+  appointmentDate: string,
+  startTime?: string,
+): Date | null {
+  const match = /^(\d{2})[/-](\d{2})[/-](\d{4})$/.exec(
+    appointmentDate.trim(),
+  );
+  if (!match) return null;
+  const [, day, month, year] = match;
+  const [hours, minutes] = (startTime ?? "00:00").split(":").map(Number);
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    hours || 0,
+    minutes || 0,
+  );
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+// Bắt đầu khám / Hoàn tất đều bị backend chặn cho tới khi đến giờ hẹn — vô
+// hiệu hoá nút trước thay vì để người dùng bấm rồi mới thấy lỗi.
+function isAppointmentStartTimeReached(row: {
+  appointment_date: string;
+  start_time?: string;
+}): boolean {
+  const start = parseAppointmentDateTime(row.appointment_date, row.start_time);
+  if (!start) return true;
+  return new Date() >= start;
 }
 
 function getNextComplaintStatus(status: ComplaintStatus): ComplaintStatus {
@@ -832,6 +888,7 @@ function DoctorsModule({
 const STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
   { value: "PENDING", label: "Chờ xác nhận" },
   { value: "CONFIRMED", label: "Đã xác nhận" },
+  { value: "IN_PROGRESS", label: "Đang khám" },
   { value: "COMPLETED", label: "Hoàn tất" },
   { value: "CANCELLED", label: "Đã hủy" },
   { value: "ABSENT", label: "Vắng mặt" },
@@ -963,8 +1020,9 @@ function AppointmentsModule({
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Trạng thái</label>
+          <label htmlFor="appointment-status-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Trạng thái</label>
           <select
+            id="appointment-status-filter"
             value={statusFilter}
             onChange={(e) => handleStatusFilter(e.target.value)}
             className={filterInputClass}
@@ -979,8 +1037,9 @@ function AppointmentsModule({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Ngày khám</label>
+          <label htmlFor="appointment-date-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Ngày khám</label>
           <input
+            id="appointment-date-filter"
             type="date"
             value={dateFilter}
             onChange={(e) => handleDateFilter(e.target.value)}
@@ -990,8 +1049,9 @@ function AppointmentsModule({
 
         {!isDoctorScope ? (
           <div className="flex flex-col gap-1">
-            <label className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Bác sĩ</label>
+            <label htmlFor="appointment-doctor-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Bác sĩ</label>
             <select
+              id="appointment-doctor-filter"
               value={adminDoctorId ?? ""}
               onChange={(e) => handleDoctorFilter(e.target.value)}
               className={filterInputClass}
@@ -1150,20 +1210,44 @@ function AppointmentsModule({
                     }
                   />
                   {canUpdateStatus && nextStatus ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() =>
-                        updateStatus.mutate({
-                          appointmentId: row.id,
-                          payload: { status: nextStatus },
-                        })
-                      }
-                    >
-                      {nextStatus === "CONFIRMED" ? "Xác nhận" : "Hoàn tất"}
-                    </Button>
+                    (() => {
+                      const timeBlocked =
+                        (nextStatus === "IN_PROGRESS" ||
+                          nextStatus === "COMPLETED") &&
+                        !isAppointmentStartTimeReached(row);
+                      const confirmCopy = NEXT_STATUS_CONFIRM_COPY[nextStatus];
+                      return (
+                        <ConfirmDialog
+                          trigger={
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={isMutating || timeBlocked}
+                              title={
+                                timeBlocked
+                                  ? "Chỉ có thể thao tác khi đã đến giờ hẹn."
+                                  : undefined
+                              }
+                            >
+                              {NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}
+                            </Button>
+                          }
+                          title={confirmCopy?.title ?? "Xác nhận thao tác"}
+                          description={
+                            confirmCopy?.description(row.id) ??
+                            `Xác nhận chuyển lịch hẹn #${row.id} sang trạng thái "${NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}"?`
+                          }
+                          isSubmitting={isMutating}
+                          onConfirm={() =>
+                            updateStatus.mutateAsync({
+                              appointmentId: row.id,
+                              payload: { status: nextStatus },
+                            })
+                          }
+                        />
+                      );
+                    })()
                   ) : null}
                   {canUpdateStatus &&
                   row.appointment_status === "CONFIRMED" ? (
@@ -1193,6 +1277,7 @@ function AppointmentsModule({
                   {canCancel &&
                   row.appointment_status !== "CANCELLED" &&
                   row.appointment_status !== "COMPLETED" &&
+                  row.appointment_status !== "IN_PROGRESS" &&
                   row.appointment_status !== "EXPIRED" ? (
                     <ConfirmDialog
                       trigger={
@@ -1494,6 +1579,7 @@ function ComplaintsModule({
 
       <div className="flex flex-wrap items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
         <select
+          aria-label="Lọc theo trạng thái"
           className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={statusFilter}
           onChange={(e) => {
@@ -1509,6 +1595,7 @@ function ComplaintsModule({
         </select>
         <input
           type="date"
+          aria-label="Từ ngày"
           className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={fromDate}
           onChange={(e) => {
@@ -1519,6 +1606,7 @@ function ComplaintsModule({
         />
         <input
           type="date"
+          aria-label="Đến ngày"
           className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
           value={toDate}
           onChange={(e) => {
@@ -2472,12 +2560,24 @@ function ExaminationResultFormDialog({
   const [appointmentIdInput, setAppointmentIdInput] = useState(
     appointmentId ? String(appointmentId) : "",
   );
+  const lookupAppointmentId =
+    appointmentId ?? (Number(appointmentIdInput) || 0);
+  const appointmentDetail = useAppointmentDetail(lookupAppointmentId);
+  const appointment = appointmentDetail.data?.data;
+  const isFormValid = Boolean(
+    lookupAppointmentId > 0 &&
+      symptoms.trim() &&
+      diagnosis.trim() &&
+      treatment.trim() &&
+      prescription.trim(),
+  );
 
   return (
     <FormDialog
       trigger={trigger}
       title={mode === "create" ? "Thêm kết quả khám" : `Sửa kết quả #${initial?.id}`}
       isSubmitting={create.isPending || update.isPending}
+      submitDisabled={!isFormValid}
       onOpen={() => {
         if (mode === "edit") {
           setSymptoms(initial?.symptoms ?? "");
@@ -2523,6 +2623,36 @@ function ExaminationResultFormDialog({
             onChange={(e) => setAppointmentIdInput(e.target.value)}
           />
         </FormField>
+      ) : null}
+      {lookupAppointmentId > 0 ? (
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs dark:border-slate-800 dark:bg-slate-900">
+          {appointmentDetail.isLoading ? (
+            <span className="text-slate-500 dark:text-slate-400">
+              Đang tải thông tin lịch hẹn #{lookupAppointmentId}...
+            </span>
+          ) : appointmentDetail.isError || !appointment ? (
+            <span className="text-rose-600 dark:text-rose-400">
+              Không tìm thấy lịch hẹn #{lookupAppointmentId}.
+            </span>
+          ) : (
+            <div className="space-y-1">
+              <div>
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  Bệnh nhân:{" "}
+                </span>
+                {appointment.patient?.fullname ?? "-"}
+              </div>
+              <div>
+                <span className="font-bold text-slate-700 dark:text-slate-300">
+                  Ngày khám:{" "}
+                </span>
+                {appointment.appointment_date}
+                {appointment.start_time ? ` · ${appointment.start_time}` : ""}
+                {appointment.end_time ? ` - ${appointment.end_time}` : ""}
+              </div>
+            </div>
+          )}
+        </div>
       ) : null}
       <FormField label="Triệu chứng" htmlFor="exam-symptoms" required>
         <Textarea
@@ -5313,6 +5443,12 @@ const moduleMeta: Record<
     title: "Bài viết của tôi",
     description: "Bài viết chuyên môn do bạn viết.",
     permissionLevel: permissions.articles,
+  },
+  "doctor-exam-results": {
+    eyebrow: "Doctor workspace",
+    title: "Kết quả khám",
+    description: "Kết quả khám bạn đã tạo lập cho bệnh nhân.",
+    permissionLevel: permissions.examResults,
   },
 };
 

@@ -61,7 +61,7 @@ export default class User {
   @Column({ type: 'boolean', default: false })
   isAdmin!: boolean;
 
-  @Column({ type: 'boolean', default: false })
+  @Column({ type: 'boolean', default: true })
   is_active!: boolean;
 
   @Column({ type: 'boolean', default: false })

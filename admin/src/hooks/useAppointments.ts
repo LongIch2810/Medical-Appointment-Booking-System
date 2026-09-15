@@ -22,6 +22,7 @@ import type { AppointmentStatus } from "@/types/interface/api.interface";
 const APPOINTMENT_STATUS_LABEL: Record<AppointmentStatus, string> = {
   PENDING: "Chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  IN_PROGRESS: "Đang khám",
   COMPLETED: "Đã khám xong",
   CANCELLED: "Đã hủy",
   ABSENT: "Vắng mặt",

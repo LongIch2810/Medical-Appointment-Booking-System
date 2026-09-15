@@ -641,7 +641,9 @@ export class AppointmentsService {
 
     const query = this.baseAppointmentQuery()
       .where('doctor.id = :doctorId', { doctorId: user.doctor.id })
-      .orderBy('appointment.appointment_date', 'ASC')
+      // Mới nhất/gần nhất trước — sắp cũ nhất lên đầu (mặc định cũ) khiến
+      // lịch hẹn hiện tại/sắp tới bị chôn vùi sau hàng chục trang lịch sử.
+      .orderBy('appointment.appointment_date', 'DESC')
       .take(limit)
       .skip(skip);
 
@@ -690,7 +692,9 @@ export class AppointmentsService {
     const skip = (page - 1) * limit;
 
     const query = this.baseAppointmentQuery()
-      .orderBy('appointment.appointment_date', 'ASC')
+      // Mới nhất/gần nhất trước — sắp cũ nhất lên đầu (mặc định cũ) khiến
+      // lịch hẹn hiện tại/sắp tới bị chôn vùi sau hàng chục trang lịch sử.
+      .orderBy('appointment.appointment_date', 'DESC')
       .take(limit)
       .skip(skip);
 
@@ -771,15 +775,26 @@ export class AppointmentsService {
         AppointmentStatus.CANCELLED,
       ],
       [AppointmentStatus.CONFIRMED]: [
-        AppointmentStatus.COMPLETED,
+        AppointmentStatus.IN_PROGRESS,
         AppointmentStatus.CANCELLED,
         AppointmentStatus.ABSENT,
       ],
+      [AppointmentStatus.IN_PROGRESS]: [AppointmentStatus.COMPLETED],
     };
     if (!allowedTransitions[appointment.status]?.includes(status)) {
       throw new BadRequestException(
         `Không thể chuyển trạng thái lịch hẹn từ ${appointment.status} sang ${status}.`,
       );
+    }
+
+    if (status === AppointmentStatus.IN_PROGRESS) {
+      const appointmentStart = this.buildAppointmentStartDate(appointment);
+      const now = new Date();
+      if (now < appointmentStart) {
+        throw new BadRequestException(
+          'Chỉ có thể bắt đầu khám khi đã đến giờ hẹn.',
+        );
+      }
     }
 
     if (status === AppointmentStatus.COMPLETED) {
@@ -796,16 +811,10 @@ export class AppointmentsService {
         );
       }
 
-      if (appointment.status !== AppointmentStatus.CONFIRMED) {
+      if (appointment.status !== AppointmentStatus.IN_PROGRESS) {
         throw new BadRequestException(
-          'Chỉ có thể đánh dấu khám xong cho lịch hẹn đã được xác nhận.',
+          'Chỉ có thể đánh dấu khám xong cho lịch hẹn đang được khám.',
         );
-      }
-
-      const appointmentStart = this.buildAppointmentStartDate(appointment);
-      const now = new Date();
-      if (now < appointmentStart) {
-        throw new BadRequestException('Lịch hẹn chưa được khám xong');
       }
     }
 
@@ -1084,7 +1093,11 @@ export class AppointmentsService {
     const count = await this.appointmentRepo.count({
       where: {
         appointment_date: Equal(today),
-        status: In([AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING]),
+        status: In([
+          AppointmentStatus.CONFIRMED,
+          AppointmentStatus.PENDING,
+          AppointmentStatus.IN_PROGRESS,
+        ]),
       },
     });
     return count;
@@ -1108,7 +1121,11 @@ export class AppointmentsService {
     const count = await this.appointmentRepo.count({
       where: {
         appointment_date: Equal(today),
-        status: In([AppointmentStatus.CONFIRMED, AppointmentStatus.PENDING]),
+        status: In([
+          AppointmentStatus.CONFIRMED,
+          AppointmentStatus.PENDING,
+          AppointmentStatus.IN_PROGRESS,
+        ]),
         doctor_schedule: { doctor: { id: doctorId } },
       },
     });

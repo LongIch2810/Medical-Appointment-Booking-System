@@ -17,11 +17,10 @@ import User from 'src/entities/user.entity';
 import UserRole from 'src/entities/userRole.entity';
 import { ROLE_NAME } from 'src/utils/constants';
 import {
+  Brackets,
   DataSource,
   EntityManager,
-  FindOptionsWhere,
   In,
-  ILike,
   QueryFailedError,
   Repository,
 } from 'typeorm';
@@ -409,32 +408,79 @@ export class UsersService {
     return result;
   }
 
-  async filterAndPaginationPatients(objectFilters: BodyFilterUsersDto) {
+  async filterAndPaginationPatients(
+    objectFilters: BodyFilterUsersDto,
+    actorUserId: number,
+    actorRoles: string[],
+  ) {
     let { page, limit } = objectFilters;
     const { search, arrange } = objectFilters;
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
-    let where: FindOptionsWhere<User> | FindOptionsWhere<User>[] | undefined;
-    const roleCondition = { roles: { role: { role_name: ROLE_NAME.PATIENT } } };
-    where = roleCondition;
-    const searchFields: (keyof User)[] = ['username', 'email', 'fullname'];
-    if (search) {
-      where = searchFields.map((field) => ({
-        [field]: ILike(`%${search}%`),
-        ...roleCondition,
-      }));
+
+    const isAdmin = actorRoles.includes(ROLE_NAME.ADMIN);
+    const isDoctor = actorRoles.includes(ROLE_NAME.DOCTOR);
+    if (!isAdmin && !isDoctor) {
+      throw new ForbiddenException(
+        'Bạn không có quyền xem danh sách bệnh nhân.',
+      );
     }
 
-    const [users, total] = await this.userRepo.findAndCount({
-      where,
-      relations: {
-        roles: { role: true },
-      },
-      order: { created_at: arrange.toUpperCase() as 'ASC' | 'DESC' },
-      skip,
-      take: limit,
-    });
+    const query = this.userRepo
+      .createQueryBuilder('patientUser')
+      .leftJoinAndSelect('patientUser.roles', 'userRole')
+      .leftJoinAndSelect('userRole.role', 'role')
+      .where('role.role_name = :patientRole', {
+        patientRole: ROLE_NAME.PATIENT,
+      });
+
+    if (search) {
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('patientUser.username ILIKE :search', {
+            search: `%${search}%`,
+          })
+            .orWhere('patientUser.email ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('patientUser.fullname ILIKE :search', {
+              search: `%${search}%`,
+            });
+        }),
+      );
+    }
+
+    if (!isAdmin) {
+      // Bác sĩ chỉ được xem những bệnh nhân đã từng có lịch hẹn với chính
+      // mình — tránh lộ thông tin liên hệ (SĐT, địa chỉ, ngày sinh...) của
+      // toàn bộ bệnh nhân trong hệ thống cho mọi tài khoản bác sĩ.
+      // Alias "patientUser" (not "user") — "user" is a reserved word in
+      // Postgres, so bare "user.id" inside this raw subquery parses as the
+      // CURRENT_USER special token and breaks with a syntax error.
+      query.andWhere(
+        `EXISTS (
+          SELECT 1 FROM appointments appt
+          INNER JOIN relatives rel ON rel.id = appt.patient_id
+          INNER JOIN doctor_schedules ds ON ds.id = appt.doctor_schedule_id
+          INNER JOIN doctors doc ON doc.id = ds.doctor_id
+          WHERE rel.user_id = "patientUser".id
+            AND doc.user_id = :actorUserId
+            AND appt.deleted_at IS NULL
+        )`,
+        { actorUserId },
+      );
+    }
+
+    query
+      .orderBy(
+        'patientUser.created_at',
+        arrange.toUpperCase() as 'ASC' | 'DESC',
+      )
+      .skip(skip)
+      .take(limit);
+
+    const [users, total] = await query.getManyAndCount();
     const result = new PaginationResultDto<UserResponseDto>(
       'users',
       UsersMapper.toUserListResponse(users),

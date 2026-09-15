@@ -17,6 +17,8 @@ type FormDialogProps = {
   submitLabel?: string;
   cancelLabel?: string;
   isSubmitting?: boolean;
+  /** Disable the submit button regardless of isSubmitting (eg. required fields still empty). */
+  submitDisabled?: boolean;
   /** Reset form state when dialog opens (eg. cleared values for create). */
   onOpen?: () => void;
   /**
@@ -36,6 +38,7 @@ export function FormDialog({
   submitLabel = "Lưu",
   cancelLabel = "Hủy",
   isSubmitting = false,
+  submitDisabled = false,
   onOpen,
   onSubmit,
   children,
@@ -51,7 +54,7 @@ export function FormDialog({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isSubmitting) return;
+    if (isSubmitting || submitDisabled) return;
     try {
       await onSubmit();
       setOpen(false);
@@ -66,9 +69,9 @@ export function FormDialog({
       <DialogContent className={dialogClassName}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription>{description}</DialogDescription>
-          ) : null}
+          <DialogDescription className={description ? undefined : "sr-only"}>
+            {description ?? title}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1 gap-4 pt-2">
           <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1.5 scrollbar-soft flex flex-col gap-3.5">
@@ -84,7 +87,11 @@ export function FormDialog({
             >
               {cancelLabel}
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="rounded-xl font-bold shadow-xs">
+            <Button
+              type="submit"
+              disabled={isSubmitting || submitDisabled}
+              className="rounded-xl font-bold shadow-xs"
+            >
               {isSubmitting ? "Đang lưu..." : submitLabel}
             </Button>
           </div>

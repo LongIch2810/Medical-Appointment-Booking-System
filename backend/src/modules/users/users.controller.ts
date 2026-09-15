@@ -176,8 +176,16 @@ export class UsersController {
   @Post('patients')
   @HttpCode(HttpStatus.OK)
   @Permissions(PERMISSIONS.PATIENT_READ)
-  getPatientsFilterAndPagination(@Body() objectFilters: BodyFilterUsersDto) {
-    return this.userService.filterAndPaginationPatients(objectFilters);
+  getPatientsFilterAndPagination(
+    @Body() objectFilters: BodyFilterUsersDto,
+    @Request() req,
+  ) {
+    const { userId, roles } = req.user as RequestPaylaod;
+    return this.userService.filterAndPaginationPatients(
+      objectFilters,
+      userId,
+      roles,
+    );
   }
 
   @ApiOperation({ summary: 'Chi tiết người dùng dành cho admin' })

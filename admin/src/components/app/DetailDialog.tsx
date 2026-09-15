@@ -46,9 +46,9 @@ export function DetailDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          {description ? (
-            <DialogDescription>{description}</DialogDescription>
-          ) : null}
+          <DialogDescription className={description ? undefined : "sr-only"}>
+            {description ?? title}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0 min-w-0 overflow-y-auto overscroll-contain pr-1 scrollbar-soft space-y-3 pt-2">
           {body ?? (

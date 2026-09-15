@@ -70,7 +70,13 @@ export interface HealthProfile {
 }
 
 export type AppointmentStatus =
-  "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED" | "ABSENT" | "EXPIRED";
+  | "PENDING"
+  | "CONFIRMED"
+  | "IN_PROGRESS"
+  | "COMPLETED"
+  | "CANCELLED"
+  | "ABSENT"
+  | "EXPIRED";
 
 export interface SpecialtySummary {
   id?: number;

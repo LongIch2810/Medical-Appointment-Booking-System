@@ -186,11 +186,7 @@ describe('AuthService', () => {
         'refresh_tokens:5',
         expect.stringContaining('"userAgent":"jest-agent"'),
       );
-      expect(usersService.updateUserField).toHaveBeenCalledWith(
-        5,
-        'is_active',
-        true,
-      );
+      expect(usersService.updateUserField).not.toHaveBeenCalled();
       expect(redisService.lPop).not.toHaveBeenCalled();
     });
 
@@ -344,7 +340,7 @@ describe('AuthService', () => {
       );
     });
 
-    it('blacklists the token, removes the session, and deactivates the user', async () => {
+    it('blacklists the token and removes the session', async () => {
       jwtService.decode.mockReturnValue({
         sub: 5,
         tokenId: 'tok-1',
@@ -366,11 +362,7 @@ describe('AuthService', () => {
         0,
         stored,
       );
-      expect(usersService.updateUserField).toHaveBeenCalledWith(
-        5,
-        'is_active',
-        false,
-      );
+      expect(usersService.updateUserField).not.toHaveBeenCalled();
       expect(result).toEqual({ message: 'Đăng xuất thành công!' });
     });
   });
@@ -393,11 +385,7 @@ describe('AuthService', () => {
 
       expect(redisService.incr).toHaveBeenCalledWith('session_version:5');
       expect(redisService.delData).toHaveBeenCalledWith('refresh_tokens:5');
-      expect(usersService.updateUserField).toHaveBeenCalledWith(
-        5,
-        'is_active',
-        false,
-      );
+      expect(usersService.updateUserField).not.toHaveBeenCalled();
       expect(result).toEqual({
         message: 'Đăng xuất tất cả các thiết bị thành công!',
       });

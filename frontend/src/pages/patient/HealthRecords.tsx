@@ -295,9 +295,11 @@ const HealthRecords: React.FC = () => {
       </Card>
 
       {!selectedHealthRecord ? (
-        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-10 text-center text-sm text-slate-500">
-          {t("healthRecords.selectRecordPrompt")}
-        </div>
+        healthProfiles.length > 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 p-10 text-center text-sm text-slate-500">
+            {t("healthRecords.selectRecordPrompt")}
+          </div>
+        ) : null
       ) : (
         <>
           {/* Active Record Banner */}

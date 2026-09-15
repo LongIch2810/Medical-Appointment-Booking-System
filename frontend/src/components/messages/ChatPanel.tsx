@@ -185,10 +185,15 @@ const ChatPanel: FC<ChatPanelProps> = ({
             description="Error loading messages."
             onRetry={onRetryMessages}
           />
+        ) : !activeChannelId ? (
+          <NotFoundResult
+            title={t("messages.noConversationSelectedTitle")}
+            description={t("messages.selectChannelPrompt")}
+          />
         ) : messages.length === 0 ? (
           <NotFoundResult
-            title={t("messages.emptyChannels")}
-            description={t("messages.selectChannelPrompt")}
+            title={t("messages.emptyConversationTitle")}
+            description={t("messages.emptyConversationDesc")}
           />
         ) : (
           messages.map((message) => (

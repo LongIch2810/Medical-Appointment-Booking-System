@@ -535,6 +535,9 @@ const vi = {
     emptyChannels: "Bạn chưa có cuộc trò chuyện nào",
     emptyChannelsDesc: "Tìm kiếm bác sĩ chuyên khoa và bắt đầu buổi tư vấn trực tuyến ngay hôm nay.",
     selectChannelPrompt: "Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu nhắn tin.",
+    noConversationSelectedTitle: "Chưa chọn cuộc trò chuyện",
+    emptyConversationTitle: "Chưa có tin nhắn nào",
+    emptyConversationDesc: "Hãy gửi lời chào để bắt đầu cuộc trò chuyện này.",
     inputPlaceholder: "Nhập tin nhắn tư vấn của bạn...",
     sendBtn: "Gửi tin",
     notFoundDoctor: "Không tìm thấy bác sĩ",
@@ -855,6 +858,7 @@ const vi = {
     appointment: {
       PENDING: "Chờ xác nhận",
       CONFIRMED: "Đã xác nhận",
+      IN_PROGRESS: "Đang khám",
       COMPLETED: "Đã khám",
       CANCELLED: "Đã hủy",
       ABSENT: "Vắng mặt",

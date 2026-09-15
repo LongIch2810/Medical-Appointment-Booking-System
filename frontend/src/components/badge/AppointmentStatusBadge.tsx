@@ -5,6 +5,7 @@ import type { AppointmentStatus } from "@/types/interface/patient.interface";
 export const appointmentStatusLabelMap: Record<AppointmentStatus, string> = {
   PENDING: "Chờ xác nhận",
   CONFIRMED: "Đã xác nhận",
+  IN_PROGRESS: "Đang khám",
   COMPLETED: "Đã khám",
   CANCELLED: "Đã hủy",
   ABSENT: "Vắng mặt",
@@ -14,6 +15,7 @@ export const appointmentStatusLabelMap: Record<AppointmentStatus, string> = {
 const statusBadgeClassMap: Record<AppointmentStatus, string> = {
   PENDING: "bg-amber-100 text-amber-800 border border-amber-200 dark:bg-[#FBBF24]/15 dark:text-[#FBBF24] dark:border-[#FBBF24]/40",
   CONFIRMED: "bg-sky-100 text-sky-800 border border-sky-200 dark:bg-[#60A5FA]/15 dark:text-[#60A5FA] dark:border-[#60A5FA]/40",
+  IN_PROGRESS: "bg-violet-100 text-violet-800 border border-violet-200 dark:bg-[#A78BFA]/15 dark:text-[#A78BFA] dark:border-[#A78BFA]/40",
   COMPLETED: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-[#34D399]/15 dark:text-[#34D399] dark:border-[#34D399]/40",
   CANCELLED: "bg-rose-100 text-rose-800 border border-rose-200 dark:bg-[#FB7185]/15 dark:text-[#FB7185] dark:border-[#FB7185]/40",
   ABSENT: "bg-slate-200 text-slate-700 border border-slate-300 dark:bg-[#1E293B] dark:text-[#94A3B8] dark:border-[#293548]",
@@ -23,6 +25,7 @@ const statusBadgeClassMap: Record<AppointmentStatus, string> = {
 const statusDotClassMap: Record<AppointmentStatus, string> = {
   PENDING: "bg-amber-500 dark:bg-[#FBBF24]",
   CONFIRMED: "bg-sky-500 dark:bg-[#60A5FA]",
+  IN_PROGRESS: "bg-violet-500 dark:bg-[#A78BFA]",
   COMPLETED: "bg-emerald-500 dark:bg-[#34D399]",
   CANCELLED: "bg-rose-500 dark:bg-[#FB7185]",
   ABSENT: "bg-slate-500 dark:bg-[#94A3B8]",
