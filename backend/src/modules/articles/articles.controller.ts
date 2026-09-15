@@ -121,4 +121,26 @@ export class ArticlesController {
   async getArticles(@Body() objectFilters: BodyFilterArticlesDto) {
     return this.articlesService.filterAndPagination(objectFilters);
   }
+
+  @ApiCookieAuth()
+  @ApiOperation({
+    summary: 'Danh sách bài viết của bác sĩ đang đăng nhập (phân trang, lọc)',
+  })
+  @Post('my-articles')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions(PERMISSIONS.ARTICLE_READ)
+  async getMyArticles(
+    @Request() req,
+    @Body() objectFilters: BodyFilterArticlesDto,
+  ) {
+    const { userId } = req.user;
+    // author_id luôn lấy từ user đang đăng nhập, không nhận từ client —
+    // tránh 1 bác sĩ tự truyền author_id của bác sĩ khác để xem bài viết
+    // không phải của mình.
+    return this.articlesService.filterAndPaginationByDoctors({
+      ...objectFilters,
+      author_id: userId,
+    });
+  }
 }

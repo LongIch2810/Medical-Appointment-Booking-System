@@ -45,6 +45,7 @@ import {
   useArticles,
   useCreateArticle,
   useDeleteArticle,
+  useDoctorArticles,
   useUpdateArticle,
 } from "@/hooks/useArticles";
 import {
@@ -4587,16 +4588,25 @@ function ArticlesModule({
   limit,
   onPageChange,
   onLimitChange,
-}: ModuleViewProps) {
+  scope,
+}: ModuleViewProps & { scope?: "admin" | "doctor" }) {
   const [approvalFilter, setApprovalFilter] = useState<
     "all" | "true" | "false"
   >("all");
-  const { data, isLoading, isError, refetch } = useArticles({
+  const listFilters = {
     page,
     limit,
     search: search || undefined,
     is_approve: approvalFilter,
+  };
+  const allArticles = useArticles(listFilters, {
+    enabled: scope !== "doctor",
   });
+  const myArticles = useDoctorArticles(listFilters, {
+    enabled: scope === "doctor",
+  });
+  const { data, isLoading, isError, refetch } =
+    scope === "doctor" ? myArticles : allArticles;
   const rows = data?.data?.articles ?? [];
   const total = data?.data?.total ?? 0;
   const approveArticle = useApproveArticle();
@@ -5298,6 +5308,12 @@ const moduleMeta: Record<
     description: "Bài viết chuyên môn của bác sĩ.",
     permissionLevel: permissions.articles,
   },
+  "doctor-articles": {
+    eyebrow: "Doctor workspace",
+    title: "Bài viết của tôi",
+    description: "Bài viết chuyên môn do bạn viết.",
+    permissionLevel: permissions.articles,
+  },
 };
 
 export function GenericModulePage({ moduleId }: { moduleId: string }) {
@@ -5366,6 +5382,8 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
         return <TopicsModule {...props} />;
       case "articles":
         return <ArticlesModule {...props} />;
+      case "doctor-articles":
+        return <ArticlesModule {...props} scope="doctor" />;
       default:
         return (
           <EmptyState

@@ -67,7 +67,7 @@ export const menuItems: MenuItem[] = [
     section: "Content",
     icon: BookOpenText,
     requiredPermissions: [permissions.articles],
-    moduleId: "articles",
+    moduleId: "doctor-articles",
   },
   {
     id: "doctor-topics",

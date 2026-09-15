@@ -12,6 +12,7 @@ import {
   deleteArticle,
   fetchArticleDetail,
   fetchArticles,
+  fetchDoctorArticles,
   updateArticle,
 } from "@/api/articleApi";
 import type {
@@ -21,15 +22,37 @@ import type {
 
 export const articleQueryKeys = {
   list: (filters: ArticleListPayload) => ["articles", filters] as const,
+  doctorList: (filters: ArticleListPayload) =>
+    ["doctor-articles", filters] as const,
   infinite: (filters: Omit<ArticleListPayload, "page">) =>
     ["articles-infinite", filters] as const,
   detail: (articleId: number) => ["article-detail", articleId] as const,
 };
 
-export function useArticles(filters: ArticleListPayload) {
+type ArticleQueryOptions = { enabled?: boolean };
+
+export function useArticles(
+  filters: ArticleListPayload,
+  options?: ArticleQueryOptions,
+) {
   return useQuery({
     queryKey: articleQueryKeys.list(filters),
     queryFn: () => fetchArticles(filters),
+    staleTime: 1000 * 60 * 5,
+    enabled: options?.enabled,
+  });
+}
+
+// Scoped to the signed-in doctor's own articles (backend forces author_id
+// from the JWT) — used by the /doctor/articles module instead of useArticles.
+export function useDoctorArticles(
+  filters: ArticleListPayload,
+  options?: ArticleQueryOptions,
+) {
+  return useQuery({
+    queryKey: articleQueryKeys.doctorList(filters),
+    queryFn: () => fetchDoctorArticles(filters),
+    enabled: options?.enabled,
     staleTime: 1000 * 60 * 5,
   });
 }
@@ -65,6 +88,7 @@ export function useCreateArticle() {
     onSuccess: () => {
       toast.success("Tạo bài viết thành công");
       queryClient.invalidateQueries({ queryKey: ["articles"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-articles"] });
     },
     onError: () => {
       toast.error("Tạo bài viết thất bại");
@@ -85,6 +109,7 @@ export function useUpdateArticle() {
     onSuccess: (_, variables) => {
       toast.success("Cập nhật bài viết thành công");
       queryClient.invalidateQueries({ queryKey: ["articles"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-articles"] });
       queryClient.invalidateQueries({
         queryKey: articleQueryKeys.detail(variables.articleId),
       });
@@ -102,6 +127,7 @@ export function useApproveArticle() {
     onSuccess: (_, articleId) => {
       toast.success("Duyệt bài viết thành công");
       queryClient.invalidateQueries({ queryKey: ["articles"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-articles"] });
       queryClient.invalidateQueries({
         queryKey: articleQueryKeys.detail(articleId),
       });
@@ -119,6 +145,7 @@ export function useDeleteArticle() {
     onSuccess: () => {
       toast.success("Xóa bài viết thành công");
       queryClient.invalidateQueries({ queryKey: ["articles"] });
+      queryClient.invalidateQueries({ queryKey: ["doctor-articles"] });
     },
     onError: () => {
       toast.error("Xóa bài viết thất bại");

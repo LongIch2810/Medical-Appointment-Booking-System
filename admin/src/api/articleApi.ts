@@ -34,6 +34,19 @@ export const fetchArticles = async (data: ArticleListPayload) => {
   };
 };
 
+// Server forces author_id from the signed-in doctor (JWT) — only their own
+// articles ever come back, regardless of what's in `data`.
+export const fetchDoctorArticles = async (data: ArticleListPayload) => {
+  const res = await axiosInstance.post<ApiResponse<ArticleListResponse>>(
+    "/articles/my-articles",
+    data,
+  );
+  return {
+    ...res.data,
+    data: normalizeArticleListResponse(res.data.data),
+  };
+};
+
 export const fetchArticleDetail = async (articleId: number) => {
   const res = await axiosInstance.get<ApiResponse<Article>>(
     `/articles/${articleId}`,

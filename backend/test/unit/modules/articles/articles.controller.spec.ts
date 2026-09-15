@@ -9,6 +9,7 @@ describe('ArticlesController', () => {
     getArticle: jest.fn(),
     approveArticle: jest.fn(),
     filterAndPagination: jest.fn(),
+    filterAndPaginationByDoctors: jest.fn(),
   };
   const controller = new ArticlesController(articlesService as never);
 
@@ -81,6 +82,36 @@ describe('ArticlesController', () => {
     expect(articlesService.filterAndPagination).toHaveBeenCalledWith(filters);
     expect(result).toEqual({ items: [] });
   });
+
+  it("lists only the authenticated doctor's own articles", async () => {
+    const filters = { page: 1 } as never;
+    articlesService.filterAndPaginationByDoctors.mockResolvedValue({
+      items: [],
+    });
+
+    const result = await controller.getMyArticles(
+      { user: { userId: 9 } } as never,
+      filters,
+    );
+
+    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith(
+      { page: 1, author_id: 9 },
+    );
+    expect(result).toEqual({ items: [] });
+  });
+
+  it('ignores any author_id the caller tries to smuggle in and forces their own userId', async () => {
+    const filters = { page: 1, author_id: 999 } as never;
+    articlesService.filterAndPaginationByDoctors.mockResolvedValue({
+      items: [],
+    });
+
+    await controller.getMyArticles({ user: { userId: 9 } } as never, filters);
+
+    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith(
+      { page: 1, author_id: 9 },
+    );
+  });
 });
 
 describe('ArticlesController authorization metadata', () => {
@@ -89,6 +120,7 @@ describe('ArticlesController authorization metadata', () => {
     ['updateArticle', PERMISSIONS.ARTICLE_UPDATE],
     ['deleteArticle', PERMISSIONS.ARTICLE_DELETE],
     ['approveArticle', PERMISSIONS.ARTICLE_APPROVE],
+    ['getMyArticles', PERMISSIONS.ARTICLE_READ],
   ] as const)('requires %s permission for %s', (method, permission) => {
     expect(
       Reflect.getMetadata(PERMISSIONS_KEY, ArticlesController.prototype[method]),
