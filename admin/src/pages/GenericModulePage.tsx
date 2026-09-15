@@ -15,6 +15,7 @@ import {
   Plus,
   RotateCcw,
   Search,
+  Upload,
   UserRound,
   UserX,
   XCircle,
@@ -4317,6 +4318,90 @@ function TopicsModule({
   );
 }
 
+function FileDropzone({
+  id,
+  files,
+  onFilesChange,
+  accept,
+  multiple = true,
+}: {
+  id: string;
+  files: File[];
+  onFilesChange: (files: File[]) => void;
+  accept?: string;
+  multiple?: boolean;
+}) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const addFiles = (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    const incoming = Array.from(list);
+    onFilesChange(multiple ? [...files, ...incoming] : incoming.slice(0, 1));
+  };
+
+  return (
+    <div className="space-y-2">
+      <label
+        htmlFor={id}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          addFiles(event.dataTransfer.files);
+        }}
+        className={
+          "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors " +
+          (isDragging
+            ? "border-primary bg-primary/5"
+            : "border-slate-200 bg-slate-50/60 hover:border-primary/60 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-primary/60 dark:hover:bg-slate-900/70")
+        }
+      >
+        <Upload className="size-5 text-slate-400 dark:text-slate-500" />
+        <div className="text-sm text-slate-600 dark:text-slate-300">
+          <span className="font-medium text-primary dark:text-emerald-400">
+            Bấm để chọn file
+          </span>{" "}
+          hoặc kéo thả vào đây
+        </div>
+        <input
+          id={id}
+          type="file"
+          accept={accept}
+          multiple={multiple}
+          className="hidden"
+          onChange={(event) => addFiles(event.target.files)}
+        />
+      </label>
+      {files.length > 0 ? (
+        <ul className="space-y-1">
+          {files.map((file, index) => (
+            <li
+              key={`${file.name}-${index}`}
+              className="flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+            >
+              <span className="truncate">{file.name}</span>
+              <button
+                type="button"
+                onClick={() =>
+                  onFilesChange(files.filter((_, i) => i !== index))
+                }
+                className="shrink-0 text-slate-400 transition-colors hover:text-rose-500 dark:text-slate-500 dark:hover:text-rose-400"
+                aria-label={`Xóa ${file.name}`}
+              >
+                <XCircle className="size-4" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 type ArticleFormState = {
   title: string;
   summary: string;
@@ -4483,19 +4568,12 @@ function ArticleFormDialog({
       </FormField>
       {mode === "create" ? (
         <FormField label="Tệp đính kèm" htmlFor="article-files">
-          <input
+          <FileDropzone
             id="article-files"
-            type="file"
-            multiple
-            onChange={(event) =>
-              setForm((prev) => ({
-                ...prev,
-                files: event.target.files
-                  ? Array.from(event.target.files)
-                  : [],
-              }))
+            files={form.files}
+            onFilesChange={(files) =>
+              setForm((prev) => ({ ...prev, files }))
             }
-            className="text-xs text-slate-900 dark:text-slate-200"
           />
         </FormField>
       ) : null}
