@@ -51,7 +51,6 @@ import {
 import {
   useAdminAppointments,
   useAppointmentDetail,
-  useCancelAppointment,
   useCreateAppointment,
   useUpdateAppointmentStatus,
 } from "@/hooks/useAppointments";
@@ -940,8 +939,7 @@ function AppointmentsModule({
   const total = data?.data?.total ?? 0;
   const { can } = usePermission();
   const updateStatus = useUpdateAppointmentStatus();
-  const cancelAppointment = useCancelAppointment();
-  const isMutating = updateStatus.isPending || cancelAppointment.isPending;
+  const isMutating = updateStatus.isPending;
 
   const canUpdateStatus = can(
     PERMISSIONS.APPOINTMENT_UPDATE_STATUS,
@@ -1289,7 +1287,12 @@ function AppointmentsModule({
                       description={`Bạn có chắc muốn hủy lịch hẹn #${row.id}?`}
                       destructive
                       isSubmitting={isMutating}
-                      onConfirm={() => cancelAppointment.mutateAsync(row.id)}
+                      onConfirm={() =>
+                        updateStatus.mutateAsync({
+                          appointmentId: row.id,
+                          payload: { status: "CANCELLED" },
+                        })
+                      }
                     />
                   ) : null}
                   {canCreateExamResult &&

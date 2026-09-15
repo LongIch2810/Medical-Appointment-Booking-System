@@ -1,6 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 import { dayNumberToEnum } from '../../shared/enums/dayOfWeek';
+import { encrypt } from '../../utils/encryption';
 
 /**
  * Bổ sung dữ liệu giao dịch (appointments, relatives, health_profile,
@@ -1301,7 +1302,7 @@ export class SeedTransactionalData1787000000000 implements MigrationInterface {
             INSERT INTO "messages" ("message_type","content","is_read","sender_id","channel_id","created_at","updated_at")
             VALUES ('regular',$1,$2,$3,$4,now(),now())
           `,
-          [conversation[i], Math.random() < 0.75, sender, channelId],
+          [encrypt(conversation[i]), Math.random() < 0.75, sender, channelId],
         );
       }
       convCount++;

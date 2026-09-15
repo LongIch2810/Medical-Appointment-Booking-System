@@ -99,6 +99,7 @@ describe('backend utilities', () => {
           start_time: '08:00',
           end_time: '09:30',
           is_active: true,
+          appointments: [],
         },
       ],
     });

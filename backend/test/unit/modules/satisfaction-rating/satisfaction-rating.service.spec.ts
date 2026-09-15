@@ -175,7 +175,20 @@ describe('SatisfactionRatingService', () => {
   });
 
   it('applies date and doctor filters with inclusive end-of-day', async () => {
+    const ratingStub = {
+      id: 1,
+      appointment: {
+        id: 10,
+        doctor_schedule: {
+          start_time: '08:00:00',
+          end_time: '09:00:00',
+          doctor: { id: 2, user: { fullname: 'BS Test' } },
+        },
+        patient: { id: 3, fullname: 'BN Test' },
+      },
+    };
     const query = builder();
+    query.getManyAndCount.mockResolvedValue([[ratingStub], 1]);
     repository.createQueryBuilder.mockReturnValue(query);
     const result = await service.filterAndPagination({
       page: 0,
@@ -185,13 +198,18 @@ describe('SatisfactionRatingService', () => {
       toDate: '2026-09-03',
       doctorId: 8,
     });
-    expect(result).toEqual({
-      satisfactionRatings: [{ id: 1 }],
-      total: 1,
-      page: 1,
-      limit: 1,
-      totalPages: 1,
-    });
+    expect(result.satisfactionRatings).toHaveLength(1);
+    // Regression test: FE đọc row.appointment.doctor.user.fullname /
+    // row.appointment.patient.fullname (cùng shape AppointmentResponseDto
+    // dùng ở /appointments) để hiện cột "Bác sĩ"/"Bệnh nhân" — trả thẳng
+    // entity lồng nhau (doctor_schedule.doctor) khiến FE luôn thấy "-".
+    expect(result.satisfactionRatings[0].appointment.doctor.user.fullname).toBe(
+      'BS Test',
+    );
+    expect(result.satisfactionRatings[0].appointment.patient.fullname).toBe(
+      'BN Test',
+    );
+    expect(result.total).toBe(1);
     expect(query.andWhere).toHaveBeenCalledTimes(3);
     const endDate = query.andWhere.mock.calls[1][1].toDate as Date;
     expect([

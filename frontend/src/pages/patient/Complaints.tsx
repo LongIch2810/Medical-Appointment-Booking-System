@@ -189,14 +189,17 @@ const MyComplaints = () => {
 
   const formatDate = (d: string | null | undefined) => {
     if (!d) return "-";
-    return new Date(d).toLocaleDateString(
+    // Backend trả created_at/updated_at dạng "dd/MM/yyyy" (DateFormatInterceptor) —
+    // new Date("dd/MM/yyyy") bị JS hiểu nhầm thành MM/DD/YYYY (hoặc Invalid Date
+    // khi ngày > 12), nên phải tự parse theo đúng thứ tự dd/MM/yyyy.
+    const [day, month, year] = d.split("/").map(Number);
+    if (!day || !month || !year) return "-";
+    return new Date(year, month - 1, day).toLocaleDateString(
       i18n.language === "en" ? "en-US" : "vi-VN",
       {
         day: "2-digit",
         month: "2-digit",
         year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
       },
     );
   };

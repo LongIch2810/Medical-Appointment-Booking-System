@@ -9,6 +9,7 @@ import { QueryFailedError, Repository } from 'typeorm';
 import SatisfactionRating from 'src/entities/satisfactionRating.entity';
 import { BodyCreateSatisfactionRating } from './dto/request/bodyCreateSatisfactionRating.dto';
 import { AppointmentsService } from '../appointments/appointments.service';
+import { AppointmentsMapper } from '../appointments/appointments.mapper';
 import { RolePermissionService } from '../role-permission/role-permission.service';
 import { PERMISSIONS } from 'src/utils/constants';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
@@ -112,6 +113,8 @@ export class SatisfactionRatingService {
       .innerJoinAndSelect('satisfaction_rating.appointment', 'appointment')
       .innerJoinAndSelect('appointment.doctor_schedule', 'doctor_schedule')
       .innerJoinAndSelect('doctor_schedule.doctor', 'doctor')
+      .innerJoinAndSelect('doctor.user', 'doctor_user')
+      .innerJoinAndSelect('appointment.patient', 'patient')
       .orderBy(
         'satisfaction_rating.created_at',
         arrange.toUpperCase() as 'ASC' | 'DESC',
@@ -135,7 +138,25 @@ export class SatisfactionRatingService {
     }
     const [satisfactionRatings, total] = await query.getManyAndCount();
     const totalPages = Math.ceil(total / limit);
-    return { satisfactionRatings, total, page, limit, totalPages };
+    // Admin FE đọc tên bác sĩ/bệnh nhân qua appointment.doctor.user.fullname
+    // và appointment.patient (cùng shape AppointmentResponseDto dùng ở
+    // /appointments) — trả thẳng entity lồng nhau (doctor_schedule.doctor)
+    // như trước khiến FE luôn thấy "-" dù DB có dữ liệu.
+    const ratingsWithMappedAppointment = satisfactionRatings.map(
+      (rating) => ({
+        ...rating,
+        appointment: AppointmentsMapper.toAppointmentResponseDto(
+          rating.appointment,
+        ),
+      }),
+    );
+    return {
+      satisfactionRatings: ratingsWithMappedAppointment,
+      total,
+      page,
+      limit,
+      totalPages,
+    };
   }
 
   async isSatisfactionRatingExist(appointment_id: number) {
