@@ -8,7 +8,7 @@ const axiosMock = vi.hoisted(() => ({
 vi.mock('@/configs/axios', () => ({ default: axiosMock }));
 
 import { createChannel, findChannelByParticipants, getChannelById } from '@/api/channelApi';
-import { fetchDoctors, fetchOutstandingDoctors } from '@/api/doctorApi';
+import { fetchDoctors, fetchDoctorSuggestions, fetchOutstandingDoctors } from '@/api/doctorApi';
 
 describe('patient API normalization', () => {
   beforeEach(() => {
@@ -91,5 +91,28 @@ describe('patient API normalization', () => {
     });
     const result = await fetchDoctors({ page: 1 } as never);
     expect(result.data.doctors).toEqual([]);
+  });
+
+  it('fetches doctor/specialty autocomplete suggestions with the search query param', async () => {
+    axiosMock.get.mockResolvedValue({
+      data: {
+        success: true,
+        data: {
+          doctors: [{ id: 1, fullname: 'Nguyễn Văn An', picture: null, specialty: 'Tim mạch' }],
+          specialties: [{ id: 2, name: 'Tim mạch' }],
+        },
+      },
+    });
+
+    const result = await fetchDoctorSuggestions('tim');
+
+    expect(axiosMock.get).toHaveBeenCalledWith('/doctors/suggestions', {
+      params: { search: 'tim' },
+      signal: undefined,
+    });
+    expect(result.data.doctors).toEqual([
+      { id: 1, fullname: 'Nguyễn Văn An', picture: null, specialty: 'Tim mạch' },
+    ]);
+    expect(result.data.specialties).toEqual([{ id: 2, name: 'Tim mạch' }]);
   });
 });

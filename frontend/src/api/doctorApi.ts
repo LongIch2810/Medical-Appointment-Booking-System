@@ -1,6 +1,7 @@
 import axiosInstance from "@/configs/axios";
 import type { DoctorCardData } from "@/types/global";
 import type { filterDoctors } from "@/types/interface/filterDoctors";
+import type { DoctorSuggestionsResult } from "@/types/interface/doctorSuggestion.interface";
 
 type ApiResponse<T> = {
   statusCode: number;
@@ -94,6 +95,17 @@ export const fetchDoctors = async (
       doctors: normalizeDoctorList(res.data.data?.doctors),
     },
   };
+};
+
+export const fetchDoctorSuggestions = async (
+  search: string,
+  signal?: AbortSignal,
+): Promise<ApiResponse<DoctorSuggestionsResult>> => {
+  const res = await axiosInstance.get("/doctors/suggestions", {
+    params: { search },
+    signal,
+  });
+  return res.data;
 };
 
 export const fetchDoctorDetail = async (doctorId: number) => {

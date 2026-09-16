@@ -20,6 +20,9 @@ import { BodyCreateDoctorDto } from './dto/request/bodyCreateDoctor.dto';
 import { BodyUpdateDoctorDto } from './dto/request/bodyUpdateDoctor.dto';
 import User from 'src/entities/user.entity';
 import Specialty from 'src/entities/specialty.entity';
+import { plainToInstance } from 'class-transformer';
+import { DoctorSuggestionResponseDto } from './dto/response/doctorSuggestionResponse.dto';
+import { SpecialtySuggestionResponseDto } from './dto/response/specialtySuggestionResponse.dto';
 
 const normalizeDoctorAvgRating = (value: unknown) => {
   const avgRating = Number(value);
@@ -139,7 +142,8 @@ export class DoctorsService {
         key: 'area',
       },
       search && {
-        condition: 'LOWER(user.fullname) LIKE LOWER(:search)',
+        condition:
+          'UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:search))',
         value: `%${search}%`,
         key: 'search',
       },
@@ -174,6 +178,95 @@ export class DoctorsService {
     await this.redisCacheService.setData(cacheKey, result, 3600);
 
     return result;
+  }
+
+  async getSuggestions(search: string) {
+    const term = search.trim();
+    const prefixParam = `${term}%`;
+    const likeParam = `%${term}%`;
+
+    const [doctorRows, specialtyRows] = await Promise.all([
+      this.doctorRepo
+        .createQueryBuilder('doctor')
+        .innerJoin('doctor.user', 'user')
+        .leftJoin('doctor.specialty', 'specialty')
+        .select('doctor.id', 'id')
+        .addSelect('user.fullname', 'fullname')
+        .addSelect('user.picture', 'picture')
+        .addSelect('specialty.name', 'specialty_name')
+        .addSelect(
+          `CASE
+            WHEN UNACCENT(LOWER(user.fullname)) = UNACCENT(LOWER(:term)) THEN 0
+            WHEN UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:prefixParam)) THEN 1
+            WHEN UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:likeParam)) THEN 2
+            ELSE 3
+          END`,
+          'match_rank',
+        )
+        .addSelect(
+          'similarity(UNACCENT(LOWER(user.fullname)), UNACCENT(LOWER(:term)))',
+          'similarity_score',
+        )
+        .where(
+          `UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:likeParam))
+           OR similarity(UNACCENT(LOWER(user.fullname)), UNACCENT(LOWER(:term))) > 0.3`,
+        )
+        .setParameters({ term, prefixParam, likeParam })
+        .orderBy('match_rank', 'ASC')
+        .addOrderBy('similarity_score', 'DESC')
+        .addOrderBy('user.fullname', 'ASC')
+        .limit(5)
+        .getRawMany(),
+      this.specialtyRepo
+        .createQueryBuilder('specialty')
+        .select('specialty.id', 'id')
+        .addSelect('specialty.name', 'name')
+        .addSelect(
+          `CASE
+            WHEN UNACCENT(LOWER(specialty.name)) = UNACCENT(LOWER(:term)) THEN 0
+            WHEN UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:prefixParam)) THEN 1
+            WHEN UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:likeParam)) THEN 2
+            ELSE 3
+          END`,
+          'match_rank',
+        )
+        .addSelect(
+          'similarity(UNACCENT(LOWER(specialty.name)), UNACCENT(LOWER(:term)))',
+          'similarity_score',
+        )
+        .where(
+          `UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:likeParam))
+           OR similarity(UNACCENT(LOWER(specialty.name)), UNACCENT(LOWER(:term))) > 0.3`,
+        )
+        .setParameters({ term, prefixParam, likeParam })
+        .orderBy('match_rank', 'ASC')
+        .addOrderBy('similarity_score', 'DESC')
+        .addOrderBy('specialty.name', 'ASC')
+        .limit(3)
+        .getRawMany(),
+    ]);
+
+    const doctors = plainToInstance(
+      DoctorSuggestionResponseDto,
+      doctorRows.map((row) => ({
+        id: Number(row.id),
+        fullname: row.fullname,
+        picture: row.picture,
+        specialty: row.specialty_name ?? null,
+      })),
+      { excludeExtraneousValues: true },
+    );
+
+    const specialties = plainToInstance(
+      SpecialtySuggestionResponseDto,
+      specialtyRows.map((row) => ({
+        id: Number(row.id),
+        name: row.name,
+      })),
+      { excludeExtraneousValues: true },
+    );
+
+    return { doctors, specialties };
   }
 
   async getDoctorDetail(doctorId: number) {

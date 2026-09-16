@@ -9,9 +9,11 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { BodyFilterDoctorsDto } from './dto/request/bodyFilterDoctors.dto';
+import { QueryDoctorSuggestionsDto } from './dto/request/queryDoctorSuggestions.dto';
 import { DoctorsService } from './doctors.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateDoctorDto } from './dto/request/bodyCreateDoctor.dto';
@@ -54,6 +56,15 @@ export class DoctorsController {
     const outstandingDoctors =
       await this.doctorsService.getOutstandingDoctors();
     return outstandingDoctors;
+  }
+
+  @ApiOperation({
+    summary: 'Gợi ý tìm kiếm bác sĩ / chuyên khoa (autocomplete)',
+  })
+  @Get('suggestions')
+  @HttpCode(HttpStatus.OK)
+  async getDoctorSuggestions(@Query() query: QueryDoctorSuggestionsDto) {
+    return this.doctorsService.getSuggestions(query.search);
   }
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)

@@ -297,6 +297,7 @@ const en = {
     pageTitle: "Medical Specialists Directory",
     pageSubtitle: "Search doctors by specialty, experience, hospital, or region and book appointments online with ease.",
     searchPlaceholder: "Search by doctor name, specialty, or hospital...",
+    searchButton: "Search",
     specialtyFilterAll: "All Specialties",
     activeFiltersLabel: "Active filter",
     resultsCount: "Found {{count}} matching doctors",

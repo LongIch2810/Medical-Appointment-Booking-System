@@ -297,6 +297,7 @@ const vi = {
     pageTitle: "Đội ngũ Bác sĩ Chuyên khoa",
     pageSubtitle: "Tìm kiếm bác sĩ theo chuyên khoa, kinh nghiệm, bệnh viện hoặc khu vực và đặt lịch khám nhanh chóng.",
     searchPlaceholder: "Tìm kiếm theo tên bác sĩ, bệnh viện, chuyên khoa...",
+    searchButton: "Tìm kiếm",
     specialtyFilterAll: "Tất cả chuyên khoa",
     activeFiltersLabel: "Đang lọc",
     resultsCount: "Tìm thấy {{count}} bác sĩ phù hợp",

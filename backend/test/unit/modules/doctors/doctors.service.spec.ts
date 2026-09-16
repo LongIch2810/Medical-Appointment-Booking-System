@@ -12,6 +12,7 @@ function makeQb(overrides: Partial<Record<string, any>> = {}) {
     select: jest.fn().mockReturnThis(),
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     leftJoin: jest.fn().mockReturnThis(),
+    innerJoin: jest.fn().mockReturnThis(),
     setParameters: jest.fn().mockReturnThis(),
     addSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
@@ -20,7 +21,9 @@ function makeQb(overrides: Partial<Record<string, any>> = {}) {
     addOrderBy: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),
+    limit: jest.fn().mockReturnThis(),
     getRawAndEntities: jest.fn().mockResolvedValue({ entities: [], raw: [] }),
+    getRawMany: jest.fn().mockResolvedValue([]),
     getCount: jest.fn().mockResolvedValue(0),
     getQuery: jest.fn().mockReturnValue(''),
     groupBy: jest.fn().mockReturnThis(),
@@ -39,6 +42,7 @@ describe('DoctorsService', () => {
     softDelete: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
+  let specialtyRepo: { createQueryBuilder: jest.Mock };
 
   beforeEach(async () => {
     redisCacheService = {
@@ -56,12 +60,16 @@ describe('DoctorsService', () => {
       createQueryBuilder: jest.fn(() => makeQb()),
     };
 
+    specialtyRepo = {
+      createQueryBuilder: jest.fn(() => makeQb()),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DoctorsService,
         { provide: getRepositoryToken(Doctor), useValue: doctorRepo },
         { provide: getRepositoryToken(User), useValue: {} },
-        { provide: getRepositoryToken(Specialty), useValue: {} },
+        { provide: getRepositoryToken(Specialty), useValue: specialtyRepo },
         { provide: RedisCacheService, useValue: redisCacheService },
       ],
     }).compile();
@@ -118,6 +126,91 @@ describe('DoctorsService', () => {
       const result = await service.getDoctorDetail(17);
 
       expect((result as { avg_rating: number }).avg_rating).toBe(5);
+    });
+  });
+
+  describe('filterAndPagination', () => {
+    it('filters doctors by fullname using the existing case-insensitive LIKE search condition', async () => {
+      redisCacheService.getData.mockResolvedValue(null);
+      const qb = makeQb();
+      doctorRepo.createQueryBuilder.mockImplementation(() => qb);
+
+      await service.filterAndPagination({
+        page: 1,
+        limit: 20,
+        search: 'An',
+      } as never);
+
+      expect(qb.andWhere).toHaveBeenCalledWith(
+        'UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:search))',
+        { search: '%An%' },
+      );
+    });
+  });
+
+  describe('getSuggestions', () => {
+    it('ranks doctor-name matches by exact/prefix/fuzzy and limits to 5', async () => {
+      const doctorQb = makeQb({
+        getRawMany: jest.fn().mockResolvedValue([
+          {
+            id: 1,
+            fullname: 'Nguyễn Văn An',
+            picture: null,
+            specialty_name: 'Tim mạch',
+          },
+        ]),
+      });
+      const specialtyQb = makeQb({ getRawMany: jest.fn().mockResolvedValue([]) });
+      doctorRepo.createQueryBuilder.mockReturnValue(doctorQb);
+      specialtyRepo.createQueryBuilder.mockReturnValue(specialtyQb);
+
+      const result = await service.getSuggestions('Nguyễn Văn An');
+
+      expect(doctorQb.limit).toHaveBeenCalledWith(5);
+      expect(doctorQb.orderBy).toHaveBeenCalledWith('match_rank', 'ASC');
+      expect(doctorQb.addOrderBy).toHaveBeenCalledWith(
+        'similarity_score',
+        'DESC',
+      );
+      expect(doctorQb.setParameters).toHaveBeenCalledWith({
+        term: 'Nguyễn Văn An',
+        prefixParam: 'Nguyễn Văn An%',
+        likeParam: '%Nguyễn Văn An%',
+      });
+      expect(result.doctors).toHaveLength(1);
+      expect(result.doctors[0]).toMatchObject({
+        id: 1,
+        fullname: 'Nguyễn Văn An',
+        specialty: 'Tim mạch',
+      });
+    });
+
+    it('ranks specialty-name matches alongside doctor matches and limits to 3', async () => {
+      const doctorQb = makeQb({ getRawMany: jest.fn().mockResolvedValue([]) });
+      const specialtyQb = makeQb({
+        getRawMany: jest.fn().mockResolvedValue([{ id: 2, name: 'Tim mạch' }]),
+      });
+      doctorRepo.createQueryBuilder.mockReturnValue(doctorQb);
+      specialtyRepo.createQueryBuilder.mockReturnValue(specialtyQb);
+
+      const result = await service.getSuggestions('tim');
+
+      expect(specialtyQb.limit).toHaveBeenCalledWith(3);
+      expect(result.specialties).toEqual([{ id: 2, name: 'Tim mạch' }]);
+      expect(result.doctors).toEqual([]);
+    });
+
+    it('returns empty groups when nothing matches either doctors or specialties', async () => {
+      doctorRepo.createQueryBuilder.mockReturnValue(
+        makeQb({ getRawMany: jest.fn().mockResolvedValue([]) }),
+      );
+      specialtyRepo.createQueryBuilder.mockReturnValue(
+        makeQb({ getRawMany: jest.fn().mockResolvedValue([]) }),
+      );
+
+      const result = await service.getSuggestions('zzz');
+
+      expect(result).toEqual({ doctors: [], specialties: [] });
     });
   });
 

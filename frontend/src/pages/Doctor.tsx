@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { RotateCcw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import DialogChooseSpecialty from "../components/dialog/DialogChooseSpecialty";
@@ -8,7 +7,7 @@ import DialogChooseArea from "@/components/dialog/DialogChooseArea";
 import DialogAutoBooking from "@/components/dialog/DialogAutoBooking";
 import { useFilterDoctorsStore } from "@/store/filterDoctorsStore";
 import { useSearchParams } from "react-router-dom";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGetDoctorsInfinite } from "@/hooks/useGetDoctorsInfinite";
 import DoctorCardSkeleton from "@/components/skeleton/DoctorCardSkeleton";
 import DoctorCard from "@/components/card/DoctorCard";
@@ -16,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import Loading from "@/components/loading/Loading";
 import NotFoundResult from "@/components/notification/NotFoundResult";
 import ErrorState from "@/components/notification/ErrorState";
-import { useDebounce } from "@/hooks/useDebounce";
+import DoctorSearchAutocomplete from "@/components/search/DoctorSearchAutocomplete";
 
 const Doctor = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -36,7 +35,12 @@ const Doctor = () => {
   } = useFilterDoctorsStore();
   const initialSearchParams = useRef(searchParams).current;
 
-  const debouncedSearch = useDebounce(search, 500);
+  // Typing does NOT call the doctors list API — it only feeds the
+  // autocomplete suggestions dropdown (its own separate, debounced query).
+  // The list only re-searches by text when the user explicitly submits:
+  // the search button, Enter (with no suggestion highlighted), or a
+  // URL-provided value on first load.
+  const [effectiveSearch, setEffectiveSearch] = useState(search);
 
   useEffect(() => {
     const urlSearch = initialSearchParams.get("search") || "";
@@ -47,6 +51,7 @@ const Doctor = () => {
     const urlArea = initialSearchParams.get("area") || "";
 
     setSearch(urlSearch);
+    setEffectiveSearch(urlSearch);
     setSpecialtyIdSelect(urlSpecialty);
     setMinExperienceSelect(urlMinExp);
     setMaxExperienceSelect(urlMaxExp);
@@ -89,7 +94,7 @@ const Doctor = () => {
       max_experience: maxExperienceSelect || undefined,
       workplace: workplaceInput || undefined,
       area: areaSelect || undefined,
-      search: debouncedSearch || undefined,
+      search: effectiveSearch || undefined,
     }),
     [
       specialtyIdSelect,
@@ -97,7 +102,7 @@ const Doctor = () => {
       maxExperienceSelect,
       workplaceInput,
       areaSelect,
-      debouncedSearch,
+      effectiveSearch,
     ]
   );
 
@@ -112,10 +117,6 @@ const Doctor = () => {
   } = useGetDoctorsInfinite(filters);
   const doctors = data?.pages.flatMap((page) => page.data.doctors) || [];
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
   const hasActiveFilters =
     Boolean(search) ||
     Boolean(specialtyIdSelect) ||
@@ -126,12 +127,17 @@ const Doctor = () => {
 
   const handleResetFilters = () => {
     setSearch("");
+    setEffectiveSearch("");
     setSpecialtyIdSelect(0);
     setMinExperienceSelect(0);
     setMaxExperienceSelect(0);
     setWorkplaceInput("");
     setAreaSelect("");
     setSearchParams({});
+  };
+
+  const handleSearchSubmit = () => {
+    setEffectiveSearch(search);
   };
 
   const { t } = useTranslation();
@@ -148,15 +154,25 @@ const Doctor = () => {
           </p>
         </div>
 
-        <div className="max-w-2xl mx-auto">
-          <Input
-            placeholder={t("doctor.searchPlaceholder")}
-            className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
-            icon={<Search className="text-slate-400" size={18} />}
-            value={search}
-            onChange={handleSearch}
-            aria-label={t("doctor.searchPlaceholder")}
-          />
+        <div className="max-w-2xl mx-auto flex gap-2">
+          <div className="flex-1">
+            <DoctorSearchAutocomplete
+              placeholder={t("doctor.searchPlaceholder")}
+              className="h-12 md:h-13 text-sm md:text-base rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 placeholder:text-slate-400 text-slate-900 dark:text-slate-100 shadow-sm hover:border-slate-300 dark:hover:border-slate-700 px-5"
+              value={search}
+              onChange={setSearch}
+              onSelectSpecialty={setSpecialtyIdSelect}
+              onSubmit={handleSearchSubmit}
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={handleSearchSubmit}
+            className="h-12 md:h-13 shrink-0 rounded-full px-5 font-bold shadow-sm cursor-pointer"
+          >
+            <Search className="h-4 w-4" />
+            <span className="hidden sm:inline">{t("doctor.searchButton")}</span>
+          </Button>
         </div>
 
         <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-3 mt-4 md:justify-center items-center">

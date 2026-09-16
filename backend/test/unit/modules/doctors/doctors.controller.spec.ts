@@ -6,6 +6,7 @@ describe('DoctorsController', () => {
     filterAndPagination: jest.fn(),
     create: jest.fn(),
     getOutstandingDoctors: jest.fn(),
+    getSuggestions: jest.fn(),
     getDoctorDetail: jest.fn(),
     update: jest.fn(),
     remove: jest.fn(),
@@ -43,6 +44,17 @@ describe('DoctorsController', () => {
 
     expect(doctorsService.getOutstandingDoctors).toHaveBeenCalledWith();
     expect(result).toEqual([{ id: 1 }]);
+  });
+
+  it('gets doctor/specialty autocomplete suggestions', async () => {
+    const query = { search: 'nguyen' } as never;
+    const suggestions = { doctors: [{ id: 1 }], specialties: [{ id: 2 }] };
+    doctorsService.getSuggestions.mockResolvedValue(suggestions);
+
+    const result = await controller.getDoctorSuggestions(query);
+
+    expect(doctorsService.getSuggestions).toHaveBeenCalledWith('nguyen');
+    expect(result).toEqual(suggestions);
   });
 
   it('gets a doctor detail', async () => {
@@ -85,4 +97,13 @@ describe('DoctorsController authorization metadata', () => {
       Reflect.getMetadata(PERMISSIONS_KEY, DoctorsController.prototype[method]),
     ).toEqual([permission]);
   });
+
+  it.each(['getFilterDoctors', 'getOutstandingDoctors', 'getDoctorSuggestions'] as const)(
+    'is public (no permission metadata) for %s',
+    (method) => {
+      expect(
+        Reflect.getMetadata(PERMISSIONS_KEY, DoctorsController.prototype[method]),
+      ).toBeUndefined();
+    },
+  );
 });
