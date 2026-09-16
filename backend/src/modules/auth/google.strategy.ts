@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy, VerifyCallback } from 'passport-google-oauth20';
@@ -46,6 +46,27 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const user = await this.usersService.findByUsernameOrEmail(email);
 
     if (user) {
+      // Đăng nhập Google đi vòng qua AuthService.validateUser() (chỉ dùng cho
+      // đăng nhập bằng mật khẩu) nên phải tự kiểm tra is_locking/is_active ở
+      // đây — nếu không, tài khoản bị khóa/vô hiệu hóa vẫn đăng nhập được
+      // bình thường miễn là dùng nút "Đăng nhập bằng Google".
+      if (user.is_locking) {
+        return done(
+          new ForbiddenException(
+            'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+          ),
+          null,
+        );
+      }
+      if (!user.is_active) {
+        return done(
+          new ForbiddenException(
+            'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
+          ),
+          null,
+        );
+      }
+
       if (!user.picture && picture) {
         await this.usersService.updateUserField(user.id, 'picture', picture);
       }

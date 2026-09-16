@@ -52,6 +52,17 @@ export class AuthService {
       return null;
     }
 
+    if (user.is_locking) {
+      throw new ForbiddenException(
+        'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+    if (!user.is_active) {
+      throw new ForbiddenException(
+        'Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên.',
+      );
+    }
+
     const roles = user.roles.map((r) => r.role.role_name);
     return { userId: user.id, roles };
   }

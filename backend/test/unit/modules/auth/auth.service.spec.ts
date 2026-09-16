@@ -138,12 +138,55 @@ describe('AuthService', () => {
       usersService.findByUsernameOrEmail.mockResolvedValue({
         id: 7,
         password: passwordHash,
+        is_active: true,
+        is_locking: false,
         roles: [{ role: { role_name: 'patient' } }],
       });
 
       await expect(
         service.validateUser('user@example.com', 'correct-password'),
       ).resolves.toEqual({ userId: 7, roles: ['patient'] });
+    });
+
+    // Regression: is_locking/is_active were never checked anywhere in the
+    // auth flow — a locked or deactivated account could still log in fresh
+    // with the right password, and its existing session/refresh token kept
+    // working indefinitely, making the admin "Khóa"/"Vô hiệu hóa" actions a
+    // no-op beyond the admin panel's own display.
+    it('rejects login for a locked account even with the correct password', async () => {
+      const passwordHash = await bcrypt.hash('correct-password', 10);
+      usersService.findByUsernameOrEmail.mockResolvedValue({
+        id: 7,
+        password: passwordHash,
+        is_active: true,
+        is_locking: true,
+        roles: [{ role: { role_name: 'patient' } }],
+      });
+
+      await expect(
+        service.validateUser('user@example.com', 'correct-password'),
+      ).rejects.toMatchObject({
+        constructor: ForbiddenException,
+        message: expect.stringContaining('đã bị khóa'),
+      });
+    });
+
+    it('rejects login for a deactivated account even with the correct password', async () => {
+      const passwordHash = await bcrypt.hash('correct-password', 10);
+      usersService.findByUsernameOrEmail.mockResolvedValue({
+        id: 7,
+        password: passwordHash,
+        is_active: false,
+        is_locking: false,
+        roles: [{ role: { role_name: 'patient' } }],
+      });
+
+      await expect(
+        service.validateUser('user@example.com', 'correct-password'),
+      ).rejects.toMatchObject({
+        constructor: ForbiddenException,
+        message: expect.stringContaining('vô hiệu hóa'),
+      });
     });
   });
 

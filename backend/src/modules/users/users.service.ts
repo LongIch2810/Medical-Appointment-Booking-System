@@ -515,6 +515,9 @@ export class UsersService {
     }
     user.is_locking = isLocking;
     const updatedUser = await this.userRepo.save(user);
+    if (isLocking) {
+      await this.revokeAllSessions(userId);
+    }
     return UsersMapper.toUserProfileResponse(updatedUser);
   }
 
@@ -530,7 +533,24 @@ export class UsersService {
     }
     user.is_active = isActive;
     const updatedUser = await this.userRepo.save(user);
+    if (!isActive) {
+      await this.revokeAllSessions(userId);
+    }
     return UsersMapper.toUserProfileResponse(updatedUser);
+  }
+
+  /**
+   * Đăng xuất khỏi mọi phiên hiện có ngay lập tức — cùng cơ chế dùng khi đổi
+   * mật khẩu (bump session_version để access/refresh token cũ bị JwtStrategy/
+   * JwtRefreshStrategy từ chối). Bắt buộc phải gọi ngay khi admin khóa/vô
+   * hiệu hóa một tài khoản: trước đây is_locking/is_active không hề được
+   * kiểm tra ở đâu trong luồng xác thực, nên tài khoản bị khóa vẫn dùng được
+   * bình thường cho tới khi access token tự hết hạn (15 phút) và vẫn refresh
+   * được vô thời hạn.
+   */
+  private async revokeAllSessions(userId: number) {
+    await this.redisCacheService.incr(`session_version:${userId}`);
+    await this.redisCacheService.delData(`refresh_tokens:${userId}`);
   }
 
   private hasAdminRole(user: User): boolean {

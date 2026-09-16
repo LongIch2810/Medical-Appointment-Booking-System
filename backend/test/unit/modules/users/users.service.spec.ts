@@ -35,6 +35,7 @@ describe('UsersService', () => {
       setData: jest.fn(),
       delData: jest.fn(),
       delByPrefix: jest.fn(),
+      incr: jest.fn(),
     } as unknown as jest.Mocked<RedisCacheService>;
 
     userRepo = {
@@ -227,7 +228,7 @@ describe('UsersService', () => {
       expect(userRepo.save).not.toHaveBeenCalled();
     });
 
-    it('locks a non-ADMIN account', async () => {
+    it('locks a non-ADMIN account and revokes their current session', async () => {
       const user = {
         id: 2,
         is_locking: false,
@@ -240,9 +241,19 @@ describe('UsersService', () => {
 
       expect(user.is_locking).toBe(true);
       expect(userRepo.save).toHaveBeenCalledWith(user);
+      // Regression: locking used to only flip the column — the account's
+      // existing access/refresh token kept working until the access token
+      // naturally expired (15 min) and could be refreshed indefinitely,
+      // since nothing in the auth flow ever checked is_locking. Bumping
+      // session_version (same mechanism as change-password) forces an
+      // immediate re-login.
+      expect(redisCacheService.incr).toHaveBeenCalledWith('session_version:2');
+      expect(redisCacheService.delData).toHaveBeenCalledWith(
+        'refresh_tokens:2',
+      );
     });
 
-    it('allows unlocking an ADMIN account (only locking is restricted)', async () => {
+    it('allows unlocking an ADMIN account (only locking is restricted) without touching sessions', async () => {
       const user = {
         id: 1,
         is_locking: true,
@@ -252,6 +263,7 @@ describe('UsersService', () => {
       userRepo.save.mockResolvedValue(user);
 
       await expect(service.setLocking(1, false)).resolves.toBeDefined();
+      expect(redisCacheService.incr).not.toHaveBeenCalled();
     });
   });
 
@@ -267,7 +279,7 @@ describe('UsersService', () => {
       );
     });
 
-    it('allows activating an ADMIN account', async () => {
+    it('allows activating an ADMIN account without touching sessions', async () => {
       const user = {
         id: 1,
         is_active: false,
@@ -277,6 +289,25 @@ describe('UsersService', () => {
       userRepo.save.mockResolvedValue(user);
 
       await expect(service.setActive(1, true)).resolves.toBeDefined();
+      expect(redisCacheService.incr).not.toHaveBeenCalled();
+    });
+
+    it('deactivates a non-ADMIN account and revokes their current session', async () => {
+      const user = {
+        id: 3,
+        is_active: true,
+        roles: [{ role: { role_name: 'PATIENT' } }],
+      };
+      userRepo.findOne.mockResolvedValue(user);
+      userRepo.save.mockResolvedValue(user);
+
+      await service.setActive(3, false);
+
+      expect(user.is_active).toBe(false);
+      expect(redisCacheService.incr).toHaveBeenCalledWith('session_version:3');
+      expect(redisCacheService.delData).toHaveBeenCalledWith(
+        'refresh_tokens:3',
+      );
     });
   });
 
