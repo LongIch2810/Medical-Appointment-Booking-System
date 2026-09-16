@@ -11,11 +11,13 @@
 - Đặt lại mật khẩu quên dùng OTP (5 phút, tối đa 5 lần thử sai) → `resetToken` một lần dùng (10 phút) → `/auth/set-new-password`. Tiêu thụ token atomically (`UPDATE ... WHERE consumed_at IS NULL`, kiểm tra `affected`) chống double-use đồng thời. Cả gửi và xác minh OTP luôn trả thông báo generic bất kể lý do thất bại thật (chống dò tài khoản).
 - Đổi mật khẩu (tự đổi hoặc qua reset) đều tăng `session_version` + xóa toàn bộ `refresh_tokens` — đăng xuất mọi thiết bị khác ngay lập tức.
 - Google OAuth: user hiện có chưa có role nào → tự gán PATIENT (lỗi nếu role PATIENT không tồn tại trong DB); email mới hoàn toàn → tạo user bằng cùng hàm dùng cho đăng ký local, khử trùng username bằng hậu tố 4 số cuối của timestamp.
+- Admin khóa (`is_locking=true`) hoặc vô hiệu hóa (`is_active=false`) một tài khoản: chặn đăng nhập mới (mật khẩu lẫn Google, `ForbiddenException`) VÀ tăng `session_version` + xóa `refresh_tokens` ngay lập tức — đá phiên đang mở của tài khoản đó ra khỏi hệ thống, giống hệt cơ chế đổi mật khẩu. Mở khóa/kích hoạt lại không cần revoke gì (không có phiên đang chặn cần dọn).
 
 **Implementation Evidence**
 
 - `backend/src/modules/auth/auth.service.ts`, `session-auth.service.ts`, `jwt.strategy.ts`, `refresh.strategy.ts`, `google.strategy.ts`
 - `backend/src/utils/constants.ts` (roles, `MAX_DEVICES`), `backend/src/utils/cookieOptions.ts`
+- `backend/src/modules/users/users.service.ts` (`setLocking`, `setActive`, `revokeAllSessions` — khóa/vô hiệu hóa tài khoản)
 
 ## Authorization
 

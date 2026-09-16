@@ -12,7 +12,7 @@ Bản trước gắn nhãn patient portal là `PARTIAL` vì `PatientPortalContex
 
 ## `[NOT IMPLEMENTED]` Các điểm cụt cụ thể trong frontend patient (đã xác minh, không suy diễn)
 
-- `ForgotPassword.tsx` bước cuối ("đặt lại mật khẩu") chỉ `setTimeout` 1s rồi báo thành công — **không gọi API nào**; code có comment tự nhận đây là placeholder chờ backend endpoint (`/otps/send-otp`, `/otps/verify-otp` tồn tại nhưng không có endpoint đặt mật khẩu mới nào được gọi ở bước này — backend thực ra có `POST /auth/set-new-password` nhưng frontend không gọi nó ở đây). Mật khẩu **không thực sự đổi**, người dùng nhận thông báo thành công giả.
+- ~~`ForgotPassword.tsx` bước cuối chỉ `setTimeout` giả~~ — **đã fix** (commit `2ed3d163`): `handleVerifyOtp` lưu `resetToken` trả về từ OTP verify, `handleResetPassword` gọi `POST /auth/set-new-password` thật qua `setNewPassword` (`frontend/src/api/authApi.ts`). Mật khẩu đổi thật, không còn thông báo thành công giả.
 - `Contact.tsx`: form "Gửi phản hồi trực tuyến" chỉ `console.log` + toast thành công giả, không gửi request nào.
 - `Settings.tsx` (patient) tab Privacy: 3 toggle (`shareDoctorHistory`, `autoSyncReports`, `anonymousResearch`) là state cục bộ, **không** được gửi trong payload `handleSaveAll()` → `PATCH /user-settings/me` — reset về mặc định khi tải lại trang.
 - `admin/`: `HealthProfilesModule`, `PatientsModule` không có create/update/delete UI (chỉ xem chi tiết) dù `permission` cấp module là `manage`.
@@ -65,6 +65,14 @@ Migration `1787100000000-seedAdminFullPermissions.ts` thực hiện `CROSS JOIN`
 ## `[CONFLICT]` `UsersService.updateRoles` không buộc đăng nhập lại, khác với `RolesService.updateRolePermissions`
 
 Đổi role của một user (`PATCH /users/:userId/roles`) chỉ xóa cache `permissions:<userId>`, **không** tăng `session_version` — access token hiện có của user đó vẫn giữ nguyên claim `roles` cũ cho tới khi hết hạn tự nhiên hoặc refresh (và ngay cả refresh cũng chỉ ký lại với cùng payload roles nó nhận, không tự tra role mới từ DB). Ngược lại, sửa permission của một *role* (`PUT`/`DELETE /roles/:roleId/permissions`) gọi `invalidateRoleUsers` — tăng `session_version` VÀ xóa `refresh_tokens` cho mọi user đang giữ role đó, buộc đăng nhập lại ngay. Hai cơ chế tương tự nhau nhưng hành xử khác nhau đáng kể.
+
+## `[CONFLICT]` (đã fix) Admin khóa/vô hiệu hóa tài khoản trước đây không có tác dụng thực tế
+
+Trước commit `47d48eb`: `UsersService.setLocking`/`setActive` chỉ đổi cột `is_locking`/`is_active` trong DB; không nơi nào trong luồng auth (`AuthService.validateUser`, `GoogleStrategy.validate`, `SessionAuthService.assertSessionValid`) từng đọc 2 cột này. Hệ quả: tài khoản bị khóa/vô hiệu hóa vẫn đăng nhập được bình thường (kể cả đăng nhập mới) và access/refresh token đang có tiếp tục hoạt động tới khi tự hết hạn (15 phút / 7 ngày) hoặc refresh vô thời hạn — nút "Khóa"/"Vô hiệu" trên admin UI thực chất là no-op về bảo mật.
+
+**Đã fix:** `setLocking(true)`/`setActive(false)` giờ tăng `session_version:<userId>` + xóa `refresh_tokens:<userId>` (cùng cơ chế revoke đã dùng cho đổi mật khẩu/sửa permission role) khi chuyển sang trạng thái bị chặn — đá phiên đang chạy + vô hiệu refresh token ngay lập tức. `AuthService.validateUser()` và `GoogleStrategy.validate()` đều throw `ForbiddenException` nếu `is_locking=true` hoặc `is_active=false`, chặn cả đăng nhập mật khẩu lẫn Google OAuth. Đã verify trực tiếp qua browser: khóa tài khoản bác sĩ đang có phiên mở → phiên bị đá ra ngay; đăng nhập lại bằng đúng mật khẩu bị từ chối; mở khóa thì đăng nhập lại bình thường.
+
+**Evidence:** `backend/src/modules/users/users.service.ts` (`setLocking`, `setActive`, `revokeAllSessions`), `backend/src/modules/auth/auth.service.ts` (`validateUser`), `backend/src/modules/auth/google.strategy.ts` (`validate`).
 
 ## `[UNCERTAIN]` Ma trận chuyển trạng thái lịch hẹn — nay đã xác nhận rõ (không còn UNCERTAIN)
 
