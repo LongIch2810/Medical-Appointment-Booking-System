@@ -72,8 +72,8 @@ export class RelativesController {
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
   ) {
-    const { userId } = req.user;
-    return this.relativesService.getRelativeDetail(userId, relativeId);
+    const { userId, roles } = req.user;
+    return this.relativesService.getRelativeDetail(userId, relativeId, roles);
   }
 
   @ApiOperation({ summary: 'Cập nhật người thân' })
@@ -86,8 +86,13 @@ export class RelativesController {
     @Param('relativeId', ParseIntPipe) relativeId: number,
     @Body() bodyUpdateRelative: BodyUpdateRelativeDto,
   ) {
-    const { userId } = req.user;
-    return this.relativesService.update(userId, relativeId, bodyUpdateRelative);
+    const { userId, roles } = req.user;
+    return this.relativesService.update(
+      userId,
+      relativeId,
+      bodyUpdateRelative,
+      roles,
+    );
   }
 
   @ApiOperation({ summary: 'Xóa người thân' })
@@ -99,8 +104,8 @@ export class RelativesController {
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
   ) {
-    const { userId } = req.user;
-    return this.relativesService.remove(userId, relativeId);
+    const { userId, roles } = req.user;
+    return this.relativesService.remove(userId, relativeId, roles);
   }
 
   @ApiOperation({ summary: 'Danh sách người thân dành cho admin' })

@@ -9,9 +9,8 @@ export const sendOtp = async (email: string) => {
 };
 
 export const verifyOtp = async (email: string, otpCode: string) => {
-  const res = await axiosInstance.post<ApiResponse<string>>(
-    "/otps/verify-otp",
-    { email, otpCode }
-  );
+  const res = await axiosInstance.post<
+    ApiResponse<{ message: string; resetToken: string }>
+  >("/otps/verify-otp", { email, otpCode });
   return res.data;
 };

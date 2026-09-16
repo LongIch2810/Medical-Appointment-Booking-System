@@ -99,6 +99,45 @@ describe('RelativesService', () => {
     });
   });
 
+  describe('findOwnedByUserId', () => {
+    it('scopes the lookup to the requesting patient when no roles are given', async () => {
+      relativeRepo.findOne.mockResolvedValue({ id: 1 });
+
+      await service.findOwnedByUserId(9, 1);
+
+      expect(relativeRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 1, user: { id: 9 } },
+        relations: ['relationship', 'health_profile', 'user'],
+      });
+    });
+
+    // Regression test: admin/relatives (RELATIVE_MANAGE) lets an admin list
+    // every patient's relative, but Sửa/Xóa/Xem on that same list called
+    // update()/remove()/getRelativeDetail() -> findOwnedByUserId() scoped by
+    // the ADMIN's own userId — confirmed live: admin (id 1) editing a
+    // patient's relative (owned by a different userId) 404'd with "Người
+    // thân không tồn tại hoặc không thuộc quyền quản lý của bạn." even
+    // though the record exists. ADMIN must bypass the ownership filter.
+    it('does not scope by owner when the actor is ADMIN', async () => {
+      relativeRepo.findOne.mockResolvedValue({ id: 1 });
+
+      await service.findOwnedByUserId(1, 38, ['ADMIN']);
+
+      expect(relativeRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 38 },
+        relations: ['relationship', 'health_profile', 'user'],
+      });
+    });
+
+    it('throws NotFoundException when the relative does not exist or is not owned by the requester', async () => {
+      relativeRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.findOwnedByUserId(9, 404)).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+    });
+  });
+
   describe('findOrCreateForBooking', () => {
     const dto: BodyCreateRelativeDto = {
       fullname: 'Nguyen Van A',

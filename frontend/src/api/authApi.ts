@@ -27,3 +27,14 @@ export const refresh = async () => {
   const res = await axiosInstance.post("/auth/refresh");
   return res.data;
 };
+
+export const setNewPassword = async (
+  resetToken: string,
+  newPassword: string
+) => {
+  const res = await axiosInstance.post("/auth/set-new-password", {
+    resetToken,
+    newPassword,
+  });
+  return res.data;
+};

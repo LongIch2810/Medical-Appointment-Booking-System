@@ -71,6 +71,48 @@ describe('AuthController', () => {
     expect(JSON.stringify(body)).not.toContain('refresh');
   });
 
+  // Regression: these handlers use @Response() (raw Express res, no
+  // `passthrough`) and previously did `return res.status(...).json(...)`,
+  // which returns the Express Response object itself — a circular structure
+  // (res.req.res === res, etc). Global interceptors (DateFormatInterceptor's
+  // unguarded recursive walk, WriteAuditLogInterceptor) receive whatever the
+  // handler returns and crashed with "Maximum call stack size exceeded" —
+  // silently, since the real HTTP response was already sent by res.json()/
+  // res.redirect() before that, but it corrupted every login/refresh/logout
+  // audit-log entry with a false status_code 500. The fix is to not return
+  // the Express response object from these handlers.
+  it.each([
+    'login',
+    'loginAdministrator',
+    'refresh',
+    'logout',
+    'googleAuthRedirect',
+  ] as const)(
+    '%s does not return the raw Express response object',
+    async (method) => {
+      authService.login.mockResolvedValue({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+      });
+      authService.loginAdministrator.mockResolvedValue({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+      });
+      authService.refresh.mockResolvedValue({
+        newAccessToken: 'access',
+        newRefreshToken: 'refresh',
+      });
+      authService.logout.mockResolvedValue({ message: 'Đăng xuất thành công' });
+      const req = { body: {}, user: {} } as never;
+      const res = createMockResponse();
+
+      const result = await controller[method](req, res as never);
+
+      expect(result).not.toBe(res);
+      expect(result).toBeUndefined();
+    },
+  );
+
   it('logs in an administrator, sets HttpOnly auth cookies, and does not leak tokens in the body', async () => {
     authService.loginAdministrator.mockResolvedValue({
       accessToken: 'admin-access',

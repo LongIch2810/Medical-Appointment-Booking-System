@@ -97,48 +97,57 @@ describe('RelativesController', () => {
   });
 
   describe('getRelativeDetail', () => {
-    it('delegates to relativesService.getRelativeDetail with userId and relativeId', async () => {
+    it('delegates to relativesService.getRelativeDetail with userId, relativeId and roles', async () => {
       const expected = { relativeId: 1 };
       relativesService.getRelativeDetail.mockResolvedValue(expected);
 
       const result = await controller.getRelativeDetail(
-        { user: { userId: 7 } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } } as never,
         1,
       );
 
-      expect(relativesService.getRelativeDetail).toHaveBeenCalledWith(7, 1);
+      expect(relativesService.getRelativeDetail).toHaveBeenCalledWith(
+        7,
+        1,
+        ['PATIENT'],
+      );
       expect(result).toBe(expected);
     });
   });
 
   describe('updateRelative', () => {
-    it('delegates to relativesService.update with userId, relativeId and body', async () => {
+    it('delegates to relativesService.update with userId, relativeId, body and roles', async () => {
       const body = { fullName: 'Jane Updated' } as never;
       const expected = { relativeId: 1, fullName: 'Jane Updated' };
       relativesService.update.mockResolvedValue(expected);
 
       const result = await controller.updateRelative(
-        { user: { userId: 7 } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } } as never,
         1,
         body,
       );
 
-      expect(relativesService.update).toHaveBeenCalledWith(7, 1, body);
+      expect(relativesService.update).toHaveBeenCalledWith(
+        7,
+        1,
+        body,
+        ['PATIENT'],
+      );
       expect(result).toBe(expected);
     });
   });
 
   describe('deleteRelative', () => {
-    it('delegates to relativesService.remove with userId and relativeId', async () => {
+    it('delegates to relativesService.remove with userId, relativeId and roles', async () => {
       const expected = { message: 'deleted' };
       relativesService.remove.mockResolvedValue(expected);
 
       const result = await controller.deleteRelative(
-        { user: { userId: 7 } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } } as never,
         1,
       );
 
-      expect(relativesService.remove).toHaveBeenCalledWith(7, 1);
+      expect(relativesService.remove).toHaveBeenCalledWith(7, 1, ['PATIENT']);
       expect(result).toBe(expected);
     });
   });

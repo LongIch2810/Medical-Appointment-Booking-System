@@ -110,12 +110,10 @@ export class SpecialtiesService {
 
     await this.specialtyRepo.softDelete(specialtyId);
 
-    const deletedSpecialty = await this.getSpecialtyDetail(specialtyId);
-
     await this.redisCacheService.delByPrefix('specialties:');
     await this.redisCacheService.delData(`specialty:${specialtyId}`);
 
-    return deletedSpecialty;
+    return { message: 'Xóa chuyên khoa thành công.' };
   }
 
   async getSpecialtyDetail(specialtyId: number) {

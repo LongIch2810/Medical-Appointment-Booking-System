@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import OtpInput from "@/components/input/OtpInput";
 import Loading from "@/components/loading/Loading";
 import { sendOtp, verifyOtp } from "@/api/otpApi";
+import { setNewPassword as setNewPasswordApi } from "@/api/authApi";
 import { getApiErrorMessage } from "@/utils/getApiErrorMessage";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +23,7 @@ const ForgotPassword: React.FC = () => {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [resetToken, setResetToken] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
@@ -64,7 +66,8 @@ const ForgotPassword: React.FC = () => {
     }
     try {
       setLoading(true);
-      await verifyOtp(email, otpCode);
+      const res = await verifyOtp(email, otpCode);
+      setResetToken(res.data.resetToken);
       toast.success("Xác minh OTP thành công");
       setStep("reset");
     } catch (error) {
@@ -83,14 +86,11 @@ const ForgotPassword: React.FC = () => {
     }
     try {
       setLoading(true);
-      // TODO(backend): no password-reset endpoint exists yet (only
-      // /otps/send-otp and /otps/verify-otp) — this step cannot be wired to
-      // a real API until one is added, so it's intentionally left simulated.
-      await new Promise((r) => setTimeout(r, 1000));
+      await setNewPasswordApi(resetToken, newPassword);
       toast.success("Đặt lại mật khẩu thành công. Vui lòng đăng nhập lại.");
       navigate("/sign-in");
-    } catch {
-      toast.error("Không thể đặt lại mật khẩu");
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Không thể đặt lại mật khẩu"));
     } finally {
       setLoading(false);
     }

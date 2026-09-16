@@ -55,11 +55,12 @@ export class HealthProfileController {
     @Param('id', ParseIntPipe) relativeId: number,
     @Body() bodyUpdateHealProfile: Partial<BodyUpdateHealthProfileDto>,
   ) {
-    const { userId } = req.user;
+    const { userId, roles } = req.user;
     const updatedHealProfile = await this.healthProfileService.update(
       userId,
       relativeId,
       bodyUpdateHealProfile,
+      roles,
     );
     return updatedHealProfile;
   }
@@ -72,8 +73,12 @@ export class HealthProfileController {
     @Request() req,
     @Param('relativeId', ParseIntPipe) relativeId: number,
   ) {
-    const { userId } = req.user;
-    return this.healthProfileService.getHealthProfile(userId, relativeId);
+    const { userId, roles } = req.user;
+    return this.healthProfileService.getHealthProfile(
+      userId,
+      relativeId,
+      roles,
+    );
   }
 
   @ApiOperation({

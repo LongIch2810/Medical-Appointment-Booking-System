@@ -81,12 +81,21 @@ describe('SpecialtiesService', () => {
         img_url: 'x',
       });
 
-      await service.delete(1);
+      const result = await service.delete(1);
 
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'specialties:',
       );
       expect(redisCacheService.delData).toHaveBeenCalledWith('specialty:1');
+      expect(result).toEqual({ message: 'Xóa chuyên khoa thành công.' });
+      // Regression test: delete() used to re-fetch the specialty via
+      // findOne() AFTER softDelete() to build its return value — TypeORM's
+      // default findOne excludes soft-deleted rows, so that second lookup
+      // always threw NotFoundException even though the delete itself
+      // succeeded (confirmed live: DB row got deleted_at set, but the API
+      // still answered 404 "Chuyên khoa không tồn tại."). findOne must only
+      // run once (the existence check), never again after softDelete.
+      expect(specialtyRepo.findOne).toHaveBeenCalledTimes(1);
     });
   });
 

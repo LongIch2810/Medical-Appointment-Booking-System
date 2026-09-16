@@ -1,5 +1,5 @@
 import { IsString, IsBoolean, IsDate, IsPhoneNumber } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
 export class BodyUpdateUserDto {
   @IsPhoneNumber('VN')
@@ -8,6 +8,7 @@ export class BodyUpdateUserDto {
   @IsString()
   fullname: string;
 
+  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
   @IsBoolean()
   gender: boolean;
 

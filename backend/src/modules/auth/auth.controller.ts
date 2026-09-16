@@ -76,7 +76,13 @@ export class AuthController {
 
     // Token đã ở HttpOnly cookie — không trả lại trong body để tránh lộ ra
     // nơi client-side JS có thể đọc được (XSS) hoặc bị log lại.
-    return res.status(HttpStatus.OK).json({
+    // Không `return` giá trị của res.json(...) (chính là đối tượng Response
+    // của Express) — global interceptors (DateFormatInterceptor,
+    // WriteAuditLogInterceptor) nhận giá trị trả về này và cố duyệt đệ quy
+    // qua nó, gây "Maximum call stack size exceeded" vì Response có tham
+    // chiếu vòng (res.req.res === res, ...). Response thật đã được gửi cho
+    // client ở dòng trên nên giá trị trả về ở đây không ảnh hưởng HTTP response.
+    res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
       data: { message: 'Đăng nhập thành công.' },
@@ -96,7 +102,8 @@ export class AuthController {
 
     this.setAuthCookies(res, accessToken, refreshToken);
 
-    return res.status(HttpStatus.OK).json({
+    // Không `return` res.json(...) — xem chú thích ở login() phía trên.
+    res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
       data: { message: 'Đăng nhập thành công.' },
@@ -119,7 +126,8 @@ export class AuthController {
     );
     this.setAuthCookies(res, newAccessToken, newRefreshToken);
 
-    return res.status(HttpStatus.OK).json({
+    // Không `return` res.json(...) — xem chú thích ở login() phía trên.
+    res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
       data: { message: 'Làm mới token thành công !' },
@@ -139,7 +147,8 @@ export class AuthController {
     const clearOptions = getClearAuthCookieOptions(this.configService);
     res.clearCookie('accessToken', clearOptions);
     res.clearCookie('refreshToken', clearOptions);
-    return res.status(HttpStatus.OK).json({
+    // Không `return` res.json(...) — xem chú thích ở login() phía trên.
+    res.status(HttpStatus.OK).json({
       statusCode: 200,
       success: true,
       data: { message },
@@ -173,7 +182,8 @@ export class AuthController {
 
     this.setAuthCookies(res, accessToken, refreshToken);
 
-    return res.redirect(
+    // Không `return` res.redirect(...) — xem chú thích ở login() phía trên.
+    res.redirect(
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173',
     );
   }

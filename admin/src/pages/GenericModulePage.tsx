@@ -2568,7 +2568,7 @@ function ExaminationResultFormDialog({
   const appointmentDetail = useAppointmentDetail(lookupAppointmentId);
   const appointment = appointmentDetail.data?.data;
   const isFormValid = Boolean(
-    lookupAppointmentId > 0 &&
+    (mode === "edit" || lookupAppointmentId > 0) &&
       symptoms.trim() &&
       diagnosis.trim() &&
       treatment.trim() &&

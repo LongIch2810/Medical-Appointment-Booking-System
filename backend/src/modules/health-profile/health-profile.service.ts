@@ -58,6 +58,7 @@ export class HealthProfileService {
     userId: number,
     relativeId: number,
     bodyUpdateHealthProfile: BodyUpdateHealthProfileDto,
+    actorRoles: string[] = [],
   ) {
     const isUserExists = await this.usersService.isUserExists(userId);
     if (!isUserExists) {
@@ -67,6 +68,7 @@ export class HealthProfileService {
     const relative = await this.relativesService.findOwnedByUserId(
       userId,
       relativeId,
+      actorRoles,
     );
 
     if (!relative.health_profile) {
@@ -89,8 +91,16 @@ export class HealthProfileService {
     return HealthProfileMapper.toHealthProfileResponseDto(updatedHealthProfile);
   }
 
-  async getHealthProfile(userId: number, relativeId: number) {
-    await this.relativesService.findOwnedByUserId(userId, relativeId);
+  async getHealthProfile(
+    userId: number,
+    relativeId: number,
+    actorRoles: string[] = [],
+  ) {
+    await this.relativesService.findOwnedByUserId(
+      userId,
+      relativeId,
+      actorRoles,
+    );
 
     const cacheKey = `healthProfile:relative:${relativeId}`;
     const cachedData = await this.redisCacheService.getData(cacheKey);

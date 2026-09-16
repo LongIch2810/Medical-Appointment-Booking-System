@@ -13,6 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { SpecialtiesService } from './specialties.service';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
@@ -23,7 +24,7 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { BodyUpdateSpecialtyDto } from './dto/request/bodyUpdateSpecialty.dto';
 import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
-import { PERMISSIONS } from 'src/utils/constants';
+import { PERMISSIONS, MAX_UPLOAD_FILE_SIZE_BYTES } from 'src/utils/constants';
 
 @ApiTags('specialties')
 @Controller('specialties')
@@ -40,7 +41,12 @@ export class SpecialtiesController {
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.SPECIALTY_CREATE)
   @AuditLogAction({ action: 'CREATE', entityName: 'specialties' })
-  @UseInterceptors(new FileRequiredInterceptor())
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: MAX_UPLOAD_FILE_SIZE_BYTES },
+    }),
+    new FileRequiredInterceptor(),
+  )
   async createSpecialty(
     @Body() bodyCreateSpecialty: BodyCreateSpecialtyDto,
     @UploadedFile() file: Express.Multer.File,

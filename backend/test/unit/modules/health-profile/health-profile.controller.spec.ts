@@ -38,12 +38,17 @@ describe('HealthProfileController', () => {
     healthProfileService.update.mockResolvedValue({ id: 3 });
 
     const result = await controller.updateHealthProfile(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } } as never,
       3,
       body,
     );
 
-    expect(healthProfileService.update).toHaveBeenCalledWith(7, 3, body);
+    expect(healthProfileService.update).toHaveBeenCalledWith(
+      7,
+      3,
+      body,
+      ['PATIENT'],
+    );
     expect(result).toEqual({ id: 3 });
   });
 
@@ -51,11 +56,15 @@ describe('HealthProfileController', () => {
     healthProfileService.getHealthProfile.mockResolvedValue({ id: 3 });
 
     const result = await controller.getHealthProfileByRelativeId(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } } as never,
       3,
     );
 
-    expect(healthProfileService.getHealthProfile).toHaveBeenCalledWith(7, 3);
+    expect(healthProfileService.getHealthProfile).toHaveBeenCalledWith(
+      7,
+      3,
+      ['PATIENT'],
+    );
     expect(result).toEqual({ id: 3 });
   });
 

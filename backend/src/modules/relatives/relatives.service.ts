@@ -23,6 +23,7 @@ import { RelativesMapper } from './relatives.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { RelationshipsService } from '../relationships/relationships.service';
 import { isPgDriverError } from '../../utils/isPgDriverError';
+import { RoleName } from 'src/shared/enums/roleName';
 
 @Injectable()
 export class RelativesService {
@@ -191,11 +192,16 @@ export class RelativesService {
     );
   }
 
-  async findOwnedByUserId(userId: number, relativeId: number) {
+  async findOwnedByUserId(
+    userId: number,
+    relativeId: number,
+    actorRoles: string[] = [],
+  ) {
+    const isAdmin = actorRoles.includes(RoleName.ADMIN);
     const relative = await this.relativeRepo.findOne({
       where: {
         id: relativeId,
-        user: { id: userId },
+        ...(isAdmin ? {} : { user: { id: userId } }),
       },
       relations: ['relationship', 'health_profile', 'user'],
     });
@@ -213,9 +219,14 @@ export class RelativesService {
     userId: number,
     relativeId: number,
     bodyUpdateRelative: BodyUpdateRelativeDto,
+    actorRoles: string[] = [],
   ) {
     try {
-      const relative = await this.findOwnedByUserId(userId, relativeId);
+      const relative = await this.findOwnedByUserId(
+        userId,
+        relativeId,
+        actorRoles,
+      );
 
       if (bodyUpdateRelative.relationship_code) {
         const relationship =
@@ -242,15 +253,31 @@ export class RelativesService {
     }
   }
 
-  async remove(userId: number, relativeId: number) {
-    const relative = await this.findOwnedByUserId(userId, relativeId);
+  async remove(
+    userId: number,
+    relativeId: number,
+    actorRoles: string[] = [],
+  ) {
+    const relative = await this.findOwnedByUserId(
+      userId,
+      relativeId,
+      actorRoles,
+    );
     const response = RelativesMapper.toRelativeResponseDto(relative);
     await this.relativeRepo.softDelete(relativeId);
     return response;
   }
 
-  async getRelativeDetail(userId: number, relativeId: number) {
-    const relative = await this.findOwnedByUserId(userId, relativeId);
+  async getRelativeDetail(
+    userId: number,
+    relativeId: number,
+    actorRoles: string[] = [],
+  ) {
+    const relative = await this.findOwnedByUserId(
+      userId,
+      relativeId,
+      actorRoles,
+    );
     return RelativesMapper.toRelativeResponseDto(relative);
   }
 
