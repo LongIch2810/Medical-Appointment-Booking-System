@@ -172,7 +172,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
     >
       <div className="flex items-center gap-x-3 sm:gap-x-5">
         {/* Mobile Hamburger Drawer */}
-        <div className="md:hidden">
+        <div className="lg:hidden">
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
               <Button
@@ -428,13 +428,13 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       </div>
 
       {userInfo && (
-        <div className="ml-auto md:hidden flex items-center gap-2">
+        <div className="ml-auto lg:hidden flex items-center gap-2">
           <NotificationBell />
         </div>
       )}
 
       {/* Desktop Navigation Links */}
-      <div className="hidden md:flex items-center space-x-2 lg:space-x-3">
+      <div className="hidden lg:flex items-center space-x-2 lg:space-x-3">
         {headerItems.map((item, index) => (
           <NavLink
             key={index}
