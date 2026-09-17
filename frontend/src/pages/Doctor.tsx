@@ -1,4 +1,4 @@
-import { RotateCcw, Search } from "lucide-react";
+import { ChevronDown, RotateCcw, Search } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import DialogChooseSpecialty from "../components/dialog/DialogChooseSpecialty";
 import DialogChooseExperience from "../components/dialog/DialogChooseExperience";
@@ -116,6 +116,7 @@ const Doctor = () => {
     refetch,
   } = useGetDoctorsInfinite(filters);
   const doctors = data?.pages.flatMap((page) => page.data.doctors) || [];
+  const totalDoctors = data?.pages[0]?.data.total ?? 0;
 
   const hasActiveFilters =
     Boolean(search) ||
@@ -213,6 +214,11 @@ const Doctor = () => {
                 />
               )}
             </div>
+            {!isLoading && doctors.length > 0 && (
+              <p className="-mt-2 text-xs sm:text-sm font-medium text-slate-500 dark:text-slate-400">
+                {t("doctor.resultsCount", { count: totalDoctors })}
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 w-full">
               {isLoading &&
                 Array.from({ length: 12 }).map((_, i) => (
@@ -226,17 +232,46 @@ const Doctor = () => {
                   <DoctorCardSkeleton key={`next-${i}`} />
                 ))}
             </div>
-            <div className="flex justify-center pt-4">
-              {hasNextPage && (
-                <Button
-                  onClick={() => fetchNextPage()}
-                  disabled={isFetchingNextPage}
-                  className="rounded-xl px-6 py-2.5 font-bold shadow-xs hover:shadow-md cursor-pointer"
-                >
-                  {isFetchingNextPage ? <Loading /> : t("doctor.loadMore")}
-                </Button>
-              )}
-            </div>
+            {doctors.length > 0 && totalDoctors > 0 && (
+              <div className="flex flex-col items-center gap-3 pt-2 w-full max-w-xs">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all duration-300"
+                    style={{
+                      width: `${Math.min(100, (doctors.length / totalDoctors) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                  {hasNextPage
+                    ? t("doctor.showingProgress", {
+                        loaded: doctors.length,
+                        total: totalDoctors,
+                      })
+                    : t("doctor.allLoaded")}
+                </p>
+
+                {hasNextPage && (
+                  <Button
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    className="gap-2 rounded-full px-6 h-11 font-bold shadow-xs hover:shadow-md cursor-pointer"
+                  >
+                    {isFetchingNextPage ? (
+                      <>
+                        <Loading />
+                        {t("doctor.loadingMore")}
+                      </>
+                    ) : (
+                      <>
+                        {t("doctor.loadMore")}
+                        <ChevronDown className="h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </>
         )}
       </div>
