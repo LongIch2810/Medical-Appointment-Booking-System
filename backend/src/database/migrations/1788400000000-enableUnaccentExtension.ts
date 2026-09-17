@@ -6,9 +6,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * "unaccent" chưa từng được bật trên DB — mọi lượt tìm kiếm chuyên khoa theo
  * tên đều crash với lỗi "function unaccent(text) does not exist" (500).
  */
-export class EnableUnaccentExtension1788400000000
-  implements MigrationInterface
-{
+export class EnableUnaccentExtension1788400000000 implements MigrationInterface {
   name = 'EnableUnaccentExtension1788400000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

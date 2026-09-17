@@ -68,5 +68,4 @@ export class AiDocumentsController {
   deleteRoadmap(@Request() req, @Param('id', ParseIntPipe) id: number) {
     return this.chatHistoryService.deleteHealthRoadmap(req.user.userId, id);
   }
-
 }

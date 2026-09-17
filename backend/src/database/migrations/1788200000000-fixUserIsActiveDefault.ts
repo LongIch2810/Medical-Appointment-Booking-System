@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class FixUserIsActiveDefault1788200000000
-  implements MigrationInterface
-{
+export class FixUserIsActiveDefault1788200000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     // `is_active` is the admin-controlled "account enabled" flag (see
     // UsersController lock/unlock/activate/deactivate and

@@ -10,9 +10,7 @@ import { encrypt } from '../../utils/encryption';
  * hoá lại phần content chưa đúng định dạng để khớp với dữ liệu do
  * saveMessage() tạo ra (đã encrypt từ đầu).
  */
-export class EncryptSeedMessageContent1788300000000
-  implements MigrationInterface
-{
+export class EncryptSeedMessageContent1788300000000 implements MigrationInterface {
   name = 'EncryptSeedMessageContent1788300000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

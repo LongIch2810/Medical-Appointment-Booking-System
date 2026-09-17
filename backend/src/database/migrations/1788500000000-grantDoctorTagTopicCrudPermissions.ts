@@ -10,9 +10,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * topic" của bác sĩ hiện đủ nút Thêm/Sửa/Xóa nhưng mọi thao tác đều 403
  * "Bạn không có quyền truy cập!".
  */
-export class GrantDoctorTagTopicCrudPermissions1788500000000
-  implements MigrationInterface
-{
+export class GrantDoctorTagTopicCrudPermissions1788500000000 implements MigrationInterface {
   name = 'GrantDoctorTagTopicCrudPermissions1788500000000';
 
   private readonly permissionNames = [
@@ -31,11 +29,10 @@ export class GrantDoctorTagTopicCrudPermissions1788500000000
     if (doctorRole.length === 0) return;
     const doctorRoleId = doctorRole[0].id;
 
-    const permissions: { id: number; name: string }[] =
-      await queryRunner.query(
-        `SELECT id, name FROM "permissions" WHERE name = ANY($1)`,
-        [this.permissionNames],
-      );
+    const permissions: { id: number; name: string }[] = await queryRunner.query(
+      `SELECT id, name FROM "permissions" WHERE name = ANY($1)`,
+      [this.permissionNames],
+    );
 
     for (const permission of permissions) {
       await queryRunner.query(

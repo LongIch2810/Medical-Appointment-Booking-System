@@ -253,11 +253,7 @@ export class RelativesService {
     }
   }
 
-  async remove(
-    userId: number,
-    relativeId: number,
-    actorRoles: string[] = [],
-  ) {
+  async remove(userId: number, relativeId: number, actorRoles: string[] = []) {
     const relative = await this.findOwnedByUserId(
       userId,
       relativeId,

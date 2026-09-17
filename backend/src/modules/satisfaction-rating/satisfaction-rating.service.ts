@@ -142,14 +142,12 @@ export class SatisfactionRatingService {
     // và appointment.patient (cùng shape AppointmentResponseDto dùng ở
     // /appointments) — trả thẳng entity lồng nhau (doctor_schedule.doctor)
     // như trước khiến FE luôn thấy "-" dù DB có dữ liệu.
-    const ratingsWithMappedAppointment = satisfactionRatings.map(
-      (rating) => ({
-        ...rating,
-        appointment: AppointmentsMapper.toAppointmentResponseDto(
-          rating.appointment,
-        ),
-      }),
-    );
+    const ratingsWithMappedAppointment = satisfactionRatings.map((rating) => ({
+      ...rating,
+      appointment: AppointmentsMapper.toAppointmentResponseDto(
+        rating.appointment,
+      ),
+    }));
     return {
       satisfactionRatings: ratingsWithMappedAppointment,
       total,

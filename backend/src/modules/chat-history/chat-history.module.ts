@@ -12,11 +12,7 @@ import { AiDocumentsModule } from '../ai-documents/ai-documents.module';
 @Module({
   imports: [
     forwardRef(() => UsersModule),
-    TypeOrmModule.forFeature([
-      Conversation,
-      AiHealthRoadmap,
-      Relative,
-    ]),
+    TypeOrmModule.forFeature([Conversation, AiHealthRoadmap, Relative]),
     RedisCacheModule,
     forwardRef(() => AiDocumentsModule),
   ],

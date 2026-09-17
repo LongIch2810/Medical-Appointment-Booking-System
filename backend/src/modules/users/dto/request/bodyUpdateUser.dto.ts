@@ -8,7 +8,9 @@ export class BodyUpdateUserDto {
   @IsString()
   fullname: string;
 
-  @Transform(({ value }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @Transform(({ value }) =>
+    value === 'true' ? true : value === 'false' ? false : value,
+  )
   @IsBoolean()
   gender: boolean;
 
