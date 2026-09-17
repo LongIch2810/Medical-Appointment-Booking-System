@@ -62,7 +62,10 @@ describe('WebsocketGateway authorization', () => {
       error,
     });
     const client = createClient({
-      handshake: { headers: { cookie: 'accessToken=valid' } },
+      handshake: {
+        headers: { cookie: 'patientAccessToken=valid' },
+        auth: { appContext: 'patient' },
+      },
     });
 
     await gateway.handleConnection(client as never);
@@ -77,13 +80,17 @@ describe('WebsocketGateway authorization', () => {
       new Error('Token không hợp lệ !'),
     );
     const client = createClient({
-      handshake: { headers: { cookie: 'accessToken=revoked' } },
+      handshake: {
+        headers: { cookie: 'patientAccessToken=revoked' },
+        auth: { appContext: 'patient' },
+      },
     });
 
     await gateway.handleConnection(client as never);
 
     expect(sessionAuthService.validateAccessToken).toHaveBeenCalledWith(
       'revoked',
+      'patient',
     );
     expect(client.emit).toHaveBeenCalledWith('ws-error', {
       code: 401,
@@ -98,9 +105,13 @@ describe('WebsocketGateway authorization', () => {
       roles: ['PATIENT'],
       tokenId: 'tok-1',
       sessionVersion: 2,
+      appContext: 'patient',
     });
     const client = createClient({
-      handshake: { headers: { cookie: 'accessToken=valid' } },
+      handshake: {
+        headers: { cookie: 'patientAccessToken=valid' },
+        auth: { appContext: 'patient' },
+      },
     });
 
     await gateway.handleConnection(client as never);
@@ -112,6 +123,7 @@ describe('WebsocketGateway authorization', () => {
       roles: ['PATIENT'],
       tokenId: 'tok-1',
       sessionVersion: 2,
+      appContext: 'patient',
     });
     expect(client.join).toHaveBeenCalledWith('user:7');
   });
@@ -152,8 +164,7 @@ describe('WebsocketGateway authorization', () => {
 
   it('applies WsCookieAuthGuard at the gateway level so every event re-checks session revocation', () => {
     const guards = Reflect.getMetadata('__guards__', WebsocketGateway) as
-      | unknown[]
-      | undefined;
+      unknown[] | undefined;
     const guardNames = (guards ?? []).map(
       (guard: any) => guard?.name ?? guard?.constructor?.name,
     );

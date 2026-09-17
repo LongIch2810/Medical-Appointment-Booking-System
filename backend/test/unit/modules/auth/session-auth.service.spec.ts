@@ -91,6 +91,7 @@ describe('SessionAuthService', () => {
         roles: ['PATIENT'],
         tokenId: 't1',
         sessionVersion: 1,
+        appContext: 'patient',
       });
       redisService.getData.mockResolvedValueOnce(1);
       redisService.getData.mockResolvedValueOnce(true);
@@ -106,21 +107,37 @@ describe('SessionAuthService', () => {
         roles: ['PATIENT'],
         tokenId: 't1',
         sessionVersion: 1,
+        appContext: 'patient',
       });
       redisService.getData.mockResolvedValueOnce(1);
       redisService.getData.mockResolvedValueOnce(undefined);
 
-      await expect(
-        service.validateAccessToken('valid.token'),
-      ).resolves.toEqual({
-        userId: 7,
-        roles: ['PATIENT'],
-        tokenId: 't1',
-        sessionVersion: 1,
-      });
+      await expect(service.validateAccessToken('valid.token')).resolves.toEqual(
+        {
+          userId: 7,
+          roles: ['PATIENT'],
+          tokenId: 't1',
+          sessionVersion: 1,
+          appContext: 'patient',
+        },
+      );
       expect(jwtService.verify).toHaveBeenCalledWith('valid.token', {
         secret: 'the-secret',
       });
+    });
+
+    it('rejects a token whose context does not match the expected context', async () => {
+      jwtService.verify.mockReturnValue({
+        sub: 7,
+        roles: ['PATIENT'],
+        tokenId: 't1',
+        sessionVersion: 1,
+        appContext: 'admin',
+      });
+
+      await expect(
+        service.validateAccessToken('admin.token', 'patient'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
     });
   });
 });

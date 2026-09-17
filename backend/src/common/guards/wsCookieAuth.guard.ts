@@ -1,5 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { SessionAuthService } from 'src/modules/auth/session-auth.service';
+import {
+  getSocketAuthAppContext,
+  getSocketAuthCookie,
+} from 'src/utils/authContext';
 
 /**
  * Guard dùng lại được cho mọi @SubscribeMessage — re-verify token + session
@@ -13,21 +17,25 @@ export class WsCookieAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const client = context.switchToWs().getClient();
-    const token = this._extractTokenFromCookie(client);
-    if (!token) {
+    const appContext = getSocketAuthAppContext(client);
+    const token = getSocketAuthCookie(client, 'access');
+    if (!token || !appContext) {
       client.emit('ws-error', { code: 401, message: 'Invalid token' });
       return false;
     }
 
     try {
-      const validated =
-        await this.sessionAuthService.validateAccessToken(token);
+      const validated = await this.sessionAuthService.validateAccessToken(
+        token,
+        appContext,
+      );
 
       client.data.user = {
         sub: validated.userId,
         roles: validated.roles,
         tokenId: validated.tokenId,
         sessionVersion: validated.sessionVersion,
+        appContext: validated.appContext,
       };
       client.data.token = token;
 
@@ -37,20 +45,4 @@ export class WsCookieAuthGuard implements CanActivate {
       return false;
     }
   }
-
-  private _extractTokenFromCookie = (client: any): string | null => {
-    try {
-      const cookies = client?.handshake?.headers?.cookie;
-      if (!cookies) return null;
-      const cookieArray = cookies.split('; ');
-      const cookieMap = cookieArray.reduce((acc: any, cookie: string) => {
-        const [key, value] = cookie.split('=');
-        if (key && value) acc[key.trim()] = decodeURIComponent(value);
-        return acc;
-      }, {});
-      return cookieMap['accessToken'] || null;
-    } catch {
-      return null;
-    }
-  };
 }

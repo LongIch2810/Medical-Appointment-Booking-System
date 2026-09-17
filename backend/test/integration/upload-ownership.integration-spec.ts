@@ -47,7 +47,9 @@ describe('Upload ownership (integration)', () => {
         public_id: 'uploads/stub',
       },
     ] as never);
-    jest.spyOn(cloudinaryService, 'deleteFile').mockResolvedValue(undefined as never);
+    jest
+      .spyOn(cloudinaryService, 'deleteFile')
+      .mockResolvedValue(undefined as never);
   });
 
   afterEach(async () => {
@@ -56,9 +58,10 @@ describe('Upload ownership (integration)', () => {
         `DELETE FROM "messages_attachments" WHERE message_id IN (SELECT id FROM "messages" WHERE channel_id = ANY($1))`,
         [createdChannelIds],
       );
-      await dataSource.query('DELETE FROM "messages" WHERE channel_id = ANY($1)', [
-        createdChannelIds,
-      ]);
+      await dataSource.query(
+        'DELETE FROM "messages" WHERE channel_id = ANY($1)',
+        [createdChannelIds],
+      );
       await dataSource.query(
         'DELETE FROM "channel_members" WHERE channel_id = ANY($1)',
         [createdChannelIds],
@@ -94,6 +97,7 @@ describe('Upload ownership (integration)', () => {
     const channelResponse = await request(app.getHttpServer())
       .post('/api/v1/channels/create')
       .set('Cookie', senderLogin.cookieHeader)
+      .set('X-App-Context', senderLogin.appContext)
       .send([sender.userId, attacker.userId])
       .expect(201);
     const channelId = channelResponse.body.data.id as number;
@@ -102,6 +106,7 @@ describe('Upload ownership (integration)', () => {
     const messageResponse = await request(app.getHttpServer())
       .post('/api/v1/messages')
       .set('Cookie', senderLogin.cookieHeader)
+      .set('X-App-Context', senderLogin.appContext)
       .send({
         message_type: 'regular',
         content: 'hello',
@@ -121,6 +126,7 @@ describe('Upload ownership (integration)', () => {
     const attackResponse = await request(app.getHttpServer())
       .post('/api/v1/uploads/messages/files')
       .set('Cookie', attackerLogin.cookieHeader)
+      .set('X-App-Context', attackerLogin.appContext)
       .field('message_id', String(messageId))
       .attach('files', png, { filename: 'x.png', contentType: 'image/png' });
     expect(attackResponse.status).toBe(403);
@@ -129,6 +135,7 @@ describe('Upload ownership (integration)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/uploads/messages/files')
       .set('Cookie', senderLogin.cookieHeader)
+      .set('X-App-Context', senderLogin.appContext)
       .field('message_id', String(messageId))
       .attach('files', png, { filename: 'x.png', contentType: 'image/png' })
       .expect(202);
@@ -196,6 +203,7 @@ describe('Upload ownership (integration)', () => {
     const createResponse = await request(app.getHttpServer())
       .post('/api/v1/articles/create-article')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', loginA.appContext)
       .field('title', `Integration test article ${Date.now()}`)
       .field('content', 'x'.repeat(220))
       .field('summary', 'y'.repeat(40))
@@ -210,6 +218,7 @@ describe('Upload ownership (integration)', () => {
     const attackResponse = await request(app.getHttpServer())
       .post('/api/v1/uploads/articles/files')
       .set('Cookie', loginB.cookieHeader)
+      .set('X-App-Context', loginB.appContext)
       .field('article_id', String(articleId))
       .attach('files', png, { filename: 'x.png', contentType: 'image/png' });
     expect(attackResponse.status).toBe(403);
@@ -218,6 +227,7 @@ describe('Upload ownership (integration)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/uploads/articles/files')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', loginA.appContext)
       .field('article_id', String(articleId))
       .attach('files', png, { filename: 'x.png', contentType: 'image/png' })
       .expect(202);

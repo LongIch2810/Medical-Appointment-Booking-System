@@ -23,9 +23,15 @@ describe('WsCookieAuthGuard', () => {
       roles: ['PATIENT'],
       tokenId: 'tok-1',
       sessionVersion: 3,
+      appContext: 'patient',
     });
     const client: any = {
-      handshake: { headers: { cookie: 'accessToken=valid.jwt.token; other=1' } },
+      handshake: {
+        headers: {
+          cookie: 'patientAccessToken=valid.jwt.token; other=1',
+        },
+        auth: { appContext: 'patient' },
+      },
       data: {},
       emit: jest.fn(),
     };
@@ -34,12 +40,14 @@ describe('WsCookieAuthGuard', () => {
 
     expect(sessionAuthService.validateAccessToken).toHaveBeenCalledWith(
       'valid.jwt.token',
+      'patient',
     );
     expect(client.data.user).toEqual({
       sub: 42,
       roles: ['PATIENT'],
       tokenId: 'tok-1',
       sessionVersion: 3,
+      appContext: 'patient',
     });
     expect(client.data.token).toBe('valid.jwt.token');
     expect(client.emit).not.toHaveBeenCalled();
@@ -51,10 +59,12 @@ describe('WsCookieAuthGuard', () => {
       roles: [],
       tokenId: 't',
       sessionVersion: 1,
+      appContext: 'patient',
     });
     const client: any = {
       handshake: {
-        headers: { cookie: 'accessToken=abc%2Bdef%3Dghi' },
+        headers: { cookie: 'patientAccessToken=abc%2Bdef%3Dghi' },
+        auth: { appContext: 'patient' },
       },
       data: {},
       emit: jest.fn(),
@@ -64,6 +74,7 @@ describe('WsCookieAuthGuard', () => {
 
     expect(sessionAuthService.validateAccessToken).toHaveBeenCalledWith(
       'abc+def=ghi',
+      'patient',
     );
   });
 
@@ -105,7 +116,10 @@ describe('WsCookieAuthGuard', () => {
       new Error('jwt expired'),
     );
     const client: any = {
-      handshake: { headers: { cookie: 'accessToken=expired.jwt.token' } },
+      handshake: {
+        headers: { cookie: 'patientAccessToken=expired.jwt.token' },
+        auth: { appContext: 'patient' },
+      },
       data: {},
       emit: jest.fn(),
     };

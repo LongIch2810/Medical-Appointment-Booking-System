@@ -27,11 +27,17 @@ export const backendBaseURL = `${backendOrigin}/api/v1`;
 const axiosInstance = axios.create({
   baseURL: backendBaseURL,
   withCredentials: true,
+  headers: {
+    "X-App-Context": "patient",
+  },
 });
 
 const refreshInstance = axios.create({
   baseURL: backendBaseURL,
   withCredentials: true,
+  headers: {
+    "X-App-Context": "patient",
+  },
 });
 
 axiosInstance.interceptors.request.use(
@@ -40,7 +46,7 @@ axiosInstance.interceptors.request.use(
   },
   function (error) {
     return Promise.reject(error);
-  }
+  },
 );
 
 let isRefreshing = false;
@@ -123,8 +129,7 @@ axiosInstance.interceptors.response.use(
       ];
       const currentPath = window.location?.pathname ?? "";
       const isPublic =
-        publicPaths.includes(currentPath) ||
-        currentPath.startsWith("/news/");
+        publicPaths.includes(currentPath) || currentPath.startsWith("/news/");
       if (!isPublic) {
         window.location.href = "/sign-in";
       }
@@ -132,7 +137,7 @@ axiosInstance.interceptors.response.use(
     } finally {
       isRefreshing = false;
     }
-  }
+  },
 );
 
 export default axiosInstance;

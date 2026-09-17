@@ -50,7 +50,8 @@ describe('PermissionsGuard end-to-end (integration)', () => {
 
       const response = await request(app.getHttpServer())
         .get('/api/v1/role-permission/matrix')
-        .set('Cookie', cookieHeader);
+        .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'patient');
 
       expect(response.status).toBe(403);
       expect(response.body.error.details).toEqual(
@@ -69,7 +70,8 @@ describe('PermissionsGuard end-to-end (integration)', () => {
 
       const response = await request(app.getHttpServer())
         .get('/api/v1/role-permission/matrix')
-        .set('Cookie', cookieHeader);
+        .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'admin');
 
       expect(response.status).toBe(200);
       const roleNames = response.body.data.roles.map(
@@ -94,6 +96,7 @@ describe('PermissionsGuard end-to-end (integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/permissions')
         .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({ page: 1, limit: 10, arrange: 'desc' });
 
       expect(response.status).toBe(403);
@@ -111,6 +114,7 @@ describe('PermissionsGuard end-to-end (integration)', () => {
       const response = await request(app.getHttpServer())
         .post('/api/v1/permissions')
         .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'admin')
         .send({ page: 1, limit: 10, arrange: 'desc' });
 
       expect(response.status).toBe(200);

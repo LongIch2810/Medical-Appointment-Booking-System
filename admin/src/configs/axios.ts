@@ -1,7 +1,4 @@
-import axios, {
-  type AxiosError,
-  type InternalAxiosRequestConfig,
-} from "axios";
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { useAuthStore } from "@/store/useAuthStore";
 
@@ -31,6 +28,9 @@ const backendBaseURL = `${backendOrigin}/api/v1`;
 const axiosInstance = axios.create({
   baseURL: backendBaseURL,
   withCredentials: true,
+  headers: {
+    "X-App-Context": "admin",
+  },
 });
 
 // `refreshInstance` không có interceptor, dùng cho các call auth (login/refresh/
@@ -38,6 +38,9 @@ const axiosInstance = axios.create({
 export const refreshInstance = axios.create({
   baseURL: backendBaseURL,
   withCredentials: true,
+  headers: {
+    "X-App-Context": "admin",
+  },
 });
 
 axiosInstance.interceptors.request.use(
@@ -103,10 +106,7 @@ function handleSessionExpired() {
   // best-effort logout về backend, không chặn UX nếu fail
   refreshInstance.post("/auth/logout").catch(() => undefined);
 
-  if (
-    typeof window !== "undefined" &&
-    window.location.pathname !== "/login"
-  ) {
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
     window.location.href = "/login";
   }
 }

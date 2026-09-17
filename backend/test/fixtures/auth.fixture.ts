@@ -5,6 +5,7 @@ const request = require('supertest');
 import Role from 'src/entities/role.entity';
 import UserRole from 'src/entities/userRole.entity';
 import { ROLE_NAME } from 'src/utils/constants';
+import { AUTH_COOKIE_NAMES, type AuthAppContext } from 'src/utils/authContext';
 
 /**
  * User PATIENT thật, có sẵn từ migration seed
@@ -22,12 +23,17 @@ export interface LoginResult {
   cookieHeader: string;
   accessToken: string;
   refreshToken: string;
+  appContext: AuthAppContext;
 }
 
-function extractCookies(setCookieHeader: string[] | undefined): {
+function extractCookies(
+  setCookieHeader: string[] | undefined,
+  appContext: AuthAppContext,
+): {
   cookieHeader: string;
   accessToken: string;
   refreshToken: string;
+  appContext: AuthAppContext;
 } {
   const cookies = setCookieHeader ?? [];
   const find = (name: string) => {
@@ -39,8 +45,9 @@ function extractCookies(setCookieHeader: string[] | undefined): {
   };
   return {
     cookieHeader: cookies.map((c) => c.split(';')[0]).join('; '),
-    accessToken: find('accessToken'),
-    refreshToken: find('refreshToken'),
+    accessToken: find(AUTH_COOKIE_NAMES[appContext].access),
+    refreshToken: find(AUTH_COOKIE_NAMES[appContext].refresh),
+    appContext,
   };
 }
 
@@ -48,14 +55,25 @@ function extractCookies(setCookieHeader: string[] | undefined): {
 export async function loginAs(
   app: INestApplication,
   credentials: { email: string; password: string },
-  endpoint: '/api/v1/auth/login' | '/api/v1/auth/admin/login' = '/api/v1/auth/login',
+  endpoint:
+    '/api/v1/auth/login' | '/api/v1/auth/admin/login' = '/api/v1/auth/login',
 ): Promise<LoginResult> {
+  const appContext: AuthAppContext = endpoint.endsWith('/admin/login')
+    ? 'admin'
+    : 'patient';
   const response = await request(app.getHttpServer())
     .post(endpoint)
-    .send({ usernameOrEmail: credentials.email, password: credentials.password })
+    .set('X-App-Context', appContext)
+    .send({
+      usernameOrEmail: credentials.email,
+      password: credentials.password,
+    })
     .expect(200);
 
-  return extractCookies(response.headers['set-cookie'] as unknown as string[]);
+  return extractCookies(
+    response.headers['set-cookie'] as unknown as string[],
+    appContext,
+  );
 }
 
 export interface RegisteredUser {
@@ -137,9 +155,10 @@ export async function cleanupRegisteredUsers(
   // -> SettingsService.getOrCreateUserSetting, createAppointmentNotifications)
   // có thể tự tạo thêm 2 bảng này cho patient — phải dọn trước khi xoá users
   // để không vi phạm FK, dù caller không trực tiếp track id của chúng.
-  await dataSource.query('DELETE FROM "notifications" WHERE user_id = ANY($1)', [
-    userIds,
-  ]);
+  await dataSource.query(
+    'DELETE FROM "notifications" WHERE user_id = ANY($1)',
+    [userIds],
+  );
   await dataSource.query(
     'DELETE FROM "user_settings" WHERE user_id = ANY($1)',
     [userIds],

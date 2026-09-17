@@ -31,6 +31,9 @@ export const connectSocket = () => {
   const newSocket = io(backendOrigin, {
     transports: ["websocket"],
     withCredentials: true,
+    auth: {
+      appContext: "patient",
+    },
   });
   socket = newSocket;
 
@@ -49,7 +52,9 @@ export const connectSocket = () => {
     console.log("Socket connected:", newSocket.id);
 
     const eventsToReplay = new Set(
-      pendingEvents.filter((event) => !event.isSuccess).map((event) => event.id)
+      pendingEvents
+        .filter((event) => !event.isSuccess)
+        .map((event) => event.id),
     );
 
     setTimeout(() => {
@@ -82,7 +87,7 @@ export const connectSocket = () => {
         retryAfter > 0
           ? `Bạn đang thao tác quá nhanh. Vui lòng thử lại sau ${retryAfter} giây.`
           : "Bạn đang thao tác quá nhanh. Vui lòng thử lại sau.",
-        { toastId: "websocket-rate-limit" }
+        { toastId: "websocket-rate-limit" },
       );
       return;
     }

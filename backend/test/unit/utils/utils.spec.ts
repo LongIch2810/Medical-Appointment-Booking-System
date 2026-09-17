@@ -3,6 +3,13 @@ import { FileType } from 'src/shared/enums/FileType';
 import { decrypt, encrypt } from 'src/utils/encryption';
 import { extractTokenFromCookie } from 'src/utils/extractTokenFromCookie';
 import {
+  AUTH_COOKIE_NAMES,
+  getRequestAccessToken,
+  getRequestAuthCookie,
+  requireRequestAuthAppContext,
+  requireTokenAppContext,
+} from 'src/utils/authContext';
+import {
   formatDate,
   formatDateDDMMYYYY,
   formatDateTimeDDMMYYYYHHmm,
@@ -23,6 +30,35 @@ import {
 import { toHHMM, toMinutes } from 'src/utils/toMinutes';
 
 describe('backend utilities', () => {
+  it('maps each app context to isolated cookies and requires a valid context', () => {
+    expect(AUTH_COOKIE_NAMES).toEqual({
+      patient: {
+        access: 'patientAccessToken',
+        refresh: 'patientRefreshToken',
+      },
+      admin: {
+        access: 'adminAccessToken',
+        refresh: 'adminRefreshToken',
+      },
+    });
+
+    const request = {
+      headers: { 'x-app-context': 'patient' },
+      cookies: {
+        patientAccessToken: 'patient-access',
+        adminAccessToken: 'admin-access',
+      },
+    };
+    expect(getRequestAuthCookie(request, 'access')).toBe('patient-access');
+    expect(getRequestAccessToken(request)).toBe('patient-access');
+    expect(getRequestAuthCookie(request, 'access', 'admin')).toBe(
+      'admin-access',
+    );
+    expect(() => requireRequestAuthAppContext({ headers: {} })).toThrow();
+    expect(() => requireTokenAppContext('admin', 'patient')).toThrow();
+    expect(requireTokenAppContext('admin', 'admin')).toBe('admin');
+  });
+
   it('encrypts with a random IV and decrypts valid values safely', () => {
     const first = encrypt('medical-secret');
     const second = encrypt('medical-secret');
@@ -37,13 +73,19 @@ describe('backend utilities', () => {
   it('extracts and decodes the access token cookie', () => {
     expect(
       extractTokenFromCookie({
-        handshake: { headers: { cookie: 'foo=bar; accessToken=a%2Eb%2Ec' } },
+        handshake: {
+          headers: { cookie: 'foo=bar; patientAccessToken=a%2Eb%2Ec' },
+          auth: { appContext: 'patient' },
+        },
       }),
     ).toBe('a.b.c');
     expect(extractTokenFromCookie({ handshake: { headers: {} } })).toBeNull();
     expect(
       extractTokenFromCookie({
-        handshake: { headers: { cookie: 'accessToken=%E0%A4%A' } },
+        handshake: {
+          headers: { cookie: 'patientAccessToken=%E0%A4%A' },
+          auth: { appContext: 'patient' },
+        },
       }),
     ).toBeNull();
   });

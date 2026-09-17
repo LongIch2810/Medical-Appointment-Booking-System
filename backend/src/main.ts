@@ -14,6 +14,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { RATE_LIMIT_RESPONSE_HEADERS } from './common/rate-limit/rate-limit.constants';
 import { parseTrustProxyHops } from './common/rate-limit/trust-proxy';
 import { validateRequiredEnv } from './config/validateEnv';
+import { AUTH_COOKIE_NAMES } from './utils/authContext';
 
 async function bootstrap() {
   // Fail-fast trước khi bootstrap Nest — không đặt vào
@@ -77,7 +78,74 @@ async function bootstrap() {
     .setTitle('System Booking Doctor')
     .setDescription('API cho hệ thống đặt lịch khám bác sĩ')
     .setVersion('1.0')
-    .addCookieAuth('accessToken')
+    .addCookieAuth(
+      AUTH_COOKIE_NAMES.patient.access,
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description:
+          'Cookie access phụ thuộc context: patientAccessToken hoặc adminAccessToken; gửi thêm X-App-Context.',
+      },
+      'cookie',
+    )
+    .addCookieAuth(
+      AUTH_COOKIE_NAMES.patient.access,
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description:
+          'Cookie access cho Patient. Khi dùng cookie, gửi thêm X-App-Context: patient.',
+      },
+      'patientAccessAuth',
+    )
+    .addCookieAuth(
+      AUTH_COOKIE_NAMES.patient.refresh,
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description:
+          'Cookie refresh cho Patient. Khi dùng cookie, gửi thêm X-App-Context: patient.',
+      },
+      'patientRefreshAuth',
+    )
+    .addCookieAuth(
+      AUTH_COOKIE_NAMES.admin.access,
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description:
+          'Cookie access cho Admin/Doctor. Khi dùng cookie, gửi thêm X-App-Context: admin.',
+      },
+      'adminAccessAuth',
+    )
+    .addCookieAuth(
+      AUTH_COOKIE_NAMES.admin.refresh,
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description:
+          'Cookie refresh cho Admin/Doctor. Khi dùng cookie, gửi thêm X-App-Context: admin.',
+      },
+      'adminRefreshAuth',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'X-App-Context',
+        in: 'header',
+        description:
+          'Bắt buộc với browser cookie auth: patient hoặc admin. Bearer service-to-service có thể suy ra context từ claim appContext.',
+      },
+      'appContext',
+    )
+    .addGlobalParameters({
+      name: 'X-App-Context',
+      in: 'header',
+      required: false,
+      schema: { type: 'string', enum: ['patient', 'admin'] },
+      description:
+        'Bắt buộc khi xác thực bằng browser cookie; không bắt buộc khi dùng Bearer token.',
+    })
     .build();
   // The Swagger CLI plugin generates this file during local builds, but
   // Vercel's serverless file tracer may omit it from the function bundle.
@@ -85,6 +153,7 @@ async function bootstrap() {
   // the API from starting when the optional file is unavailable.
   const swaggerMetadataPath = join(__dirname, 'metadata.js');
   if (existsSync(swaggerMetadataPath)) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { default: swaggerMetadata } = require('./metadata.js');
     await SwaggerModule.loadPluginMetadata(swaggerMetadata);
   } else {

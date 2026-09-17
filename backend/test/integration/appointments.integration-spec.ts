@@ -111,6 +111,7 @@ describe('Appointments booking flow (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         appointment_date: appointmentDate,
         doctor_schedule_id: doctorSchedule.id,
@@ -154,6 +155,7 @@ describe('Appointments booking flow (integration)', () => {
     const first = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send(payload)
       .expect(201);
     createdAppointmentIds.push(first.body.data.id);
@@ -161,6 +163,7 @@ describe('Appointments booking flow (integration)', () => {
     const second = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send(payload);
 
     expect(second.status).toBe(409);
@@ -182,6 +185,7 @@ describe('Appointments booking flow (integration)', () => {
     const booked = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         appointment_date: appointmentDate,
         doctor_schedule_id: doctorSchedule.id,
@@ -193,7 +197,8 @@ describe('Appointments booking flow (integration)', () => {
 
     const cancelResponse = await request(app.getHttpServer())
       .delete(`/api/v1/appointments/cancel/${booked.body.data.id}`)
-      .set('Cookie', cookieHeader);
+      .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient');
 
     expect(cancelResponse.status).toBe(200);
     const rows = await dataSource.query<{ status: string }[]>(
@@ -211,6 +216,7 @@ describe('Appointments booking flow (integration)', () => {
     const response = await request(app.getHttpServer())
       .patch('/api/v1/appointments/1/status')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({ status: 'CONFIRMED' });
 
     expect(response.status).toBe(403);
@@ -231,6 +237,7 @@ describe('Appointments booking flow (integration)', () => {
     const booked = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', patientCookie)
+      .set('X-App-Context', 'patient')
       .send({
         appointment_date: appointmentDate,
         doctor_schedule_id: doctorSchedule.id,
@@ -251,6 +258,7 @@ describe('Appointments booking flow (integration)', () => {
     const response = await request(app.getHttpServer())
       .patch(`/api/v1/appointments/${booked.body.data.id}/status`)
       .set('Cookie', doctorCookie)
+      .set('X-App-Context', 'admin')
       .send({ status: 'CONFIRMED' });
 
     expect(response.status).toBe(403);
@@ -287,6 +295,7 @@ describe('Appointments booking flow (integration)', () => {
     const seedBooking = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         appointment_date: nextDateMatchingDayOfWeek(seedSchedule.day_of_week),
         doctor_schedule_id: seedSchedule.id,
@@ -329,10 +338,12 @@ describe('Appointments booking flow (integration)', () => {
       request(app.getHttpServer())
         .post('/api/v1/appointments/booking')
         .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'patient')
         .send(racePayload),
       request(app.getHttpServer())
         .post('/api/v1/appointments/booking')
         .set('Cookie', cookieHeader)
+        .set('X-App-Context', 'patient')
         .send(racePayload),
     ]);
 

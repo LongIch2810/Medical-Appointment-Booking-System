@@ -10,7 +10,9 @@ describe('JwtRefreshStrategy', () => {
       get: jest.fn().mockReturnValue('refresh-secret'),
       getOrThrow: jest.fn().mockReturnValue('refresh-secret'),
     };
-    sessionAuthService = { assertSessionValid: jest.fn().mockResolvedValue(undefined) };
+    sessionAuthService = {
+      assertSessionValid: jest.fn().mockResolvedValue(undefined),
+    };
     strategy = new JwtRefreshStrategy(
       configService as never,
       sessionAuthService as never,
@@ -23,23 +25,33 @@ describe('JwtRefreshStrategy', () => {
     });
     expect(
       () =>
-        new JwtRefreshStrategy(configService as never, sessionAuthService as never),
+        new JwtRefreshStrategy(
+          configService as never,
+          sessionAuthService as never,
+        ),
     ).toThrow('REFRESH_TOKEN_SECRET is not configured');
   });
 
-  it('delegates session revocation checks to SessionAuthService and returns the full payload', async () => {
+  it('delegates session revocation checks and returns the full payload with context', async () => {
     const payload = {
       sub: 9,
       tokenId: 'tok-1',
       sessionVersion: 4,
       roles: ['PATIENT'],
+      appContext: 'patient',
     };
 
-    await expect(strategy.validate(payload)).resolves.toEqual({
+    await expect(
+      strategy.validate(
+        { headers: { 'x-app-context': 'patient' } } as never,
+        payload,
+      ),
+    ).resolves.toEqual({
       userId: 9,
       tokenId: 'tok-1',
       sessionVersion: 4,
       roles: ['PATIENT'],
+      appContext: 'patient',
     });
     expect(sessionAuthService.assertSessionValid).toHaveBeenCalledWith({
       sub: 9,
@@ -54,7 +66,13 @@ describe('JwtRefreshStrategy', () => {
     );
 
     await expect(
-      strategy.validate({ sub: 9, tokenId: 't', sessionVersion: 1, roles: [] }),
+      strategy.validate({ headers: { 'x-app-context': 'patient' } } as never, {
+        sub: 9,
+        tokenId: 't',
+        sessionVersion: 1,
+        roles: [],
+        appContext: 'patient',
+      }),
     ).rejects.toThrow('Token đã bị thu hồi !');
   });
 });

@@ -12,6 +12,7 @@ import {
   Query,
   Request,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { ChatHistoryService } from './chat-history.service';
@@ -24,6 +25,7 @@ import { PERMISSIONS } from 'src/utils/constants';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BodyBuildHealthRoadmapDto } from './dto/request/bodyBuildHealthRoadmap.dto';
 import type { Response } from 'express';
+import { getRequestAccessToken } from 'src/utils/authContext';
 
 @ApiTags('chat-history')
 @ApiCookieAuth()
@@ -66,7 +68,8 @@ export class ChatHistoryController {
   @Permissions(PERMISSIONS.CHATBOT_CHAT)
   async chatWithChatbot(@Request() req, @Body() body: BodyChatDto) {
     const { userId } = req.user;
-    const { accessToken: token } = req.cookies;
+    const token = getRequestAccessToken(req);
+    if (!token) throw new UnauthorizedException('Token không hợp lệ.');
     const { question } = body;
     const answer = await this.chatHistoryService.chatbotAnswer(
       userId,
@@ -85,7 +88,8 @@ export class ChatHistoryController {
     @Body() body: BodyBuildHealthRoadmapDto,
   ) {
     const { userId } = req.user;
-    const { accessToken: token } = req.cookies;
+    const token = getRequestAccessToken(req);
+    if (!token) throw new UnauthorizedException('Token không hợp lệ.');
 
     return this.chatHistoryService.buildHealthRoadmap(
       userId,

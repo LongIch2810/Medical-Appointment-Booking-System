@@ -1,4 +1,5 @@
 import Doctor from 'src/entities/doctor.entity';
+import type { AuthAppContext } from 'src/utils/authContext';
 
 export type Arrange = 'desc' | 'asc';
 
@@ -16,6 +17,7 @@ export type RequestPaylaod = {
   roles: string[];
   tokenId: string;
   sessionVersion: number;
+  appContext: AuthAppContext;
 };
 
 export type PgDriverError = {

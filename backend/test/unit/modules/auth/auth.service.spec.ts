@@ -221,10 +221,17 @@ describe('AuthService', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
-      expect(redisService.setData).toHaveBeenCalledWith(
-        'session_version:5',
-        2,
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ appContext: 'patient' }),
+        expect.any(Object),
       );
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ appContext: 'patient' }),
+        expect.any(Object),
+      );
+      expect(redisService.setData).toHaveBeenCalledWith('session_version:5', 2);
       expect(redisService.rPush).toHaveBeenCalledWith(
         'refresh_tokens:5',
         expect.stringContaining('"userAgent":"jest-agent"'),
@@ -237,7 +244,10 @@ describe('AuthService', () => {
       redisService.getData.mockResolvedValue(1);
       jwtService.sign.mockReturnValue('token');
       jwtService.decode.mockReturnValue({ exp: 1_700_000_000 });
-      const oldest = JSON.stringify({ tokenId: 'old-token', exp: 1_600_000_000 });
+      const oldest = JSON.stringify({
+        tokenId: 'old-token',
+        exp: 1_600_000_000,
+      });
       redisService.lRange.mockResolvedValue([oldest, 's2', 's3', 's4']);
 
       const req = {
@@ -285,11 +295,18 @@ describe('AuthService', () => {
         accessToken: 'access-token',
         refreshToken: 'refresh-token',
       });
-      // No cached session_version -> defaults to 1, not the falsy null.
-      expect(redisService.setData).toHaveBeenCalledWith(
-        'session_version:8',
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
         1,
+        expect.objectContaining({ appContext: 'admin' }),
+        expect.any(Object),
       );
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ appContext: 'admin' }),
+        expect.any(Object),
+      );
+      // No cached session_version -> defaults to 1, not the falsy null.
+      expect(redisService.setData).toHaveBeenCalledWith('session_version:8', 1);
     });
 
     it('allows a user holding PATIENT plus another role', async () => {
@@ -316,9 +333,7 @@ describe('AuthService', () => {
         fullname: 'New User',
         roles: [],
       };
-      usersService.createUserWithDefaultProfile.mockResolvedValue(
-        createdUser,
-      );
+      usersService.createUserWithDefaultProfile.mockResolvedValue(createdUser);
       dataSource.transaction.mockImplementation((cb: any) => cb({}));
 
       const result = await service.register({
@@ -362,7 +377,10 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('throws UnauthorizedException when the refresh token cookie cannot be decoded', async () => {
       jwtService.decode.mockReturnValue(null);
-      const req = { cookies: { refreshToken: 'bad-token' } } as any;
+      const req = {
+        headers: { 'x-app-context': 'patient' },
+        cookies: { patientRefreshToken: 'bad-token' },
+      } as any;
 
       await expect(service.logout(req)).rejects.toBeInstanceOf(
         UnauthorizedException,
@@ -374,9 +392,13 @@ describe('AuthService', () => {
         sub: 5,
         tokenId: 'tok-1',
         exp: 1_700_000_000,
+        appContext: 'patient',
       });
       redisService.lRange.mockResolvedValue([]);
-      const req = { cookies: { refreshToken: 'refresh' } } as any;
+      const req = {
+        headers: { 'x-app-context': 'patient' },
+        cookies: { patientRefreshToken: 'refresh' },
+      } as any;
 
       await expect(service.logout(req)).rejects.toBeInstanceOf(
         UnauthorizedException,
@@ -388,10 +410,14 @@ describe('AuthService', () => {
         sub: 5,
         tokenId: 'tok-1',
         exp: 1_700_000_000,
+        appContext: 'patient',
       });
       const stored = JSON.stringify({ tokenId: 'tok-1' });
       redisService.lRange.mockResolvedValue([stored]);
-      const req = { cookies: { refreshToken: 'refresh' } } as any;
+      const req = {
+        headers: { 'x-app-context': 'patient' },
+        cookies: { patientRefreshToken: 'refresh' },
+      } as any;
 
       const result = await service.logout(req);
 
@@ -413,7 +439,10 @@ describe('AuthService', () => {
   describe('logoutAll', () => {
     it('throws UnauthorizedException when the refresh token cookie cannot be decoded', async () => {
       jwtService.decode.mockReturnValue(undefined);
-      const req = { cookies: { refreshToken: 'bad-token' } } as any;
+      const req = {
+        headers: { 'x-app-context': 'patient' },
+        cookies: { patientRefreshToken: 'bad-token' },
+      } as any;
 
       await expect(service.logoutAll(req)).rejects.toBeInstanceOf(
         UnauthorizedException,
@@ -421,8 +450,15 @@ describe('AuthService', () => {
     });
 
     it('bumps the session version and clears every stored session', async () => {
-      jwtService.decode.mockReturnValue({ sub: 5, tokenId: 'tok-1' });
-      const req = { cookies: { refreshToken: 'refresh' } } as any;
+      jwtService.decode.mockReturnValue({
+        sub: 5,
+        tokenId: 'tok-1',
+        appContext: 'patient',
+      });
+      const req = {
+        headers: { 'x-app-context': 'patient' },
+        cookies: { patientRefreshToken: 'refresh' },
+      } as any;
 
       const result = await service.logoutAll(req);
 
@@ -441,6 +477,7 @@ describe('AuthService', () => {
       tokenId: 'tok-1',
       sessionVersion: 3,
       roles: ['PATIENT'],
+      appContext: 'patient',
     };
 
     it('throws UnauthorizedException when the token is blacklisted', async () => {
@@ -479,6 +516,16 @@ describe('AuthService', () => {
         newAccessToken: 'new-access-token',
         newRefreshToken: 'new-refresh-token',
       });
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({ appContext: 'patient' }),
+        expect.any(Object),
+      );
+      expect(jwtService.sign).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({ appContext: 'patient' }),
+        expect.any(Object),
+      );
       expect(redisService.lRem).toHaveBeenCalledWith(
         'refresh_tokens:5',
         0,
@@ -578,11 +625,11 @@ describe('AuthService', () => {
         'id = :id AND consumed_at IS NULL',
         { id: 1 },
       );
-      expect(manager.userRepo.update).toHaveBeenCalledWith(
-        5,
-        { password: expect.any(String) },
-      );
-      const [, { password: storedHash }] = manager.userRepo.update.mock.calls[0];
+      expect(manager.userRepo.update).toHaveBeenCalledWith(5, {
+        password: expect.any(String),
+      });
+      const [, { password: storedHash }] =
+        manager.userRepo.update.mock.calls[0];
       await expect(
         bcrypt.compare('NewSecret@123', storedHash as string),
       ).resolves.toBe(true);

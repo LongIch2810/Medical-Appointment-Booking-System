@@ -4,6 +4,10 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { SessionAuthService } from './session-auth.service';
+import {
+  assertRequestTokenAppContext,
+  getRequestAuthCookie,
+} from 'src/utils/authContext';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -13,9 +17,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        (req: Request) => req?.cookies?.accessToken,
+        (req: Request) => getRequestAuthCookie(req, 'access'),
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
+      passReqToCallback: true,
       ignoreExpiration: false,
       // Không có fallback string — thiếu ACCESS_TOKEN_SECRET phải fail-fast
       // ở startup (xem AppModule ConfigModule.forRoot validate), không được
@@ -24,8 +29,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: any) {
+  async validate(req: Request, payload: any) {
     const { sub: userId, roles, tokenId, sessionVersion } = payload;
+    const appContext = assertRequestTokenAppContext(req, payload.appContext);
 
     await this.sessionAuthService.assertSessionValid({
       sub: userId,
@@ -33,6 +39,6 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       sessionVersion,
     });
 
-    return { userId, roles };
+    return { userId, roles, appContext };
   }
 }

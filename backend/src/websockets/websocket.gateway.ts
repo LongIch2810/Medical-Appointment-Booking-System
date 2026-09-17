@@ -21,6 +21,10 @@ import { WsCookieAuthGuard } from 'src/common/guards/wsCookieAuth.guard';
 import { WebsocketConnectionRateLimitService } from './websocket-connection-rate-limit.service';
 import { WsRateLimitFilter } from './ws-rate-limit.filter';
 import { WsRateLimitGuard } from './ws-rate-limit.guard';
+import {
+  getSocketAuthAppContext,
+  getSocketAuthCookie,
+} from 'src/utils/authContext';
 
 @WebSocketGateway({
   cors: {
@@ -81,15 +85,18 @@ export class WebsocketGateway
       return;
     }
 
-    const token = this._extractTokenFromCookie(client);
-    if (!token) {
+    const appContext = getSocketAuthAppContext(client);
+    const token = getSocketAuthCookie(client, 'access');
+    if (!token || !appContext) {
       this.rejectUnauthorizedClient(client);
       return;
     }
 
     try {
-      const validated =
-        await this.sessionAuthService.validateAccessToken(token);
+      const validated = await this.sessionAuthService.validateAccessToken(
+        token,
+        appContext,
+      );
 
       // client.data.user giữ đúng shape { sub, roles, ... } mà
       // getAuthenticatedUserId()/WsCookieAuthGuard kỳ vọng.
@@ -98,6 +105,7 @@ export class WebsocketGateway
         roles: validated.roles,
         tokenId: validated.tokenId,
         sessionVersion: validated.sessionVersion,
+        appContext: validated.appContext,
       };
       client.data.token = token;
 
@@ -224,20 +232,4 @@ export class WebsocketGateway
     client.emit('ws-error', { code: 401, message: 'Invalid token' });
     client.disconnect(true);
   }
-
-  private _extractTokenFromCookie = (client: any): string | null => {
-    try {
-      const cookies = client?.handshake?.headers?.cookie;
-      if (!cookies) return null;
-      const cookieArray = cookies.split('; ');
-      const cookieMap = cookieArray.reduce((acc: any, cookie: string) => {
-        const [key, value] = cookie.split('=');
-        if (key && value) acc[key.trim()] = decodeURIComponent(value);
-        return acc;
-      }, {});
-      return cookieMap['accessToken'] || null;
-    } catch {
-      return null;
-    }
-  };
 }

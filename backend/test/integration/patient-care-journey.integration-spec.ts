@@ -87,6 +87,7 @@ describe('Patient care journey (integration)', () => {
         roles: ['DOCTOR'],
         tokenId: randomUUID(),
         sessionVersion: null,
+        appContext: 'admin',
       },
       {
         secret:
@@ -94,7 +95,7 @@ describe('Patient care journey (integration)', () => {
         expiresIn: '15m',
       },
     );
-    doctorCookie = `accessToken=${token}`;
+    doctorCookie = `adminAccessToken=${token}`;
   });
 
   afterEach(async () => {
@@ -133,6 +134,7 @@ describe('Patient care journey (integration)', () => {
     const relativeResponse = await request(app.getHttpServer())
       .post('/api/v1/relatives')
       .set('Cookie', patientLogin.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         fullname: '  Người Thân Integration  ',
         relationship_code: relationshipCode,
@@ -147,6 +149,7 @@ describe('Patient care journey (integration)', () => {
     await request(app.getHttpServer())
       .patch(`/api/v1/health-profiles/update/${relativeId}`)
       .set('Cookie', patientLogin.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         height: 172,
         weight: 68,
@@ -158,6 +161,7 @@ describe('Patient care journey (integration)', () => {
     const profile = await request(app.getHttpServer())
       .get(`/api/v1/health-profiles/${relativeId}`)
       .set('Cookie', patientLogin.cookieHeader)
+      .set('X-App-Context', 'patient')
       .expect(200);
     expect(profile.body.data).toMatchObject({
       height: 172,
@@ -169,6 +173,7 @@ describe('Patient care journey (integration)', () => {
     const booking = await request(app.getHttpServer())
       .post('/api/v1/appointments/booking')
       .set('Cookie', patientLogin.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         appointment_date: nextDateMatchingDayOfWeek(schedule.day_of_week),
         doctor_schedule_id: schedule.id,
@@ -183,6 +188,7 @@ describe('Patient care journey (integration)', () => {
     await request(app.getHttpServer())
       .patch(`/api/v1/appointments/${appointmentId}/status`)
       .set('Cookie', doctorCookie)
+      .set('X-App-Context', 'admin')
       .send({ status: 'CONFIRMED' })
       .expect(200);
 
@@ -196,12 +202,14 @@ describe('Patient care journey (integration)', () => {
     await request(app.getHttpServer())
       .patch(`/api/v1/appointments/${appointmentId}/status`)
       .set('Cookie', doctorCookie)
+      .set('X-App-Context', 'admin')
       .send({ status: 'COMPLETED' })
       .expect(200);
 
     const examination = await request(app.getHttpServer())
       .post('/api/v1/examination-result/create')
       .set('Cookie', doctorCookie)
+      .set('X-App-Context', 'admin')
       .send({
         symptoms: 'Đau họng',
         diagnosis: 'Viêm họng nhẹ',
@@ -215,6 +223,7 @@ describe('Patient care journey (integration)', () => {
     const rating = await request(app.getHttpServer())
       .post('/api/v1/satisfaction-rating/create-rating')
       .set('Cookie', patientLogin.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         rating_score: 5,
         feedback: '  Bác sĩ tư vấn rất rõ ràng  ',

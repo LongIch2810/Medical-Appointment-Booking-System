@@ -46,12 +46,28 @@ describe('WebsocketGateway integration', () => {
   // logout/logout-all/reset-password does to a real session in Redis.
   const revokedTokens = new Set<string>();
   const sessionAuthService = {
-    validateAccessToken: jest.fn(async (token: string) => {
-      if (token !== 'valid-token' || revokedTokens.has(token)) {
-        throw new UnauthorizedException('Token không hợp lệ !');
-      }
-      return { userId: 7, roles: ['PATIENT'], tokenId: 't1', sessionVersion: 1 };
-    }),
+    validateAccessToken: jest.fn(
+      async (
+        token: string,
+        expectedContext: 'patient' | 'admin' = 'patient',
+      ) => {
+        const tokenContext = token === 'admin-token' ? 'admin' : 'patient';
+        if (
+          (token !== 'valid-token' && token !== 'admin-token') ||
+          revokedTokens.has(token) ||
+          tokenContext !== expectedContext
+        ) {
+          throw new UnauthorizedException('Token không hợp lệ !');
+        }
+        return {
+          userId: tokenContext === 'admin' ? 8 : 7,
+          roles: tokenContext === 'admin' ? ['DOCTOR'] : ['PATIENT'],
+          tokenId: tokenContext === 'admin' ? 'admin-t1' : 't1',
+          sessionVersion: 1,
+          appContext: tokenContext,
+        };
+      },
+    ),
   };
 
   beforeAll(async () => {
@@ -89,7 +105,9 @@ describe('WebsocketGateway integration', () => {
         sender: { id: userId },
         channel: { id: data.channel_id },
       };
-      gateway.server.to(`room:${data.channel_id}`).emit('receive:message', message);
+      gateway.server
+        .to(`room:${data.channel_id}`)
+        .emit('receive:message', message);
       return Promise.resolve(message);
     });
   });
@@ -110,10 +128,18 @@ describe('WebsocketGateway integration', () => {
     await app.close();
   });
 
-  function connect(token = 'valid-token') {
+  function connect(
+    token = 'valid-token',
+    appContext: 'patient' | 'admin' = 'patient',
+  ) {
+    const cookieName =
+      appContext === 'admin' ? 'adminAccessToken' : 'patientAccessToken';
     const client = io(endpoint, {
       transports: ['websocket'],
-      extraHeaders: { cookie: `accessToken=${encodeURIComponent(token)}` },
+      extraHeaders: {
+        cookie: `${cookieName}=${encodeURIComponent(token)}`,
+      },
+      auth: { appContext },
       forceNew: true,
       reconnection: false,
     });
@@ -158,6 +184,16 @@ describe('WebsocketGateway integration', () => {
     expect(messagesService.saveMessage).toHaveBeenCalledWith(
       { channel_id: 12, content: 'hello' },
       7,
+    );
+  });
+
+  it('authenticates an admin socket with the admin cookie and context', async () => {
+    const client = connect('admin-token', 'admin');
+    await once(client, 'connect');
+
+    expect(sessionAuthService.validateAccessToken).toHaveBeenCalledWith(
+      'admin-token',
+      'admin',
     );
   });
 

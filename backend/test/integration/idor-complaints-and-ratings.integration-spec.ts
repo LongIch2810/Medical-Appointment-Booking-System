@@ -81,13 +81,14 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
         roles: ['DOCTOR'],
         tokenId: randomUUID(),
         sessionVersion: null,
+        appContext: 'admin',
       },
       {
         secret: configService.get<string>('ACCESS_TOKEN_SECRET'),
         expiresIn: '15m',
       },
     );
-    doctorCookie = `accessToken=${token}`;
+    doctorCookie = `adminAccessToken=${token}`;
   });
 
   afterEach(async () => {
@@ -109,10 +110,9 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       ]);
       createdAppointmentIds.length = 0;
     }
-    await dataSource.query(
-      'DELETE FROM "complaints" WHERE user_id = ANY($1)',
-      [createdUserIds],
-    );
+    await dataSource.query('DELETE FROM "complaints" WHERE user_id = ANY($1)', [
+      createdUserIds,
+    ]);
     await cleanupRegisteredUsers(dataSource, createdUserIds);
     createdUserIds.length = 0;
   });
@@ -135,6 +135,7 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       const created = await request(app.getHttpServer())
         .post('/api/v1/complaints/create')
         .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({
           title: 'Spoofed complaint',
           description: 'Should belong to A, not B',
@@ -148,13 +149,15 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       // B (the real owner would be A here) cannot read A's complaint.
       const readByB = await request(app.getHttpServer())
         .get(`/api/v1/complaints/${complaintId}`)
-        .set('Cookie', loginB.cookieHeader);
+        .set('Cookie', loginB.cookieHeader)
+        .set('X-App-Context', 'patient');
       expect(readByB.status).toBe(403);
 
       // A can read their own complaint.
       const readByA = await request(app.getHttpServer())
         .get(`/api/v1/complaints/${complaintId}`)
         .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient')
         .expect(200);
       expect(readByA.body.data.id).toBe(complaintId);
 
@@ -162,6 +165,7 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       const globalList = await request(app.getHttpServer())
         .post('/api/v1/complaints')
         .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({ page: 1, limit: 10, arrange: 'desc' });
       expect(globalList.status).toBe(403);
     });
@@ -185,6 +189,7 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       const booking = await request(app.getHttpServer())
         .post('/api/v1/appointments/booking')
         .set('Cookie', loginB.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({
           appointment_date: nextDateMatchingDayOfWeek(schedule.day_of_week),
           doctor_schedule_id: schedule.id,
@@ -198,6 +203,7 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       await request(app.getHttpServer())
         .patch(`/api/v1/appointments/${appointmentId}/status`)
         .set('Cookie', doctorCookie)
+        .set('X-App-Context', 'admin')
         .send({ status: 'CONFIRMED' })
         .expect(200);
 
@@ -209,12 +215,14 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       await request(app.getHttpServer())
         .patch(`/api/v1/appointments/${appointmentId}/status`)
         .set('Cookie', doctorCookie)
+        .set('X-App-Context', 'admin')
         .send({ status: 'COMPLETED' })
         .expect(200);
 
       await request(app.getHttpServer())
         .post('/api/v1/examination-result/create')
         .set('Cookie', doctorCookie)
+        .set('X-App-Context', 'admin')
         .send({
           symptoms: 'Sốt nhẹ',
           diagnosis: 'Cảm cúm',
@@ -227,7 +235,12 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       const rating = await request(app.getHttpServer())
         .post('/api/v1/satisfaction-rating/create-rating')
         .set('Cookie', loginB.cookieHeader)
-        .send({ rating_score: 5, feedback: 'Great', appointment_id: appointmentId })
+        .set('X-App-Context', 'patient')
+        .send({
+          rating_score: 5,
+          feedback: 'Great',
+          appointment_id: appointmentId,
+        })
         .expect(201);
       void rating;
 
@@ -240,13 +253,15 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       // A cannot read B's rating.
       const readByA = await request(app.getHttpServer())
         .get(`/api/v1/satisfaction-rating/${ratingId}`)
-        .set('Cookie', loginA.cookieHeader);
+        .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient');
       expect(readByA.status).toBe(403);
 
       // A cannot update B's rating.
       const updateByA = await request(app.getHttpServer())
         .patch(`/api/v1/satisfaction-rating/${ratingId}`)
         .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({ rating_score: 1, feedback: 'Tampered' });
       expect(updateByA.status).toBe(403);
 
@@ -263,10 +278,12 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       await request(app.getHttpServer())
         .get(`/api/v1/satisfaction-rating/${ratingId}`)
         .set('Cookie', loginB.cookieHeader)
+        .set('X-App-Context', 'patient')
         .expect(200);
       await request(app.getHttpServer())
         .patch(`/api/v1/satisfaction-rating/${ratingId}`)
         .set('Cookie', loginB.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({ feedback: 'Updated by owner' })
         .expect(200);
 
@@ -274,6 +291,7 @@ describe('Complaints & satisfaction-rating IDOR (integration)', () => {
       const globalList = await request(app.getHttpServer())
         .post('/api/v1/satisfaction-rating')
         .set('Cookie', loginA.cookieHeader)
+        .set('X-App-Context', 'patient')
         .send({ page: 1, limit: 10, arrange: 'desc' });
       expect(globalList.status).toBe(403);
     });

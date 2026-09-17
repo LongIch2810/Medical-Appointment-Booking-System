@@ -28,9 +28,21 @@ import {
   getClearAuthCookieOptions,
 } from 'src/utils/cookieOptions';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
-import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiCookieAuth,
+  ApiOperation,
+  ApiSecurity,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { RATE_LIMIT_POLICIES } from 'src/common/rate-limit/rate-limit.constants';
+import type { Response as ExpressResponse } from 'express';
+import {
+  AUTH_COOKIE_NAMES,
+  LEGACY_AUTH_COOKIE_NAMES,
+  requireRequestAuthAppContext,
+  type AuthAppContext,
+} from 'src/utils/authContext';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -40,16 +52,37 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
-  private setAuthCookies(res, accessToken: string, refreshToken: string): void {
+  private setAuthCookies(
+    res: ExpressResponse,
+    accessToken: string,
+    refreshToken: string,
+    appContext: AuthAppContext,
+  ): void {
     res.cookie(
-      'accessToken',
+      AUTH_COOKIE_NAMES[appContext].access,
       accessToken,
       getAuthCookieOptions(this.configService, ACCESS_TOKEN_EXPIRE_TIME),
     );
     res.cookie(
-      'refreshToken',
+      AUTH_COOKIE_NAMES[appContext].refresh,
       refreshToken,
       getAuthCookieOptions(this.configService, REFRESH_TOKEN_EXPIRE_TIME),
+    );
+  }
+
+  private clearAuthCookies(
+    res: ExpressResponse,
+    appContext: AuthAppContext,
+  ): void {
+    const clearOptions = getClearAuthCookieOptions(this.configService);
+    res.clearCookie(AUTH_COOKIE_NAMES[appContext].access, clearOptions);
+    res.clearCookie(AUTH_COOKIE_NAMES[appContext].refresh, clearOptions);
+  }
+
+  private clearLegacyAuthCookies(res: ExpressResponse): void {
+    const clearOptions = getClearAuthCookieOptions(this.configService);
+    LEGACY_AUTH_COOKIE_NAMES.forEach((name) =>
+      res.clearCookie(name, clearOptions),
     );
   }
 
@@ -69,10 +102,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.login' })
-  async login(@Request() req, @Response() res) {
-    const { accessToken, refreshToken } = await this.authService.login(req);
+  async login(@Request() req, @Response() res: ExpressResponse) {
+    const { accessToken, refreshToken } = await this.authService.login(
+      req,
+      'patient',
+    );
 
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, accessToken, refreshToken, 'patient');
+    this.clearLegacyAuthCookies(res);
 
     // Token đã ở HttpOnly cookie — không trả lại trong body để tránh lộ ra
     // nơi client-side JS có thể đọc được (XSS) hoặc bị log lại.
@@ -96,11 +133,12 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(LocalAuthGuard)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.login-administrator' })
-  async loginAdministrator(@Request() req, @Response() res) {
+  async loginAdministrator(@Request() req, @Response() res: ExpressResponse) {
     const { accessToken, refreshToken } =
-      await this.authService.loginAdministrator(req);
+      await this.authService.loginAdministrator(req, 'admin');
 
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, accessToken, refreshToken, 'admin');
+    this.clearLegacyAuthCookies(res);
 
     // Không `return` res.json(...) — xem chú thích ở login() phía trên.
     res.status(HttpStatus.OK).json({
@@ -112,19 +150,22 @@ export class AuthController {
   }
 
   @UseGuards(JwtRefreshAuthGuard)
-  @ApiCookieAuth()
+  @ApiCookieAuth('patientRefreshAuth')
+  @ApiCookieAuth('adminRefreshAuth')
+  @ApiSecurity('appContext')
   @ApiOperation({ summary: 'Làm mới access token' })
   @Throttle(RATE_LIMIT_POLICIES.refresh)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.refresh' })
-  async refresh(@Request() req, @Response() res) {
+  async refresh(@Request() req, @Response() res: ExpressResponse) {
     const payload = req.user;
     const { newAccessToken, newRefreshToken } = await this.authService.refresh(
       req,
       payload,
     );
-    this.setAuthCookies(res, newAccessToken, newRefreshToken);
+    const appContext = requireRequestAuthAppContext(req);
+    this.setAuthCookies(res, newAccessToken, newRefreshToken, appContext);
 
     // Không `return` res.json(...) — xem chú thích ở login() phía trên.
     res.status(HttpStatus.OK).json({
@@ -137,16 +178,18 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.AUTH_LOGOUT)
-  @ApiCookieAuth()
+  @ApiCookieAuth('patientAccessAuth')
+  @ApiCookieAuth('adminAccessAuth')
+  @ApiSecurity('appContext')
   @ApiOperation({ summary: 'Đăng xuất' })
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout' })
-  async logout(@Request() req, @Response() res) {
+  async logout(@Request() req, @Response() res: ExpressResponse) {
     const { message } = await this.authService.logout(req);
-    const clearOptions = getClearAuthCookieOptions(this.configService);
-    res.clearCookie('accessToken', clearOptions);
-    res.clearCookie('refreshToken', clearOptions);
+    const appContext = requireRequestAuthAppContext(req);
+    this.clearAuthCookies(res, appContext);
+    this.clearLegacyAuthCookies(res);
     // Không `return` res.json(...) — xem chú thích ở login() phía trên.
     res.status(HttpStatus.OK).json({
       statusCode: 200,
@@ -158,13 +201,21 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard, PermissionsGuard)
   @Permissions(PERMISSIONS.AUTH_LOGOUT)
-  @ApiCookieAuth()
+  @ApiCookieAuth('patientAccessAuth')
+  @ApiCookieAuth('adminAccessAuth')
+  @ApiSecurity('appContext')
   @ApiOperation({ summary: 'Đăng xuất khỏi tất cả thiết bị' })
   @Post('logout-all')
   @HttpCode(HttpStatus.OK)
   @AuditLogAction({ action: 'LOGOUT', entityName: 'auth.logout-all' })
-  async logoutAll(@Request() req) {
+  async logoutAll(
+    @Request() req,
+    @Response({ passthrough: true }) res: ExpressResponse,
+  ) {
     const { message } = await this.authService.logoutAll(req);
+    const appContext = requireRequestAuthAppContext(req);
+    this.clearAuthCookies(res, appContext);
+    this.clearLegacyAuthCookies(res);
     return { message };
   }
 
@@ -177,10 +228,14 @@ export class AuthController {
   @Get('google/redirect')
   @UseGuards(GoogleAuthGuard)
   @AuditLogAction({ action: 'LOGIN', entityName: 'auth.google' })
-  async googleAuthRedirect(@Request() req, @Response() res) {
-    const { accessToken, refreshToken } = await this.authService.login(req);
+  async googleAuthRedirect(@Request() req, @Response() res: ExpressResponse) {
+    const { accessToken, refreshToken } = await this.authService.login(
+      req,
+      'patient',
+    );
 
-    this.setAuthCookies(res, accessToken, refreshToken);
+    this.setAuthCookies(res, accessToken, refreshToken, 'patient');
+    this.clearLegacyAuthCookies(res);
 
     // Không `return` res.redirect(...) — xem chú thích ở login() phía trên.
     res.redirect(

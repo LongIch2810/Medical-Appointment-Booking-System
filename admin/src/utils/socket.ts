@@ -18,6 +18,9 @@ export function connectSocket() {
   const newSocket = io(backendOrigin, {
     transports: ["websocket"],
     withCredentials: true,
+    auth: {
+      appContext: "admin",
+    },
   });
   socket = newSocket;
   let isRefreshing = false;
@@ -29,7 +32,7 @@ export function connectSocket() {
         retryAfter > 0
           ? `Bạn đang thao tác quá nhanh. Vui lòng thử lại sau ${retryAfter} giây.`
           : "Bạn đang thao tác quá nhanh. Vui lòng thử lại sau.",
-        { toastId: "websocket-rate-limit" }
+        { toastId: "websocket-rate-limit" },
       );
       return;
     }

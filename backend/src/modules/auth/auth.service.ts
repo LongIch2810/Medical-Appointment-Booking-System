@@ -22,6 +22,12 @@ import User from 'src/entities/user.entity';
 import ResetToken from 'src/entities/resetToken.entity';
 import { OtpPurpose } from 'src/shared/enums/otpPurpose';
 import { hashSecret } from 'src/utils/hashSecret';
+import {
+  getRequestAuthCookie,
+  requireRequestAuthAppContext,
+  requireTokenAppContext,
+  type AuthAppContext,
+} from 'src/utils/authContext';
 
 @Injectable()
 export class AuthService {
@@ -67,7 +73,7 @@ export class AuthService {
     return { userId: user.id, roles };
   }
 
-  async login(req: Request) {
+  async login(req: Request, appContext: AuthAppContext = 'patient') {
     const { userId, roles } = req.user as RequestPaylaod;
     if (!roles.includes(RoleName.PATIENT)) {
       throw new ForbiddenException('Bạn không có quyền truy cập!');
@@ -86,6 +92,7 @@ export class AuthService {
       roles,
       tokenId,
       sessionVersion,
+      appContext,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -130,7 +137,7 @@ export class AuthService {
     };
   }
 
-  async loginAdministrator(req: Request) {
+  async loginAdministrator(req: Request, appContext: AuthAppContext = 'admin') {
     const { userId, roles } = req.user as RequestPaylaod;
     if (roles.length === 1 && roles.includes(RoleName.PATIENT)) {
       throw new ForbiddenException('Bạn không có quyền truy cập!');
@@ -150,6 +157,7 @@ export class AuthService {
       roles,
       tokenId,
       sessionVersion,
+      appContext,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -218,11 +226,13 @@ export class AuthService {
   }
 
   async logout(req: Request) {
-    const refreshToken = req.cookies.refreshToken;
-    const decoded = this.jwtService.decode(refreshToken);
+    const appContext = requireRequestAuthAppContext(req);
+    const refreshToken = getRequestAuthCookie(req, 'refresh', appContext);
+    const decoded = this.jwtService.decode(refreshToken ?? '');
     if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
       throw new UnauthorizedException('Token không hợp lệ!');
     }
+    requireTokenAppContext(decoded.appContext, appContext);
     const now = Math.floor(Date.now() / 1000);
     const ttl = decoded.exp ? decoded.exp - now : 7 * 24 * 60 * 60;
     await this.redisService.setData(`blacklist:${decoded.tokenId}`, true, ttl);
@@ -238,11 +248,13 @@ export class AuthService {
   }
 
   async logoutAll(req: Request) {
-    const refreshToken = req.cookies.refreshToken;
-    const decoded = this.jwtService.decode(refreshToken);
+    const appContext = requireRequestAuthAppContext(req);
+    const refreshToken = getRequestAuthCookie(req, 'refresh', appContext);
+    const decoded = this.jwtService.decode(refreshToken ?? '');
     if (!decoded || typeof decoded !== 'object' || !decoded.tokenId) {
       throw new UnauthorizedException('Token không hợp lệ!');
     }
+    requireTokenAppContext(decoded.appContext, appContext);
 
     await this.redisService.incr(`session_version:${decoded.sub}`);
     await this.redisService.delData(`refresh_tokens:${decoded.sub}`);
@@ -251,6 +263,7 @@ export class AuthService {
 
   async refresh(req: Request, payload: any) {
     const { userId, tokenId, sessionVersion, roles } = payload;
+    const appContext = requireTokenAppContext(payload.appContext);
 
     const isBlacklisted = await this.redisService.getData(
       `blacklist:${tokenId}`,
@@ -272,6 +285,7 @@ export class AuthService {
       tokenId: newTokenId,
       sessionVersion: sessionVersion,
       roles,
+      appContext,
     };
     await this.redisService.lRem(`refresh_tokens:${userId}`, 0, match);
     const now = Math.floor(Date.now() / 1000);

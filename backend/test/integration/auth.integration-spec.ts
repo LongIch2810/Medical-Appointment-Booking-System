@@ -11,6 +11,7 @@ import {
 import {
   PATIENT_FIXTURE,
   cleanupRegisteredUsers,
+  loginAs,
   registerAndPromote,
   registerNewUser,
 } from '../fixtures/auth.fixture';
@@ -97,9 +98,11 @@ describe('Auth (integration)', () => {
       expect(response.body.data).not.toHaveProperty('accessToken');
       expect(response.body.data).not.toHaveProperty('refreshToken');
       const setCookie = response.headers['set-cookie'] as unknown as string[];
-      const accessCookie = setCookie.find((c) => c.startsWith('accessToken='));
+      const accessCookie = setCookie.find((c) =>
+        c.startsWith('patientAccessToken='),
+      );
       const refreshCookie = setCookie.find((c) =>
-        c.startsWith('refreshToken='),
+        c.startsWith('patientRefreshToken='),
       );
       expect(accessCookie).toContain('HttpOnly');
       expect(accessCookie).toContain('SameSite=Strict');
@@ -141,7 +144,9 @@ describe('Auth (integration)', () => {
       expect(response.status).toBe(200);
       expect(response.body.data).not.toHaveProperty('accessToken');
       const setCookie = response.headers['set-cookie'] as unknown as string[];
-      expect(setCookie.some((c) => c.startsWith('accessToken='))).toBe(true);
+      expect(setCookie.some((c) => c.startsWith('adminAccessToken='))).toBe(
+        true,
+      );
     });
   });
 
@@ -171,6 +176,7 @@ describe('Auth (integration)', () => {
       const logoutResponse = await request(app.getHttpServer())
         .post('/api/v1/auth/logout')
         .set('Cookie', cookies)
+        .set('X-App-Context', 'patient')
         .send();
 
       expect(logoutResponse.status).toBe(200);
@@ -179,8 +185,102 @@ describe('Auth (integration)', () => {
       const refreshResponse = await request(app.getHttpServer())
         .post('/api/v1/auth/refresh')
         .set('Cookie', cookies)
+        .set('X-App-Context', 'patient')
         .send();
       expect(refreshResponse.status).toBe(401);
+    });
+
+    it('keeps patient and admin sessions independent and rejects context mismatches', async () => {
+      const user = await registerAndPromote(app, dataSource, ROLE_NAME.DOCTOR);
+      createdUserIds.push(user.userId);
+
+      const adminLogin = await loginAs(app, user, '/api/v1/auth/admin/login');
+
+      // The patient app must remain unauthenticated while only the admin
+      // session exists in the browser.
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', adminLogin.cookieHeader)
+        .set('X-App-Context', 'patient')
+        .expect(401);
+
+      const patientLogin = await loginAs(app, user);
+      let adminCookieHeader = adminLogin.cookieHeader;
+      let patientCookieHeader = patientLogin.cookieHeader;
+      const getBothCookies = () =>
+        [adminCookieHeader, patientCookieHeader].join('; ');
+
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'admin')
+        .expect(200);
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'patient')
+        .expect(200);
+
+      // A patient refresh rotates only the patient session; the admin
+      // refresh token remains usable, and vice versa.
+      const patientRefreshResponse = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'patient')
+        .expect(200);
+      patientCookieHeader = (
+        patientRefreshResponse.headers['set-cookie'] as string[]
+      )
+        .map((cookie) => cookie.split(';')[0])
+        .join('; ');
+
+      const adminRefreshResponse = await request(app.getHttpServer())
+        .post('/api/v1/auth/refresh')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'admin')
+        .expect(200);
+      adminCookieHeader = (
+        adminRefreshResponse.headers['set-cookie'] as string[]
+      )
+        .map((cookie) => cookie.split(';')[0])
+        .join('; ');
+
+      // The cookie name and the JWT claim must agree with the request context.
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', adminLogin.cookieHeader)
+        .set('X-App-Context', 'patient')
+        .expect(401);
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set(
+          'Cookie',
+          `patientAccessToken=${adminLogin.accessToken}; patientRefreshToken=${adminLogin.refreshToken}`,
+        )
+        .set('X-App-Context', 'patient')
+        .expect(401);
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', `accessToken=${adminLogin.accessToken}`)
+        .set('X-App-Context', 'admin')
+        .expect(401);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'patient')
+        .expect(200);
+      await request(app.getHttpServer())
+        .get('/api/v1/users/info')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'admin')
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/api/v1/auth/logout')
+        .set('Cookie', getBothCookies())
+        .set('X-App-Context', 'admin')
+        .expect(200);
     });
   });
 });

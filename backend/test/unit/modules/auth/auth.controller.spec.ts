@@ -52,14 +52,14 @@ describe('AuthController', () => {
 
     await controller.login(req, res as never);
 
-    expect(authService.login).toHaveBeenCalledWith(req);
+    expect(authService.login).toHaveBeenCalledWith(req, 'patient');
     expect(res.cookie).toHaveBeenCalledWith(
-      'accessToken',
+      'patientAccessToken',
       'access',
       expect.objectContaining({ httpOnly: true }),
     );
     expect(res.cookie).toHaveBeenCalledWith(
-      'refreshToken',
+      'patientRefreshToken',
       'refresh',
       expect.objectContaining({ httpOnly: true }),
     );
@@ -103,7 +103,11 @@ describe('AuthController', () => {
         newRefreshToken: 'refresh',
       });
       authService.logout.mockResolvedValue({ message: 'Đăng xuất thành công' });
-      const req = { body: {}, user: {} } as never;
+      const req = {
+        body: {},
+        user: {},
+        headers: { 'x-app-context': 'patient' },
+      } as never;
       const res = createMockResponse();
 
       const result = await controller[method](req, res as never);
@@ -123,14 +127,14 @@ describe('AuthController', () => {
 
     await controller.loginAdministrator(req, res as never);
 
-    expect(authService.loginAdministrator).toHaveBeenCalledWith(req);
+    expect(authService.loginAdministrator).toHaveBeenCalledWith(req, 'admin');
     expect(res.cookie).toHaveBeenCalledWith(
-      'accessToken',
+      'adminAccessToken',
       'admin-access',
       expect.objectContaining({ httpOnly: true }),
     );
     expect(res.cookie).toHaveBeenCalledWith(
-      'refreshToken',
+      'adminRefreshToken',
       'admin-refresh',
       expect.objectContaining({ httpOnly: true }),
     );
@@ -154,7 +158,7 @@ describe('AuthController', () => {
       await controller.login({ body: {} } as never, res as never);
 
       expect(res.cookie).toHaveBeenCalledWith(
-        'accessToken',
+        'patientAccessToken',
         'access',
         expect.objectContaining({ secure: false, sameSite: 'strict' }),
       );
@@ -173,7 +177,7 @@ describe('AuthController', () => {
       await controller.login({ body: {} } as never, res as never);
 
       expect(res.cookie).toHaveBeenCalledWith(
-        'accessToken',
+        'patientAccessToken',
         'access',
         expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
@@ -186,14 +190,17 @@ describe('AuthController', () => {
       authService.logout.mockResolvedValue({ message: 'Đăng xuất thành công' });
       const res = createMockResponse();
 
-      await controller.logout({} as never, res as never);
+      await controller.logout(
+        { headers: { 'x-app-context': 'patient' } } as never,
+        res as never,
+      );
 
       expect(res.clearCookie).toHaveBeenCalledWith(
-        'accessToken',
+        'patientAccessToken',
         expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
       expect(res.clearCookie).toHaveBeenCalledWith(
-        'refreshToken',
+        'patientRefreshToken',
         expect.objectContaining({ secure: true, sameSite: 'none' }),
       );
     });
@@ -201,7 +208,10 @@ describe('AuthController', () => {
 
   it('refreshes tokens using the request payload and sets new cookies', async () => {
     const payload = { userId: 7 };
-    const req = { user: payload } as never;
+    const req = {
+      user: payload,
+      headers: { 'x-app-context': 'patient' },
+    } as never;
     authService.refresh.mockResolvedValue({
       newAccessToken: 'new-access',
       newRefreshToken: 'new-refresh',
@@ -212,12 +222,12 @@ describe('AuthController', () => {
 
     expect(authService.refresh).toHaveBeenCalledWith(req, payload);
     expect(res.cookie).toHaveBeenCalledWith(
-      'accessToken',
+      'patientAccessToken',
       'new-access',
       expect.objectContaining({ httpOnly: true }),
     );
     expect(res.cookie).toHaveBeenCalledWith(
-      'refreshToken',
+      'patientRefreshToken',
       'new-refresh',
       expect.objectContaining({ httpOnly: true }),
     );
@@ -232,18 +242,18 @@ describe('AuthController', () => {
 
   it('logs out, clearing auth cookies', async () => {
     authService.logout.mockResolvedValue({ message: 'Đăng xuất thành công' });
-    const req = {} as never;
+    const req = { headers: { 'x-app-context': 'patient' } } as never;
     const res = createMockResponse();
 
     await controller.logout(req, res as never);
 
     expect(authService.logout).toHaveBeenCalledWith(req);
     expect(res.clearCookie).toHaveBeenCalledWith(
-      'accessToken',
+      'patientAccessToken',
       expect.objectContaining({ httpOnly: true }),
     );
     expect(res.clearCookie).toHaveBeenCalledWith(
-      'refreshToken',
+      'patientRefreshToken',
       expect.objectContaining({ httpOnly: true }),
     );
     expect(res.status).toHaveBeenCalledWith(200);
@@ -257,11 +267,22 @@ describe('AuthController', () => {
 
   it('logs out of all devices and returns the service message', async () => {
     authService.logoutAll.mockResolvedValue({ message: 'Đã đăng xuất' });
-    const req = {} as never;
+    const req = {
+      headers: { 'x-app-context': 'patient' },
+    } as never;
+    const res = createMockResponse();
 
-    const result = await controller.logoutAll(req);
+    const result = await controller.logoutAll(req, res as never);
 
     expect(authService.logoutAll).toHaveBeenCalledWith(req);
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'patientAccessToken',
+      expect.objectContaining({ httpOnly: true }),
+    );
+    expect(res.clearCookie).toHaveBeenCalledWith(
+      'patientRefreshToken',
+      expect.objectContaining({ httpOnly: true }),
+    );
     expect(result).toEqual({ message: 'Đã đăng xuất' });
   });
 
@@ -280,9 +301,9 @@ describe('AuthController', () => {
 
     await controller.googleAuthRedirect(req, res as never);
 
-    expect(authService.login).toHaveBeenCalledWith(req);
+    expect(authService.login).toHaveBeenCalledWith(req, 'patient');
     expect(res.cookie).toHaveBeenCalledWith(
-      'accessToken',
+      'patientAccessToken',
       'g-access',
       expect.objectContaining({ httpOnly: true }),
     );

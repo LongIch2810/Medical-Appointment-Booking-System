@@ -65,10 +65,11 @@ describe('WebSocket session revocation (integration)', () => {
     await app.close();
   });
 
-  function connect(cookieHeader: string) {
+  function connect(cookieHeader: string, appContext = 'patient') {
     const client = io(endpoint, {
       transports: ['websocket'],
       extraHeaders: { cookie: cookieHeader },
+      auth: { appContext },
       forceNew: true,
       reconnection: false,
     });
@@ -84,6 +85,7 @@ describe('WebSocket session revocation (integration)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/auth/logout-all')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .expect(200);
 
     const socket = connect(login.cookieHeader);
@@ -104,6 +106,7 @@ describe('WebSocket session revocation (integration)', () => {
     const channelResponse = await request(app.getHttpServer())
       .post('/api/v1/channels/create')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .send([user.userId, peer.userId])
       .expect(201);
     const channelId = channelResponse.body.data.id as number;
@@ -123,6 +126,7 @@ describe('WebSocket session revocation (integration)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/auth/logout-all')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .expect(200);
 
     const rejected = once<{ code: number }>(socket, 'ws-error');
@@ -130,9 +134,10 @@ describe('WebSocket session revocation (integration)', () => {
     const error = await rejected;
     expect(error.code).toBe(401);
 
-    await dataSource.query('DELETE FROM "channel_members" WHERE channel_id = $1', [
-      channelId,
-    ]);
+    await dataSource.query(
+      'DELETE FROM "channel_members" WHERE channel_id = $1',
+      [channelId],
+    );
     await dataSource.query('DELETE FROM "channels" WHERE id = $1', [channelId]);
   });
 });

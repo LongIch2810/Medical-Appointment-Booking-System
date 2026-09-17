@@ -29,10 +29,9 @@ describe('Notifications (integration)', () => {
 
   afterEach(async () => {
     if (createdNotificationIds.length > 0) {
-      await dataSource.query(
-        'DELETE FROM "notifications" WHERE id = ANY($1)',
-        [createdNotificationIds],
-      );
+      await dataSource.query('DELETE FROM "notifications" WHERE id = ANY($1)', [
+        createdNotificationIds,
+      ]);
       createdNotificationIds.length = 0;
     }
     await cleanupRegisteredUsers(dataSource, createdUserIds);
@@ -50,7 +49,8 @@ describe('Notifications (integration)', () => {
 
     const response = await request(app.getHttpServer())
       .get('/api/v1/notifications/me')
-      .set('Cookie', cookieHeader);
+      .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient');
 
     expect(response.status).toBe(200);
     expect(response.body.data.notifications).toEqual([]);
@@ -64,7 +64,8 @@ describe('Notifications (integration)', () => {
 
     const response = await request(app.getHttpServer())
       .get('/api/v1/notifications/recipients')
-      .set('Cookie', cookieHeader);
+      .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient');
 
     expect(response.status).toBe(403);
   });
@@ -87,7 +88,8 @@ describe('Notifications (integration)', () => {
     const recipientsResponse = await request(app.getHttpServer())
       .get('/api/v1/notifications/recipients')
       .query({ search: patient.email })
-      .set('Cookie', adminCookie);
+      .set('Cookie', adminCookie)
+      .set('X-App-Context', 'admin');
     expect(recipientsResponse.status).toBe(200);
     expect(
       recipientsResponse.body.data.users.some(
@@ -98,6 +100,7 @@ describe('Notifications (integration)', () => {
     const createResponse = await request(app.getHttpServer())
       .post('/api/v1/notifications/create')
       .set('Cookie', adminCookie)
+      .set('X-App-Context', 'admin')
       .send({
         title: 'Integration test notice',
         content: 'This is a test notification.',
@@ -110,7 +113,8 @@ describe('Notifications (integration)', () => {
 
     const mineResponse = await request(app.getHttpServer())
       .get('/api/v1/notifications/me')
-      .set('Cookie', patientCookie);
+      .set('Cookie', patientCookie)
+      .set('X-App-Context', 'patient');
     expect(
       mineResponse.body.data.notifications.some(
         (n: { id: number }) => n.id === notificationId,
@@ -119,7 +123,8 @@ describe('Notifications (integration)', () => {
 
     const readResponse = await request(app.getHttpServer())
       .patch(`/api/v1/notifications/me/${notificationId}/read`)
-      .set('Cookie', patientCookie);
+      .set('Cookie', patientCookie)
+      .set('X-App-Context', 'patient');
     expect(readResponse.status).toBe(200);
     expect(readResponse.body.data.isRead).toBe(true);
 
@@ -142,6 +147,7 @@ describe('Notifications (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/notifications/create')
       .set('Cookie', adminCookie)
+      .set('X-App-Context', 'admin')
       .send({
         title: 'Should fail',
         content: 'Target does not exist.',

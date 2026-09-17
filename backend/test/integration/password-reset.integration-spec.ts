@@ -37,9 +37,10 @@ describe('Password reset via OTP + reset token (integration)', () => {
     if (createdUserIds.length > 0) {
       // otps.user_id FK is ON DELETE NO ACTION — must clear these first or
       // the users DELETE below fails with a foreign key violation.
-      await dataSource.query('DELETE FROM "reset_tokens" WHERE user_id = ANY($1)', [
-        createdUserIds,
-      ]);
+      await dataSource.query(
+        'DELETE FROM "reset_tokens" WHERE user_id = ANY($1)',
+        [createdUserIds],
+      );
       await dataSource.query('DELETE FROM "otps" WHERE user_id = ANY($1)', [
         createdUserIds,
       ]);
@@ -179,7 +180,8 @@ describe('Password reset via OTP + reset token (integration)', () => {
     // password reset revokes existing sessions the same way logout-all does.
     const refreshAfterReset = await request(app.getHttpServer())
       .post('/api/v1/auth/refresh')
-      .set('Cookie', loginBefore.cookieHeader);
+      .set('Cookie', loginBefore.cookieHeader)
+      .set('X-App-Context', loginBefore.appContext);
     expect(refreshAfterReset.status).toBe(401);
 
     await loginAs(app, { email: user.email, password: 'BrandNew@123' });

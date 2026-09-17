@@ -61,6 +61,7 @@ describe('Search ownership isolation (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/relatives')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({
         fullname,
         relationship_code: relationshipCode,
@@ -89,6 +90,7 @@ describe('Search ownership isolation (integration)', () => {
     const byFullname = await request(app.getHttpServer())
       .get('/api/v1/relatives/patient/relatives')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', 'patient')
       .query({ search: relativeB.fullname })
       .expect(200);
     expect(byFullname.body.data.relatives).toHaveLength(0);
@@ -96,6 +98,7 @@ describe('Search ownership isolation (integration)', () => {
     const byPhone = await request(app.getHttpServer())
       .get('/api/v1/relatives/patient/relatives')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', 'patient')
       .query({ search: relativeB.phone })
       .expect(200);
     expect(byPhone.body.data.relatives).toHaveLength(0);
@@ -104,6 +107,7 @@ describe('Search ownership isolation (integration)', () => {
     const bFindsOwn = await request(app.getHttpServer())
       .get('/api/v1/relatives/patient/relatives')
       .set('Cookie', loginB.cookieHeader)
+      .set('X-App-Context', 'patient')
       .query({ search: relativeB.fullname })
       .expect(200);
     expect(
@@ -124,12 +128,14 @@ describe('Search ownership isolation (integration)', () => {
     await request(app.getHttpServer())
       .patch(`/api/v1/health-profiles/update/${relativeB.id}`)
       .set('Cookie', loginB.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({ height: 170, weight: 60, blood_type: 'A+' })
       .expect(200);
 
     const searchByFullname = await request(app.getHttpServer())
       .post('/api/v1/health-profiles/patient/list')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({ page: 1, limit: 10, arrange: 'desc', search: relativeB.fullname })
       .expect(200);
     expect(searchByFullname.body.data.healthProfiles).toHaveLength(0);
@@ -137,6 +143,7 @@ describe('Search ownership isolation (integration)', () => {
     const searchByPhone = await request(app.getHttpServer())
       .post('/api/v1/health-profiles/patient/list')
       .set('Cookie', loginA.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({ page: 1, limit: 10, arrange: 'desc', search: relativeB.phone })
       .expect(200);
     expect(searchByPhone.body.data.healthProfiles).toHaveLength(0);
@@ -144,6 +151,7 @@ describe('Search ownership isolation (integration)', () => {
     const bFindsOwn = await request(app.getHttpServer())
       .post('/api/v1/health-profiles/patient/list')
       .set('Cookie', loginB.cookieHeader)
+      .set('X-App-Context', 'patient')
       .send({ page: 1, limit: 10, arrange: 'desc', search: relativeB.fullname })
       .expect(200);
     expect(bFindsOwn.body.data.healthProfiles.length).toBeGreaterThan(0);

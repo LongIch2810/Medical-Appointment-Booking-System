@@ -88,9 +88,10 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
         `DELETE FROM "messages_attachments" WHERE message_id IN (SELECT id FROM "messages" WHERE channel_id = ANY($1))`,
         [createdChannelIds],
       );
-      await dataSource.query('DELETE FROM "messages" WHERE channel_id = ANY($1)', [
-        createdChannelIds,
-      ]);
+      await dataSource.query(
+        'DELETE FROM "messages" WHERE channel_id = ANY($1)',
+        [createdChannelIds],
+      );
       await dataSource.query(
         'DELETE FROM "channel_members" WHERE channel_id = ANY($1)',
         [createdChannelIds],
@@ -119,10 +120,12 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
     cookieHeader: string,
     userId: number,
     peerId: number,
+    appContext: string,
   ) {
     const channelResponse = await request(app.getHttpServer())
       .post('/api/v1/channels/create')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', appContext)
       .send([userId, peerId])
       .expect(201);
     const channelId = channelResponse.body.data.id as number;
@@ -131,6 +134,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
     const messageResponse = await request(app.getHttpServer())
       .post('/api/v1/messages')
       .set('Cookie', cookieHeader)
+      .set('X-App-Context', appContext)
       .send({
         message_type: 'regular',
         content: 'hello',
@@ -151,6 +155,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
       login.cookieHeader,
       patient.userId,
       peer.userId,
+      login.appContext,
     );
     const cloudinaryService = app.get(CloudinaryService);
     const assertSenderSpy = jest.spyOn(
@@ -166,6 +171,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
     await request(app.getHttpServer())
       .post('/api/v1/uploads/messages/files')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .field('message_id', String(messageId))
       .attach('files', png, {
         filename: 'one-pixel.png',
@@ -219,6 +225,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
       login.cookieHeader,
       patient.userId,
       peer.userId,
+      login.appContext,
     );
     const cloudinaryService = app.get(CloudinaryService);
     const oversized = Buffer.alloc(20 * 1024 * 1024 + 1, 1);
@@ -226,6 +233,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/uploads/messages/files')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .field('message_id', String(messageId))
       .attach('files', oversized, {
         filename: 'too-big.png',

@@ -10,7 +10,9 @@ describe('JwtStrategy', () => {
       get: jest.fn().mockReturnValue('access-secret'),
       getOrThrow: jest.fn().mockReturnValue('access-secret'),
     };
-    sessionAuthService = { assertSessionValid: jest.fn().mockResolvedValue(undefined) };
+    sessionAuthService = {
+      assertSessionValid: jest.fn().mockResolvedValue(undefined),
+    };
     strategy = new JwtStrategy(
       configService as never,
       sessionAuthService as never,
@@ -22,21 +24,29 @@ describe('JwtStrategy', () => {
       throw new Error('ACCESS_TOKEN_SECRET is not configured');
     });
     expect(
-      () => new JwtStrategy(configService as never, sessionAuthService as never),
+      () =>
+        new JwtStrategy(configService as never, sessionAuthService as never),
     ).toThrow('ACCESS_TOKEN_SECRET is not configured');
   });
 
-  it('delegates session revocation checks to SessionAuthService and returns userId/roles', async () => {
+  it('delegates session revocation checks and returns the validated app context', async () => {
     const payload = {
       sub: 9,
       roles: ['PATIENT'],
       tokenId: 'tok-1',
       sessionVersion: 4,
+      appContext: 'patient',
     };
 
-    await expect(strategy.validate(payload)).resolves.toEqual({
+    await expect(
+      strategy.validate(
+        { headers: { 'x-app-context': 'patient' } } as never,
+        payload,
+      ),
+    ).resolves.toEqual({
       userId: 9,
       roles: ['PATIENT'],
+      appContext: 'patient',
     });
     expect(sessionAuthService.assertSessionValid).toHaveBeenCalledWith({
       sub: 9,
@@ -51,7 +61,13 @@ describe('JwtStrategy', () => {
     );
 
     await expect(
-      strategy.validate({ sub: 9, roles: [], tokenId: 't', sessionVersion: 1 }),
+      strategy.validate({ headers: { 'x-app-context': 'patient' } } as never, {
+        sub: 9,
+        roles: [],
+        tokenId: 't',
+        sessionVersion: 1,
+        appContext: 'patient',
+      }),
     ).rejects.toThrow('Token đã bị thu hồi !');
   });
 });

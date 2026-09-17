@@ -59,13 +59,18 @@ describe('JwtRefreshAuthGuard', () => {
     passport.use(
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({
-        user: { userId: 5, tokenId: 'refresh-token-id', sessionVersion: 2 },
+        user: {
+          userId: 5,
+          tokenId: 'refresh-token-id',
+          sessionVersion: 2,
+          appContext: 'patient',
+        },
       })) as any,
     );
     const guard = new JwtRefreshAuthGuard();
     const req: any = {
-      cookies: { refreshToken: 'valid.refresh.token' },
-      headers: {},
+      cookies: { patientRefreshToken: 'valid.refresh.token' },
+      headers: { 'x-app-context': 'patient' },
     };
 
     await expect(guard.canActivate(makeContext(req))).resolves.toBe(true);
@@ -73,6 +78,7 @@ describe('JwtRefreshAuthGuard', () => {
       userId: 5,
       tokenId: 'refresh-token-id',
       sessionVersion: 2,
+      appContext: 'patient',
     });
   });
 
@@ -90,17 +96,21 @@ describe('JwtRefreshAuthGuard', () => {
   });
 
   it('propagates a custom error thrown by the strategy (e.g. revoked refresh session) instead of a generic 401', async () => {
-    const revokedError = new UnauthorizedException('Phiên đăng nhập không hợp lệ !');
+    const revokedError = new UnauthorizedException(
+      'Phiên đăng nhập không hợp lệ !',
+    );
     passport.use(
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })) as any,
     );
     const guard = new JwtRefreshAuthGuard();
     const req: any = {
-      cookies: { refreshToken: 'stale.refresh.token' },
-      headers: {},
+      cookies: { patientRefreshToken: 'stale.refresh.token' },
+      headers: { 'x-app-context': 'patient' },
     };
 
-    await expect(guard.canActivate(makeContext(req))).rejects.toBe(revokedError);
+    await expect(guard.canActivate(makeContext(req))).rejects.toBe(
+      revokedError,
+    );
   });
 });

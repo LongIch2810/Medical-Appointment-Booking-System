@@ -63,14 +63,21 @@ describe('JwtAuthGuard', () => {
     passport.use(
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({
-        user: { userId: 1, roles: ['PATIENT'] },
+        user: { userId: 1, roles: ['PATIENT'], appContext: 'patient' },
       })) as any,
     );
     const guard = new JwtAuthGuard();
-    const req: any = { cookies: { accessToken: 'valid.jwt.token' }, headers: {} };
+    const req: any = {
+      cookies: { patientAccessToken: 'valid.jwt.token' },
+      headers: { 'x-app-context': 'patient' },
+    };
 
     await expect(guard.canActivate(makeContext(req))).resolves.toBe(true);
-    expect(req.user).toEqual({ userId: 1, roles: ['PATIENT'] });
+    expect(req.user).toEqual({
+      userId: 1,
+      roles: ['PATIENT'],
+      appContext: 'patient',
+    });
   });
 
   it('throws UnauthorizedException when the jwt strategy reports no user (missing/invalid token)', async () => {
@@ -93,8 +100,13 @@ describe('JwtAuthGuard', () => {
       new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })) as any,
     );
     const guard = new JwtAuthGuard();
-    const req: any = { cookies: { accessToken: 'revoked.jwt.token' }, headers: {} };
+    const req: any = {
+      cookies: { patientAccessToken: 'revoked.jwt.token' },
+      headers: { 'x-app-context': 'patient' },
+    };
 
-    await expect(guard.canActivate(makeContext(req))).rejects.toBe(revokedError);
+    await expect(guard.canActivate(makeContext(req))).rejects.toBe(
+      revokedError,
+    );
   });
 });

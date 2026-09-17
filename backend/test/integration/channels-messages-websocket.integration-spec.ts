@@ -85,6 +85,7 @@ describe('Channels, messages and WebSocket with PostgreSQL (integration)', () =>
     const client = io(endpoint, {
       transports: ['websocket'],
       extraHeaders: { cookie: cookieHeader },
+      auth: { appContext: 'patient' },
       forceNew: true,
       reconnection: false,
     });
@@ -108,6 +109,7 @@ describe('Channels, messages and WebSocket with PostgreSQL (integration)', () =>
     const channelResponse = await request(app.getHttpServer())
       .post('/api/v1/channels/create')
       .set('Cookie', firstLogin.cookieHeader)
+      .set('X-App-Context', firstLogin.appContext)
       .send([first.userId, second.userId])
       .expect(201);
     const channelId = channelResponse.body.data.id as number;
@@ -117,6 +119,7 @@ describe('Channels, messages and WebSocket with PostgreSQL (integration)', () =>
     await request(app.getHttpServer())
       .get(`/api/v1/channels/${channelId}`)
       .set('Cookie', outsiderLogin.cookieHeader)
+      .set('X-App-Context', outsiderLogin.appContext)
       .expect(400);
 
     const firstSocket = connect(firstLogin.cookieHeader);
@@ -187,6 +190,7 @@ describe('Channels, messages and WebSocket with PostgreSQL (integration)', () =>
     const history = await request(app.getHttpServer())
       .get(`/api/v1/messages/${channelId}?page=1`)
       .set('Cookie', secondLogin.cookieHeader)
+      .set('X-App-Context', secondLogin.appContext)
       .expect(200);
     expect(history.body.data.messages[0]).toMatchObject({
       id: stored[0].id,
@@ -196,6 +200,7 @@ describe('Channels, messages and WebSocket with PostgreSQL (integration)', () =>
     await request(app.getHttpServer())
       .get(`/api/v1/messages/${channelId}?page=1`)
       .set('Cookie', outsiderLogin.cookieHeader)
+      .set('X-App-Context', outsiderLogin.appContext)
       .expect(404);
   });
 });

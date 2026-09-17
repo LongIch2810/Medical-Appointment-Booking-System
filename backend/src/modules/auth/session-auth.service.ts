@@ -2,12 +2,17 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import {
+  type AuthAppContext,
+  requireTokenAppContext,
+} from 'src/utils/authContext';
 
 export interface ValidatedAccessToken {
   userId: number;
   roles: string[];
   tokenId: string;
   sessionVersion: number;
+  appContext: AuthAppContext;
 }
 
 /**
@@ -63,7 +68,10 @@ export class SessionAuthService {
    * Dùng cho WebSocket, nơi không có passport-jwt tự verify signature —
    * verify chữ ký + kiểm tra session revocation trong một bước.
    */
-  async validateAccessToken(token: string): Promise<ValidatedAccessToken> {
+  async validateAccessToken(
+    token: string,
+    expectedContext?: AuthAppContext,
+  ): Promise<ValidatedAccessToken> {
     let payload: Record<string, unknown>;
     try {
       payload = this.jwtService.verify(token, {
@@ -77,6 +85,10 @@ export class SessionAuthService {
     const tokenId = payload?.tokenId as string | undefined;
     const sessionVersion = payload?.sessionVersion as number | undefined;
     const roles = (payload?.roles as string[] | undefined) ?? [];
+    const appContext = requireTokenAppContext(
+      payload?.appContext,
+      expectedContext,
+    );
 
     if (!Number.isInteger(userId) || userId <= 0 || !tokenId) {
       throw new UnauthorizedException('Token không hợp lệ !');
@@ -88,6 +100,12 @@ export class SessionAuthService {
       sessionVersion: sessionVersion as number,
     });
 
-    return { userId, roles, tokenId, sessionVersion: sessionVersion as number };
+    return {
+      userId,
+      roles,
+      tokenId,
+      sessionVersion: sessionVersion as number,
+      appContext,
+    };
   }
 }

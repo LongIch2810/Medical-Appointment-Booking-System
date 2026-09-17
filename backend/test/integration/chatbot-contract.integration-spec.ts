@@ -134,6 +134,7 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/chat-history/chat')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .send({ question: 'Tôi nên ngủ bao lâu?' })
       .expect(200);
 
@@ -162,6 +163,7 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
     const success = await request(app.getHttpServer())
       .post('/api/v1/chat-history/build-health-roadmap')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .send({ relative_id: relatives[0].id })
       .expect(200);
 
@@ -178,6 +180,7 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
     const timeout = await request(app.getHttpServer())
       .post('/api/v1/chat-history/build-health-roadmap')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .send({ relative_id: relatives[0].id });
 
     expect(timeout.status).toBe(504);
@@ -192,6 +195,7 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
     const response = await request(app.getHttpServer())
       .post('/api/v1/admin-reports/generate')
       .set('Cookie', login.cookieHeader)
+      .set('X-App-Context', login.appContext)
       .send({
         reportType: 'NEW_USER_REGISTRATIONS',
         rangePreset: 'THIS_MONTH',
@@ -207,5 +211,4 @@ describe('Backend -> chatbot HTTP contract (integration)', () => {
       tableRows: [{ user_count: 3 }],
     });
   });
-
 });
