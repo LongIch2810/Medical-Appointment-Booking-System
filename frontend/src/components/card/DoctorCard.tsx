@@ -60,6 +60,14 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
 
     navigate(`/patient/messages?doctorUserId=${user_id}`);
   };
+  const handleBookAppointment = () => {
+    if (!userInfo) {
+      navigate("/sign-in");
+      return;
+    }
+
+    setIsShow(true);
+  };
 
   return (
     <>
@@ -154,7 +162,7 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
         {/* Footer Actions */}
         <CardFooter className="flex flex-col gap-2 p-4.5 pt-0">
           <Button
-            onClick={() => setIsShow(true)}
+            onClick={handleBookAppointment}
             className="w-full gap-2 rounded-2xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-xs sm:text-sm shadow-xs cursor-pointer h-10"
           >
             <Calendar size={15} />

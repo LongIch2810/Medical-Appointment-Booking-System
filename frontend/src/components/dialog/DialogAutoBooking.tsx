@@ -1,17 +1,18 @@
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "../ui/button";
 import Loading from "../loading/Loading";
 import CalendarComponent from "../calendar/CalendarComponent";
 import { useBookingAppointmentStore } from "@/store/bookingAppointmentStore";
+import { useUserStore } from "@/store/useUserStore";
 import {
   usePatientRelatives,
   useRelationships,
@@ -34,6 +35,8 @@ const defaultNewRelativeForm = {
 };
 
 const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
+  const navigate = useNavigate();
+  const { userInfo } = useUserStore();
   const [open, setOpen] = useState(false);
   const [selectedRelativeId, setSelectedRelativeId] = useState(0);
   const [selectedSpecialtyId, setSelectedSpecialtyId] = useState(0);
@@ -118,16 +121,21 @@ const DialogAutoBooking = ({ className = "" }: { className?: string }) => {
         if (!isOpen) reset();
       }}
     >
-      <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          className={`gap-2 rounded-full border-primary/40 text-primary hover:bg-primary/5 ${className}`}
-        >
-          <Sparkles className="h-4 w-4" />
-          Đặt lịch nhanh
-        </Button>
-      </DialogTrigger>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          if (!userInfo) {
+            navigate("/sign-in");
+            return;
+          }
+          setOpen(true);
+        }}
+        className={`gap-2 rounded-full border-primary/40 text-primary hover:bg-primary/5 ${className}`}
+      >
+        <Sparkles className="h-4 w-4" />
+        Đặt lịch nhanh
+      </Button>
       <DialogContent className="max-w-lg p-0 gap-0 border border-slate-200/80 shadow-2xl rounded-2xl sm:rounded-3xl bg-white dark:border-[#293548] dark:bg-[#172033] overflow-hidden">
         <div className="shrink-0 p-5 sm:p-6 border-b border-slate-100 dark:border-[#293548] pr-12 bg-white dark:bg-[#111827]">
           <DialogHeader>
