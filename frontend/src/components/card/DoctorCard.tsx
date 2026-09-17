@@ -90,9 +90,9 @@ export default function DoctorCard(doctorCardProps: DoctorCardProps) {
                 </CardTitle>
                 {isOutstanding && (
                   <Badge
-                    className="flex shrink-0 items-center gap-1 rounded-full bg-linear-to-r from-rose-500 via-pink-500 to-amber-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs border-none"
+                    className="flex shrink-0 items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300"
                   >
-                    <Flame size={12} className="animate-pulse" />
+                    <Flame size={12} />
                     {t("doctor.outstanding")}
                   </Badge>
                 )}
