@@ -1,114 +1,81 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Read `AGENTS.md` first. It is the primary repository guide: project overview, architecture, tech stack, commands, environment variables, database, API/frontend conventions, known constraints, and the documentation map (`specs/as-is/`, service-level `AGENTS.md`/`DESIGN.md`). This file does not repeat that content — it only adds Claude Code-specific working instructions on top of it.
 
-## Repository overview
+## 1. Required Reading Order
 
-LifeHealth is a medical appointment booking platform composed of four independent services, each with its own `package.json` and dependencies:
+1. `AGENTS.md` (root) — including its §2 Mandatory Codebase Discovery Rule, which governs how Claude Code must search this repo (see §3 below).
+2. This file.
+3. Whatever nested doc applies to the task — see `AGENTS.md §23 Documentation Map` (`specs/as-is/*.md` for "is this actually true", `frontend/AGENTS.md`+`DESIGN.md` or `admin/AGENTS.md`+`DESIGN.md`+`docs/rules.md`+`docs/workflow.md` for UI work).
+4. The actual source files you're about to touch.
+5. Existing tests covering that area.
 
-- `frontend/` — patient-facing portal (React 19 + TS + Vite 6)
-- `admin/` — workspace for doctors/administrators (React 19 + TS + Vite 6, near-identical stack/structure to `frontend/`)
-- `backend/` — API server (NestJS + TypeORM + PostgreSQL + Redis + Socket.IO)
-- `chatbot/` — Node/TS service for medical Q&A and consultation flows (LangChain + LangGraph + Qdrant)
+Do not start editing code before this. "It's a small change" is not an exemption — `AGENTS.md §18 Agent Working Rules` applies to every change, not just large ones.
 
-There is no root package.json / workspace tool — install and run each service from its own directory.
+## 2. Claude Code Workflow
 
-## Mandatory Codebase Discovery Rule
+- **Discover**: inspect the repo, search for the existing implementation, search for every caller/consumer, identify which of the 4 services are affected (a backend DTO or response-shape change routinely affects `frontend/`, `admin/`, and sometimes `chatbot/` at once — check all three, not just the one you started in).
+- **Understand**: read the current flow end to end, identify the source of truth for the behavior in question (`AGENTS.md §24`), identify constraints (`AGENTS.md §22`, `specs/as-is/known-ambiguities.md`).
+- **Plan**: for anything non-trivial, identify the files to change, the behavior that must be preserved, the risk, and how you'll validate it — before writing code.
+- **Implement**: smallest reasonable change that fixes the root cause; keep the existing architecture (`AGENTS.md §18`).
+- **Verify**: run the checks in `AGENTS.md §9` relevant to what changed, plus lint/typecheck/build; review `git diff`.
+- **Report**: state exactly what changed, which files, what you verified, and what remains unverified. Never round this up to "done" if a check wasn't run.
 
-Claude Code MUST use Codebase Memory MCP before searching source code directly. If the repository is not indexed, run `index_repository` first. Use `search_graph` to find symbols, `trace_path` for callers/callees and data flow, and `get_code_snippet` only after resolving an exact qualified name; use `query_graph` or `search_code` for broader analysis. Do not begin code discovery with grep, glob, IDE text search, or manual file browsing. Fall back to text search only when graph results are insufficient or when locating string literals, error messages, configuration, documentation, or other non-code content. This rule applies repository-wide, including directories with additional instruction files.
+## 3. Repository Search Rules — Codebase Discovery Is Mandatory
 
-## Commands
+`AGENTS.md §2` requires every coding agent, Claude Code included, to use the Codebase Memory MCP server (`codebase-memory-mcp`) before searching source code directly:
 
-`docker compose -f docker-compose.dev.yml up -d` runs the full dev stack (`frontend`, `admin`, `backend`, `chatbot`, plus Postgres/Redis/RedisInsight/pgAdmin) in containers with bind-mounted source and polling-based hot reload. Its host ports differ from the native ports below for `frontend`/`admin`/`backend` (5183/4183/3010 instead of 5173/4173/3000) so the container stack and native `npm run dev` processes can run side by side without colliding; `chatbot` uses 5000 either way. Run `docker compose -f docker-compose.dev.yml up -d postgres redis pgadmin redisinsight` to start only infra when running everything else natively.
+- If the repository is not indexed, run `index_repository` first.
+- Use `search_graph` to find symbols, `trace_path` for callers/callees and data flow, `get_code_snippet` only after resolving an exact qualified name, and `query_graph`/`search_code` for broader analysis.
+- Do not begin code discovery with grep, glob, IDE text search, or manual file browsing.
+- Fall back to text search only when graph results are insufficient, or when locating string literals, error messages, configuration, documentation, or other non-code content.
+- This applies repository-wide, including inside directories that have their own additional instruction files.
 
-### backend/ (from `backend/`)
-- `npm run start:dev` — watch mode (nest, port from `PORT` env, default 3000), API prefixed at `/api/v1`, Swagger at `/api-docs`
-- `npm run build` — `nest build --builder swc`
-- `npm run lint` — eslint --fix
-- `npm run test` / `npm run test:cov` — Jest tests under `backend/test/unit/` (mirroring `src/`) and `backend/test/integration/`, one Jest run per file: `npm run test -- path/to/file.spec.ts`
-- `npm run test:e2e` — Jest e2e (`test/jest-e2e.json`)
-- `npm run migration:run` / `migration:revert` / `migration:generate` / `migration:create` — TypeORM CLI against `src/database/data-source.ts`
+Separately from the discovery-tool rule above: before creating a new component, hook, service, utility, API client, validation schema, or config, search the repository (via the graph tools, then grep/glob as needed) for an existing equivalent — see `AGENTS.md §13`/`§17` for the established layering (e.g. `src/api/<resource>Api.ts` → `src/hooks/use<Resource>.ts`, `src/schemas/<domain>.schema.ts` for zod validation, `src/components/notification/` or `src/components/app/` for loading/error/empty states). Do not duplicate an abstraction that already exists.
 
-### frontend/ and admin/ (from each directory)
-- `npm run dev` — Vite dev server (`frontend` on 5173, `admin` on 4173)
-- `npm run build` — `tsc -b && vite build`
-- `npm run lint` — eslint
-- `npm run preview`
-- `admin/` has no test runner configured; validate changes with `lint` + `build` + manual checks in `dev`.
-- `frontend/` has Playwright end-to-end specs under `frontend/test/e2e/` — `npm run test:e2e` (headless) or `npm run test:e2e:ui` (interactive runner), config in `frontend/playwright.config.ts`.
+## 4. Documentation Discipline
 
-### chatbot/ (from `chatbot/`)
-- `npm run dev` — nodemon (see `chatbot/nodemon.json`), Express server on port 5000
-- `npm run build` — `tsc` (emits to `dist/`); `npm run start:prod` runs the built output
-- `npm run typecheck` / `npm run typecheck:test` — `tsc --noEmit` against `tsconfig.json` / `tsconfig.test.json`
-- `npm run test` / `npm run test:cov` — Node's built-in test runner (not Jest), via `node --loader ts-node/esm --import ./test/noExternalNetwork.ts --test "test/**/*.spec.ts"`; specs live in `chatbot/test/unit/` mirroring `src/`. `noExternalNetwork.ts` blocks real outbound calls, so tests mock `httpClient`/LLM/Qdrant rather than hitting them. Run a single file the same way: swap the glob for the file path.
-- `npm run knowledge:build` — rebuilds/reconciles the Qdrant RAG collection from source docs (`src/scripts/buildKnowledgeBase.ts`); only needed when onboarding docs change, not for normal dev.
+Do not treat a comment, README line, or older doc as automatically true. `AGENTS.md §24 Source of Truth` gives the trust order — code and tests outrank prose docs, and the root `README.md` is confirmed to contain at least one inaccuracy (chatbot AI providers, see `AGENTS.md §5`/§15's evidence). If a task touches an area where docs and code disagree, verify against source/tests/config and say so explicitly rather than silently picking one.
 
-## Architecture
+## 5. Scope Discipline
 
-### Backend (NestJS)
+Do not, unless the user explicitly asks or the task truly requires it: rewrite a whole module for a small fix, change frameworks, change architecture, do a mass rename, upgrade unrelated dependencies, reformat the whole repository, or edit files outside the task's scope. If you notice something else that looks wrong while working, mention it — don't fix it inline as a drive-by change.
 
-Feature modules live under `backend/src/modules/<feature>/` (controller, service, module, dto/, and sometimes a `*.mapper.ts`), registered in `backend/src/app.module.ts`. Entities are centralized (not per-module) in `backend/src/entities/*.entity.ts`, and TypeORM migrations live in `backend/src/database/migrations/`.
+## 6. Debugging Rules
 
-Global request pipeline (wired in `backend/src/main.ts`):
-- Global prefix `api/v1`, CORS allow-listing the frontend/admin dev origins, cookie-parser.
-- Interceptor chain: `RemoveFieldPasswordInterceptor` → `DateFormatInterceptor` → `ResponseInterceptor` (wraps every response as `{ statusCode, success, data, error }`) → a global `WriteAuditLogInterceptor` (registered as `APP_INTERCEPTOR` in `app.module.ts`).
-- `HttpExceptionFilter` global filter, `ValidationPipe({ transform: true, whitelist: true })` global pipe.
+Don't patch the first symptom you see. For any bug:
+1. Reproduce or trace the actual flow where possible.
+2. Find the root cause (trace upstream/downstream — a bug can originate in a different service than where it's observed, e.g. a `frontend`/`admin` symptom whose cause is in `backend`).
+3. Check the network/API/database/cache/auth layers that are actually involved.
+4. Fix the cause, not the symptom.
+5. Verify the fix and check for regressions in adjacent behavior.
 
-Auth is Passport-based JWT (access + refresh cookies) plus Google OAuth — strategies in `backend/src/modules/auth/*.strategy.ts`, guards in `backend/src/common/guards/` (`jwt.guard`, `jwtRefresh.guard`, `google.guard`, `localAuth.guard`, `wsCookieAuth.guard` for sockets).
+Never delete a feature just to make a bug stop reproducing.
 
-Anything that must immediately revoke a user's access — password change, role-permission edits, admin lock/deactivate — works by bumping `session_version:<userId>` and clearing `refresh_tokens:<userId>` in Redis, checked by `SessionAuthService.assertSessionValid()` on every authenticated request (HTTP and WebSocket). Just flipping a DB column has no effect on its own: `assertSessionValid()` doesn't query Postgres per-request, so a flag like `is_locking`/`is_active` only blocks anything once something calls this same revoke (`UsersService`'s `setLocking`/`setActive` do; `AuthService.validateUser()`/`GoogleStrategy.validate()` also check the flags directly at login). When adding a new admin action that should force logout, reuse this pattern instead of adding a per-request DB check to the hot path. Not every similar action does this yet — `UsersService.updateRoles` (per-user role changes) only clears the permissions cache, not the session, unlike `RolesService`'s role-permission edits.
+## 7. Frontend/UI Tasks
 
-Authorization is a custom RBAC layer, not Nest's built-in roles: controllers annotate handlers with `@Permissions('domain:action')` (`backend/src/common/decorators/permission.decorator.ts`), enforced by `PermissionsGuard` (`backend/src/common/guards/permissions.guard.ts`), which resolves the caller's effective permissions via `RolePermissionService` (roles → role_permission → permissions, seeded/migrated in `backend/src/database/migrations/`). `RolePermissionModule` is imported globally so the guard can be injected everywhere. When adding a protected endpoint, add/reuse a permission string and gate the route with `@Permissions(...)`.
+Beyond `AGENTS.md §13`/§17: preserve existing functionality, don't break accessibility or responsive layout, don't hide or clip important content, check both the patient (`frontend/`) and admin (`admin/`) layouts if a shared component changed, and reuse the existing design system/components (`frontend/DESIGN.md`, `admin/DESIGN.md`) instead of hand-rolling new patterns. If this session has a browser automation tool available, actually load the page and check it — don't claim a visual/responsive fix is verified without having rendered it.
 
-Real-time features (messages/channels, notifications) go through `backend/src/websockets/websocket.gateway.ts` guarded by `wsCookieAuth.guard`. Background/async work (mail, notifications) goes through BullMQ (`backend/src/bullmq/`). Redis is used both for caching (`redis-cache/`) and BullMQ.
+## 8. Backend Tasks
 
-Dates displayed to users are formatted `dd/MM/yyyy` (and `HH:mm dd/MM/yyyy` for date+time) via `formatDateDDMMYYYY`/`formatDateTimeDDMMYYYYHHmm` in `backend/src/utils/formatDate.ts`, applied automatically to every response by the global `DateFormatInterceptor` (recurses into nested objects/arrays, converts any `Date` value it finds). Don't hand-format dates again in a DTO/mapper or in frontend code that already receives one of these interceptor-formatted strings — and if you add a new user-facing date string that bypasses the interceptor (e.g. built manually into a message/report), format it with the same `dd/MM/yyyy` utility for consistency.
+Before changing an API: read the controller, service, DTO, any guard/permission decorator, the database access it triggers, and every frontend/admin caller (see `AGENTS.md §12`/§14). Don't change a response contract casually — if a change is breaking, say so explicitly and identify every consumer that needs to update.
 
-### Frontend / Admin (React + Vite)
+## 9. Database Tasks
 
-`admin/` mirrors `frontend/`'s architecture — check `frontend/` for the reference implementation of anything not yet built in `admin/`.
+Don't change the schema directly. Check `backend/src/entities/`, existing migrations (`backend/src/database/migrations/`), the queries/services that touch the table, and every consumer (backend endpoints, `frontend`/`admin` types, `chatbot`'s read-only views under `chatbot/src/entities_view/` — a schema change can silently break the chatbot's read-only SQL-QA tool if a view it depends on changes shape). Never drop migration history or data unless the user asks for it.
 
-Every server interaction flows through exactly these layers, in order — pages/components never call axios/fetch directly:
+## 10. Environment and Secrets
 
-```
-component / page  →  hook (src/hooks/, TanStack Query)  →  api module (src/api/<resource>Api.ts)  →  axios instance (src/configs/axios.ts)
-```
+Never hardcode a secret, commit a populated `.env`, or expose a server-only variable (anything not prefixed `VITE_` in `frontend`/`admin`) to browser code. If a task adds a new environment variable: add it to the relevant service's `.env.example` with a comment (matching the existing style — see `AGENTS.md §10`), note which code reads it, and update `AGENTS.md §10` if it's a variable future agents need to know about.
 
-- `src/configs/axios.ts` is the single axios instance: base URL, `withCredentials`, and the refresh-token interceptor (queues concurrent 401s, retries once after `/auth/refresh`, redirects to login on failure). Never instantiate a second axios/QueryClient.
-- `src/api/<resource>Api.ts` — plain typed HTTP wrappers, always return `res.data`, no React/hooks/toast/navigation.
-- `src/hooks/use<Resource>.ts` — TanStack Query hooks; each feature exports a `<feature>QueryKeys` factory (tuple keys) that mutations use for cache invalidation. `retry: false`, default `staleTime: 30_000` (set in `src/main.tsx`) unless a hook needs otherwise.
-- `src/store/` (Zustand) holds client-only state (auth user, UI flags) — server data belongs in the Query cache, never in a store.
-- `src/types/interface/<resource>.interface.ts` — request/response types plus shared `ApiResponse<T>` / `ApiError`.
-- `src/schemas/<domain>.schema.ts` — shared zod validation schemas paired with react-hook-form (`zodResolver`); extract a schema here whenever more than one form needs the same validation rules instead of redefining them inline per page. Established in `frontend/`; `admin/` doesn't have this folder yet but should follow the same convention when it needs cross-form validation reuse.
+## 11. Verification Requirements
 
-Pages must render loading / error / empty states for every async view (see `admin/docs/rules.md` §7) and disable submit controls while a mutation is pending. `frontend/` has a shared visual pattern for this in `src/components/notification/` — `StateCard.tsx` is the generic building block, with `ErrorState.tsx` (retry action) and `NotFoundResult.tsx` (empty/no-results, reset action) as ready-made wrappers around it. `admin/` has its own parallel (differently-named) set in `src/components/app/`: `LoadingState.tsx`, `ErrorState.tsx` (retry action), and `EmptyState.tsx` (title/description, no built-in reset action) — reuse the set that matches whichever app you're in instead of hand-rolling ad hoc loading/error markup.
+Before claiming a task is complete, run what's applicable, in this order of preference: (1) the targeted test for the change, (2) the broader relevant test suite (`AGENTS.md §9`), (3) typecheck, (4) lint, (5) build. If something fails, determine whether it's caused by your change or pre-existing on this branch before reporting it — don't hide a failure either way, and say explicitly which is which.
 
-`admin/` still has `src/services/mockApi.ts`, but only one screen (`EnterpriseReportsDashboardPage`, via `getEnterpriseReportGroups`) actually reads from it now — the other four exported methods have no callers. Do not remove or relocate the file; if migrating that last screen, follow `admin/docs/workflow.md` §7.10.
+## 12. No Fabrication Rule
 
-Both apps use the `@/` alias for `src/`, Tailwind CSS 4 + shadcn/ui primitives (`src/components/ui/`) with composed app components in `src/components/app/`, React Router 7 (`src/routes/AppRoutes.tsx`), and react-hook-form + zod for forms.
+Never claim a file, function, endpoint, schema field, environment variable, command, test result, or deployment state exists or passed unless you actually read or ran it in this session. "I haven't checked" is always an acceptable answer; a confident guess is not.
 
-`frontend/` is i18n'd via `react-i18next`, locale objects in `src/i18n/locales/{vi,en}.ts`; call sites use `t("namespace.key", { defaultValue: "..." })`. A missing/typo'd key silently renders the `defaultValue` instead of the raw key, which masks the gap visually — periodically audit for keys with no `defaultValue` fallback (those render the raw `namespace.key` string) rather than assuming the UI looking fine means every key resolves. `admin/` has no i18n layer (Vietnamese-only strings inline).
+## 13. Completion Standard
 
-`frontend/`'s real-time notification toast (`NotificationRealtimeProvider`, `src/components/providers/`) fires the instant the backend emits a `notification:new` socket event — independent of, and typically faster than, whatever HTTP request triggered that notification (e.g. a chatbot reply, since the agent still needs an LLM turn to compose the response text). A toast appearing before the corresponding page/chat response is expected given this architecture, not a race-condition bug — don't "fix" it by delaying the toast without confirming the gap isn't just inherent agent/LLM latency.
-
-**Known pitfall:** both `frontend/` and `admin/` deploy via Vercel with an SPA catch-all rewrite (`vercel.json`); Vite fingerprints `React.lazy()` chunk filenames per build, so a browser tab left open across a redeploy can request a chunk that no longer exists. The rewrite's `source` pattern must exclude `/assets/` (`"/((?!assets/).*)"`, not a bare `"/(.*)"`) so a missing chunk gets a real 404 instead of `index.html` (which the browser then rejects with a MIME-type error trying to run it as a module); `frontend/src/main.tsx` also listens for Vite's `vite:preloadError` event to force one reload as a second line of defense. Keep both in place — the rewrite fix alone doesn't help a tab that's already loaded stale JS before the request fails.
-
-### Chatbot (LangChain/LangGraph)
-
-Express server (`src/server.ts`) exposing routes in `src/routes/` → `src/controllers/` → `src/services/`. Conversational flows are LangGraph state graphs in `src/langgraph/*.graph.ts` (booking, diagnosis, report generation, health roadmap), composed from tools in `src/tools/` (RAG lookup, SQL QA over read-only DB views in `src/entities_view/`, booking, PDF/report generation). RAG indexing/embedding lives in `src/rag/` and `src/utils/loadDocuments.ts` / `splitDocuments.ts`, backed by Qdrant (`src/configs/vectordb.ts`). PDF/report rendering uses `pdfkit` + `chartjs-node-canvas` (`src/utils/generatePdfReport.ts`, `renderChartToImage.ts`). Note: the `diagnosis` graph is fully implemented but `src/routes/chatbot.route.ts` never registers a route for it — it is currently unreachable via HTTP (confirmed by `test/integration/chatbot.route.integration.spec.ts`, which mocks it to throw if called). Only `chat`, `create-report`, and `build-health-roadmap` are live endpoints. (The medical-record-summary OCR/upload flow — `ocr.tool.ts`, `summary_medical_record.tool.ts`, the `upload/summary-medical-record` route, and its admin UI — was removed; do not resurrect it from git history without checking why it was pulled.)
-
-The main `/chat` flow's agent graph (`src/agents/agents.ts`) is `guard → agent → tools`: `guard` is a cheap/fast classifier model (`getChatModel({ profile: "fast" })`) that hard-blocks off-topic messages before the main agent runs at all (fails open — proceeds to `agent` — if the classifier throws or returns nothing); `agent` is the main LLM (`OPENAI_MODEL`, currently `gpt-4.1-mini`, bound to `tools`); `tools` runs via `ToolNode`. After a tool call, the graph normally loops back `tools → agent` so the LLM can compose the final answer from the `ToolMessage` — except `booking_appointment_tool`, which already returns a fully-formatted final answer, so the graph short-circuits straight to `__end__` instead (see `shouldContinueAfterTools`); `src/services/chatbot.service.ts`'s `handleChatService` correspondingly searches the message history in reverse for a `booking_appointment_tool` `ToolMessage` and prefers its content over the trailing `AIMessage`. Keep these two in sync if either changes.
-
-Chatbot→backend HTTP calls (chat-history saves, relative/specialty lookups, booking) should go through the shared `httpClient` in `src/configs/httpClient.ts` — an axios instance with keep-alive `http.Agent`/`https.Agent` — instead of a plain axios/fetch call, since a fresh TCP/TLS handshake per request measured ~1.3-1.8s on deploy (larger than the LLM call itself). Retryable upstream calls (Qdrant, backend HTTP, LLM) use `withRetry`/`normalizeChatbotError` from `src/utils/retry.ts`, which normalizes any failure into a `ChatbotOperationError { status, code, retryable }`. Tools/graphs log caught errors via `logSafeError(context, error)` (`src/utils/safeLog.ts`), which intentionally logs only `name`/`code`/`status` (redacts `message`/`stack`) — so a vague `ChatbotOperationError` in logs (e.g. generic `INTERNAL_ERROR`/500) needs a direct repro (small script invoking the graph/tool, or a temporary full-error catch) to see the real cause, not just re-reading the log.
-
-**Known pitfall:** `@qdrant/js-client-rest` must stay pinned at `1.18.0` in `chatbot/package.json`. `@langchain/qdrant@0.1.2` (the LangChain vector store wrapper actually used, via `src/configs/vectordb.ts`) still calls the client's `.search()` method, which `@qdrant/js-client-rest@1.19.0` removed in favor of `.query()`. Bumping past `1.18.0` silently breaks `rag_tool` with `this.client.search is not a function`, surfaced only as a generic `ChatbotOperationError { code: "INTERNAL_ERROR", status: 500 }` since `logSafeError` strips the real message. Do not `npm update`/`npm audit fix` this package without re-verifying `rag_tool` still returns a real answer end-to-end.
-
-## Conventions (apply repo-wide unless a service's own doc says otherwise)
-
-- Naming: kebab-case folders/files, PascalCase React components, `useXxx` hooks, camelCase functions/variables with verb prefixes for actions, `isX/hasX/canX/shouldX` booleans, `UPPER_SNAKE_CASE` true constants, `xxxApi.ts` for API modules, `*.interface.ts` for shared types.
-- Reuse existing components/hooks/services before adding new ones; do not introduce a new state, HTTP, or test library without explicit approval.
-- Do not delete or rewrite existing code/architecture without approval — if something looks obsolete, flag it instead of removing it.
-- `admin/` has its own deeper contributor docs — read `admin/AGENTS.md`, `admin/DESIGN.md`, `admin/docs/rules.md`, and `admin/docs/workflow.md` before making non-trivial changes there (they cover full RBAC-in-UI, query-key, and mutation conventions with worked examples).
-- Before making non-trivial Patient UI changes, read both `frontend/AGENTS.md` and `frontend/DESIGN.md`; the design guide governs visual tokens, responsive behavior, accessibility, loading states, and component composition for the patient-facing app.
-- Store screenshots referenced by the root `README.md` in `docs/images/` using descriptive kebab-case filenames and relative Markdown paths. Screenshots must come from the real Admin, Doctor, or Patient UI, use demo/anonymized data, omit browser secrets and credentials, and be optimized before committing.
+A task is not "done" just because code was written. It is done only when: the implementation is updated, the directly affected code was inspected (not just the file you edited), applicable verification from §11 was actually run, the diff was reviewed for unrelated changes, and any remaining limitation or unverified step was stated plainly to the user.
