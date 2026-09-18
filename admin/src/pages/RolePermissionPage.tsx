@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   SlidersHorizontal,
   Table as TableIcon,
+  X,
 } from "lucide-react";
 
 import { ErrorState } from "@/components/app/ErrorState";
@@ -289,8 +290,18 @@ export function RolePermissionPage() {
             placeholder="Tìm theo tên quyền (vd: doctor, user)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-10 rounded-xl"
+            className="pl-10 pr-8 h-10 rounded-xl"
           />
+          {search ? (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-0.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              aria-label="Xóa từ khóa tìm kiếm"
+            >
+              <X className="size-3.5" />
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -302,6 +313,29 @@ export function RolePermissionPage() {
           [roleFilter, groupFilter, assignmentFilter].filter(Boolean).length
         }
         onReset={resetFilters}
+        chips={[
+          roleFilter
+            ? {
+                id: "role",
+                label: `Vai trò: ${roleFilter}`,
+                onRemove: () => setRoleFilter(""),
+              }
+            : null,
+          groupFilter
+            ? {
+                id: "group",
+                label: `Nhóm: ${groupedCatalog.find((g) => g.name === groupFilter)?.label ?? groupFilter}`,
+                onRemove: () => setGroupFilter(""),
+              }
+            : null,
+          assignmentFilter
+            ? {
+                id: "assignment",
+                label: `Trạng thái: ${assignmentFilter === "assigned" ? "Đã gán" : "Chưa gán"}`,
+                onRemove: () => setAssignmentFilter(""),
+              }
+            : null,
+        ].filter(Boolean) as { id: string; label: string; onRemove: () => void }[]}
       >
         <SelectFilter
           id="role-permission-role-filter"

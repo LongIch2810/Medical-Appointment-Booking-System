@@ -10,6 +10,7 @@ import {
   Upload,
   UserRound,
   UserX,
+  X,
   XCircle,
 } from "lucide-react";
 
@@ -370,6 +371,25 @@ function CreatedSortFilters({
       hasActiveFilters={Boolean(from || to || arrange)}
       activeFilterCount={[from || to, arrange].filter(Boolean).length}
       onReset={onReset}
+      chips={[
+        from || to
+          ? {
+              id: "date",
+              label: `Ngày: ${from || "..."} → ${to || "..."}`,
+              onRemove: () => {
+                onFromChange("");
+                onToChange("");
+              },
+            }
+          : null,
+        arrange
+          ? {
+              id: "arrange",
+              label: `Sắp xếp: ${arrange === "desc" ? "Mới nhất" : "Cũ nhất"}`,
+              onRemove: () => onArrangeChange(""),
+            }
+          : null,
+      ].filter(Boolean) as { id: string; label: string; onRemove: () => void }[]}
     >
       <DateRangeFilter
         fromId={`${prefix}-created-from`}
@@ -493,6 +513,69 @@ function UsersModule({
           setArrangeFilter("");
           onPageChange(1);
         }}
+        chips={[
+          roleFilter !== undefined
+            ? {
+                id: "role",
+                label: `Vai trò: ${roles.find((r) => r.id === roleFilter)?.role_name ?? roleFilter}`,
+                onRemove: () => {
+                  setRoleFilter(undefined);
+                  onPageChange(1);
+                },
+              }
+            : null,
+          activeFilter
+            ? {
+                id: "active",
+                label: `Hoạt động: ${activeFilter === "true" ? "Đang hoạt động" : "Ngừng"}`,
+                onRemove: () => {
+                  setActiveFilter("");
+                  onPageChange(1);
+                },
+              }
+            : null,
+          lockingFilter
+            ? {
+                id: "locking",
+                label: `Khóa: ${lockingFilter === "true" ? "Đang khóa" : "Không khóa"}`,
+                onRemove: () => {
+                  setLockingFilter("");
+                  onPageChange(1);
+                },
+              }
+            : null,
+          genderFilter
+            ? {
+                id: "gender",
+                label: `Giới tính: ${genderFilter === "true" ? "Nam" : "Nữ"}`,
+                onRemove: () => {
+                  setGenderFilter("");
+                  onPageChange(1);
+                },
+              }
+            : null,
+          createdFrom || createdTo
+            ? {
+                id: "date",
+                label: `Ngày: ${createdFrom || "..."} → ${createdTo || "..."}`,
+                onRemove: () => {
+                  setCreatedFrom("");
+                  setCreatedTo("");
+                  onPageChange(1);
+                },
+              }
+            : null,
+          arrangeFilter
+            ? {
+                id: "arrange",
+                label: `Sắp xếp: ${arrangeFilter === "desc" ? "Mới nhất" : "Cũ nhất"}`,
+                onRemove: () => {
+                  setArrangeFilter("");
+                  onPageChange(1);
+                },
+              }
+            : null,
+        ].filter(Boolean) as { id: string; label: string; onRemove: () => void }[]}
       >
         <SelectFilter
           id="users-role-filter"
@@ -7192,9 +7275,9 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
       />
 
       {supportsSearch ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-slate-200/90 bg-white/95 p-3.5 shadow-2xs backdrop-blur-xs dark:border-slate-800/90 dark:bg-slate-900/95">
           <div className="relative w-full sm:max-w-md">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
             <Input
               value={searchInput}
               onChange={(event) => {
@@ -7203,7 +7286,7 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
               }}
               aria-label={`Tìm kiếm trong ${headerProps.title.toLowerCase()}`}
               placeholder={`Tìm kiếm trong ${headerProps.title.toLowerCase()}...`}
-              className="pl-10 h-10 rounded-xl"
+              className="pl-10 pr-8 h-10 rounded-xl"
             />
             {searchInput ? (
               <button
@@ -7212,9 +7295,10 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
                   setSearchInput("");
                   setPage(1);
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer"
+                aria-label="Xóa từ khóa tìm kiếm"
               >
-                Xóa
+                <X className="size-3.5" />
               </button>
             ) : null}
           </div>
