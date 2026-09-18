@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LifeHealth appointment booking showcase</title>
+    <style>
+      :root {
+        --ink: #10233f;
+        --muted: #607089;
+        --teal: #079788;
+        --teal-deep: #04665f;
+        --mint: #d8f4ee;
+        --aqua: #e9f8f5;
+        --line: #cfe4df;
+        --paper: #fbfefd;
+        --night: #071123;
+        font-family: "Segoe UI Variable Display", "Segoe UI", Arial, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; width: 1422px; min-height: 900px; overflow: hidden; }
+      body {
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 82% 4%, rgba(7, 151, 136, 0.16), transparent 30%),
+          linear-gradient(130deg, #f5fbfa 0%, #edf8f5 52%, #f9fcfc 100%);
+      }
+
+      .board { display: none; position: relative; width: 1422px; height: 900px; overflow: hidden; }
+      body[data-view="flow"] .flow-board,
+      body[data-view="admin"] .admin-board { display: block; }
+
+      .grid {
+        position: absolute;
+        inset: 0;
+        opacity: 0.38;
+        background-image:
+          linear-gradient(rgba(4, 102, 95, 0.055) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(4, 102, 95, 0.055) 1px, transparent 1px);
+        background-size: 36px 36px;
+        mask-image: linear-gradient(to bottom, black, transparent 72%);
+      }
+
+      .brand {
+        position: absolute;
+        top: 46px;
+        left: 60px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        font-size: 20px;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+      }
+
+      .brand-logo {
+        width: 48px;
+        height: 48px;
+        display: block;
+        object-fit: cover;
+        border-radius: 14px;
+        border: 1px solid rgba(16, 35, 63, 0.1);
+        box-shadow: 0 14px 32px rgba(7, 151, 136, 0.2);
+      }
+
+      .release {
+        position: absolute;
+        top: 54px;
+        right: 60px;
+        padding: 9px 14px;
+        border: 1px solid rgba(7, 151, 136, 0.22);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.74);
+        color: var(--teal-deep);
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .intro {
+        position: absolute;
+        left: 60px;
+        top: 116px;
+        width: 790px;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 780px;
+        font-size: 48px;
+        line-height: 1.06;
+        letter-spacing: -0.048em;
+        font-weight: 760;
+      }
+
+      .intro p {
+        width: 620px;
+        margin: 16px 0 0;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.55;
+      }
+
+      .flow-steps {
+        position: absolute;
+        top: 136px;
+        right: 60px;
+        width: 420px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .flow-step {
+        padding: 12px 12px 11px;
+        border-top: 3px solid var(--line);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.3;
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--teal-deep);
+        font-size: 14px;
+      }
+
+      .shot {
+        position: absolute;
+        overflow: hidden;
+        background: white;
+        border: 1px solid rgba(16, 35, 63, 0.1);
+        box-shadow: 0 26px 70px rgba(15, 45, 64, 0.16);
+      }
+
+      .shot::before {
+        content: "";
+        position: absolute;
+        z-index: 2;
+        top: 12px;
+        left: 16px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: #ff6b6b;
+        box-shadow: 13px 0 #f7c948, 26px 0 #3ecf8e;
+      }
+
+      .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+
+      .search-shot {
+        left: 60px;
+        top: 300px;
+        width: 500px;
+        height: 210px;
+        border-radius: 18px 18px 28px 18px;
+        transform: rotate(-0.65deg);
+      }
+
+      .search-shot img { object-position: center 30%; padding-top: 28px; background: #fff; }
+
+      .booking-shot {
+        right: 60px;
+        top: 260px;
+        width: 785px;
+        height: 455px;
+        border-radius: 24px;
+        border: 7px solid rgba(255, 255, 255, 0.94);
+        box-shadow: 0 34px 100px rgba(6, 57, 71, 0.2);
+      }
+
+      .booking-shot img { object-position: center; }
+
+      .ops-shot {
+        left: 84px;
+        top: 555px;
+        width: 470px;
+        height: 190px;
+        border-radius: 26px 18px 18px 18px;
+        transform: rotate(0.7deg);
+      }
+
+      .ops-shot img { object-position: center top; padding-top: 26px; background: #fff; }
+
+      .caption {
+        position: absolute;
+        z-index: 4;
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 9px 13px;
+        border-radius: 12px;
+        background: var(--ink);
+        color: white;
+        font-size: 13px;
+        font-weight: 700;
+        box-shadow: 0 12px 24px rgba(16, 35, 63, 0.17);
+      }
+
+      .caption span {
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 8px;
+        background: var(--teal);
+      }
+
+      .cap-search { left: 78px; top: 280px; }
+      .cap-book { right: 82px; top: 238px; }
+      .cap-ops { left: 105px; top: 535px; }
+
+      .summary {
+        position: absolute;
+        left: 60px;
+        right: 60px;
+        bottom: 42px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 20px;
+        border-top: 1px solid rgba(16, 35, 63, 0.11);
+        color: var(--muted);
+        font-size: 15px;
+      }
+
+      .summary strong { color: var(--ink); }
+      .summary-path { color: var(--teal-deep); font-weight: 700; letter-spacing: 0.01em; }
+
+      /* Admin theme board */
+      .admin-board { background: linear-gradient(115deg, #f5fbfa 0 50%, #071123 50% 100%); }
+      .admin-board .grid { opacity: 0.22; }
+      .admin-board .brand { color: var(--ink); }
+      .admin-board .release { color: #d8f4ee; border-color: rgba(216, 244, 238, 0.2); background: rgba(7, 17, 35, 0.42); }
+      .admin-board .intro { width: 920px; }
+      .admin-board .intro p { width: 700px; }
+      .admin-board h1 { width: 880px; max-width: 880px; font-size: 42px; }
+
+      .theme-panel {
+        position: absolute;
+        top: 280px;
+        width: 625px;
+        height: 390px;
+        padding: 22px;
+        border-radius: 26px;
+        box-shadow: 0 28px 80px rgba(7, 17, 35, 0.18);
+      }
+
+      .theme-panel.light { left: 58px; background: rgba(255,255,255,0.92); border: 1px solid rgba(16,35,63,0.1); }
+      .theme-panel.dark { right: 58px; background: #0c1930; border: 1px solid rgba(216,244,238,0.12); }
+
+      .theme-title {
+        height: 52px;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        font-weight: 750;
+        font-size: 18px;
+      }
+
+      .theme-title small { display: block; margin-top: 4px; color: var(--muted); font-weight: 500; font-size: 13px; }
+      .dark .theme-title { color: white; }
+      .dark .theme-title small { color: #8ea0ba; }
+
+      .theme-dot { width: 14px; height: 14px; margin-top: 4px; border-radius: 50%; background: #f4c857; box-shadow: 0 0 0 6px rgba(244,200,87,0.13); }
+      .dark .theme-dot { background: #73a7ff; box-shadow: 0 0 0 6px rgba(115,167,255,0.14); }
+
+      .theme-panel img {
+        width: 100%;
+        height: 292px;
+        display: block;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 16px;
+        border: 1px solid rgba(16,35,63,0.08);
+        background: #f5f7f8;
+      }
+
+      .theme-panel.dark img { background: #050b1c; }
+
+      .admin-tags {
+        position: absolute;
+        left: 58px;
+        right: 58px;
+        bottom: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .admin-tag {
+        padding: 10px 16px;
+        border: 1px solid rgba(7,151,136,0.19);
+        border-radius: 999px;
+        color: var(--teal-deep);
+        background: rgba(255,255,255,0.72);
+        font-size: 13px;
+        font-weight: 650;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="board flow-board">
+      <div class="grid"></div>
+      <div class="brand"><img class="brand-logo" src="./lifehealth-logo.jpg" alt="LifeHealth logo" />LifeHealth</div>
+      <div class="release">Appointment experience</div>
+      <div class="intro">
+        <h1>Đặt lịch khám, từ nhu cầu đến lịch hẹn</h1>
+        <p>Một hành trình liền mạch cho người bệnh, đồng thời cung cấp bộ công cụ vận hành rõ ràng cho đội ngũ quản trị.</p>
+      </div>
+      <div class="flow-steps">
+        <div class="flow-step"><strong>01</strong>Tìm đúng chuyên khoa</div>
+        <div class="flow-step"><strong>02</strong>Chọn ngày khám</div>
+        <div class="flow-step"><strong>03</strong>Quản lý lịch hẹn</div>
+      </div>
+
+      <div class="caption cap-search"><span>1</span>Tìm bác sĩ</div>
+      <div class="shot search-shot"><img src="../screenshots/live/patient-doctors-filters.png" alt="Bộ lọc tìm bác sĩ" /></div>
+
+      <div class="caption cap-book"><span>2</span>Chọn lịch khám</div>
+      <div class="shot booking-shot"><img src="../screenshots/live/booking-modal.png" alt="Hộp thoại đặt lịch khám" /></div>
+
+      <div class="caption cap-ops"><span>3</span>Theo dõi vận hành</div>
+      <div class="shot ops-shot"><img src="../screenshots/live/admin-appointments-light.png" alt="Bộ lọc quản lý lịch hẹn" /></div>
+
+      <div class="summary">
+        <span><strong>Thiết kế tập trung vào tác vụ:</strong> ít bước, rõ trạng thái, dễ kiểm soát.</span>
+        <span class="summary-path">Patient → Booking → Operations</span>
+      </div>
+    </section>
+
+    <section class="board admin-board">
+      <div class="grid"></div>
+      <div class="brand"><img class="brand-logo" src="./lifehealth-logo.jpg" alt="LifeHealth logo" />LifeHealth</div>
+      <div class="release">Admin / Doctor console</div>
+      <div class="intro">
+        <h1>Quản lý lịch hẹn trong mọi chế độ hiển thị</h1>
+        <p>Cùng một cấu trúc thông tin, độ tương phản và nhịp đọc được giữ nhất quán giữa light mode và dark mode.</p>
+      </div>
+
+      <article class="theme-panel light">
+        <div class="theme-title"><span>Light mode<small>Không gian sáng, ưu tiên khả năng quét dữ liệu</small></span><span class="theme-dot"></span></div>
+        <img src="../screenshots/live/admin-appointments-light.png" alt="Quản lý lịch hẹn light mode" />
+      </article>
+
+      <article class="theme-panel dark">
+        <div class="theme-title"><span>Dark mode<small>Giảm chói cho ca trực và môi trường thiếu sáng</small></span><span class="theme-dot"></span></div>
+        <img src="../screenshots/live/admin-appointments-dark.png" alt="Quản lý lịch hẹn dark mode" />
+      </article>
+
+      <div class="admin-tags">
+        <span class="admin-tag">Tìm kiếm</span>
+        <span class="admin-tag">Trạng thái</span>
+        <span class="admin-tag">Hình thức đặt</span>
+        <span class="admin-tag">Khoảng ngày</span>
+        <span class="admin-tag">Bác sĩ phụ trách</span>
+      </div>
+    </section>
+
+    <script>
+      const view = new URLSearchParams(window.location.search).get("view") || "flow";
+      document.body.dataset.view = view === "admin" ? "admin" : "flow";
+    </script>
+  </body>
+</html>

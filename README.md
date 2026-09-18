@@ -46,9 +46,30 @@ Modern healthcare delivery demands friction-free access for patients and high-ef
 
 ---
 
-## Patient Experience (Current UI)
+## Product Showcase: Appointment Booking
 
-The Patient Portal (`frontend/`) provides a calm, responsive healthcare experience with clear booking flows, specialist discovery, protected health information, and integrated LifeHealth MedAI access. Vietnamese is the default language, with English available from the header.
+Appointment booking is the core LifeHealth experience: patients find the right specialty, choose an available date, and submit a booking while administrators and doctors monitor appointments from one operational workspace.
+
+The current deployments are available here:
+
+- [Patient portal](https://patientuilifehealth.vercel.app/)
+- [Admin / Doctor portal](https://adminmanagementuilifehealth.vercel.app/)
+
+### Patient booking journey
+
+![LifeHealth appointment booking journey](docs/showcase/booking-flow.png)
+
+The showcase follows the primary workflow from specialist discovery to date selection and operational follow-up. Personal account details, clinical records, addresses, and doctor contact information are intentionally excluded.
+
+### Admin and Doctor appointment operations
+
+![LifeHealth appointment management in light and dark modes](docs/showcase/booking-admin-themes.png)
+
+The management view keeps search, status, booking mode, date range, and doctor filters consistent across light and dark themes.
+
+## Patient Experience (Feature Reference)
+
+The Patient Portal (`frontend/`) provides a calm, responsive healthcare experience with clear booking flows, specialist discovery, protected health information, and integrated LifeHealth MedAI access. Vietnamese is the default language, with English available from the header. The product showcase above is the current visual reference; the sections below document the individual patient journeys.
 
 ### 1. Modern Portal Landing Page
 The current public landing page presents the three-step care path, popular specialties, verified doctors, appointment guidance, privacy commitments, and direct entry points to doctor search and the health assistant.
@@ -59,107 +80,79 @@ The header also provides the current display and language controls:
 - **Theme:** Light and dark display modes with matching contrast, surfaces, and accent colors.
 - **Responsive layout:** The same booking-focused information architecture adapts across desktop and mobile screens.
 
-| Light / Vietnamese | Dark / Vietnamese |
-| :---: | :---: |
-| ![Patient Home - Light Vietnamese](docs/screenshots/patient/home-light-vi.png) | ![Patient Home - Dark Vietnamese](docs/screenshots/patient/home-dark-vi.png) |
-
-| Light / English | Dark / English |
-| :---: | :---: |
-| ![Patient Home - Light English](docs/screenshots/patient/home-light-en.png) | ![Patient Home - Dark English](docs/screenshots/patient/home-dark-en.png) |
-
-_The screenshots above were captured from the live patient portal at [patientuilifehealth.vercel.app](https://patientuilifehealth.vercel.app), reflecting the current landing-page design._
+The current live landing-page capture is shown in the **Live Demo Captures** section above.
 
 ---
 
 ### 2. Unified Patient Dashboard
 Once signed in, the patient dashboard provides an immediate overview of health vitals, active appointments, quick booking shortcuts, and personalized specialist recommendations.
 
-![Patient Dashboard](docs/screenshots/patient/dashboard.png)
 
 ---
 
 ### 3. Specialist Discovery & Search
 Patients can search, filter, and compare doctors across clinical specialties, experience levels, and ratings with live availability indicators.
 
-![Doctor Discovery](docs/screenshots/patient/doctor-list.png)
 
 ---
 
 ### 4. Specialist Profile & Consultation Schedule
 Detailed doctor profile displaying medical qualifications, biography, consultation fee, clinic location, and an interactive schedule picker for available examination slots.
 
-![Doctor Profile](docs/screenshots/patient/doctor-profile.png)
 
 ---
 
 ### 5. Interactive Appointment Booking Workflows
 LifeHealth provides two seamless paths to schedule care: an accelerated quick booking dialog and a detailed doctor schedule with date and slot selection.
 
-| Quick Booking Modal ("Đặt lịch nhanh") | Doctor Schedule & Booking Flow |
-| :---: | :---: |
-| ![Quick Booking Modal](docs/screenshots/patient/quick-booking.png) | ![Doctor Schedule and Booking Flow](docs/screenshots/patient/booking.png) |
-| *Rapid booking modal for selecting a patient profile, specialty, and preferred date without leaving the doctor directory.* | *Doctor-specific calendar and live consultation-slot area used to continue the booking flow.* |
+The current live patient care-journey capture is shown in the **Live Demo Captures** section above.
 
 ---
 
 ### 6. Appointment Management & Visit History
 Patients can inspect upcoming appointments, filter by status (All, Pending, Confirmed, Completed, Cancelled), view clinic addresses, and manage their consultation itinerary.
 
-![Appointment Management](docs/screenshots/patient/appointments.png)
 
 ---
 
 ### 7. Direct Doctor-Patient Messaging
 Built-in secure messaging enables direct communication between patients and their attending specialists for appointment questions, follow-up guidance, and preparation notes.
 
-![Patient Messaging](docs/screenshots/patient/messaging.png)
 
 ---
 
 ### 8. Longitudinal Health & Family Records
 Comprehensive medical record tracking for the patient and linked family members, including blood type, height, weight, BMI, recent blood pressure, glucose levels, and active prescriptions.
 
-![Health Records](docs/screenshots/patient/health-records.png)
 
 ---
 
 ### 9. Account Profile & Personal Information
 Dedicated profile management interface allowing patients to update identification details, contact information, addresses, and emergency contacts.
 
-![Patient Profile](docs/screenshots/patient/profile.png)
 
 ---
 
 ### 10. LifeHealth MedAI Consultation Assistant
 An integrated AI assistant powered by LangGraph and RAG workflows that provides patients with 24/7 symptom assessment, medical context, and clinic guidance before booking.
 
-![LifeHealth MedAI Consultation](docs/screenshots/patient/ai-consultation.png)
 
 ---
 
-## Doctor & Administrator Workspaces
+## Doctor & Administrator Workspaces (Feature Reference)
 
-In addition to the patient experience, LifeHealth includes dedicated portals for healthcare providers and system operators.
+In addition to the patient experience, LifeHealth includes dedicated portals for healthcare providers and system operators. The current dashboard and RBAC/filter captures are shown in the live demo section above.
 
 ### Doctor Experience
 
-![Doctor Dashboard](docs/images/doctor-dashboard.webp)
 
-*Daily clinical workspace tracking consultation volume, appointment statuses, and pending patient actions.*
+The live admin dashboard capture above also represents the shared operational visual language used by the Doctor workspace.
 
 ---
 
 ### Administrator Experience
 
-| Operational Dashboard | Role & Permission Governance (RBAC) |
-| :---: | :---: |
-| ![Admin Dashboard](docs/images/admin-dashboard.webp) | ![Admin Role Management](docs/images/admin-role-management.webp) |
-| *Real-time clinical control tower with active metrics, daily appointment tracking, and role breakdown.* | *Fine-grained RBAC matrix managing 130+ system permissions across clinical and administrative domains.* |
-
-| Centralized User & Practitioner Management | AI Enterprise Report Generator |
-| :---: | :---: |
-| ![Admin User Management](docs/images/admin-user-management.webp) | ![AI Enterprise Report Generator](docs/images/admin-ai-report.webp) |
-| *System user directory with lifecycle controls (lock/unlock, activation, and role assignments).* | *Automated clinical & operational reporting engine with AI insights, interactive charts, and CSV/PDF export.* |
+The live RBAC/filter capture above documents the current permission-governance workspace.
 
 ---
 
@@ -299,8 +292,8 @@ Exact versions currently installed and running stably in this repository (see ea
 ├── chatbot/                # AI consultation and clinical report service
 │   └── src/                # LangGraph agents, RAG pipelines, Qdrant vectors
 ├── docs/                   # Product documentation and screenshots
-│   ├── screenshots/patient/# Redesigned Patient UI presentation captures
-│   └── images/             # Admin and Doctor workspace captures
+│   ├── showcase/           # Composed README product showcases
+│   └── screenshots/live/   # Privacy-safe source captures
 └── docker-compose.dev.yml  # Multi-service container orchestration
 ```
 
