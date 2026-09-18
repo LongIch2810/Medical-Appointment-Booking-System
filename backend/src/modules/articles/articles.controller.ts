@@ -21,6 +21,7 @@ import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateArticleDto } from './dto/request/bodyCreateArticle.dto';
 
 import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
+import { BodyFilterArticlesImproveDto } from './dto/request/bodyFilterArticlesImprove.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
 import { PartialUpdateArticleDto } from './dto/request/partialUpdateArticle.dto';
@@ -118,7 +119,7 @@ export class ArticlesController {
   @ApiOperation({ summary: 'Danh sách bài viết (phân trang, lọc)' })
   @Post()
   @HttpCode(HttpStatus.OK)
-  async getArticles(@Body() objectFilters: BodyFilterArticlesDto) {
+  async getArticles(@Body() objectFilters: BodyFilterArticlesImproveDto) {
     return this.articlesService.filterAndPagination(objectFilters);
   }
 
@@ -132,7 +133,7 @@ export class ArticlesController {
   @Permissions(PERMISSIONS.ARTICLE_READ)
   async getMyArticles(
     @Request() req,
-    @Body() objectFilters: BodyFilterArticlesDto,
+    @Body() objectFilters: BodyFilterArticlesImproveDto,
   ) {
     const { userId } = req.user;
     // author_id luôn lấy từ user đang đăng nhập, không nhận từ client —

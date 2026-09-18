@@ -19,10 +19,14 @@ export const complaintQueryKeys = {
     ["complaint-detail", complaintId] as const,
 };
 
-export function useComplaints(filters: ComplaintListPayload) {
+export function useComplaints(
+  filters: ComplaintListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: complaintQueryKeys.list(filters),
     queryFn: () => fetchComplaints(filters),
+    enabled: options?.enabled,
   });
 }
 

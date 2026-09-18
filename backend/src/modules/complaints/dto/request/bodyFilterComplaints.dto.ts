@@ -1,5 +1,12 @@
-import { Type } from 'class-transformer';
-import { IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import {
+  IsDateString,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+import { IsBeforeOrEqual } from 'src/common/decorators/isBeforeOrEqual.decorator';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { ComplaintStatus } from 'src/entities/complaint.entity';
 import { Arrange } from 'src/shared/types/global.type';
@@ -18,12 +25,15 @@ export class BodyFilterComplaintsDto extends PaginationDto {
   @IsOptional()
   userId?: number;
 
-  @IsString()
+  @IsDateString()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @IsBeforeOrEqual('toDate', { message: 'fromDate must be before toDate' })
   fromDate?: string;
 
-  @IsString()
+  @IsDateString()
   @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
   toDate?: string;
 
   @IsIn(['desc', 'asc'], { message: 'arrange phải là asc hoặc desc' })

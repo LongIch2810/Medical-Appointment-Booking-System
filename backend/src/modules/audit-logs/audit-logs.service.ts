@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { AuditLog } from 'src/entities/auditLog.entity';
 import { Repository } from 'typeorm';
@@ -8,6 +12,7 @@ import { BodyFilterAuditLogsDto } from './dto/request/bodyFilterAuditLogs.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { AuditLogListResponseDto } from './dto/response/auditLogResponse.dto';
 import { AuditLogsMapper } from './audit-logs.mapper';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class AuditLogsService {
@@ -80,7 +85,7 @@ export class AuditLogsService {
       });
     }
 
-    if (userId) {
+    if (userId !== undefined) {
       query.andWhere('user.id = :userId', { userId });
     }
 
@@ -101,8 +106,11 @@ export class AuditLogsService {
     }
 
     if (toDate) {
-      query.andWhere('auditLog.created_at <= :toDate', {
-        toDate: new Date(toDate),
+      if (fromDate && new Date(fromDate) > new Date(toDate)) {
+        throw new BadRequestException('fromDate must be before toDate');
+      }
+      query.andWhere('auditLog.created_at < :toDate', {
+        toDate: startOfNextDay(toDate),
       });
     }
 

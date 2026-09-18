@@ -20,10 +20,14 @@ export const doctorQueryKeys = {
   detail: (doctorId: number) => ["doctor-detail", doctorId] as const,
 };
 
-export function useDoctors(filters: DoctorListPayload) {
+export function useDoctors(
+  filters: DoctorListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: doctorQueryKeys.list(filters),
     queryFn: () => fetchDoctors(filters),
+    enabled: options?.enabled,
   });
 }
 

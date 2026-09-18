@@ -10,6 +10,7 @@ import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { QueryFailedError, Repository } from 'typeorm';
 import { BodyUpdateSpecialtyDto } from './dto/request/bodyUpdateSpecialty.dto';
 import { BodyFilterSpecialtiesDto } from './dto/request/bodyFilterSpecialties.dto';
+import { startOfNextDay } from 'src/utils/filterDate';
 import { BodyCreateSpecialtyDto } from './dto/request/bodyCreateSpecialty.dto';
 import { generateSlug } from 'src/utils/generateSlug';
 import { SpecialtiesMapper } from './specialties.mapper';
@@ -128,7 +129,14 @@ export class SpecialtiesService {
 
   async filterAndPagination(objectFilter: BodyFilterSpecialtiesDto) {
     let { page, limit } = objectFilter;
-    const { search, arrange } = objectFilter;
+    const { search, createdFrom, createdTo, arrange } = objectFilter;
+    if (
+      createdFrom &&
+      createdTo &&
+      new Date(createdFrom) > new Date(createdTo)
+    ) {
+      throw new BadRequestException('createdFrom must be before createdTo');
+    }
     const cacheKey = `specialties:page=${page}:limit=${limit}:filter=${JSON.stringify(objectFilter || {})}`;
     const cachedData = await this.redisCacheService.getData(cacheKey);
     if (cachedData) {
@@ -151,6 +159,17 @@ export class SpecialtiesService {
         'UNACCENT(LOWER(specialty.name)) LIKE UNACCENT(LOWER(:search))',
         { search: `%${search}%` },
       );
+    }
+
+    if (createdFrom) {
+      query.andWhere('specialty.created_at >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+    if (createdTo) {
+      query.andWhere('specialty.created_at < :createdTo', {
+        createdTo: startOfNextDay(createdTo),
+      });
     }
 
     const [specialties, total] = await query.getManyAndCount();

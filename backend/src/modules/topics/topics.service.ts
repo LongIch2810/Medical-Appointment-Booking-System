@@ -1,12 +1,14 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Topic from 'src/entities/topic.entity';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Brackets, QueryFailedError, Repository } from 'typeorm';
 import { BodyFilterTopicsDto } from './dto/request/bodyFilterTopics.dto';
+import { startOfNextDay } from 'src/utils/filterDate';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { BodyCreateTopicDto } from './dto/request/bodyCreateTopic.dto';
 import { generateSlug } from 'src/utils/generateSlug';
@@ -88,7 +90,14 @@ export class TopicsService {
 
   async filterAndPagination(objectFilters: BodyFilterTopicsDto) {
     let { page, limit } = objectFilters;
-    const { search, arrange } = objectFilters;
+    const { search, createdFrom, createdTo, arrange } = objectFilters;
+    if (
+      createdFrom &&
+      createdTo &&
+      new Date(createdFrom) > new Date(createdTo)
+    ) {
+      throw new BadRequestException('createdFrom must be before createdTo');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -108,6 +117,17 @@ export class TopicsService {
     if (search) {
       query.andWhere(`LOWER(topic.name) LIKE LOWER(:search)`, {
         search: `%${search}%`,
+      });
+    }
+
+    if (createdFrom) {
+      query.andWhere('topic.created_at >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+    if (createdTo) {
+      query.andWhere('topic.created_at < :createdTo', {
+        createdTo: startOfNextDay(createdTo),
       });
     }
 

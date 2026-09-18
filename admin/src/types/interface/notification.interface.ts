@@ -29,6 +29,7 @@ export interface NotificationListPayload extends PaginationPayload {
   search?: string;
   userId?: number;
   isRead?: boolean;
+  type?: NotificationType;
   fromDate?: string;
   toDate?: string;
   arrange?: SortOrder;

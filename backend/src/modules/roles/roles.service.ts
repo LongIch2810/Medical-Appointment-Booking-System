@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Role from 'src/entities/role.entity';
-import { DataSource, In, Like, QueryFailedError, Repository } from 'typeorm';
+import { DataSource, ILike, In, QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateRoleDto } from './dto/request/bodyCreateRole.dto';
 import { BodyFilterRolesDto } from './dto/request/bodyFilterRoles.dto';
 import { RolesMapper } from './roles.mapper';
@@ -238,6 +238,13 @@ export class RolesService {
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
+    const keyword = search?.trim() ?? '';
+    const where = keyword
+      ? [
+          { role_name: ILike(`%${keyword}%`) },
+          { description: ILike(`%${keyword}%`) },
+        ]
+      : {};
     const [roles, total] = await this.roleRepo.findAndCount({
       relations: ['permissions', 'permissions.permission'],
       skip,
@@ -245,10 +252,7 @@ export class RolesService {
       order: {
         role_name: arrange.toUpperCase() as 'ASC' | 'DESC',
       },
-      where: {
-        role_name: Like(`%${search}%`),
-        description: Like(`%${search}%`),
-      },
+      where,
     });
     const result = new PaginationResultDto(
       'roles',

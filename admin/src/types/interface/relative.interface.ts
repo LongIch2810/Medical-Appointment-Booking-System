@@ -23,6 +23,9 @@ export interface Relative {
 export interface RelativeListPayload extends PaginationPayload {
   search?: string;
   relationshipCode?: string;
+  gender?: boolean;
+  dobFrom?: string;
+  dobTo?: string;
   arrange?: SortOrder;
 }
 

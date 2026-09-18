@@ -1,5 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
-import { QueryFailedError } from 'typeorm';
+import { Brackets, QueryFailedError } from 'typeorm';
 import { TagsService } from 'src/modules/tags/tags.service';
 
 function queryBuilder(result: unknown = null) {
@@ -130,9 +130,7 @@ describe('TagsService', () => {
       limit: 1,
     });
     expect(builder.skip).toHaveBeenCalledWith(0);
-    expect(builder.where).toHaveBeenCalledWith('tag.name ILIKE :search', {
-      search: '%heart%',
-    });
+    expect(builder.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
   });
 
   it('throws for a missing tag and only soft-deletes an existing one', async () => {

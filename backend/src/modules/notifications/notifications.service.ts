@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import Notification from 'src/entities/notification.entity';
@@ -23,6 +28,7 @@ import { isPgDriverError } from 'src/utils/isPgDriverError';
 import { toHHMM } from 'src/utils/toMinutes';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
 import { QueryFailedError } from 'typeorm';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 const ACTIVE_ADMIN_USER_IDS_CACHE_KEY = 'notifications:active-admin-user-ids';
 
@@ -214,7 +220,8 @@ export class NotificationsService {
 
   async filterAndPagination(objectFilters: BodyFilterNotificationsDto) {
     let { page, limit } = objectFilters;
-    const { search, userId, isRead, fromDate, toDate, arrange } = objectFilters;
+    const { search, userId, isRead, type, fromDate, toDate, arrange } =
+      objectFilters;
     page = Math.max(1, Number(page) || 1);
     limit = Math.max(1, Number(limit) || 10);
     const skip = (page - 1) * limit;
@@ -235,9 +242,12 @@ export class NotificationsService {
         { search: `%${search}%` },
       );
     }
-    if (userId) query.andWhere('user.id = :userId', { userId });
+    if (userId !== undefined) query.andWhere('user.id = :userId', { userId });
     if (isRead !== undefined) {
       query.andWhere('notification.is_read = :isRead', { isRead });
+    }
+    if (type) {
+      query.andWhere('notification.type = :type', { type });
     }
     if (fromDate) {
       query.andWhere('notification.created_at >= :fromDate', {
@@ -245,8 +255,11 @@ export class NotificationsService {
       });
     }
     if (toDate) {
-      query.andWhere('notification.created_at <= :toDate', {
-        toDate: new Date(toDate),
+      if (fromDate && new Date(fromDate) > new Date(toDate)) {
+        throw new BadRequestException('fromDate must be before toDate');
+      }
+      query.andWhere('notification.created_at < :toDate', {
+        toDate: startOfNextDay(toDate),
       });
     }
 

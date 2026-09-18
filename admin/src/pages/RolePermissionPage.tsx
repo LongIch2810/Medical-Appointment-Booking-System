@@ -17,6 +17,8 @@ import {
 import { ErrorState } from "@/components/app/ErrorState";
 import { LoadingState } from "@/components/app/LoadingState";
 import { PageHeader } from "@/components/app/PageHeader";
+import { FilterBar } from "@/components/app/FilterBar";
+import { SelectFilter } from "@/components/app/SelectFilter";
 import { RoleCreateDialog } from "@/components/app/RoleCreateDialog";
 import { RoleEditDialog } from "@/components/app/RoleEditDialog";
 import { RolePermissionsAddDialog } from "@/components/app/RolePermissionsAddDialog";
@@ -28,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { PERMISSIONS } from "@/config/permissions";
 import { usePermission } from "@/hooks/usePermission";
 import { useRolePermissionMatrix } from "@/hooks/useRolePermission";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { groupPermissions } from "@/lib/permission-grouping";
 
 export function RolePermissionPage() {
@@ -35,10 +38,16 @@ export function RolePermissionPage() {
   const { can } = usePermission();
 
   const [activeTab, setActiveTab] = useState<"cards" | "matrix" | "catalog">(
-    "cards"
+    "cards",
   );
   const [search, setSearch] = useState("");
-  const [expandedRoles, setExpandedRoles] = useState<Record<string | number, boolean>>({});
+  const [roleFilter, setRoleFilter] = useState("");
+  const [groupFilter, setGroupFilter] = useState("");
+  const [assignmentFilter, setAssignmentFilter] = useState("");
+  const [expandedRoles, setExpandedRoles] = useState<
+    Record<string | number, boolean>
+  >({});
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const matrix = data?.data;
 
@@ -57,12 +66,57 @@ export function RolePermissionPage() {
 
   const filteredPermissions = useMemo(() => {
     if (!matrix) return [];
-    const term = search.trim().toLowerCase();
-    if (!term) return matrix.permissions;
-    return matrix.permissions.filter((permission) =>
-      permission.name.toLowerCase().includes(term)
+    const term = debouncedSearch.trim().toLowerCase();
+    const groupTerm = groupFilter.trim().toLowerCase();
+    return matrix.permissions.filter((permission) => {
+      const group = groupedCatalog.find((candidate) =>
+        candidate.permissions.some((item) => item.id === permission.id),
+      );
+      const matchesSearch =
+        !term || permission.name.toLowerCase().includes(term);
+      const matchesGroup =
+        !groupTerm ||
+        Boolean(
+          group &&
+          `${group.name} ${group.label}`.toLowerCase().includes(groupTerm),
+        );
+      const assigned = matrix.roles.some((role) =>
+        role.permission_ids.includes(permission.id),
+      );
+      const matchesAssignment =
+        !assignmentFilter ||
+        (assignmentFilter === "assigned" ? assigned : !assigned);
+      return matchesSearch && matchesGroup && matchesAssignment;
+    });
+  }, [matrix, debouncedSearch, groupFilter, assignmentFilter, groupedCatalog]);
+
+  const filteredRoles = useMemo(() => {
+    if (!matrix) return [];
+    const term = roleFilter.trim().toLowerCase();
+    return matrix.roles.filter((role) => {
+      const matchesName = !term || role.role_name.toLowerCase().includes(term);
+      const matchesAssignment =
+        !assignmentFilter ||
+        (assignmentFilter === "assigned"
+          ? role.permission_ids.length > 0
+          : role.permission_ids.length === 0);
+      return matchesName && matchesAssignment;
+    });
+  }, [matrix, roleFilter, assignmentFilter]);
+
+  const filteredPermissionGroups = useMemo(() => {
+    const term = groupFilter.trim().toLowerCase();
+    return groupedCatalog.filter(
+      (group) =>
+        !term || `${group.name} ${group.label}`.toLowerCase().includes(term),
     );
-  }, [matrix, search]);
+  }, [groupedCatalog, groupFilter]);
+
+  const resetFilters = () => {
+    setRoleFilter("");
+    setGroupFilter("");
+    setAssignmentFilter("");
+  };
 
   const toggleRoleExpand = (roleId: string | number) => {
     setExpandedRoles((prev) => ({
@@ -75,7 +129,7 @@ export function RolePermissionPage() {
   const canEdit = can(PERMISSIONS.ROLE_UPDATE, PERMISSIONS.ROLE_MANAGE);
   const canManagePermissions = can(
     PERMISSIONS.ROLE_PERMISSION_UPDATE,
-    PERMISSIONS.ROLE_PERMISSION_MANAGE
+    PERMISSIONS.ROLE_PERMISSION_MANAGE,
   );
 
   if (isLoading) {
@@ -119,7 +173,10 @@ export function RolePermissionPage() {
             canCreate && (
               <RoleCreateDialog
                 trigger={
-                  <Button variant="default" className="gap-2 rounded-xl font-bold shadow-xs">
+                  <Button
+                    variant="default"
+                    className="gap-2 rounded-xl font-bold shadow-xs"
+                  >
                     + Tạo vai trò mới
                   </Button>
                 }
@@ -135,7 +192,9 @@ export function RolePermissionPage() {
         <Card className="rounded-3xl border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Tổng Vai trò</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Tổng Vai trò
+              </p>
               <p className="font-display text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-1">
                 {totalRoles}
               </p>
@@ -152,7 +211,9 @@ export function RolePermissionPage() {
         <Card className="rounded-3xl border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Quyền hệ thống</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Quyền hệ thống
+              </p>
               <p className="font-display text-3xl font-extrabold text-slate-900 dark:text-slate-100 mt-1">
                 {totalPermissions}
               </p>
@@ -169,7 +230,9 @@ export function RolePermissionPage() {
         <Card className="rounded-3xl border-slate-200/80 bg-white p-5 shadow-2xs transition hover:shadow-md dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mô hình Bảo mật</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Mô hình Bảo mật
+              </p>
               <p className="font-display text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
                 RBAC Matrix
               </p>
@@ -222,6 +285,7 @@ export function RolePermissionPage() {
         <div className="relative w-full sm:w-72">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <Input
+            aria-label="Tìm theo tên quyền"
             placeholder="Tìm theo tên quyền (vd: doctor, user)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -230,17 +294,77 @@ export function RolePermissionPage() {
         </div>
       </div>
 
+      <FilterBar
+        hasActiveFilters={Boolean(
+          roleFilter || groupFilter || assignmentFilter,
+        )}
+        activeFilterCount={
+          [roleFilter, groupFilter, assignmentFilter].filter(Boolean).length
+        }
+        onReset={resetFilters}
+      >
+        <SelectFilter
+          id="role-permission-role-filter"
+          label="Vai trò"
+          value={roleFilter}
+          onChange={setRoleFilter}
+          options={matrix.roles.map((role) => ({
+            value: role.role_name,
+            label: role.role_name,
+          }))}
+          placeholder="Tất cả vai trò"
+        />
+        <SelectFilter
+          id="role-permission-group-filter"
+          label="Nhóm quyền"
+          value={groupFilter}
+          onChange={setGroupFilter}
+          options={groupedCatalog.map((group) => ({
+            value: group.name,
+            label: group.label,
+          }))}
+          placeholder="Tất cả nhóm"
+        />
+        <SelectFilter
+          id="role-permission-assignment-filter"
+          label="Trạng thái gán"
+          value={assignmentFilter}
+          onChange={setAssignmentFilter}
+          options={[
+            { value: "assigned", label: "Đã gán" },
+            { value: "unassigned", label: "Chưa gán" },
+          ]}
+          placeholder="Tất cả"
+        />
+      </FilterBar>
+
       {/* TAB 1: Role Cards & Management View */}
       {activeTab === "cards" && (
         <div className="grid gap-6 items-start md:grid-cols-2">
-          {matrix.roles.map((role) => {
+          {filteredRoles.map((role) => {
             const rolePermissions = role.permission_ids
-              .map((id) => ({ id, name: permissionsById.get(id) ?? `perm#${id}` }))
-              .filter((p) =>
-                search
-                  ? p.name.toLowerCase().includes(search.toLowerCase())
-                  : true
-              );
+              .map((id) => ({
+                id,
+                name: permissionsById.get(id) ?? `perm#${id}`,
+              }))
+              .filter((p) => {
+                const matchesSearch =
+                  !debouncedSearch ||
+                  p.name.toLowerCase().includes(debouncedSearch.toLowerCase());
+                const group = groupedCatalog.find((candidate) =>
+                  candidate.permissions.some((item) => item.id === p.id),
+                );
+                const groupTerm = groupFilter.trim().toLowerCase();
+                const matchesGroup =
+                  !groupTerm ||
+                  Boolean(
+                    group &&
+                    `${group.name} ${group.label}`
+                      .toLowerCase()
+                      .includes(groupTerm),
+                  );
+                return matchesSearch && matchesGroup;
+              });
             const groupedRolePerms = groupPermissions(rolePermissions);
             const isExpanded = expandedRoles[role.id] ?? false;
 
@@ -261,7 +385,10 @@ export function RolePermissionPage() {
                         </p>
                       ) : null}
                     </div>
-                    <Badge variant="info" className="shrink-0 text-xs font-bold">
+                    <Badge
+                      variant="info"
+                      className="shrink-0 text-xs font-bold"
+                    >
                       {role.permission_ids.length} quyền
                     </Badge>
                   </div>
@@ -271,7 +398,11 @@ export function RolePermissionPage() {
                     {canEdit && (
                       <RoleEditDialog
                         trigger={
-                          <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl font-semibold">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs rounded-xl font-semibold"
+                          >
                             Sửa tên &amp; mô tả
                           </Button>
                         }
@@ -281,7 +412,11 @@ export function RolePermissionPage() {
                     {canManagePermissions && (
                       <RolePermissionsAddDialog
                         trigger={
-                          <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl font-semibold text-teal-700 dark:text-teal-400 hover:border-teal-300">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs rounded-xl font-semibold text-teal-700 dark:text-teal-400 hover:border-teal-300"
+                          >
                             + Thêm quyền
                           </Button>
                         }
@@ -292,7 +427,11 @@ export function RolePermissionPage() {
                     {canManagePermissions && (
                       <RolePermissionsRemoveDialog
                         trigger={
-                          <Button variant="outline" size="sm" className="h-8 text-xs rounded-xl font-semibold text-rose-600 hover:text-rose-700 hover:border-rose-300">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-xs rounded-xl font-semibold text-rose-600 hover:text-rose-700 hover:border-rose-300"
+                          >
                             - Bỏ quyền
                           </Button>
                         }
@@ -310,24 +449,26 @@ export function RolePermissionPage() {
                     </div>
                   ) : (
                     <div className="space-y-3.5">
-                      {groupedRolePerms.slice(0, isExpanded ? undefined : 3).map((group) => (
-                        <div key={group.name} className="space-y-1.5">
-                          <div className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                            {group.label} ({group.permissions.length})
+                      {groupedRolePerms
+                        .slice(0, isExpanded ? undefined : 3)
+                        .map((group) => (
+                          <div key={group.name} className="space-y-1.5">
+                            <div className="mono-label text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                              {group.label} ({group.permissions.length})
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.permissions.map((p) => (
+                                <Badge
+                                  key={p.id}
+                                  variant="outline"
+                                  className="text-[11px] font-medium border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
+                                >
+                                  {p.name}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
-                          <div className="flex flex-wrap gap-1.5">
-                            {group.permissions.map((p) => (
-                              <Badge
-                                key={p.id}
-                                variant="outline"
-                                className="text-[11px] font-medium border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
-                              >
-                                {p.name}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
+                        ))}
 
                       {groupedRolePerms.length > 3 ? (
                         <button
@@ -336,11 +477,13 @@ export function RolePermissionPage() {
                         >
                           {isExpanded ? (
                             <>
-                              <ChevronUp className="size-3.5" /> Thu gọn nhóm quyền
+                              <ChevronUp className="size-3.5" /> Thu gọn nhóm
+                              quyền
                             </>
                           ) : (
                             <>
-                              <ChevronDown className="size-3.5" /> Xem thêm {groupedRolePerms.length - 3} nhóm quyền khác...
+                              <ChevronDown className="size-3.5" /> Xem thêm{" "}
+                              {groupedRolePerms.length - 3} nhóm quyền khác...
                             </>
                           )}
                         </button>
@@ -363,7 +506,8 @@ export function RolePermissionPage() {
               <span>Bảng Ma trận Đối chiếu Vai trò - Quyền hạn</span>
             </CardTitle>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              So sánh trực quan các quyền được gán giữa các vai trò trong hệ thống.
+              So sánh trực quan các quyền được gán giữa các vai trò trong hệ
+              thống.
             </p>
           </CardHeader>
           <CardContent className="p-0 overflow-x-auto">
@@ -374,7 +518,7 @@ export function RolePermissionPage() {
                     <th className="mono-label px-4 py-3.5 text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                       Mã Quyền hạn (Permission Name)
                     </th>
-                    {matrix.roles.map((role) => (
+                    {filteredRoles.map((role) => (
                       <th
                         key={role.id}
                         className="mono-label px-4 py-3.5 text-center text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider"
@@ -388,7 +532,7 @@ export function RolePermissionPage() {
                   {filteredPermissions.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={matrix.roles.length + 1}
+                        colSpan={filteredRoles.length + 1}
                         className="p-8 text-center text-sm text-slate-500 dark:text-slate-400"
                       >
                         Không có quyền nào khớp từ khóa &quot;{search}&quot;.
@@ -403,9 +547,9 @@ export function RolePermissionPage() {
                         <td className="px-4 py-3 text-xs font-mono font-semibold text-slate-900 dark:text-slate-100">
                           {permission.name}
                         </td>
-                        {matrix.roles.map((role) => {
+                        {filteredRoles.map((role) => {
                           const hasPerm = role.permission_ids.includes(
-                            permission.id
+                            permission.id,
                           );
                           return (
                             <td
@@ -438,9 +582,12 @@ export function RolePermissionPage() {
       {activeTab === "catalog" && (
         <div className="space-y-6">
           <div className="grid gap-6 items-start md:grid-cols-2">
-            {groupedCatalog.map((group) => {
-              const filteredGroupPerms = group.permissions.filter((p) =>
-                search ? p.name.toLowerCase().includes(search.toLowerCase()) : true
+            {filteredPermissionGroups.map((group) => {
+              const visiblePermissionIds = new Set(
+                filteredPermissions.map((permission) => permission.id),
+              );
+              const filteredGroupPerms = group.permissions.filter(
+                (permission) => visiblePermissionIds.has(permission.id),
               );
               if (filteredGroupPerms.length === 0) return null;
 
@@ -454,7 +601,10 @@ export function RolePermissionPage() {
                       <CardTitle className="text-base font-bold text-slate-900 dark:text-slate-100">
                         {group.label}
                       </CardTitle>
-                      <Badge variant={group.badgeTone} className="text-xs font-bold">
+                      <Badge
+                        variant={group.badgeTone}
+                        className="text-xs font-bold"
+                      >
                         {filteredGroupPerms.length} permissions
                       </Badge>
                     </div>
@@ -467,7 +617,9 @@ export function RolePermissionPage() {
                           className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-2 text-xs font-mono text-slate-800 dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-200"
                         >
                           <span className="truncate">{permission.name}</span>
-                          <span className="text-[10px] text-slate-400 dark:text-slate-400 shrink-0 ml-1">#{permission.id}</span>
+                          <span className="text-[10px] text-slate-400 dark:text-slate-400 shrink-0 ml-1">
+                            #{permission.id}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -481,4 +633,3 @@ export function RolePermissionPage() {
     </div>
   );
 }
-

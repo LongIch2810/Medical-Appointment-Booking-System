@@ -35,6 +35,11 @@ export interface User {
 export interface UserListPayload extends PaginationPayload {
   search?: string;
   role_id?: number;
+  isActive?: boolean;
+  isLocking?: boolean;
+  gender?: boolean;
+  createdFrom?: string;
+  createdTo?: string;
   arrange?: SortOrder;
 }
 

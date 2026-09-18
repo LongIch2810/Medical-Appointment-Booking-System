@@ -22,10 +22,14 @@ export const relativeQueryKeys = {
   detail: (relativeId: number) => ["relative-detail", relativeId] as const,
 };
 
-export function useAdminRelatives(filters: RelativeListPayload) {
+export function useAdminRelatives(
+  filters: RelativeListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: relativeQueryKeys.admin(filters),
     queryFn: () => fetchAdminRelatives(filters),
+    enabled: options?.enabled,
   });
 }
 

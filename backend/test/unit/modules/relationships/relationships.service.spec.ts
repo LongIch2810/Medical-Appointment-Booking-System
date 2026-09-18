@@ -1,4 +1,5 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { Brackets } from 'typeorm';
 import { RelationshipsService } from 'src/modules/relationships/relationships.service';
 
 function makeQuery(result: unknown = null) {
@@ -120,7 +121,7 @@ describe('RelationshipsService', () => {
     expect(result.relationships[0]).toMatchObject({
       relationship_code: 'PARENT',
     });
-    expect(query.orWhere).toHaveBeenCalled();
+    expect(query.andWhere).toHaveBeenCalledWith(expect.any(Brackets));
   });
 
   it('throws for missing details', async () => {

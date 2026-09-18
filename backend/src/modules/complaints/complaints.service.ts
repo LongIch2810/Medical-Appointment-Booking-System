@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -7,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import Complaint, { ComplaintStatus } from 'src/entities/complaint.entity';
 import { Repository } from 'typeorm';
+import { startOfNextDay } from 'src/utils/filterDate';
 import { RolePermissionService } from '../role-permission/role-permission.service';
 import { PERMISSIONS } from 'src/utils/constants';
 import { BodyCreateComplaintDto } from './dto/request/bodyCreateComplaint.dto';
@@ -57,7 +59,7 @@ export class ComplaintsService {
       query.andWhere('complaint.complaint_status = :status', { status });
     }
 
-    if (userId) {
+    if (userId !== undefined) {
       query.andWhere('user.id = :userId', { userId });
     }
 
@@ -68,8 +70,11 @@ export class ComplaintsService {
     }
 
     if (toDate) {
-      query.andWhere('complaint.created_at <= :toDate', {
-        toDate: new Date(toDate),
+      if (fromDate && new Date(fromDate) > new Date(toDate)) {
+        throw new BadRequestException('fromDate must be before toDate');
+      }
+      query.andWhere('complaint.created_at < :toDate', {
+        toDate: startOfNextDay(toDate),
       });
     }
 

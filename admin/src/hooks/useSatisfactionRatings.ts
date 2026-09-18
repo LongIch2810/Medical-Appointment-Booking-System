@@ -21,10 +21,12 @@ export const satisfactionRatingQueryKeys = {
 
 export function useSatisfactionRatings(
   filters: SatisfactionRatingListPayload,
+  options?: { enabled?: boolean },
 ) {
   return useQuery({
     queryKey: satisfactionRatingQueryKeys.list(filters),
     queryFn: () => fetchSatisfactionRatings(filters),
+    enabled: options?.enabled,
   });
 }
 

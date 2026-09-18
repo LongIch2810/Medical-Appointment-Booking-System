@@ -10,6 +10,8 @@ export interface Tag {
 
 export interface TagListPayload extends PaginationPayload {
   search?: string;
+  createdFrom?: string;
+  createdTo?: string;
   arrange?: SortOrder;
 }
 

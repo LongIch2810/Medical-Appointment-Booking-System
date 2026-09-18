@@ -18,10 +18,11 @@ export const topicQueryKeys = {
   detail: (topicId: number) => ["topic-detail", topicId] as const,
 };
 
-export function useTopics(filters: TopicListPayload) {
+export function useTopics(filters: TopicListPayload, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: topicQueryKeys.list(filters),
     queryFn: () => fetchTopics(filters),
+    enabled: options?.enabled,
     staleTime: 1000 * 60 * 30,
   });
 }

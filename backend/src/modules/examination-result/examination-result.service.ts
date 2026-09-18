@@ -15,6 +15,8 @@ import { UsersService } from '../users/users.service';
 import { BodyUpdateExaminationResultDto } from './dto/request/bodyUpdateExaminationResult.dto';
 import { ExaminationResultMapper } from './examination-result.mapper';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
+import { Brackets } from 'typeorm';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class ExaminationResultService {
@@ -117,7 +119,15 @@ export class ExaminationResultService {
     }
 
     let { limit, page } = objectFilters;
-    const { date, arrange } = objectFilters;
+    const { date, fromDate, toDate, search, arrange } = objectFilters;
+    const effectiveFromDate = date ?? fromDate;
+    if (
+      effectiveFromDate &&
+      toDate &&
+      new Date(effectiveFromDate) > new Date(toDate)
+    ) {
+      throw new BadRequestException('date must be before toDate');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -131,9 +141,17 @@ export class ExaminationResultService {
       .skip(skip)
       .take(limit);
 
-    if (date) {
-      query.andWhere('examination_result.created_at >= :date', { date });
+    if (effectiveFromDate) {
+      query.andWhere('examination_result.created_at >= :date', {
+        date: effectiveFromDate,
+      });
     }
+    if (toDate) {
+      query.andWhere('examination_result.created_at < :toDate', {
+        toDate: startOfNextDay(toDate),
+      });
+    }
+    this.applySearch(query, search);
 
     const [examinationResults, total] = await query.getManyAndCount();
     const result = new PaginationResultDto(
@@ -274,7 +292,7 @@ export class ExaminationResultService {
       query.andWhere('examination_result.created_at >= :date', { date });
     }
 
-    if (relativeId) {
+    if (relativeId !== undefined) {
       query.andWhere('patient.id = :relativeId', { relativeId });
     }
 
@@ -293,7 +311,16 @@ export class ExaminationResultService {
 
   async filterAndPagination(objectFilters: BodyFilterExaminationResultsDto) {
     let { limit, page } = objectFilters;
-    const { date, arrange, relativeId } = objectFilters;
+    const { date, fromDate, toDate, search, arrange, relativeId, doctorId } =
+      objectFilters;
+    const effectiveFromDate = date ?? fromDate;
+    if (
+      effectiveFromDate &&
+      toDate &&
+      new Date(effectiveFromDate) > new Date(toDate)
+    ) {
+      throw new BadRequestException('date must be before toDate');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -305,13 +332,26 @@ export class ExaminationResultService {
       .skip(skip)
       .take(limit);
 
-    if (date) {
-      query.andWhere('examination_result.created_at >= :date', { date });
+    if (effectiveFromDate) {
+      query.andWhere('examination_result.created_at >= :date', {
+        date: effectiveFromDate,
+      });
+    }
+
+    if (toDate) {
+      query.andWhere('examination_result.created_at < :toDate', {
+        toDate: startOfNextDay(toDate),
+      });
     }
 
     if (relativeId) {
       query.andWhere('patient.id = :relativeId', { relativeId });
     }
+
+    if (doctorId !== undefined) {
+      query.andWhere('doctor.id = :doctorId', { doctorId });
+    }
+    this.applySearch(query, search);
 
     const [examinationResults, total] = await query.getManyAndCount();
     const result = new PaginationResultDto(
@@ -359,5 +399,31 @@ export class ExaminationResultService {
       .leftJoinAndSelect('doctor_schedule.doctor', 'doctor')
       .leftJoinAndSelect('doctor.user', 'doctor_user')
       .leftJoinAndSelect('doctor.specialty', 'specialty');
+  }
+
+  private applySearch(
+    query: ReturnType<ExaminationResultService['baseExaminationResultQuery']>,
+    search?: string,
+  ) {
+    if (!search) return;
+    query.andWhere(
+      new Brackets((searchQuery) => {
+        searchQuery
+          .where('CAST(examination_result.id AS TEXT) ILIKE :search', {
+            search: `%${search}%`,
+          })
+          .orWhere('patient.fullname ILIKE :search', { search: `%${search}%` })
+          .orWhere('user.fullname ILIKE :search', { search: `%${search}%` })
+          .orWhere('doctor_user.fullname ILIKE :search', {
+            search: `%${search}%`,
+          })
+          .orWhere('examination_result.diagnosis ILIKE :search', {
+            search: `%${search}%`,
+          })
+          .orWhere('examination_result.symptoms ILIKE :search', {
+            search: `%${search}%`,
+          });
+      }),
+    );
   }
 }

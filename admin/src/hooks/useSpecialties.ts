@@ -19,10 +19,11 @@ export const specialtyQueryKeys = {
     ["specialty-detail", specialtyId] as const,
 };
 
-export function useSpecialties(filters: SpecialtyListPayload) {
+export function useSpecialties(filters: SpecialtyListPayload, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: specialtyQueryKeys.list(filters),
     queryFn: () => fetchSpecialties(filters),
+    enabled: options?.enabled,
     staleTime: 1000 * 60 * 5,
   });
 }

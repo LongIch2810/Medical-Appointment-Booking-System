@@ -47,6 +47,7 @@ import { NotificationType } from 'src/shared/enums/notificationType';
 import { SettingsService } from '../settings/settings.service';
 import { EmailProducer } from 'src/bullmq/queues/email/email.producer';
 import { RoleName } from 'src/shared/enums/roleName';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 export const APPOINTMENT_SLOT_UNAVAILABLE = 'APPOINTMENT_SLOT_UNAVAILABLE';
 
@@ -600,7 +601,7 @@ export class AppointmentsService {
       });
     }
 
-    if (relativeId) {
+    if (relativeId !== undefined) {
       query.andWhere('appointment.patient.id = :relativeId', {
         relativeId,
       });
@@ -653,13 +654,13 @@ export class AppointmentsService {
       });
     }
 
-    if (relativeId) {
+    if (relativeId !== undefined) {
       query.andWhere('appointment.patient.id = :relativeId', {
         relativeId,
       });
     }
 
-    if (bookerId) {
+    if (bookerId !== undefined) {
       query.andWhere('appointment.booked_by_user.id = :bookerId', {
         bookerId,
       });
@@ -686,6 +687,10 @@ export class AppointmentsService {
       bookerId,
       doctorId,
       appointmentDate,
+      search,
+      bookingMode,
+      appointmentFrom,
+      appointmentTo,
     } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
@@ -704,13 +709,13 @@ export class AppointmentsService {
       });
     }
 
-    if (relativeId) {
+    if (relativeId !== undefined) {
       query.andWhere('appointment.patient.id = :relativeId', {
         relativeId,
       });
     }
 
-    if (bookerId) {
+    if (bookerId !== undefined) {
       query.andWhere('appointment.booked_by_user.id = :bookerId', {
         bookerId,
       });
@@ -723,7 +728,46 @@ export class AppointmentsService {
       });
     }
 
-    if (doctorId) {
+    if (appointmentFrom && appointmentTo && appointmentFrom > appointmentTo) {
+      throw new BadRequestException(
+        'appointmentFrom must be before or equal to appointmentTo',
+      );
+    }
+
+    if (appointmentFrom) {
+      query.andWhere('appointment.appointment_date >= :appointmentFrom', {
+        appointmentFrom: appointmentFrom.slice(0, 10),
+      });
+    }
+
+    if (appointmentTo) {
+      query.andWhere('appointment.appointment_date < :appointmentTo', {
+        appointmentTo: startOfNextDay(appointmentTo),
+      });
+    }
+
+    if (bookingMode) {
+      query.andWhere('appointment.booking_mode = :bookingMode', {
+        bookingMode,
+      });
+    }
+
+    if (search) {
+      query.andWhere(
+        `(
+          CAST(appointment.id AS TEXT) ILIKE :appointmentSearch
+          OR patient.fullname ILIKE :appointmentSearch
+          OR patientUser.fullname ILIKE :appointmentSearch
+          OR doctorUser.fullname ILIKE :appointmentSearch
+          OR bookedByUser.fullname ILIKE :appointmentSearch
+          OR appointment.symptoms ILIKE :appointmentSearch
+          OR appointment.notes ILIKE :appointmentSearch
+        )`,
+        { appointmentSearch: `%${search.trim()}%` },
+      );
+    }
+
+    if (doctorId !== undefined) {
       query.andWhere('doctor.id = :doctorId', { doctorId });
     }
     const [appointments, total] = await query.getManyAndCount();

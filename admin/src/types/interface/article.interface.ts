@@ -29,6 +29,9 @@ export interface Article {
 export interface ArticleListPayload extends PaginationPayload {
   search?: string;
   topic_slug?: string;
+  author_id?: number;
+  createdFrom?: string;
+  createdTo?: string;
   arrange?: SortOrder;
   is_approve?: "true" | "false" | "all";
 }

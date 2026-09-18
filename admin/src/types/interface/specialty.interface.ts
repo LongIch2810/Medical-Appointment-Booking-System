@@ -12,6 +12,8 @@ export interface Specialty {
 
 export interface SpecialtyListPayload extends PaginationPayload {
   search?: string;
+  createdFrom?: string;
+  createdTo?: string;
   arrange?: SortOrder;
 }
 

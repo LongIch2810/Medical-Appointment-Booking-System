@@ -30,6 +30,7 @@ import { BodyFilterUsersDto } from './dto/request/bodyFilterUsers.dto';
 import { UserResponseDto } from './dto/response/userResponse.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class UsersService {
@@ -357,7 +358,23 @@ export class UsersService {
 
   async filterAndPagination(objectFilters: BodyFilterUsersDto) {
     let { page, limit } = objectFilters;
-    const { search, role_id, arrange } = objectFilters;
+    const {
+      search,
+      role_id,
+      isActive,
+      isLocking,
+      gender,
+      createdFrom,
+      createdTo,
+      arrange,
+    } = objectFilters;
+    if (
+      createdFrom &&
+      createdTo &&
+      new Date(createdFrom) > new Date(createdTo)
+    ) {
+      throw new BadRequestException('createdFrom must be before createdTo');
+    }
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
@@ -386,10 +403,30 @@ export class UsersService {
       );
     }
 
-    if (role_id) {
+    if (role_id !== undefined) {
       query
         .innerJoin('account.roles', 'filterUserRole')
         .andWhere('filterUserRole.role_id = :roleId', { roleId: role_id });
+    }
+
+    if (isActive !== undefined) {
+      query.andWhere('account.is_active = :isActive', { isActive });
+    }
+    if (isLocking !== undefined) {
+      query.andWhere('account.is_locking = :isLocking', { isLocking });
+    }
+    if (gender !== undefined) {
+      query.andWhere('account.gender = :gender', { gender });
+    }
+    if (createdFrom) {
+      query.andWhere('account.created_at >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+    if (createdTo) {
+      query.andWhere('account.created_at < :createdTo', {
+        createdTo: startOfNextDay(createdTo),
+      });
     }
 
     const [users, total] = await query
@@ -414,7 +451,22 @@ export class UsersService {
     actorRoles: string[],
   ) {
     let { page, limit } = objectFilters;
-    const { search, arrange } = objectFilters;
+    const {
+      search,
+      isActive,
+      isLocking,
+      gender,
+      createdFrom,
+      createdTo,
+      arrange,
+    } = objectFilters;
+    if (
+      createdFrom &&
+      createdTo &&
+      new Date(createdFrom) > new Date(createdTo)
+    ) {
+      throw new BadRequestException('createdFrom must be before createdTo');
+    }
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
@@ -449,6 +501,26 @@ export class UsersService {
             });
         }),
       );
+    }
+
+    if (isActive !== undefined) {
+      query.andWhere('patientUser.is_active = :isActive', { isActive });
+    }
+    if (isLocking !== undefined) {
+      query.andWhere('patientUser.is_locking = :isLocking', { isLocking });
+    }
+    if (gender !== undefined) {
+      query.andWhere('patientUser.gender = :gender', { gender });
+    }
+    if (createdFrom) {
+      query.andWhere('patientUser.created_at >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+    if (createdTo) {
+      query.andWhere('patientUser.created_at < :createdTo', {
+        createdTo: startOfNextDay(createdTo),
+      });
     }
 
     if (!isAdmin) {

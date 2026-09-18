@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -24,6 +25,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { RelationshipsService } from '../relationships/relationships.service';
 import { isPgDriverError } from '../../utils/isPgDriverError';
 import { RoleName } from 'src/shared/enums/roleName';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class RelativesService {
@@ -88,7 +90,11 @@ export class RelativesService {
 
   async filterAndPagination(objectFilters: BodyFilterRelativesDto) {
     let { page, limit } = objectFilters;
-    const { search, relationshipCode, arrange } = objectFilters;
+    const { search, relationshipCode, gender, dobFrom, dobTo, arrange } =
+      objectFilters;
+    if (dobFrom && dobTo && new Date(dobFrom) > new Date(dobTo)) {
+      throw new BadRequestException('dobFrom must be before dobTo');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -99,17 +105,19 @@ export class RelativesService {
     );
 
     if (search) {
-      query.andWhere('lower(relative.fullname) LIKE lower(:search)', {
-        search: `%${search}%`,
-      });
-      query.orWhere('relative.phone LIKE :search', {
-        search: `%${search}%`,
-      });
-      query.orWhere(
-        'lower(relationship.relationship_name) LIKE lower(:search)',
-        {
-          search: `%${search}%`,
-        },
+      query.andWhere(
+        new Brackets((qb) => {
+          qb.where('lower(relative.fullname) LIKE lower(:search)', {
+            search: `%${search}%`,
+          })
+            .orWhere('relative.phone LIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere(
+              'lower(relationship.relationship_name) LIKE lower(:search)',
+              { search: `%${search}%` },
+            );
+        }),
       );
     }
 
@@ -120,6 +128,18 @@ export class RelativesService {
           relationshipCode,
         },
       );
+    }
+
+    if (gender !== undefined) {
+      query.andWhere('relative.gender = :gender', { gender });
+    }
+    if (dobFrom) {
+      query.andWhere('relative.dob >= :dobFrom', { dobFrom });
+    }
+    if (dobTo) {
+      query.andWhere('relative.dob < :dobTo', {
+        dobTo: startOfNextDay(dobTo),
+      });
     }
 
     const [relatives, total] = await query
@@ -141,7 +161,11 @@ export class RelativesService {
     objectFilters: BodyFilterRelativesDto,
   ) {
     let { page, limit } = objectFilters;
-    const { search, relationshipCode, arrange } = objectFilters;
+    const { search, relationshipCode, gender, dobFrom, dobTo, arrange } =
+      objectFilters;
+    if (dobFrom && dobTo && new Date(dobFrom) > new Date(dobTo)) {
+      throw new BadRequestException('dobFrom must be before dobTo');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -177,6 +201,17 @@ export class RelativesService {
           relationshipCode,
         },
       );
+    }
+    if (gender !== undefined) {
+      query.andWhere('relative.gender = :gender', { gender });
+    }
+    if (dobFrom) {
+      query.andWhere('relative.dob >= :dobFrom', { dobFrom });
+    }
+    if (dobTo) {
+      query.andWhere('relative.dob < :dobTo', {
+        dobTo: startOfNextDay(dobTo),
+      });
     }
     const [relatives, total] = await query
       .skip(skip)

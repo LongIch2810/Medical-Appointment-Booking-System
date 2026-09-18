@@ -18,10 +18,11 @@ export const tagQueryKeys = {
   detail: (tagId: number) => ["tag-detail", tagId] as const,
 };
 
-export function useTags(filters: TagListPayload) {
+export function useTags(filters: TagListPayload, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: tagQueryKeys.list(filters),
     queryFn: () => fetchTags(filters),
+    enabled: options?.enabled,
     staleTime: 1000 * 60 * 30,
   });
 }

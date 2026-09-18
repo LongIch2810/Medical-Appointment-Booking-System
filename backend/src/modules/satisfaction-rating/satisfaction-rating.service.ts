@@ -104,7 +104,25 @@ export class SatisfactionRatingService {
 
   async filterAndPagination(objectFilters: BodyFilterSatisfactionRatingsDto) {
     let { page, limit } = objectFilters;
-    const { fromDate, toDate, doctorId, arrange } = objectFilters;
+    const {
+      search,
+      fromDate,
+      toDate,
+      doctorId,
+      minRating,
+      maxRating,
+      arrange,
+    } = objectFilters;
+    if (
+      minRating !== undefined &&
+      maxRating !== undefined &&
+      minRating > maxRating
+    ) {
+      throw new BadRequestException('minRating must be less than maxRating');
+    }
+    if (fromDate && toDate && new Date(fromDate) > new Date(toDate)) {
+      throw new BadRequestException('fromDate must be before toDate');
+    }
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
@@ -121,6 +139,12 @@ export class SatisfactionRatingService {
       )
       .skip(skip)
       .take(limit);
+    if (search) {
+      query.andWhere(
+        '(doctor_user.fullname ILIKE :search OR patient.fullname ILIKE :search OR satisfaction_rating.feedback ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
     if (fromDate) {
       query.andWhere('satisfaction_rating.created_at >= :fromDate', {
         fromDate,
@@ -133,8 +157,18 @@ export class SatisfactionRatingService {
         toDate: toDateWithTime,
       });
     }
-    if (doctorId) {
+    if (doctorId !== undefined) {
       query.andWhere('doctor.id = :doctorId', { doctorId });
+    }
+    if (minRating !== undefined) {
+      query.andWhere('satisfaction_rating.rating_score >= :minRating', {
+        minRating,
+      });
+    }
+    if (maxRating !== undefined) {
+      query.andWhere('satisfaction_rating.rating_score <= :maxRating', {
+        maxRating,
+      });
     }
     const [satisfactionRatings, total] = await query.getManyAndCount();
     const totalPages = Math.ceil(total / limit);

@@ -9,6 +9,10 @@ export class BodyFilterRelationshipsDto extends PaginationDto {
   @IsOptional()
   search?: string;
 
+  @IsString()
+  @IsOptional()
+  code?: string;
+
   @IsIn(['desc', 'asc'], { message: "'arrange pháº£i lÃ  asc hoáº·c desc'" })
   arrange: Arrange = 'desc';
 }

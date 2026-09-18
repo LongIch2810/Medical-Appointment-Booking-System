@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -100,6 +101,15 @@ export class DoctorsService {
       area,
       search,
     } = objectFilter;
+    if (
+      min_experience !== undefined &&
+      max_experience !== undefined &&
+      min_experience > max_experience
+    ) {
+      throw new BadRequestException(
+        'min_experience must be less than max_experience',
+      );
+    }
     let { page, limit } = objectFilter;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
@@ -116,17 +126,17 @@ export class DoctorsService {
     const totalQuery = this.baseTotalDoctorQuery();
 
     const filters: FilterItem[] = [
-      specialty_id && {
+      specialty_id !== undefined && {
         condition: 'specialty.id = :specialty_id',
         value: specialty_id,
         key: 'specialty_id',
       },
-      min_experience && {
+      min_experience !== undefined && {
         condition: 'doctor.experience >= :min_experience',
         value: min_experience,
         key: 'min_experience',
       },
-      max_experience && {
+      max_experience !== undefined && {
         condition: 'doctor.experience <= :max_experience',
         value: max_experience,
         key: 'max_experience',

@@ -1,15 +1,7 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
-  Check,
   CheckCircle2,
-  ChevronDown,
   Clock,
   Mail,
   Plus,
@@ -28,14 +20,14 @@ import { FormDialog, FormField } from "@/components/app/FormDialog";
 import { UserCreateDialog } from "@/components/app/UserCreateDialog";
 import { UserEditDialog } from "@/components/app/UserEditDialog";
 import { PageHeader } from "@/components/app/PageHeader";
+import { SearchableSelect } from "@/components/app/SearchableSelect";
+import { FilterBar } from "@/components/app/FilterBar";
+import { SelectFilter } from "@/components/app/SelectFilter";
+import { DateRangeFilter } from "@/components/app/DateRangeFilter";
+import { NumberRangeFilter } from "@/components/app/NumberRangeFilter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { permissions, PERMISSIONS } from "@/config/permissions";
@@ -52,10 +44,10 @@ import {
   useAdminAppointments,
   useAppointmentDetail,
   useCreateAppointment,
+  useDoctorAppointments,
   useUpdateAppointmentStatus,
 } from "@/hooks/useAppointments";
 import { useAuditLogs } from "@/hooks/useAuditLogs";
-import { useCurrentDoctor } from "@/hooks/useCurrentDoctor";
 import {
   useComplaints,
   useCreateComplaint,
@@ -136,8 +128,10 @@ import {
 import { ErrorState } from "@/components/app/ErrorState";
 import { EmptyState } from "@/components/app/EmptyState";
 import { LoadingState } from "@/components/app/LoadingState";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type {
   AppointmentStatus,
+  BookingMode,
   ComplaintStatus,
 } from "@/types/interface/api.interface";
 import type { AdminAppointmentListPayload } from "@/types/interface/appointment.interface";
@@ -148,6 +142,7 @@ import type { Specialty } from "@/types/interface/specialty.interface";
 import type { Tag } from "@/types/interface/tag.interface";
 import type { Topic } from "@/types/interface/topic.interface";
 import type { ExaminationResult } from "@/types/interface/examinationResult.interface";
+import type { NotificationType } from "@/types/interface/notification.interface";
 import type { Relationship } from "@/types/interface/relationship.interface";
 import type { Relative } from "@/types/interface/relative.interface";
 import type { User } from "@/types/interface/user.interface";
@@ -184,11 +179,15 @@ const NEXT_STATUS_LABEL: Partial<Record<AppointmentStatus, string>> = {
 };
 
 const NEXT_STATUS_CONFIRM_COPY: Partial<
-  Record<AppointmentStatus, { title: string; description: (id: number) => string }>
+  Record<
+    AppointmentStatus,
+    { title: string; description: (id: number) => string }
+  >
 > = {
   CONFIRMED: {
     title: "Xác nhận lịch hẹn",
-    description: (id) => `Xác nhận lịch hẹn #${id}? Bệnh nhân sẽ nhận được thông báo lịch đã được xác nhận.`,
+    description: (id) =>
+      `Xác nhận lịch hẹn #${id}? Bệnh nhân sẽ nhận được thông báo lịch đã được xác nhận.`,
   },
   IN_PROGRESS: {
     title: "Bắt đầu khám",
@@ -196,7 +195,8 @@ const NEXT_STATUS_CONFIRM_COPY: Partial<
   },
   COMPLETED: {
     title: "Hoàn tất khám",
-    description: (id) => `Xác nhận đã hoàn tất khám cho lịch hẹn #${id}? Sau bước này không thể quay lại trạng thái trước.`,
+    description: (id) =>
+      `Xác nhận đã hoàn tất khám cho lịch hẹn #${id}? Sau bước này không thể quay lại trạng thái trước.`,
   },
 };
 
@@ -204,9 +204,7 @@ function parseAppointmentDateTime(
   appointmentDate: string,
   startTime?: string,
 ): Date | null {
-  const match = /^(\d{2})[/-](\d{2})[/-](\d{4})$/.exec(
-    appointmentDate.trim(),
-  );
+  const match = /^(\d{2})[/-](\d{2})[/-](\d{4})$/.exec(appointmentDate.trim());
   if (!match) return null;
   const [, day, month, year] = match;
   const [hours, minutes] = (startTime ?? "00:00").split(":").map(Number);
@@ -251,29 +249,36 @@ const COMPLAINT_STATUS_META: Record<
     label: "Chờ xử lý",
     badgeVariant: "warning",
     icon: Clock,
-    accentClass: "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/40",
-    chipClass: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300",
+    accentClass:
+      "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/40",
+    chipClass:
+      "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300",
   },
   in_progress: {
     label: "Đang xử lý",
     badgeVariant: "info",
     icon: AlertTriangle,
-    accentClass: "border-sky-200 bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/40",
+    accentClass:
+      "border-sky-200 bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/40",
     chipClass: "bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300",
   },
   resolved: {
     label: "Đã giải quyết",
     badgeVariant: "success",
     icon: CheckCircle2,
-    accentClass: "border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40",
-    chipClass: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300",
+    accentClass:
+      "border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/40",
+    chipClass:
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300",
   },
   rejected: {
     label: "Từ chối",
     badgeVariant: "danger",
     icon: XCircle,
-    accentClass: "border-rose-200 bg-rose-50 dark:border-rose-800/60 dark:bg-rose-950/40",
-    chipClass: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300",
+    accentClass:
+      "border-rose-200 bg-rose-50 dark:border-rose-800/60 dark:bg-rose-950/40",
+    chipClass:
+      "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300",
   },
 };
 
@@ -282,8 +287,10 @@ function ComplaintStatusBadge({ status }: { status: ComplaintStatus }) {
     label: status,
     badgeVariant: "outline" as const,
     icon: AlertTriangle,
-    accentClass: "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900",
-    chipClass: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+    accentClass:
+      "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900",
+    chipClass:
+      "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
   };
   const Icon = meta.icon;
   return (
@@ -324,7 +331,11 @@ function ViewDetailButton({
   );
 }
 
-function formatBoolean(value: boolean | null | undefined, yes = "Có", no = "Không") {
+function formatBoolean(
+  value: boolean | null | undefined,
+  yes = "Có",
+  no = "Không",
+) {
   if (value === undefined || value === null) return "-";
   return value ? yes : no;
 }
@@ -334,6 +345,56 @@ function formatDate(value: string | null | undefined) {
   return value;
 }
 
+function CreatedSortFilters({
+  prefix,
+  from,
+  to,
+  arrange,
+  onFromChange,
+  onToChange,
+  onArrangeChange,
+  onReset,
+}: {
+  prefix: string;
+  from: string;
+  to: string;
+  arrange: "" | "asc" | "desc";
+  onFromChange: (value: string) => void;
+  onToChange: (value: string) => void;
+  onArrangeChange: (value: "" | "asc" | "desc") => void;
+  onReset: () => void;
+}) {
+  const invalid = Boolean(from && to && from > to);
+  return (
+    <FilterBar
+      hasActiveFilters={Boolean(from || to || arrange)}
+      activeFilterCount={[from || to, arrange].filter(Boolean).length}
+      onReset={onReset}
+    >
+      <DateRangeFilter
+        fromId={`${prefix}-created-from`}
+        fromValue={from}
+        onFromChange={onFromChange}
+        toId={`${prefix}-created-to`}
+        toValue={to}
+        onToChange={onToChange}
+        error={invalid ? "Khoảng ngày không hợp lệ" : undefined}
+      />
+      <SelectFilter
+        id={`${prefix}-arrange`}
+        label="Sắp xếp"
+        value={arrange}
+        onChange={(value) => onArrangeChange(value as "" | "asc" | "desc")}
+        options={[
+          { value: "desc", label: "Mới nhất" },
+          { value: "asc", label: "Cũ nhất" },
+        ]}
+        placeholder="Mặc định"
+      />
+    </FilterBar>
+  );
+}
+
 function UsersModule({
   search,
   page,
@@ -341,22 +402,42 @@ function UsersModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useUsers({
-    page,
-    limit,
-    search: search || undefined,
-  });
-  const { can } = usePermission();
-  const rawUsers = useMemo(
-    () => data?.data?.users ?? [],
-    [data?.data?.users],
+  const [roleFilter, setRoleFilter] = useState<number | undefined>();
+  const [activeFilter, setActiveFilter] = useState("");
+  const [lockingFilter, setLockingFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"" | "asc" | "desc">("");
+  const rolesQuery = useRoles({ page: 1, limit: 100 });
+  const roles = rolesQuery.data?.data?.roles ?? [];
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
   );
+
+  const { data, isLoading, isError, refetch } = useUsers(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      role_id: roleFilter,
+      isActive: activeFilter === "" ? undefined : activeFilter === "true",
+      isLocking: lockingFilter === "" ? undefined : lockingFilter === "true",
+      gender: genderFilter === "" ? undefined : genderFilter === "true",
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      arrange: arrangeFilter || undefined,
+    },
+    { enabled: !invalidDateRange },
+  );
+  const { can } = usePermission();
+  const rawUsers = useMemo(() => data?.data?.users ?? [], [data?.data?.users]);
   const rows = useMemo(() => {
     return rawUsers.filter(
       (user) =>
         !user.roles?.some(
-          (role) => role.role_name?.toUpperCase() === "PATIENT"
-        )
+          (role) => role.role_name?.toUpperCase() === "PATIENT",
+        ),
     );
   }, [rawUsers]);
   const total = data?.data?.total ?? rows.length;
@@ -381,172 +462,301 @@ function UsersModule({
   const canCreate = can(PERMISSIONS.USER_CREATE, PERMISSIONS.USER_MANAGE);
 
   return (
-    <GenericList
-      title="Người dùng"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <UserCreateDialog
-            trigger={
-              <Button type="button" variant="outline" size="sm">
-                + Tạo người dùng
-              </Button>
-            }
-          />
-        ) : undefined
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        {
-          key: "fullname",
-          label: "Họ tên",
-          render: (row) => row.fullname || row.username,
-        },
-        { key: "email", label: "Email", render: (row) => row.email },
-        { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
-        {
-          key: "roles",
-          label: "Vai trò",
-          render: (row) => getRoleNames(row.roles) || "-",
-        },
-        {
-          key: "is_active",
-          label: "Trạng thái",
-          render: (row) =>
-            row.is_active ? (
-              <Badge variant="success">Active</Badge>
-            ) : (
-              <Badge variant="outline">Inactive</Badge>
-            ),
-        },
-        {
-          key: "is_locked",
-          label: "Khóa",
-          render: (row) =>
-            row.is_locked ? (
-              <Badge variant="danger">Locked</Badge>
-            ) : (
-              <Badge variant="outline">Free</Badge>
-            ),
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Người dùng #${row.id}`}
-                description={row.fullname || row.username}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Username", value: row.username },
-                  { label: "Họ tên", value: row.fullname },
-                  { label: "Email", value: row.email },
-                  { label: "Số điện thoại", value: row.phone ?? "-" },
-                  { label: "Địa chỉ", value: row.address ?? "-" },
-                  {
-                    label: "Giới tính",
-                    value: row.gender === undefined ? "-" : row.gender ? "Nam" : "Nữ",
-                  },
-                  { label: "Ngày sinh", value: formatDate(row.date_of_birth) },
-                  {
-                    label: "Vai trò",
-                    value: getRoleNames(row.roles) || "-",
-                  },
-                  {
-                    label: "Trạng thái",
-                    value: row.is_active ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="outline">Inactive</Badge>
-                    ),
-                  },
-                  {
-                    label: "Khóa",
-                    value: row.is_locked ? (
-                      <Badge variant="danger">Locked</Badge>
-                    ) : (
-                      <Badge variant="outline">Free</Badge>
-                    ),
-                  },
-                  {
-                    label: "Quyền admin",
-                    value: formatBoolean(row.isAdmin),
-                  },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-              />
-              {canUpdate ? (
-                <UserEditDialog
-                  user={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
-                  }
+    <div className="space-y-4">
+      <FilterBar
+        hasActiveFilters={Boolean(
+          roleFilter !== undefined ||
+          activeFilter ||
+          lockingFilter ||
+          genderFilter ||
+          createdFrom ||
+          createdTo ||
+          arrangeFilter,
+        )}
+        activeFilterCount={
+          [
+            roleFilter !== undefined,
+            Boolean(activeFilter),
+            Boolean(lockingFilter),
+            Boolean(genderFilter),
+            Boolean(createdFrom || createdTo),
+            Boolean(arrangeFilter),
+          ].filter(Boolean).length
+        }
+        onReset={() => {
+          setRoleFilter(undefined);
+          setActiveFilter("");
+          setLockingFilter("");
+          setGenderFilter("");
+          setCreatedFrom("");
+          setCreatedTo("");
+          setArrangeFilter("");
+          onPageChange(1);
+        }}
+      >
+        <SelectFilter
+          id="users-role-filter"
+          label="Vai trò"
+          value={roleFilter ? String(roleFilter) : ""}
+          onChange={(value) => {
+            setRoleFilter(value ? Number(value) : undefined);
+            onPageChange(1);
+          }}
+          options={roles.map((role) => ({
+            value: String(role.id),
+            label: role.role_name,
+          }))}
+          placeholder="Tất cả vai trò"
+        />
+        <SelectFilter
+          id="users-active-filter"
+          label="Hoạt động"
+          value={activeFilter}
+          onChange={(value) => {
+            setActiveFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Đang hoạt động" },
+            { value: "false", label: "Ngừng" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <SelectFilter
+          id="users-locking-filter"
+          label="Khóa"
+          value={lockingFilter}
+          onChange={(value) => {
+            setLockingFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Đang khóa" },
+            { value: "false", label: "Không khóa" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <SelectFilter
+          id="users-gender-filter"
+          label="Giới tính"
+          value={genderFilter}
+          onChange={(value) => {
+            setGenderFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Nam" },
+            { value: "false", label: "Nữ" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <DateRangeFilter
+          fromId="users-created-from"
+          fromValue={createdFrom}
+          onFromChange={(value) => {
+            setCreatedFrom(value);
+            onPageChange(1);
+          }}
+          toId="users-created-to"
+          toValue={createdTo}
+          onToChange={(value) => {
+            setCreatedTo(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        <SelectFilter
+          id="users-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter(value as "" | "asc" | "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mặc định"
+        />
+      </FilterBar>
+      <GenericList
+        title="Người dùng"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <UserCreateDialog
+              trigger={
+                <Button type="button" variant="outline" size="sm">
+                  + Tạo người dùng
+                </Button>
+              }
+            />
+          ) : undefined
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          {
+            key: "fullname",
+            label: "Họ tên",
+            render: (row) => row.fullname || row.username,
+          },
+          { key: "email", label: "Email", render: (row) => row.email },
+          { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
+          {
+            key: "roles",
+            label: "Vai trò",
+            render: (row) => getRoleNames(row.roles) || "-",
+          },
+          {
+            key: "is_active",
+            label: "Trạng thái",
+            render: (row) =>
+              row.is_active ? (
+                <Badge variant="success">Active</Badge>
+              ) : (
+                <Badge variant="outline">Inactive</Badge>
+              ),
+          },
+          {
+            key: "is_locked",
+            label: "Khóa",
+            render: (row) =>
+              row.is_locked ? (
+                <Badge variant="danger">Locked</Badge>
+              ) : (
+                <Badge variant="outline">Free</Badge>
+              ),
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Người dùng #${row.id}`}
+                  description={row.fullname || row.username}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Username", value: row.username },
+                    { label: "Họ tên", value: row.fullname },
+                    { label: "Email", value: row.email },
+                    { label: "Số điện thoại", value: row.phone ?? "-" },
+                    { label: "Địa chỉ", value: row.address ?? "-" },
+                    {
+                      label: "Giới tính",
+                      value:
+                        row.gender === undefined
+                          ? "-"
+                          : row.gender
+                            ? "Nam"
+                            : "Nữ",
+                    },
+                    {
+                      label: "Ngày sinh",
+                      value: formatDate(row.date_of_birth),
+                    },
+                    {
+                      label: "Vai trò",
+                      value: getRoleNames(row.roles) || "-",
+                    },
+                    {
+                      label: "Trạng thái",
+                      value: row.is_active ? (
+                        <Badge variant="success">Active</Badge>
+                      ) : (
+                        <Badge variant="outline">Inactive</Badge>
+                      ),
+                    },
+                    {
+                      label: "Khóa",
+                      value: row.is_locked ? (
+                        <Badge variant="danger">Locked</Badge>
+                      ) : (
+                        <Badge variant="outline">Free</Badge>
+                      ),
+                    },
+                    {
+                      label: "Quyền admin",
+                      value: formatBoolean(row.isAdmin),
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
                 />
-              ) : null}
-              {!hasAdminRole(row.roles) && (row.is_active
-                ? canDeactivate && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() => deactivateUser.mutate(row.id)}
-                    >
-                      Vô hiệu
-                    </Button>
-                  )
-                : canActivate && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() => activateUser.mutate(row.id)}
-                    >
-                      Kích hoạt
-                    </Button>
-                  ))}
-              {!hasAdminRole(row.roles) && (row.is_locked
-                ? canUnlock && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() => unlockUser.mutate(row.id)}
-                    >
-                      Mở khóa
-                    </Button>
-                  )
-                : canLock && (
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      disabled={isMutating}
-                      onClick={() => lockUser.mutate(row.id)}
-                    >
-                      Khóa
-                    </Button>
-                  ))}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <UserEditDialog
+                    user={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {!hasAdminRole(row.roles) &&
+                  (row.is_active
+                    ? canDeactivate && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() => deactivateUser.mutate(row.id)}
+                        >
+                          Vô hiệu
+                        </Button>
+                      )
+                    : canActivate && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() => activateUser.mutate(row.id)}
+                        >
+                          Kích hoạt
+                        </Button>
+                      ))}
+                {!hasAdminRole(row.roles) &&
+                  (row.is_locked
+                    ? canUnlock && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() => unlockUser.mutate(row.id)}
+                        >
+                          Mở khóa
+                        </Button>
+                      )
+                    : canLock && (
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          disabled={isMutating}
+                          onClick={() => lockUser.mutate(row.id)}
+                        >
+                          Khóa
+                        </Button>
+                      ))}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -557,88 +767,216 @@ function PatientsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = usePatients({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [activeFilter, setActiveFilter] = useState("");
+  const [lockingFilter, setLockingFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"" | "asc" | "desc">("");
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
+  );
+  const { data, isLoading, isError, refetch } = usePatients(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      isActive: activeFilter === "" ? undefined : activeFilter === "true",
+      isLocking: lockingFilter === "" ? undefined : lockingFilter === "true",
+      gender: genderFilter === "" ? undefined : genderFilter === "true",
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      arrange: arrangeFilter || undefined,
+    },
+    { enabled: !invalidDateRange },
+  );
 
   const rows = data?.data?.patients ?? [];
   const total = data?.data?.total ?? 0;
 
   return (
-    <GenericList
-      title="Bệnh nhân"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        {
-          key: "fullname",
-          label: "Họ tên",
-          render: (row) => row.fullname || row.username,
-        },
-        { key: "email", label: "Email", render: (row) => row.email },
-        { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
-        {
-          key: "is_active",
-          label: "Trạng thái",
-          render: (row) =>
-            row.is_active ? (
-              <Badge variant="success">Active</Badge>
-            ) : (
-              <Badge variant="outline">Inactive</Badge>
+    <div className="space-y-4">
+      <FilterBar
+        hasActiveFilters={Boolean(
+          activeFilter ||
+          lockingFilter ||
+          genderFilter ||
+          createdFrom ||
+          createdTo ||
+          arrangeFilter,
+        )}
+        activeFilterCount={
+          [
+            activeFilter,
+            lockingFilter,
+            genderFilter,
+            createdFrom || createdTo,
+            arrangeFilter,
+          ].filter(Boolean).length
+        }
+        onReset={() => {
+          setActiveFilter("");
+          setLockingFilter("");
+          setGenderFilter("");
+          setCreatedFrom("");
+          setCreatedTo("");
+          setArrangeFilter("");
+          onPageChange(1);
+        }}
+      >
+        <SelectFilter
+          id="patients-active-filter"
+          label="Hoạt động"
+          value={activeFilter}
+          onChange={(value) => {
+            setActiveFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Đang hoạt động" },
+            { value: "false", label: "Ngừng" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <SelectFilter
+          id="patients-locking-filter"
+          label="Khóa"
+          value={lockingFilter}
+          onChange={(value) => {
+            setLockingFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Đang khóa" },
+            { value: "false", label: "Không khóa" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <SelectFilter
+          id="patients-gender-filter"
+          label="Giới tính"
+          value={genderFilter}
+          onChange={(value) => {
+            setGenderFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Nam" },
+            { value: "false", label: "Nữ" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <DateRangeFilter
+          fromId="patients-created-from"
+          fromValue={createdFrom}
+          onFromChange={(value) => {
+            setCreatedFrom(value);
+            onPageChange(1);
+          }}
+          toId="patients-created-to"
+          toValue={createdTo}
+          onToChange={(value) => {
+            setCreatedTo(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        <SelectFilter
+          id="patients-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter(value as "" | "asc" | "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mặc định"
+        />
+      </FilterBar>
+      <GenericList
+        title="Bệnh nhân"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          {
+            key: "fullname",
+            label: "Họ tên",
+            render: (row) => row.fullname || row.username,
+          },
+          { key: "email", label: "Email", render: (row) => row.email },
+          { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
+          {
+            key: "is_active",
+            label: "Trạng thái",
+            render: (row) =>
+              row.is_active ? (
+                <Badge variant="success">Active</Badge>
+              ) : (
+                <Badge variant="outline">Inactive</Badge>
+              ),
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Bệnh nhân #${row.id}`}
+                  description={row.fullname || row.username}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Username", value: row.username },
+                    { label: "Họ tên", value: row.fullname },
+                    { label: "Email", value: row.email },
+                    { label: "Số điện thoại", value: row.phone ?? "-" },
+                    { label: "Địa chỉ", value: row.address ?? "-" },
+                    {
+                      label: "Giới tính",
+                      value:
+                        row.gender === undefined
+                          ? "-"
+                          : row.gender
+                            ? "Nam"
+                            : "Nữ",
+                    },
+                    {
+                      label: "Ngày sinh",
+                      value: formatDate(row.date_of_birth),
+                    },
+                    {
+                      label: "Vai trò",
+                      value: getRoleNames(row.roles) || "-",
+                    },
+                    {
+                      label: "Trạng thái",
+                      value: row.is_active ? (
+                        <Badge variant="success">Active</Badge>
+                      ) : (
+                        <Badge variant="outline">Inactive</Badge>
+                      ),
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                />
+              </ActionCell>
             ),
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Bệnh nhân #${row.id}`}
-                description={row.fullname || row.username}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Username", value: row.username },
-                  { label: "Họ tên", value: row.fullname },
-                  { label: "Email", value: row.email },
-                  { label: "Số điện thoại", value: row.phone ?? "-" },
-                  { label: "Địa chỉ", value: row.address ?? "-" },
-                  {
-                    label: "Giới tính",
-                    value: row.gender === undefined ? "-" : row.gender ? "Nam" : "Nữ",
-                  },
-                  { label: "Ngày sinh", value: formatDate(row.date_of_birth) },
-                  {
-                    label: "Vai trò",
-                    value: getRoleNames(row.roles) || "-",
-                  },
-                  {
-                    label: "Trạng thái",
-                    value: row.is_active ? (
-                      <Badge variant="success">Active</Badge>
-                    ) : (
-                      <Badge variant="outline">Inactive</Badge>
-                    ),
-                  },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-              />
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -739,11 +1077,43 @@ function DoctorsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useDoctors({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [specialtyFilter, setSpecialtyFilter] = useState("");
+  const [minExperience, setMinExperience] = useState("");
+  const [maxExperience, setMaxExperience] = useState("");
+  const [workplaceFilter, setWorkplaceFilter] = useState("");
+  const [areaFilter, setAreaFilter] = useState("");
+  const debouncedMinExperience = useDebouncedValue(minExperience, 350);
+  const debouncedMaxExperience = useDebouncedValue(maxExperience, 350);
+  const debouncedWorkplace = useDebouncedValue(workplaceFilter, 350);
+  const debouncedArea = useDebouncedValue(areaFilter, 350);
+  const invalidExperienceRange = Boolean(
+    minExperience &&
+    maxExperience &&
+    Number(minExperience) > Number(maxExperience),
+  );
+
+  const specialtiesQuery = useSpecialties({ page: 1, limit: 100 });
+  const specialties = specialtiesQuery.data?.data?.specialties ?? [];
+
+  const { data, isLoading, isError, refetch } = useDoctors(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      specialty_id: specialtyFilter ? Number(specialtyFilter) : undefined,
+      min_experience:
+        debouncedMinExperience !== ""
+          ? Number(debouncedMinExperience)
+          : undefined,
+      max_experience:
+        debouncedMaxExperience !== ""
+          ? Number(debouncedMaxExperience)
+          : undefined,
+      workplace: debouncedWorkplace || undefined,
+      area: debouncedArea || undefined,
+    },
+    { enabled: !invalidExperienceRange },
+  );
   const { can } = usePermission();
   const rows = data?.data?.doctors ?? [];
   const total = data?.data?.total ?? 0;
@@ -752,135 +1122,235 @@ function DoctorsModule({
   const canUpdate = can(PERMISSIONS.DOCTOR_UPDATE, PERMISSIONS.DOCTOR_MANAGE);
   const canDelete = can(PERMISSIONS.DOCTOR_DELETE, PERMISSIONS.DOCTOR_MANAGE);
 
+  const hasActiveFilters = Boolean(
+    specialtyFilter ||
+    minExperience ||
+    maxExperience ||
+    workplaceFilter ||
+    areaFilter,
+  );
+  const resetFilters = () => {
+    setSpecialtyFilter("");
+    setMinExperience("");
+    setMaxExperience("");
+    setWorkplaceFilter("");
+    setAreaFilter("");
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Bác sĩ"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "fullname", label: "Họ tên", render: (row) => row.fullname },
-        {
-          key: "specialty",
-          label: "Chuyên khoa",
-          render: (row) =>
-            typeof row.specialty === "string"
-              ? row.specialty
-              : row.specialty?.name ?? row.specialty?.specialty_name ?? "-",
-        },
-        {
-          key: "experience",
-          label: "Kinh nghiệm",
-          render: (row) => `${row.experience} năm`,
-        },
-        {
-          key: "doctor_level",
-          label: "Cấp bậc",
-          render: (row) => row.doctor_level,
-        },
-        {
-          key: "avg_rating",
-          label: "Đánh giá",
-          render: (row) => row.avg_rating?.toFixed?.(2) ?? row.avg_rating,
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => {
-            const specialtyName =
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <SelectFilter
+          id="doctors-specialty-filter"
+          label="Chuyên khoa"
+          value={specialtyFilter}
+          onChange={(value) => {
+            setSpecialtyFilter(value);
+            onPageChange(1);
+          }}
+          options={specialties.map((s) => ({
+            value: String(s.id),
+            label: s.name,
+          }))}
+          placeholder="Tất cả chuyên khoa"
+        />
+        <NumberRangeFilter
+          label="Kinh nghiệm (năm)"
+          minId="doctors-min-experience"
+          maxId="doctors-max-experience"
+          minValue={minExperience}
+          maxValue={maxExperience}
+          onMinChange={(value) => {
+            setMinExperience(value);
+            onPageChange(1);
+          }}
+          onMaxChange={(value) => {
+            setMaxExperience(value);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            invalidExperienceRange
+              ? "Khoảng kinh nghiệm không hợp lệ"
+              : undefined
+          }
+        />
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="doctors-workplace-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Nơi công tác
+          </label>
+          <Input
+            id="doctors-workplace-filter"
+            value={workplaceFilter}
+            onChange={(e) => {
+              setWorkplaceFilter(e.target.value);
+              onPageChange(1);
+            }}
+            placeholder="Tên bệnh viện/phòng khám"
+            className="h-10 w-48"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="doctors-area-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Khu vực
+          </label>
+          <Input
+            id="doctors-area-filter"
+            value={areaFilter}
+            onChange={(e) => {
+              setAreaFilter(e.target.value);
+              onPageChange(1);
+            }}
+            placeholder="Quận/thành phố"
+            className="h-10 w-40"
+          />
+        </div>
+      </FilterBar>
+      <GenericList
+        title="Bác sĩ"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "fullname", label: "Họ tên", render: (row) => row.fullname },
+          {
+            key: "specialty",
+            label: "Chuyên khoa",
+            render: (row) =>
               typeof row.specialty === "string"
                 ? row.specialty
-                : row.specialty?.name ?? row.specialty?.specialty_name ?? "-";
-            return (
-              <ActionCell>
-                <ViewDetailButton
-                  title={`Bác sĩ #${row.id}`}
-                  description={row.fullname}
-                  rows={[
-                    { label: "ID", value: row.id },
-                    { label: "User ID", value: row.user_id },
-                    { label: "Họ tên", value: row.fullname },
-                    { label: "Email", value: row.email ?? "-" },
-                    { label: "Số điện thoại", value: row.phone ?? "-" },
-                    { label: "Chuyên khoa", value: specialtyName },
-                    {
-                      label: "Kinh nghiệm",
-                      value: `${row.experience} năm`,
-                    },
-                    { label: "Cấp bậc", value: row.doctor_level },
-                    { label: "Nơi công tác", value: row.workplace ?? "-" },
-                    {
-                      label: "Điểm trung bình",
-                      value: row.avg_rating?.toFixed?.(2) ?? row.avg_rating,
-                    },
-                    {
-                      label: "Lượt khám hoàn tất",
-                      value: row.appointments_completed ?? 0,
-                    },
-                    {
-                      label: "Outstanding",
-                      value: formatBoolean(row.isOutstanding),
-                    },
-                    {
-                      label: "Giới tính",
-                      value:
-                        row.gender === undefined ? "-" : row.gender ? "Nam" : "Nữ",
-                    },
-                    { label: "Ngày sinh", value: formatDate(row.date_of_birth) },
-                    { label: "Tạo lúc", value: formatDate(row.created_at) },
-                    { label: "Cập nhật", value: formatDate(row.updated_at) },
-                  ]}
-                  footer={
-                    row.about_me ? (
-                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                          Giới thiệu
-                        </div>
-                        <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                          {row.about_me}
-                        </p>
-                      </div>
-                    ) : null
-                  }
-                />
-                {canUpdate ? (
-                  <DoctorEditDialog
-                    doctor={row}
-                    trigger={
-                      <Button type="button" variant="outline" size="sm">
-                        Sửa
-                      </Button>
-                    }
-                  />
-                ) : null}
-                {canDelete ? (
-                  <ConfirmDialog
-                    trigger={
-                      <Button type="button" variant="destructive" size="sm">
-                        Xóa
-                      </Button>
-                    }
-                    title="Xóa bác sĩ"
-                    description={`Bạn có chắc muốn xóa bác sĩ #${row.id}? Hành động không thể hoàn tác.`}
-                    destructive
-                    isSubmitting={deleteDoctor.isPending}
-                    onConfirm={() => deleteDoctor.mutateAsync(row.id)}
-                  />
-                ) : null}
-              </ActionCell>
-            );
+                : (row.specialty?.name ?? row.specialty?.specialty_name ?? "-"),
           },
-        },
-      ]}
-    />
+          {
+            key: "experience",
+            label: "Kinh nghiệm",
+            render: (row) => `${row.experience} năm`,
+          },
+          {
+            key: "doctor_level",
+            label: "Cấp bậc",
+            render: (row) => row.doctor_level,
+          },
+          {
+            key: "avg_rating",
+            label: "Đánh giá",
+            render: (row) => row.avg_rating?.toFixed?.(2) ?? row.avg_rating,
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => {
+              const specialtyName =
+                typeof row.specialty === "string"
+                  ? row.specialty
+                  : (row.specialty?.name ??
+                    row.specialty?.specialty_name ??
+                    "-");
+              return (
+                <ActionCell>
+                  <ViewDetailButton
+                    title={`Bác sĩ #${row.id}`}
+                    description={row.fullname}
+                    rows={[
+                      { label: "ID", value: row.id },
+                      { label: "User ID", value: row.user_id },
+                      { label: "Họ tên", value: row.fullname },
+                      { label: "Email", value: row.email ?? "-" },
+                      { label: "Số điện thoại", value: row.phone ?? "-" },
+                      { label: "Chuyên khoa", value: specialtyName },
+                      {
+                        label: "Kinh nghiệm",
+                        value: `${row.experience} năm`,
+                      },
+                      { label: "Cấp bậc", value: row.doctor_level },
+                      { label: "Nơi công tác", value: row.workplace ?? "-" },
+                      {
+                        label: "Điểm trung bình",
+                        value: row.avg_rating?.toFixed?.(2) ?? row.avg_rating,
+                      },
+                      {
+                        label: "Lượt khám hoàn tất",
+                        value: row.appointments_completed ?? 0,
+                      },
+                      {
+                        label: "Outstanding",
+                        value: formatBoolean(row.isOutstanding),
+                      },
+                      {
+                        label: "Giới tính",
+                        value:
+                          row.gender === undefined
+                            ? "-"
+                            : row.gender
+                              ? "Nam"
+                              : "Nữ",
+                      },
+                      {
+                        label: "Ngày sinh",
+                        value: formatDate(row.date_of_birth),
+                      },
+                      { label: "Tạo lúc", value: formatDate(row.created_at) },
+                      { label: "Cập nhật", value: formatDate(row.updated_at) },
+                    ]}
+                    footer={
+                      row.about_me ? (
+                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                            Giới thiệu
+                          </div>
+                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                            {row.about_me}
+                          </p>
+                        </div>
+                      ) : null
+                    }
+                  />
+                  {canUpdate ? (
+                    <DoctorEditDialog
+                      doctor={row}
+                      trigger={
+                        <Button type="button" variant="outline" size="sm">
+                          Sửa
+                        </Button>
+                      }
+                    />
+                  ) : null}
+                  {canDelete ? (
+                    <ConfirmDialog
+                      trigger={
+                        <Button type="button" variant="destructive" size="sm">
+                          Xóa
+                        </Button>
+                      }
+                      title="Xóa bác sĩ"
+                      description={`Bạn có chắc muốn xóa bác sĩ #${row.id}? Hành động không thể hoàn tác.`}
+                      destructive
+                      isSubmitting={deleteDoctor.isPending}
+                      onConfirm={() => deleteDoctor.mutateAsync(row.id)}
+                    />
+                  ) : null}
+                </ActionCell>
+              );
+            },
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -904,38 +1374,75 @@ function AppointmentsModule({
 }: ModuleViewProps & { scope?: "admin" | "doctor" }) {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | "">("");
   const [dateFilter, setDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+  const [bookingModeFilter, setBookingModeFilter] = useState<BookingMode | "">(
+    "",
+  );
   const [adminDoctorId, setAdminDoctorId] = useState<number | undefined>();
+  const [bookerId, setBookerId] = useState<number | undefined>();
+  const [bookerSearch, setBookerSearch] = useState("");
+  const debouncedBookerSearch = useDebouncedValue(bookerSearch, 350);
+  const [bookerPage, setBookerPage] = useState(1);
 
   const isDoctorScope = scope === "doctor";
 
   const doctorsQuery = useDoctors(
-    { page: 1, limit: 200 },
+    { page: 1, limit: 20 },
+    { enabled: !isDoctorScope },
   );
   const doctors: Doctor[] = doctorsQuery.data?.data?.doctors ?? [];
+  const bookersQuery = useUsers(
+    { page: bookerPage, limit: 20, search: debouncedBookerSearch || undefined },
+    { enabled: !isDoctorScope },
+  );
+  const bookerItems = (bookersQuery.data?.data?.users ?? []).map((user) => ({
+    value: user.id,
+    label: user.fullname || user.username,
+    hint: user.email,
+  }));
+  const selectedBooker = bookerItems.find((item) => item.value === bookerId);
 
-  // Bypass: backend endpoint /appointments/doctor/appointments hiện đang lỗi
-  // (service truy cập user.doctor.id mà không nạp relation), nên dùng endpoint
-  // admin có filter `doctorId` cho scope doctor.
-  const currentDoctorQuery = useCurrentDoctor();
-  const doctorId = currentDoctorQuery.data?.id;
-
+  // Doctor requests use the server-scoped endpoint; admin-only lookups stay disabled.
   const queryPayload = useMemo<AdminAppointmentListPayload>(() => {
     const payload: AdminAppointmentListPayload = { page, limit };
+    if (search) payload.search = search;
     if (statusFilter) payload.appointmentStatus = statusFilter;
-    if (dateFilter) payload.appointmentDate = dateFilter;
-    if (isDoctorScope) {
-      payload.doctorId = doctorId;
-    } else if (adminDoctorId) {
+    if (bookingModeFilter) payload.bookingMode = bookingModeFilter;
+    if (dateFilter) payload.appointmentFrom = dateFilter;
+    if (toDateFilter) payload.appointmentTo = toDateFilter;
+    if (!isDoctorScope && adminDoctorId) {
       payload.doctorId = adminDoctorId;
     }
+    if (!isDoctorScope && bookerId !== undefined) payload.bookerId = bookerId;
     return payload;
-  }, [page, limit, statusFilter, dateFilter, doctorId, isDoctorScope, adminDoctorId]);
+  }, [
+    page,
+    limit,
+    search,
+    statusFilter,
+    bookingModeFilter,
+    dateFilter,
+    toDateFilter,
+    isDoctorScope,
+    adminDoctorId,
+    bookerId,
+  ]);
+
+  const invalidDateRange = Boolean(
+    dateFilter && toDateFilter && dateFilter > toDateFilter,
+  );
 
   const adminQuery = useAdminAppointments(
     queryPayload,
-    !isDoctorScope || Boolean(doctorId),
+    !isDoctorScope && !invalidDateRange,
   );
-  const { data, isLoading, isError, refetch } = adminQuery;
+  const doctorQuery = useDoctorAppointments(
+    queryPayload,
+    isDoctorScope && !invalidDateRange,
+  );
+  const { data, isLoading, isError, refetch } = isDoctorScope
+    ? doctorQuery
+    : adminQuery;
   const total = data?.data?.total ?? 0;
   const { can } = usePermission();
   const updateStatus = useUpdateAppointmentStatus();
@@ -958,21 +1465,7 @@ function AppointmentsModule({
     PERMISSIONS.APPOINTMENT_MANAGE,
   );
 
-  const filtered = useMemo(() => {
-    const list = data?.data?.appointments ?? [];
-    if (!search) return list;
-    const term = search.toLowerCase();
-    return list.filter((row) =>
-      [
-        row.patient?.fullname,
-        row.doctor?.fullname,
-        row.symptoms,
-        row.appointment_status,
-      ]
-        .filter(Boolean)
-        .some((value) => String(value).toLowerCase().includes(term)),
-    );
-  }, [data, search]);
+  const filtered = data?.data?.appointments ?? [];
 
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value as AppointmentStatus | "");
@@ -992,33 +1485,36 @@ function AppointmentsModule({
   const clearFilters = () => {
     setStatusFilter("");
     setDateFilter("");
+    setToDateFilter("");
+    setBookingModeFilter("");
     setAdminDoctorId(undefined);
+    setBookerId(undefined);
+    setBookerSearch("");
     onPageChange(1);
   };
 
-  const hasActiveFilters = statusFilter || dateFilter || adminDoctorId;
+  const hasActiveFilters = Boolean(
+    statusFilter ||
+    dateFilter ||
+    toDateFilter ||
+    bookingModeFilter ||
+    adminDoctorId ||
+    bookerId,
+  );
 
   const filterInputClass =
     "flex h-10 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-2xs outline-none transition placeholder:text-slate-400 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-400";
-
-  if (isDoctorScope && currentDoctorQuery.isLoading) {
-    return <LoadingState />;
-  }
-
-  if (isDoctorScope && !doctorId) {
-    return (
-      <EmptyState
-        title="Không tìm thấy hồ sơ bác sĩ"
-        description="Tài khoản hiện tại chưa gắn với hồ sơ bác sĩ nào trong hệ thống."
-      />
-    );
-  }
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <label htmlFor="appointment-status-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Trạng thái</label>
+          <label
+            htmlFor="appointment-status-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Trạng thái
+          </label>
           <select
             id="appointment-status-filter"
             value={statusFilter}
@@ -1035,7 +1531,12 @@ function AppointmentsModule({
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="appointment-date-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Ngày khám</label>
+          <label
+            htmlFor="appointment-date-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Ngày khám
+          </label>
           <input
             id="appointment-date-filter"
             type="date"
@@ -1045,9 +1546,54 @@ function AppointmentsModule({
           />
         </div>
 
+        <SelectFilter
+          id="appointment-booking-mode-filter"
+          label="Hình thức đặt"
+          value={bookingModeFilter}
+          onChange={(value) => {
+            setBookingModeFilter(value as BookingMode | "");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "user_select", label: "Người dùng chọn lịch" },
+            { value: "ai_select", label: "AI tự động chọn lịch" },
+          ]}
+          placeholder="Tất cả"
+        />
+
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="appointment-to-date-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Đến ngày
+          </label>
+          <input
+            id="appointment-to-date-filter"
+            type="date"
+            value={toDateFilter}
+            aria-invalid={invalidDateRange}
+            onChange={(e) => {
+              setToDateFilter(e.target.value);
+              onPageChange(1);
+            }}
+            className={filterInputClass}
+          />
+          {invalidDateRange ? (
+            <span className="text-xs text-destructive" role="alert">
+              Khoảng ngày không hợp lệ
+            </span>
+          ) : null}
+        </div>
+
         {!isDoctorScope ? (
           <div className="flex flex-col gap-1">
-            <label htmlFor="appointment-doctor-filter" className="mono-label text-[10px] text-slate-500 dark:text-slate-400">Bác sĩ</label>
+            <label
+              htmlFor="appointment-doctor-filter"
+              className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+            >
+              Bác sĩ
+            </label>
             <select
               id="appointment-doctor-filter"
               value={adminDoctorId ?? ""}
@@ -1061,6 +1607,32 @@ function AppointmentsModule({
                 </option>
               ))}
             </select>
+          </div>
+        ) : null}
+
+        {!isDoctorScope ? (
+          <div className="w-56">
+            <SearchableSelect
+              id="appointment-booker-filter"
+              placeholder="Tất cả người đặt"
+              searchPlaceholder="Tìm người đặt..."
+              search={bookerSearch}
+              onSearchChange={(value) => {
+                setBookerSearch(value);
+                setBookerPage(1);
+              }}
+              isLoading={bookersQuery.isLoading}
+              page={bookerPage}
+              totalPages={bookersQuery.data?.data?.totalPages ?? 1}
+              onPageChange={setBookerPage}
+              items={bookerItems}
+              selectedValue={bookerId}
+              selectedLabel={selectedBooker?.label}
+              onSelect={(value) => {
+                setBookerId(typeof value === "number" ? value : undefined);
+                onPageChange(1);
+              }}
+            />
           </div>
         ) : null}
 
@@ -1130,7 +1702,9 @@ function AppointmentsModule({
             key: "actions",
             label: "Thao tác",
             render: (row) => {
-              const nextStatus = getNextAppointmentStatus(row.appointment_status);
+              const nextStatus = getNextAppointmentStatus(
+                row.appointment_status,
+              );
               return (
                 <ActionCell>
                   <ViewDetailButton
@@ -1207,48 +1781,48 @@ function AppointmentsModule({
                       ) : null
                     }
                   />
-                  {canUpdateStatus && nextStatus ? (
-                    (() => {
-                      const timeBlocked =
-                        (nextStatus === "IN_PROGRESS" ||
-                          nextStatus === "COMPLETED") &&
-                        !isAppointmentStartTimeReached(row);
-                      const confirmCopy = NEXT_STATUS_CONFIRM_COPY[nextStatus];
-                      return (
-                        <ConfirmDialog
-                          trigger={
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={isMutating || timeBlocked}
-                              title={
-                                timeBlocked
-                                  ? "Chỉ có thể thao tác khi đã đến giờ hẹn."
-                                  : undefined
-                              }
-                            >
-                              {NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}
-                            </Button>
-                          }
-                          title={confirmCopy?.title ?? "Xác nhận thao tác"}
-                          description={
-                            confirmCopy?.description(row.id) ??
-                            `Xác nhận chuyển lịch hẹn #${row.id} sang trạng thái "${NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}"?`
-                          }
-                          isSubmitting={isMutating}
-                          onConfirm={() =>
-                            updateStatus.mutateAsync({
-                              appointmentId: row.id,
-                              payload: { status: nextStatus },
-                            })
-                          }
-                        />
-                      );
-                    })()
-                  ) : null}
-                  {canUpdateStatus &&
-                  row.appointment_status === "CONFIRMED" ? (
+                  {canUpdateStatus && nextStatus
+                    ? (() => {
+                        const timeBlocked =
+                          (nextStatus === "IN_PROGRESS" ||
+                            nextStatus === "COMPLETED") &&
+                          !isAppointmentStartTimeReached(row);
+                        const confirmCopy =
+                          NEXT_STATUS_CONFIRM_COPY[nextStatus];
+                        return (
+                          <ConfirmDialog
+                            trigger={
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={isMutating || timeBlocked}
+                                title={
+                                  timeBlocked
+                                    ? "Chỉ có thể thao tác khi đã đến giờ hẹn."
+                                    : undefined
+                                }
+                              >
+                                {NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}
+                              </Button>
+                            }
+                            title={confirmCopy?.title ?? "Xác nhận thao tác"}
+                            description={
+                              confirmCopy?.description(row.id) ??
+                              `Xác nhận chuyển lịch hẹn #${row.id} sang trạng thái "${NEXT_STATUS_LABEL[nextStatus] ?? nextStatus}"?`
+                            }
+                            isSubmitting={isMutating}
+                            onConfirm={() =>
+                              updateStatus.mutateAsync({
+                                appointmentId: row.id,
+                                payload: { status: nextStatus },
+                              })
+                            }
+                          />
+                        );
+                      })()
+                    : null}
+                  {canUpdateStatus && row.appointment_status === "CONFIRMED" ? (
                     <ConfirmDialog
                       trigger={
                         <Button
@@ -1347,6 +1921,10 @@ function AppointmentsModule({
   );
 }
 
+const AUDIT_METHOD_OPTIONS = ["GET", "POST", "PATCH", "PUT", "DELETE"].map(
+  (m) => ({ value: m, label: m }),
+);
+
 function AuditLogsModule({
   search,
   page,
@@ -1354,139 +1932,326 @@ function AuditLogsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useAuditLogs({
-    page,
-    limit,
-    search: search || undefined,
+  const [actionFilter, setActionFilter] = useState("");
+  const [entityNameFilter, setEntityNameFilter] = useState("");
+  const debouncedActionFilter = useDebouncedValue(actionFilter, 350);
+  const debouncedEntityNameFilter = useDebouncedValue(entityNameFilter, 350);
+  const [userIdFilter, setUserIdFilter] = useState<number | undefined>();
+  const [methodFilter, setMethodFilter] = useState("");
+  const [isSuccessFilter, setIsSuccessFilter] = useState("");
+  const [fromDateFilter, setFromDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"asc" | "desc">("desc");
+
+  const [userSearch, setUserSearch] = useState("");
+  const debouncedUserSearch = useDebouncedValue(userSearch, 350);
+  const [userPickerPage, setUserPickerPage] = useState(1);
+  const userPickerQuery = useUsers({
+    page: userPickerPage,
+    limit: 20,
+    search: debouncedUserSearch || undefined,
   });
+  const userPickerItems = (userPickerQuery.data?.data?.users ?? []).map(
+    (u) => ({ value: u.id, label: u.fullname || u.username, hint: u.email }),
+  );
+  const selectedUser = (userPickerQuery.data?.data?.users ?? []).find(
+    (u) => u.id === userIdFilter,
+  );
+
+  const invalidDateRange = Boolean(
+    fromDateFilter && toDateFilter && fromDateFilter > toDateFilter,
+  );
+  const { data, isLoading, isError, refetch } = useAuditLogs(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      action: debouncedActionFilter || undefined,
+      entityName: debouncedEntityNameFilter || undefined,
+      userId: userIdFilter,
+      method: methodFilter || undefined,
+      isSuccess: isSuccessFilter ? isSuccessFilter === "true" : undefined,
+      fromDate: fromDateFilter || undefined,
+      toDate: toDateFilter || undefined,
+      arrange: arrangeFilter,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = data?.data?.auditLogs ?? [];
   const total = data?.data?.total ?? 0;
 
+  const hasActiveFilters = Boolean(
+    actionFilter ||
+    entityNameFilter ||
+    userIdFilter ||
+    methodFilter ||
+    isSuccessFilter ||
+    fromDateFilter ||
+    toDateFilter ||
+    arrangeFilter !== "desc",
+  );
+  const resetFilters = () => {
+    setActionFilter("");
+    setEntityNameFilter("");
+    setUserIdFilter(undefined);
+    setMethodFilter("");
+    setIsSuccessFilter("");
+    setFromDateFilter("");
+    setToDateFilter("");
+    setArrangeFilter("desc");
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Audit logs"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "action", label: "Hành động", render: (row) => row.action },
-        {
-          key: "entity_name",
-          label: "Đối tượng",
-          render: (row) => row.entity_name,
-        },
-        {
-          key: "user",
-          label: "Người thực hiện",
-          render: (row) => row.user?.fullname ?? "system",
-        },
-        {
-          key: "endpoint",
-          label: "Endpoint",
-          render: (row) => `${row.method} ${row.endpoint}`,
-        },
-        {
-          key: "is_success",
-          label: "Trạng thái",
-          render: (row) =>
-            row.is_success ? (
-              <Badge variant="success">{row.status_code}</Badge>
-            ) : (
-              <Badge variant="danger">{row.status_code}</Badge>
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="audit-action-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Hành động
+          </label>
+          <Input
+            id="audit-action-filter"
+            value={actionFilter}
+            onChange={(e) => {
+              setActionFilter(e.target.value);
+              onPageChange(1);
+            }}
+            placeholder="VD: LOGIN, UPDATE_ROLE..."
+            className="h-10 w-44"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label
+            htmlFor="audit-entity-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Đối tượng
+          </label>
+          <Input
+            id="audit-entity-filter"
+            value={entityNameFilter}
+            onChange={(e) => {
+              setEntityNameFilter(e.target.value);
+              onPageChange(1);
+            }}
+            placeholder="VD: User, Appointment..."
+            className="h-10 w-40"
+          />
+        </div>
+        <div className="flex flex-col gap-1 w-56">
+          <label
+            htmlFor="audit-user-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Người thực hiện
+          </label>
+          <SearchableSelect
+            id="audit-user-filter"
+            placeholder="Tất cả người dùng"
+            searchPlaceholder="Tìm theo tên/email..."
+            search={userSearch}
+            onSearchChange={(value) => {
+              setUserSearch(value);
+              setUserPickerPage(1);
+            }}
+            isLoading={userPickerQuery.isLoading}
+            page={userPickerPage}
+            totalPages={userPickerQuery.data?.data?.totalPages ?? 1}
+            onPageChange={setUserPickerPage}
+            items={userPickerItems}
+            selectedValue={userIdFilter}
+            selectedLabel={
+              selectedUser
+                ? selectedUser.fullname || selectedUser.username
+                : null
+            }
+            onSelect={(value) => {
+              setUserIdFilter(typeof value === "number" ? value : undefined);
+              onPageChange(1);
+            }}
+          />
+        </div>
+        <SelectFilter
+          id="audit-method-filter"
+          label="Method"
+          value={methodFilter}
+          onChange={(value) => {
+            setMethodFilter(value);
+            onPageChange(1);
+          }}
+          options={AUDIT_METHOD_OPTIONS}
+          placeholder="Tất cả method"
+        />
+        <SelectFilter
+          id="audit-success-filter"
+          label="Trạng thái"
+          value={isSuccessFilter}
+          onChange={(value) => {
+            setIsSuccessFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Thành công" },
+            { value: "false", label: "Thất bại" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <DateRangeFilter
+          fromId="audit-from-date"
+          fromValue={fromDateFilter}
+          onFromChange={(value) => {
+            setFromDateFilter(value);
+            onPageChange(1);
+          }}
+          toId="audit-to-date"
+          toValue={toDateFilter}
+          onToChange={(value) => {
+            setToDateFilter(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        <SelectFilter
+          id="audit-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter((value as "asc" | "desc") || "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mới nhất"
+        />
+      </FilterBar>
+      <GenericList
+        title="Audit logs"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "action", label: "Hành động", render: (row) => row.action },
+          {
+            key: "entity_name",
+            label: "Đối tượng",
+            render: (row) => row.entity_name,
+          },
+          {
+            key: "user",
+            label: "Người thực hiện",
+            render: (row) => row.user?.fullname ?? "system",
+          },
+          {
+            key: "endpoint",
+            label: "Endpoint",
+            render: (row) => `${row.method} ${row.endpoint}`,
+          },
+          {
+            key: "is_success",
+            label: "Trạng thái",
+            render: (row) =>
+              row.is_success ? (
+                <Badge variant="success">{row.status_code}</Badge>
+              ) : (
+                <Badge variant="danger">{row.status_code}</Badge>
+              ),
+          },
+          {
+            key: "created_at",
+            label: "Thời gian",
+            render: (row) => row.created_at,
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Audit log #${row.id}`}
+                  description={`${row.method} ${row.endpoint}`}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Hành động", value: row.action },
+                    { label: "Đối tượng", value: row.entity_name },
+                    {
+                      label: "Người thực hiện",
+                      value: row.user?.fullname ?? "system",
+                    },
+                    { label: "Email", value: row.user?.email ?? "-" },
+                    { label: "Method", value: row.method },
+                    { label: "Endpoint", value: row.endpoint },
+                    {
+                      label: "Status",
+                      value: row.is_success ? (
+                        <Badge variant="success">{row.status_code}</Badge>
+                      ) : (
+                        <Badge variant="danger">{row.status_code}</Badge>
+                      ),
+                    },
+                    {
+                      label: "Thời lượng",
+                      value: row.duration_ms ? `${row.duration_ms} ms` : "-",
+                    },
+                    { label: "IP", value: row.ip_address ?? "-" },
+                    { label: "User agent", value: row.user_agent ?? "-" },
+                    { label: "Thời gian", value: formatDate(row.created_at) },
+                  ]}
+                  footer={
+                    row.error_message || row.old_data || row.new_data ? (
+                      <div className="space-y-3">
+                        {row.error_message ? (
+                          <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+                            <div className="mono-label text-[10px] text-rose-600 dark:text-rose-400">
+                              Error message
+                            </div>
+                            <p className="mt-2 whitespace-pre-line">
+                              {row.error_message}
+                            </p>
+                          </div>
+                        ) : null}
+                        {row.old_data ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Old data
+                            </div>
+                            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
+                              {JSON.stringify(row.old_data, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
+                        {row.new_data ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              New data
+                            </div>
+                            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
+                              {JSON.stringify(row.new_data, null, 2)}
+                            </pre>
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null
+                  }
+                />
+              </ActionCell>
             ),
-        },
-        {
-          key: "created_at",
-          label: "Thời gian",
-          render: (row) => row.created_at,
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Audit log #${row.id}`}
-                description={`${row.method} ${row.endpoint}`}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Hành động", value: row.action },
-                  { label: "Đối tượng", value: row.entity_name },
-                  {
-                    label: "Người thực hiện",
-                    value: row.user?.fullname ?? "system",
-                  },
-                  { label: "Email", value: row.user?.email ?? "-" },
-                  { label: "Method", value: row.method },
-                  { label: "Endpoint", value: row.endpoint },
-                  {
-                    label: "Status",
-                    value: row.is_success ? (
-                      <Badge variant="success">{row.status_code}</Badge>
-                    ) : (
-                      <Badge variant="danger">{row.status_code}</Badge>
-                    ),
-                  },
-                  {
-                    label: "Thời lượng",
-                    value: row.duration_ms ? `${row.duration_ms} ms` : "-",
-                  },
-                  { label: "IP", value: row.ip_address ?? "-" },
-                  { label: "User agent", value: row.user_agent ?? "-" },
-                  { label: "Thời gian", value: formatDate(row.created_at) },
-                ]}
-                footer={
-                  row.error_message ||
-                  row.old_data ||
-                  row.new_data ? (
-                    <div className="space-y-3">
-                      {row.error_message ? (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
-                          <div className="mono-label text-[10px] text-rose-600 dark:text-rose-400">
-                            Error message
-                          </div>
-                          <p className="mt-2 whitespace-pre-line">
-                            {row.error_message}
-                          </p>
-                        </div>
-                      ) : null}
-                      {row.old_data ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Old data
-                          </div>
-                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
-                            {JSON.stringify(row.old_data, null, 2)}
-                          </pre>
-                        </div>
-                      ) : null}
-                      {row.new_data ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            New data
-                          </div>
-                          <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
-                            {JSON.stringify(row.new_data, null, 2)}
-                          </pre>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null
-                }
-              />
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -1500,15 +2265,40 @@ function ComplaintsModule({
   const [statusFilter, setStatusFilter] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
-  const [responseInputs, setResponseInputs] = useState<Record<number, string>>({});
-  const { data, isLoading, isError, refetch } = useComplaints({
-    page,
-    limit,
-    search: search || undefined,
-    status: (statusFilter as ComplaintStatus) || undefined,
-    fromDate: fromDate || undefined,
-    toDate: toDate || undefined,
+  const [arrangeFilter, setArrangeFilter] = useState<"asc" | "desc">("desc");
+  const [userIdFilter, setUserIdFilter] = useState<number | undefined>();
+  const [userSearch, setUserSearch] = useState("");
+  const [userPickerPage, setUserPickerPage] = useState(1);
+  const [responseInputs, setResponseInputs] = useState<Record<number, string>>(
+    {},
+  );
+  const debouncedUserSearch = useDebouncedValue(userSearch, 350);
+  const userPickerQuery = useUsers({
+    page: userPickerPage,
+    limit: 20,
+    search: debouncedUserSearch || undefined,
   });
+  const complaintUserItems = (userPickerQuery.data?.data?.users ?? []).map(
+    (user) => ({
+      value: user.id,
+      label: user.fullname || user.username,
+      hint: user.email,
+    }),
+  );
+  const invalidDateRange = Boolean(fromDate && toDate && fromDate > toDate);
+  const { data, isLoading, isError, refetch } = useComplaints(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      status: (statusFilter as ComplaintStatus) || undefined,
+      userId: userIdFilter,
+      fromDate: fromDate || undefined,
+      toDate: toDate || undefined,
+      arrange: arrangeFilter,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = useMemo(
     () => data?.data?.complaints ?? [],
     [data?.data?.complaints],
@@ -1532,7 +2322,12 @@ function ComplaintsModule({
     PERMISSIONS.COMPLAINT_MANAGE,
   );
 
-  const hasFilters = statusFilter || fromDate || toDate;
+  const hasFilters =
+    statusFilter ||
+    fromDate ||
+    toDate ||
+    userIdFilter ||
+    arrangeFilter !== "desc";
 
   const statusCounts = useMemo(() => {
     const counts: Record<ComplaintStatus, number> = {
@@ -1596,27 +2391,60 @@ function ComplaintsModule({
           <option value="resolved">Đã giải quyết</option>
           <option value="rejected">Từ chối</option>
         </select>
-        <input
-          type="date"
-          aria-label="Từ ngày"
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-          value={fromDate}
-          onChange={(e) => {
-            setFromDate(e.target.value);
+        <DateRangeFilter
+          fromId="complaints-from-date"
+          fromValue={fromDate}
+          onFromChange={(value) => {
+            setFromDate(value);
             onPageChange(1);
           }}
-          placeholder="Từ ngày"
+          toId="complaints-to-date"
+          toValue={toDate}
+          onToChange={(value) => {
+            setToDate(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
         />
-        <input
-          type="date"
-          aria-label="Đến ngày"
-          className="h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus-visible:border-primary dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100"
-          value={toDate}
-          onChange={(e) => {
-            setToDate(e.target.value);
+        <div className="w-56">
+          <SearchableSelect
+            id="complaints-user-filter"
+            placeholder="Tất cả người gửi"
+            searchPlaceholder="Tìm người gửi..."
+            search={userSearch}
+            onSearchChange={(value) => {
+              setUserSearch(value);
+              setUserPickerPage(1);
+            }}
+            isLoading={userPickerQuery.isLoading}
+            page={userPickerPage}
+            totalPages={userPickerQuery.data?.data?.totalPages ?? 1}
+            onPageChange={setUserPickerPage}
+            items={complaintUserItems}
+            selectedValue={userIdFilter}
+            selectedLabel={
+              complaintUserItems.find((item) => item.value === userIdFilter)
+                ?.label
+            }
+            onSelect={(value) => {
+              setUserIdFilter(typeof value === "number" ? value : undefined);
+              onPageChange(1);
+            }}
+          />
+        </div>
+        <SelectFilter
+          id="complaints-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter((value as "asc" | "desc") || "desc");
             onPageChange(1);
           }}
-          placeholder="Đến ngày"
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mới nhất"
         />
         {hasFilters ? (
           <Button
@@ -1627,6 +2455,9 @@ function ComplaintsModule({
               setStatusFilter("");
               setFromDate("");
               setToDate("");
+              setUserIdFilter(undefined);
+              setUserSearch("");
+              setArrangeFilter("desc");
               onPageChange(1);
             }}
           >
@@ -1736,9 +2567,7 @@ function ComplaintsModule({
                       {
                         label: "Trạng thái",
                         value: (
-                          <ComplaintStatusBadge
-                            status={row.complaint_status}
-                          />
+                          <ComplaintStatusBadge status={row.complaint_status} />
                         ),
                       },
                       {
@@ -1771,8 +2600,7 @@ function ComplaintsModule({
                             </p>
                           </div>
                         ) : null}
-                        {canUpdate &&
-                        row.complaint_status === "in_progress" ? (
+                        {canUpdate && row.complaint_status === "in_progress" ? (
                           <div className="space-y-2 rounded-lg border border-sky-200 bg-sky-50/40 p-4 dark:border-sky-900/60 dark:bg-sky-950/40">
                             <label
                               htmlFor={`response-${row.id}`}
@@ -1856,11 +2684,7 @@ function ComplaintsModule({
   );
 }
 
-function ComplaintCreateDialog({
-  trigger,
-}: {
-  trigger: ReactNode;
-}) {
+function ComplaintCreateDialog({ trigger }: { trigger: ReactNode }) {
   const create = useCreateComplaint();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -1916,18 +2740,17 @@ function ComplaintCreateDialog({
 
 type NotificationAudienceMode = "SINGLE" | "ALL" | "ROLE" | "USERS";
 
-const AUDIENCE_MODE_OPTIONS: { value: NotificationAudienceMode; label: string }[] = [
+const AUDIENCE_MODE_OPTIONS: {
+  value: NotificationAudienceMode;
+  label: string;
+}[] = [
   { value: "SINGLE", label: "Một người dùng" },
   { value: "ALL", label: "Tất cả người dùng" },
   { value: "ROLE", label: "Theo vai trò" },
   { value: "USERS", label: "Người dùng cụ thể" },
 ];
 
-function NotificationCreateDialog({
-  trigger,
-}: {
-  trigger: ReactNode;
-}) {
+function NotificationCreateDialog({ trigger }: { trigger: ReactNode }) {
   const create = useCreateNotification();
   const sendBroadcast = useSendNotificationBroadcast();
   const [title, setTitle] = useState("");
@@ -2077,8 +2900,7 @@ function NotificationCreateDialog({
             onScroll={(event) => {
               const { scrollTop, scrollHeight, clientHeight } =
                 event.currentTarget;
-              const isNearBottom =
-                scrollHeight - scrollTop - clientHeight < 48;
+              const isNearBottom = scrollHeight - scrollTop - clientHeight < 48;
               if (
                 isNearBottom &&
                 recipientsQuery.hasNextPage &&
@@ -2140,8 +2962,8 @@ function NotificationCreateDialog({
       ) : audienceMode === "ALL" ? (
         <FormField label="Đối tượng">
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Thông báo sẽ được gửi tới toàn bộ tài khoản đang hoạt động (gồm
-            cả patient, doctor và admin).
+            Thông báo sẽ được gửi tới toàn bộ tài khoản đang hoạt động (gồm cả
+            patient, doctor và admin).
           </p>
         </FormField>
       ) : audienceMode === "ROLE" ? (
@@ -2182,8 +3004,7 @@ function NotificationCreateDialog({
             onScroll={(event) => {
               const { scrollTop, scrollHeight, clientHeight } =
                 event.currentTarget;
-              const isNearBottom =
-                scrollHeight - scrollTop - clientHeight < 48;
+              const isNearBottom = scrollHeight - scrollTop - clientHeight < 48;
               if (
                 isNearBottom &&
                 recipientsQuery.hasNextPage &&
@@ -2243,9 +3064,7 @@ function NotificationCreateDialog({
         </FormField>
       )}
       {recipientError ? (
-        <p className="text-xs font-semibold text-rose-600">
-          {recipientError}
-        </p>
+        <p className="text-xs font-semibold text-rose-600">{recipientError}</p>
       ) : null}
       <FormField
         label="Đường dẫn khi nhấn (tuỳ chọn)"
@@ -2264,6 +3083,19 @@ function NotificationCreateDialog({
   );
 }
 
+const NOTIFICATION_TYPE_OPTIONS: { value: NotificationType; label: string }[] =
+  [
+    { value: "MANUAL", label: "Thủ công" },
+    { value: "APPOINTMENT_CREATED", label: "Tạo lịch hẹn" },
+    { value: "APPOINTMENT_CANCELLED", label: "Hủy lịch hẹn" },
+    {
+      value: "APPOINTMENT_STATUS_UPDATED",
+      label: "Cập nhật trạng thái lịch hẹn",
+    },
+    { value: "APPOINTMENT_EXPIRED", label: "Lịch hẹn quá hạn" },
+    { value: "APPOINTMENT_REMINDER", label: "Nhắc lịch hẹn" },
+  ];
+
 function NotificationsModule({
   search,
   page,
@@ -2271,11 +3103,45 @@ function NotificationsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useNotifications({
-    page,
-    limit,
-    search: search || undefined,
+  const [isReadFilter, setIsReadFilter] = useState("");
+  const [userIdFilter, setUserIdFilter] = useState<number | undefined>();
+  const [typeFilter, setTypeFilter] = useState<NotificationType | "">("");
+  const [fromDateFilter, setFromDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"asc" | "desc">("desc");
+
+  const [userSearch, setUserSearch] = useState("");
+  const debouncedUserSearch = useDebouncedValue(userSearch, 350);
+  const [userPickerPage, setUserPickerPage] = useState(1);
+  const userPickerQuery = useUsers({
+    page: userPickerPage,
+    limit: 20,
+    search: debouncedUserSearch || undefined,
   });
+  const userPickerItems = (userPickerQuery.data?.data?.users ?? []).map(
+    (u) => ({ value: u.id, label: u.fullname || u.username, hint: u.email }),
+  );
+  const selectedUser = (userPickerQuery.data?.data?.users ?? []).find(
+    (u) => u.id === userIdFilter,
+  );
+
+  const invalidDateRange = Boolean(
+    fromDateFilter && toDateFilter && fromDateFilter > toDateFilter,
+  );
+  const { data, isLoading, isError, refetch } = useNotifications(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      isRead: isReadFilter ? isReadFilter === "true" : undefined,
+      userId: userIdFilter,
+      type: typeFilter || undefined,
+      fromDate: fromDateFilter || undefined,
+      toDate: toDateFilter || undefined,
+      arrange: arrangeFilter,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = data?.data?.notifications ?? [];
   const total = data?.data?.total ?? 0;
   const deleteNotification = useDeleteNotification();
@@ -2290,101 +3156,210 @@ function NotificationsModule({
     PERMISSIONS.NOTIFICATION_MANAGE,
   );
 
+  const hasActiveFilters = Boolean(
+    isReadFilter ||
+    userIdFilter ||
+    typeFilter ||
+    fromDateFilter ||
+    toDateFilter ||
+    arrangeFilter !== "desc",
+  );
+  const resetFilters = () => {
+    setIsReadFilter("");
+    setUserIdFilter(undefined);
+    setTypeFilter("");
+    setFromDateFilter("");
+    setToDateFilter("");
+    setArrangeFilter("desc");
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Thông báo"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <NotificationCreateDialog
-            trigger={<Button size="sm">+ Thêm thông báo</Button>}
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <SelectFilter
+          id="notifications-read-filter"
+          label="Trạng thái đọc"
+          value={isReadFilter}
+          onChange={(value) => {
+            setIsReadFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Đã đọc" },
+            { value: "false", label: "Chưa đọc" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <SelectFilter
+          id="notifications-type-filter"
+          label="Loại thông báo"
+          value={typeFilter}
+          onChange={(value) => {
+            setTypeFilter(value as NotificationType | "");
+            onPageChange(1);
+          }}
+          options={NOTIFICATION_TYPE_OPTIONS}
+          placeholder="Tất cả loại"
+        />
+        <div className="flex flex-col gap-1 w-56">
+          <label
+            htmlFor="notifications-user-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Người nhận
+          </label>
+          <SearchableSelect
+            id="notifications-user-filter"
+            placeholder="Tất cả người dùng"
+            searchPlaceholder="Tìm theo tên/email..."
+            search={userSearch}
+            onSearchChange={(value) => {
+              setUserSearch(value);
+              setUserPickerPage(1);
+            }}
+            isLoading={userPickerQuery.isLoading}
+            page={userPickerPage}
+            totalPages={userPickerQuery.data?.data?.totalPages ?? 1}
+            onPageChange={setUserPickerPage}
+            items={userPickerItems}
+            selectedValue={userIdFilter}
+            selectedLabel={
+              selectedUser
+                ? selectedUser.fullname || selectedUser.username
+                : null
+            }
+            onSelect={(value) => {
+              setUserIdFilter(typeof value === "number" ? value : undefined);
+              onPageChange(1);
+            }}
           />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "title", label: "Tiêu đề", render: (row) => row.title },
-        {
-          key: "user",
-          label: "Người nhận",
-          render: (row) => row.user?.fullname ?? "-",
-        },
-        {
-          key: "isRead",
-          label: "Trạng thái đọc",
-          render: (row) =>
-            row.isRead ? (
-              <Badge variant="success">Đã đọc</Badge>
-            ) : (
-              <Badge variant="warning">Chưa đọc</Badge>
-            ),
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Thông báo #${row.id}`}
-                description={row.title}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Tiêu đề", value: row.title },
-                  { label: "Người nhận", value: row.user?.fullname ?? "-" },
-                  { label: "Email", value: row.user?.email ?? "-" },
-                  {
-                    label: "Trạng thái đọc",
-                    value: row.isRead ? (
-                      <Badge variant="success">Đã đọc</Badge>
-                    ) : (
-                      <Badge variant="warning">Chưa đọc</Badge>
-                    ),
-                  },
-                  { label: "Loại", value: row.type },
-                  { label: "Tạo lúc", value: formatDate(row.createdAt) },
-                  { label: "Cập nhật", value: formatDate(row.updatedAt) },
-                ]}
-                footer={
-                  row.content ? (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                        Nội dung
+        </div>
+        <DateRangeFilter
+          fromId="notifications-from-date"
+          fromValue={fromDateFilter}
+          onFromChange={(value) => {
+            setFromDateFilter(value);
+            onPageChange(1);
+          }}
+          toId="notifications-to-date"
+          toValue={toDateFilter}
+          onToChange={(value) => {
+            setToDateFilter(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        <SelectFilter
+          id="notifications-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter((value as "asc" | "desc") || "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mới nhất"
+        />
+      </FilterBar>
+      <GenericList
+        title="Thông báo"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <NotificationCreateDialog
+              trigger={<Button size="sm">+ Thêm thông báo</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "title", label: "Tiêu đề", render: (row) => row.title },
+          {
+            key: "user",
+            label: "Người nhận",
+            render: (row) => row.user?.fullname ?? "-",
+          },
+          {
+            key: "isRead",
+            label: "Trạng thái đọc",
+            render: (row) =>
+              row.isRead ? (
+                <Badge variant="success">Đã đọc</Badge>
+              ) : (
+                <Badge variant="warning">Chưa đọc</Badge>
+              ),
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Thông báo #${row.id}`}
+                  description={row.title}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Tiêu đề", value: row.title },
+                    { label: "Người nhận", value: row.user?.fullname ?? "-" },
+                    { label: "Email", value: row.user?.email ?? "-" },
+                    {
+                      label: "Trạng thái đọc",
+                      value: row.isRead ? (
+                        <Badge variant="success">Đã đọc</Badge>
+                      ) : (
+                        <Badge variant="warning">Chưa đọc</Badge>
+                      ),
+                    },
+                    { label: "Loại", value: row.type },
+                    { label: "Tạo lúc", value: formatDate(row.createdAt) },
+                    { label: "Cập nhật", value: formatDate(row.updatedAt) },
+                  ]}
+                  footer={
+                    row.content ? (
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                          Nội dung
+                        </div>
+                        <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                          {row.content}
+                        </p>
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                        {row.content}
-                      </p>
-                    </div>
-                  ) : null
-                }
-              />
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
+                    ) : null
                   }
-                  title="Xóa thông báo"
-                  description={`Xóa thông báo #${row.id}?`}
-                  destructive
-                  isSubmitting={deleteNotification.isPending}
-                  onConfirm={() => deleteNotification.mutateAsync(row.id)}
                 />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa thông báo"
+                    description={`Xóa thông báo #${row.id}?`}
+                    destructive
+                    isSubmitting={deleteNotification.isPending}
+                    onConfirm={() => deleteNotification.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -2448,11 +3423,50 @@ function SatisfactionRatingsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useSatisfactionRatings({
-    page,
-    limit,
-    search: search || undefined,
+  const [doctorFilter, setDoctorFilter] = useState<number | undefined>();
+  const [minRating, setMinRating] = useState("");
+  const [maxRating, setMaxRating] = useState("");
+  const debouncedMinRating = useDebouncedValue(minRating, 350);
+  const debouncedMaxRating = useDebouncedValue(maxRating, 350);
+  const [fromDateFilter, setFromDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 350);
+  const [doctorPickerPage, setDoctorPickerPage] = useState(1);
+  const doctorPickerQuery = useDoctors({
+    page: doctorPickerPage,
+    limit: 20,
+    search: debouncedDoctorSearch || undefined,
   });
+  const doctorPickerItems = (doctorPickerQuery.data?.data?.doctors ?? []).map(
+    (d) => ({ value: d.id, label: d.fullname }),
+  );
+  const selectedDoctor = (doctorPickerQuery.data?.data?.doctors ?? []).find(
+    (d) => d.id === doctorFilter,
+  );
+
+  const invalidRatingRange = Boolean(
+    minRating && maxRating && Number(minRating) > Number(maxRating),
+  );
+  const invalidDateRange = Boolean(
+    fromDateFilter && toDateFilter && fromDateFilter > toDateFilter,
+  );
+  const { data, isLoading, isError, refetch } = useSatisfactionRatings(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      doctorId: doctorFilter,
+      minRating:
+        debouncedMinRating !== "" ? Number(debouncedMinRating) : undefined,
+      maxRating:
+        debouncedMaxRating !== "" ? Number(debouncedMaxRating) : undefined,
+      fromDate: fromDateFilter || undefined,
+      toDate: toDateFilter || undefined,
+    },
+    { enabled: !invalidRatingRange && !invalidDateRange },
+  );
   const rows = data?.data?.satisfactionRatings ?? [];
   const total = data?.data?.total ?? 0;
   const { can } = usePermission();
@@ -2461,85 +3475,163 @@ function SatisfactionRatingsModule({
     PERMISSIONS.SATISFACTION_RATING_MANAGE,
   );
 
+  const hasActiveFilters = Boolean(
+    doctorFilter || minRating || maxRating || fromDateFilter || toDateFilter,
+  );
+  const resetFilters = () => {
+    setDoctorFilter(undefined);
+    setMinRating("");
+    setMaxRating("");
+    setFromDateFilter("");
+    setToDateFilter("");
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Đánh giá"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "rating", label: "Điểm", render: (row) => row.rating },
-        {
-          key: "doctor",
-          label: "Bác sĩ",
-          render: (row) => row.doctor?.fullname ?? "-",
-        },
-        {
-          key: "patient",
-          label: "Bệnh nhân",
-          render: (row) => row.patient?.fullname ?? "-",
-        },
-        {
-          key: "comment",
-          label: "Nhận xét",
-          render: (row) => row.comment ?? "-",
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Đánh giá #${row.id}`}
-                description={`${row.rating} sao`}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Điểm", value: row.rating },
-                  { label: "Bác sĩ", value: row.doctor?.fullname ?? "-" },
-                  { label: "Bệnh nhân", value: row.patient?.fullname ?? "-" },
-                  {
-                    label: "Lịch hẹn liên quan",
-                    value: row.appointment_id ?? "-",
-                  },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-                footer={
-                  row.comment ? (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                        Nhận xét
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <div className="flex flex-col gap-1 w-56">
+          <label
+            htmlFor="ratings-doctor-filter"
+            className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+          >
+            Bác sĩ
+          </label>
+          <SearchableSelect
+            id="ratings-doctor-filter"
+            placeholder="Tất cả bác sĩ"
+            searchPlaceholder="Tìm theo tên bác sĩ..."
+            search={doctorSearch}
+            onSearchChange={(value) => {
+              setDoctorSearch(value);
+              setDoctorPickerPage(1);
+            }}
+            isLoading={doctorPickerQuery.isLoading}
+            page={doctorPickerPage}
+            totalPages={doctorPickerQuery.data?.data?.totalPages ?? 1}
+            onPageChange={setDoctorPickerPage}
+            items={doctorPickerItems}
+            selectedValue={doctorFilter}
+            selectedLabel={selectedDoctor ? selectedDoctor.fullname : null}
+            onSelect={(value) => {
+              setDoctorFilter(typeof value === "number" ? value : undefined);
+              onPageChange(1);
+            }}
+          />
+        </div>
+        <NumberRangeFilter
+          label="Điểm đánh giá"
+          minId="ratings-min-score"
+          maxId="ratings-max-score"
+          minValue={minRating}
+          maxValue={maxRating}
+          onMinChange={(value) => {
+            setMinRating(value);
+            onPageChange(1);
+          }}
+          onMaxChange={(value) => {
+            setMaxRating(value);
+            onPageChange(1);
+          }}
+          min={1}
+          max={5}
+          error={invalidRatingRange ? "Khoảng điểm không hợp lệ" : undefined}
+        />
+        <DateRangeFilter
+          fromId="ratings-from-date"
+          fromValue={fromDateFilter}
+          onFromChange={(value) => {
+            setFromDateFilter(value);
+            onPageChange(1);
+          }}
+          toId="ratings-to-date"
+          toValue={toDateFilter}
+          onToChange={(value) => {
+            setToDateFilter(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+      </FilterBar>
+      <GenericList
+        title="Đánh giá"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "rating", label: "Điểm", render: (row) => row.rating },
+          {
+            key: "doctor",
+            label: "Bác sĩ",
+            render: (row) => row.doctor?.fullname ?? "-",
+          },
+          {
+            key: "patient",
+            label: "Bệnh nhân",
+            render: (row) => row.patient?.fullname ?? "-",
+          },
+          {
+            key: "comment",
+            label: "Nhận xét",
+            render: (row) => row.comment ?? "-",
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Đánh giá #${row.id}`}
+                  description={`${row.rating} sao`}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Điểm", value: row.rating },
+                    { label: "Bác sĩ", value: row.doctor?.fullname ?? "-" },
+                    { label: "Bệnh nhân", value: row.patient?.fullname ?? "-" },
+                    {
+                      label: "Lịch hẹn liên quan",
+                      value: row.appointment_id ?? "-",
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                  footer={
+                    row.comment ? (
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                          Nhận xét
+                        </div>
+                        <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                          {row.comment}
+                        </p>
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                        {row.comment}
-                      </p>
-                    </div>
-                  ) : null
-                }
-              />
-              {canUpdate ? (
-                <SatisfactionRatingEditDialog
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
+                    ) : null
                   }
                 />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <SatisfactionRatingEditDialog
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -2569,16 +3661,18 @@ function ExaminationResultFormDialog({
   const appointment = appointmentDetail.data?.data;
   const isFormValid = Boolean(
     (mode === "edit" || lookupAppointmentId > 0) &&
-      symptoms.trim() &&
-      diagnosis.trim() &&
-      treatment.trim() &&
-      prescription.trim(),
+    symptoms.trim() &&
+    diagnosis.trim() &&
+    treatment.trim() &&
+    prescription.trim(),
   );
 
   return (
     <FormDialog
       trigger={trigger}
-      title={mode === "create" ? "Thêm kết quả khám" : `Sửa kết quả #${initial?.id}`}
+      title={
+        mode === "create" ? "Thêm kết quả khám" : `Sửa kết quả #${initial?.id}`
+      }
       isSubmitting={create.isPending || update.isPending}
       submitDisabled={!isFormValid}
       onOpen={() => {
@@ -2705,13 +3799,51 @@ function ExamResultsModule({
   scope,
 }: ModuleViewProps & { scope?: "admin" | "doctor" }) {
   const isDoctorScope = scope === "doctor";
+  const [dateFilter, setDateFilter] = useState("");
+  const [toDateFilter, setToDateFilter] = useState("");
+  const [doctorFilter, setDoctorFilter] = useState<number | undefined>();
+
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const debouncedDoctorSearch = useDebouncedValue(doctorSearch, 350);
+  const [doctorPickerPage, setDoctorPickerPage] = useState(1);
+  const doctorPickerQuery = useDoctors(
+    {
+      page: doctorPickerPage,
+      limit: 20,
+      search: debouncedDoctorSearch || undefined,
+    },
+    { enabled: !isDoctorScope },
+  );
+  const doctorPickerItems = (doctorPickerQuery.data?.data?.doctors ?? []).map(
+    (d) => ({ value: d.id, label: d.fullname }),
+  );
+  const selectedDoctor = (doctorPickerQuery.data?.data?.doctors ?? []).find(
+    (d) => d.id === doctorFilter,
+  );
+
+  const invalidDateRange = Boolean(
+    dateFilter && toDateFilter && dateFilter > toDateFilter,
+  );
   const doctorResults = useDoctorExaminationResults(
-    { page, limit },
-    { enabled: isDoctorScope },
+    {
+      page,
+      limit,
+      search: search || undefined,
+      fromDate: dateFilter || undefined,
+      toDate: toDateFilter || undefined,
+    },
+    { enabled: isDoctorScope && !invalidDateRange },
   );
   const adminResults = useExaminationResults(
-    { page, limit, search: search || undefined },
-    { enabled: !isDoctorScope },
+    {
+      page,
+      limit,
+      search: search || undefined,
+      fromDate: dateFilter || undefined,
+      toDate: toDateFilter || undefined,
+      doctorId: doctorFilter,
+    },
+    { enabled: !isDoctorScope && !invalidDateRange },
   );
   const { data, isLoading, isError, refetch } = isDoctorScope
     ? doctorResults
@@ -2733,157 +3865,211 @@ function ExamResultsModule({
     PERMISSIONS.EXAMINATION_RESULT_MANAGE,
   );
 
+  const hasActiveFilters = Boolean(dateFilter || toDateFilter || doctorFilter);
+  const resetFilters = () => {
+    setDateFilter("");
+    setToDateFilter("");
+    setDoctorFilter(undefined);
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Kết quả khám"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <ExaminationResultFormDialog
-            mode="create"
-            trigger={<Button size="sm">+ Thêm kết quả</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        {
-          key: "patient",
-          label: "Bệnh nhân",
-          render: (row) => row.patient?.fullname ?? "-",
-        },
-        {
-          key: "doctor",
-          label: "Bác sĩ",
-          render: (row) => row.doctor?.fullname ?? "-",
-        },
-        {
-          key: "diagnosis",
-          label: "Chẩn đoán",
-          render: (row) => row.diagnosis ?? "-",
-        },
-        {
-          key: "examined_at",
-          label: "Ngày khám",
-          render: (row) => row.examined_at ?? row.created_at ?? "-",
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Kết quả khám #${row.id}`}
-                description={row.diagnosis ?? ""}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Bệnh nhân", value: row.patient?.fullname ?? "-" },
-                  { label: "Bác sĩ", value: row.doctor?.fullname ?? "-" },
-                  { label: "Chẩn đoán", value: row.diagnosis ?? "-" },
-                  {
-                    label: "Ngày khám",
-                    value: formatDate(row.examined_at ?? row.created_at),
-                  },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-                footer={
-                  row.symptoms ||
-                  row.treatment ||
-                  row.prescription ||
-                  row.notes ? (
-                    <div className="space-y-3">
-                      {row.symptoms ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Triệu chứng
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <DateRangeFilter
+          fromId="exam-results-from-date"
+          fromValue={dateFilter}
+          onFromChange={(value) => {
+            setDateFilter(value);
+            onPageChange(1);
+          }}
+          toId="exam-results-to-date"
+          toValue={toDateFilter}
+          onToChange={(value) => {
+            setToDateFilter(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        {!isDoctorScope ? (
+          <div className="flex flex-col gap-1 w-56">
+            <label
+              htmlFor="exam-results-doctor-filter"
+              className="mono-label text-[10px] text-slate-500 dark:text-slate-400"
+            >
+              Bác sĩ
+            </label>
+            <SearchableSelect
+              id="exam-results-doctor-filter"
+              placeholder="Tất cả bác sĩ"
+              searchPlaceholder="Tìm theo tên bác sĩ..."
+              search={doctorSearch}
+              onSearchChange={(value) => {
+                setDoctorSearch(value);
+                setDoctorPickerPage(1);
+              }}
+              isLoading={doctorPickerQuery.isLoading}
+              page={doctorPickerPage}
+              totalPages={doctorPickerQuery.data?.data?.totalPages ?? 1}
+              onPageChange={setDoctorPickerPage}
+              items={doctorPickerItems}
+              selectedValue={doctorFilter}
+              selectedLabel={selectedDoctor ? selectedDoctor.fullname : null}
+              onSelect={(value) => {
+                setDoctorFilter(typeof value === "number" ? value : undefined);
+                onPageChange(1);
+              }}
+            />
+          </div>
+        ) : null}
+      </FilterBar>
+      <GenericList
+        title="Kết quả khám"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <ExaminationResultFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Thêm kết quả</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          {
+            key: "patient",
+            label: "Bệnh nhân",
+            render: (row) => row.patient?.fullname ?? "-",
+          },
+          {
+            key: "doctor",
+            label: "Bác sĩ",
+            render: (row) => row.doctor?.fullname ?? "-",
+          },
+          {
+            key: "diagnosis",
+            label: "Chẩn đoán",
+            render: (row) => row.diagnosis ?? "-",
+          },
+          {
+            key: "examined_at",
+            label: "Ngày khám",
+            render: (row) => row.examined_at ?? row.created_at ?? "-",
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Kết quả khám #${row.id}`}
+                  description={row.diagnosis ?? ""}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Bệnh nhân", value: row.patient?.fullname ?? "-" },
+                    { label: "Bác sĩ", value: row.doctor?.fullname ?? "-" },
+                    { label: "Chẩn đoán", value: row.diagnosis ?? "-" },
+                    {
+                      label: "Ngày khám",
+                      value: formatDate(row.examined_at ?? row.created_at),
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                  footer={
+                    row.symptoms ||
+                    row.treatment ||
+                    row.prescription ||
+                    row.notes ? (
+                      <div className="space-y-3">
+                        {row.symptoms ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Triệu chứng
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.symptoms}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.symptoms}
-                          </p>
-                        </div>
-                      ) : null}
-                      {row.treatment ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Phác đồ
+                        ) : null}
+                        {row.treatment ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Phác đồ
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.treatment}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.treatment}
-                          </p>
-                        </div>
-                      ) : null}
-                      {row.prescription ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Đơn thuốc
+                        ) : null}
+                        {row.prescription ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Đơn thuốc
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.prescription}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.prescription}
-                          </p>
-                        </div>
-                      ) : null}
-                      {row.notes ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Ghi chú
+                        ) : null}
+                        {row.notes ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Ghi chú
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.notes}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.notes}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null
-                }
-              />
-              {canUpdate ? (
-                <ExaminationResultFormDialog
-                  mode="edit"
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
+                        ) : null}
+                      </div>
+                    ) : null
                   }
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa kết quả khám"
-                  description={`Xóa kết quả khám #${row.id}?`}
-                  destructive
-                  isSubmitting={deleteResult.isPending}
-                  onConfirm={() => deleteResult.mutateAsync(row.id)}
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <ExaminationResultFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa kết quả khám"
+                    description={`Xóa kết quả khám #${row.id}?`}
+                    destructive
+                    isSubmitting={deleteResult.isPending}
+                    onConfirm={() => deleteResult.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
-function AppointmentCreateDialog({
-  trigger,
-}: {
-  trigger: ReactNode;
-}) {
+function AppointmentCreateDialog({ trigger }: { trigger: ReactNode }) {
   const create = useCreateAppointment();
   const [doctorId, setDoctorId] = useState<number | undefined>();
   const [scheduleId, setScheduleId] = useState<number | undefined>();
@@ -2949,11 +4135,7 @@ function AppointmentCreateDialog({
     const term = scheduleSearch.trim().toLowerCase();
     if (!term) return flatSchedules;
     return flatSchedules.filter((schedule) =>
-      [
-        schedule.day_of_week,
-        schedule.start_time ?? "",
-        schedule.end_time ?? "",
-      ]
+      [schedule.day_of_week, schedule.start_time ?? "", schedule.end_time ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(term),
@@ -3128,7 +4310,11 @@ function AppointmentCreateDialog({
         />
       </FormField>
 
-      <FormField label="Bệnh nhân (người thân)" htmlFor="appt-relative" required>
+      <FormField
+        label="Bệnh nhân (người thân)"
+        htmlFor="appt-relative"
+        required
+      >
         <SearchableSelect
           id="appt-relative"
           placeholder="-- Chọn bệnh nhân --"
@@ -3162,192 +4348,6 @@ function AppointmentCreateDialog({
   );
 }
 
-type SearchableSelectItem = {
-  value: number | string;
-  label: string;
-  hint?: string;
-};
-
-type SearchableSelectProps = {
-  id?: string;
-  placeholder?: string;
-  searchPlaceholder?: string;
-  search: string;
-  onSearchChange: (value: string) => void;
-  isLoading?: boolean;
-  page: number;
-  totalPages: number;
-  onPageChange: (next: number) => void;
-  disabled?: boolean;
-  items: SearchableSelectItem[];
-  selectedValue?: number | string;
-  selectedLabel?: string | null;
-  onSelect: (value: number | string | undefined) => void;
-};
-
-function SearchableSelect({
-  id,
-  placeholder = "-- Chọn --",
-  searchPlaceholder = "Tìm kiếm...",
-  search,
-  onSearchChange,
-  isLoading,
-  page,
-  totalPages,
-  onPageChange,
-  disabled,
-  items,
-  selectedValue,
-  selectedLabel,
-  onSelect,
-}: SearchableSelectProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handleClick = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
-      }
-    };
-    const handleKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKey);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      const timer = window.setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 0);
-      return () => window.clearTimeout(timer);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (disabled && open) setOpen(false);
-  }, [disabled, open]);
-
-  const triggerLabel = selectedLabel ?? placeholder;
-  const showPagination = totalPages > 1;
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        id={id}
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((prev) => !prev)}
-        className={`flex h-11 w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none transition focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-600 ${open ? "border-primary ring-2 ring-primary/20" : ""}`}
-      >
-        <span
-          className={`truncate text-left ${selectedLabel ? "text-slate-900 dark:text-slate-100" : "text-slate-400 dark:text-slate-500"}`}
-        >
-          {triggerLabel}
-        </span>
-        <ChevronDown
-          className={`size-4 shrink-0 text-slate-400 dark:text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}
-        />
-      </button>
-
-      {open && !disabled ? (
-        <div className="absolute left-0 right-0 top-full z-30 mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center gap-2 border-b border-slate-200 bg-white px-3 dark:border-slate-800 dark:bg-slate-900">
-            <Search className="size-4 text-slate-400" />
-            <input
-              ref={searchInputRef}
-              type="text"
-              placeholder={searchPlaceholder}
-              value={search}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="h-10 flex-1 border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:outline-none focus-visible:outline-none focus-visible:ring-0 dark:text-slate-100 dark:placeholder:text-slate-400"
-            />
-          </div>
-
-          <div className="max-h-60 overflow-y-auto py-1">
-            {isLoading ? (
-              <div className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
-                Đang tải...
-              </div>
-            ) : items.length === 0 ? (
-              <div className="px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
-                Không có kết quả.
-              </div>
-            ) : (
-              items.map((item) => {
-                const isSelected = item.value === selectedValue;
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => {
-                      onSelect(item.value);
-                      setOpen(false);
-                    }}
-                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 ${isSelected ? "bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-emerald-400" : "text-slate-800 dark:text-slate-200"}`}
-                  >
-                    <span className="flex flex-col">
-                      <span className="truncate">{item.label}</span>
-                      {item.hint ? (
-                        <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                          {item.hint}
-                        </span>
-                      ) : null}
-                    </span>
-                    {isSelected ? (
-                      <Check className="size-4 shrink-0 text-primary dark:text-emerald-400" />
-                    ) : null}
-                  </button>
-                );
-              })
-            )}
-          </div>
-
-          {showPagination ? (
-            <div className="flex items-center justify-between gap-2 border-t border-slate-200 bg-white px-2 py-1.5 dark:border-slate-800 dark:bg-slate-900">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page <= 1 || isLoading}
-                onClick={() => onPageChange(Math.max(1, page - 1))}
-              >
-                Trước
-              </Button>
-              <span className="text-xs text-slate-500 dark:text-slate-400">
-                Trang {page}/{totalPages}
-                {isLoading ? " • đang tải..." : ""}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={page >= totalPages || isLoading}
-                onClick={() =>
-                  onPageChange(Math.min(totalPages, page + 1))
-                }
-              >
-                Sau
-              </Button>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
 function RelativeFormDialog({
   trigger,
   initial,
@@ -3369,7 +4369,9 @@ function RelativeFormDialog({
   return (
     <FormDialog
       trigger={trigger}
-      title={mode === "create" ? "Thêm người thân" : `Sửa người thân #${initial?.id}`}
+      title={
+        mode === "create" ? "Thêm người thân" : `Sửa người thân #${initial?.id}`
+      }
       isSubmitting={create.isPending || update.isPending}
       onOpen={() => {
         if (mode === "edit") {
@@ -3377,7 +4379,11 @@ function RelativeFormDialog({
           setPhone(initial?.phone ?? "");
           setDateOfBirth(initial?.date_of_birth ?? "");
           setGender(
-            initial?.gender === undefined ? "" : initial.gender ? "male" : "female",
+            initial?.gender === undefined
+              ? ""
+              : initial.gender
+                ? "male"
+                : "female",
           );
         }
       }}
@@ -3447,11 +4453,27 @@ function RelativesModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useAdminRelatives({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [relationshipFilter, setRelationshipFilter] = useState("");
+  const [genderFilter, setGenderFilter] = useState("");
+  const [dobFrom, setDobFrom] = useState("");
+  const [dobTo, setDobTo] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"" | "asc" | "desc">("");
+  const relationshipsQuery = useRelationships({ page: 1, limit: 100 });
+  const relationships = relationshipsQuery.data?.data?.relationships ?? [];
+
+  const { data, isLoading, isError, refetch } = useAdminRelatives(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      relationshipCode: relationshipFilter || undefined,
+      gender: genderFilter === "" ? undefined : genderFilter === "true",
+      dobFrom: dobFrom || undefined,
+      dobTo: dobTo || undefined,
+      arrange: arrangeFilter || undefined,
+    },
+    { enabled: !(dobFrom && dobTo && dobFrom > dobTo) },
+  );
   const rows = data?.data?.relatives ?? [];
   const total = data?.data?.total ?? 0;
   const deleteRelative = useDeleteRelative();
@@ -3470,103 +4492,212 @@ function RelativesModule({
   );
 
   return (
-    <GenericList
-      title="Người thân"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <RelativeFormDialog
-            mode="create"
-            trigger={<Button size="sm">+ Thêm người thân</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "fullname", label: "Họ tên", render: (row) => row.fullname },
-        { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
-        {
-          key: "relationship",
-          label: "Quan hệ",
-          render: (row) =>
-            row.relationship?.name ??
-            row.relationship?.relationship_code ??
-            "-",
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Người thân #${row.id}`}
-                description={row.fullname}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Họ tên", value: row.fullname },
-                  { label: "Số điện thoại", value: row.phone ?? "-" },
-                  {
-                    label: "Quan hệ",
-                    value:
-                      row.relationship?.name ??
-                      row.relationship?.relationship_code ??
-                      "-",
-                  },
-                  {
-                    label: "Mã quan hệ",
-                    value: row.relationship?.relationship_code ?? "-",
-                  },
-                  {
-                    label: "Giới tính",
-                    value:
-                      row.gender === undefined ? "-" : row.gender ? "Nam" : "Nữ",
-                  },
-                  { label: "Ngày sinh", value: formatDate(row.date_of_birth) },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-              />
-              {canUpdate ? (
-                <RelativeFormDialog
-                  mode="edit"
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
-                  }
+    <div className="space-y-4">
+      <FilterBar
+        hasActiveFilters={Boolean(
+          relationshipFilter ||
+          genderFilter ||
+          dobFrom ||
+          dobTo ||
+          arrangeFilter,
+        )}
+        activeFilterCount={
+          [
+            relationshipFilter,
+            genderFilter,
+            dobFrom || dobTo,
+            arrangeFilter,
+          ].filter(Boolean).length
+        }
+        onReset={() => {
+          setRelationshipFilter("");
+          setGenderFilter("");
+          setDobFrom("");
+          setDobTo("");
+          setArrangeFilter("");
+          onPageChange(1);
+        }}
+      >
+        <SelectFilter
+          id="relatives-relationship-filter"
+          label="Mối quan hệ"
+          value={relationshipFilter}
+          onChange={(value) => {
+            setRelationshipFilter(value);
+            onPageChange(1);
+          }}
+          options={relationships.map((r) => ({
+            value: r.relationship_code,
+            label: r.relationship_name || r.name || r.relationship_code,
+          }))}
+          placeholder="Tất cả mối quan hệ"
+        />
+        <SelectFilter
+          id="relatives-gender-filter"
+          label="Giới tính"
+          value={genderFilter}
+          onChange={(value) => {
+            setGenderFilter(value);
+            onPageChange(1);
+          }}
+          options={[
+            { value: "true", label: "Nam" },
+            { value: "false", label: "Nữ" },
+          ]}
+          placeholder="Tất cả"
+        />
+        <DateRangeFilter
+          fromId="relatives-dob-from"
+          fromLabel="Sinh từ ngày"
+          fromValue={dobFrom}
+          onFromChange={(value) => {
+            setDobFrom(value);
+            onPageChange(1);
+          }}
+          toId="relatives-dob-to"
+          toLabel="Sinh đến ngày"
+          toValue={dobTo}
+          onToChange={(value) => {
+            setDobTo(value);
+            onPageChange(1);
+          }}
+          error={
+            dobFrom && dobTo && dobFrom > dobTo
+              ? "Khoảng ngày không hợp lệ"
+              : undefined
+          }
+        />
+        <SelectFilter
+          id="relatives-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter(value as "" | "asc" | "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mặc định"
+        />
+      </FilterBar>
+      <GenericList
+        title="Người thân"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <RelativeFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Thêm người thân</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "fullname", label: "Họ tên", render: (row) => row.fullname },
+          { key: "phone", label: "SĐT", render: (row) => row.phone ?? "-" },
+          {
+            key: "relationship",
+            label: "Quan hệ",
+            render: (row) =>
+              row.relationship?.name ??
+              row.relationship?.relationship_code ??
+              "-",
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Người thân #${row.id}`}
+                  description={row.fullname}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Họ tên", value: row.fullname },
+                    { label: "Số điện thoại", value: row.phone ?? "-" },
+                    {
+                      label: "Quan hệ",
+                      value:
+                        row.relationship?.name ??
+                        row.relationship?.relationship_code ??
+                        "-",
+                    },
+                    {
+                      label: "Mã quan hệ",
+                      value: row.relationship?.relationship_code ?? "-",
+                    },
+                    {
+                      label: "Giới tính",
+                      value:
+                        row.gender === undefined
+                          ? "-"
+                          : row.gender
+                            ? "Nam"
+                            : "Nữ",
+                    },
+                    {
+                      label: "Ngày sinh",
+                      value: formatDate(row.date_of_birth),
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa người thân"
-                  description={`Xóa người thân #${row.id} (${row.fullname})?`}
-                  destructive
-                  isSubmitting={deleteRelative.isPending}
-                  onConfirm={() => deleteRelative.mutateAsync(row.id)}
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <RelativeFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa người thân"
+                    description={`Xóa người thân #${row.id} (${row.fullname})?`}
+                    destructive
+                    isSubmitting={deleteRelative.isPending}
+                    onConfirm={() => deleteRelative.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
+
+const BLOOD_TYPE_FILTER_OPTIONS = [
+  "A+",
+  "A-",
+  "B+",
+  "B-",
+  "AB+",
+  "AB-",
+  "O+",
+  "O-",
+].map((v) => ({ value: v, label: v }));
 
 function HealthProfilesModule({
   search,
@@ -3575,111 +4706,327 @@ function HealthProfilesModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useAdminHealthProfiles({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [bloodTypeFilter, setBloodTypeFilter] = useState("");
+  const [minHeartRate, setMinHeartRate] = useState("");
+  const [maxHeartRate, setMaxHeartRate] = useState("");
+  const [minGlucose, setMinGlucose] = useState("");
+  const [maxGlucose, setMaxGlucose] = useState("");
+  const [minCholesterol, setMinCholesterol] = useState("");
+  const [maxCholesterol, setMaxCholesterol] = useState("");
+  const [minWeight, setMinWeight] = useState("");
+  const [maxWeight, setMaxWeight] = useState("");
+  const [minHeight, setMinHeight] = useState("");
+  const [maxHeight, setMaxHeight] = useState("");
+  const debouncedMinHeartRate = useDebouncedValue(minHeartRate, 350);
+  const debouncedMaxHeartRate = useDebouncedValue(maxHeartRate, 350);
+  const debouncedMinGlucose = useDebouncedValue(minGlucose, 350);
+  const debouncedMaxGlucose = useDebouncedValue(maxGlucose, 350);
+  const debouncedMinCholesterol = useDebouncedValue(minCholesterol, 350);
+  const debouncedMaxCholesterol = useDebouncedValue(maxCholesterol, 350);
+  const debouncedMinWeight = useDebouncedValue(minWeight, 350);
+  const debouncedMaxWeight = useDebouncedValue(maxWeight, 350);
+  const debouncedMinHeight = useDebouncedValue(minHeight, 350);
+  const debouncedMaxHeight = useDebouncedValue(maxHeight, 350);
+  const invalidHealthRanges = [
+    [minHeartRate, maxHeartRate],
+    [minGlucose, maxGlucose],
+    [minCholesterol, maxCholesterol],
+    [minWeight, maxWeight],
+    [minHeight, maxHeight],
+  ].some(([min, max]) => Boolean(min && max && Number(min) > Number(max)));
+
+  const { data, isLoading, isError, refetch } = useAdminHealthProfiles(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      blood_type: bloodTypeFilter || undefined,
+      minHeartRate:
+        debouncedMinHeartRate !== ""
+          ? Number(debouncedMinHeartRate)
+          : undefined,
+      maxHeartRate:
+        debouncedMaxHeartRate !== ""
+          ? Number(debouncedMaxHeartRate)
+          : undefined,
+      minGlucoseLevel:
+        debouncedMinGlucose !== "" ? Number(debouncedMinGlucose) : undefined,
+      maxGlucoseLevel:
+        debouncedMaxGlucose !== "" ? Number(debouncedMaxGlucose) : undefined,
+      minCholesterolLevel:
+        debouncedMinCholesterol !== ""
+          ? Number(debouncedMinCholesterol)
+          : undefined,
+      maxCholesterolLevel:
+        debouncedMaxCholesterol !== ""
+          ? Number(debouncedMaxCholesterol)
+          : undefined,
+      minWeight:
+        debouncedMinWeight !== "" ? Number(debouncedMinWeight) : undefined,
+      maxWeight:
+        debouncedMaxWeight !== "" ? Number(debouncedMaxWeight) : undefined,
+      minHeight:
+        debouncedMinHeight !== "" ? Number(debouncedMinHeight) : undefined,
+      maxHeight:
+        debouncedMaxHeight !== "" ? Number(debouncedMaxHeight) : undefined,
+    },
+    { enabled: !invalidHealthRanges },
+  );
   const rows = data?.data?.healthProfiles ?? [];
   const total = data?.data?.total ?? 0;
 
+  const hasActiveFilters = Boolean(
+    bloodTypeFilter ||
+    minHeartRate ||
+    maxHeartRate ||
+    minGlucose ||
+    maxGlucose ||
+    minCholesterol ||
+    maxCholesterol ||
+    minWeight ||
+    maxWeight ||
+    minHeight ||
+    maxHeight,
+  );
+  const resetFilters = () => {
+    setBloodTypeFilter("");
+    setMinHeartRate("");
+    setMaxHeartRate("");
+    setMinGlucose("");
+    setMaxGlucose("");
+    setMinCholesterol("");
+    setMaxCholesterol("");
+    setMinWeight("");
+    setMaxWeight("");
+    setMinHeight("");
+    setMaxHeight("");
+    onPageChange(1);
+  };
+
   return (
-    <GenericList
-      title="Hồ sơ sức khỏe"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        {
-          key: "patient",
-          label: "Người dùng",
-          render: (row) => row.patient?.fullname ?? "-",
-        },
-        {
-          key: "blood_type",
-          label: "Nhóm máu",
-          render: (row) => row.blood_type ?? "-",
-        },
-        {
-          key: "height",
-          label: "Chiều cao",
-          render: (row) => (row.height ? `${row.height} cm` : "-"),
-        },
-        {
-          key: "weight",
-          label: "Cân nặng",
-          render: (row) => (row.weight ? `${row.weight} kg` : "-"),
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Hồ sơ sức khỏe #${row.id}`}
-                description={row.patient?.fullname ?? ""}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Người dùng", value: row.patient?.fullname ?? "-" },
-                  {
-                    label: "Quan hệ",
-                    value:
-                      row.patient?.relationship?.name ??
-                      row.patient?.relationship?.relationship_code ??
-                      "-",
-                  },
-                  { label: "Nhóm máu", value: row.blood_type ?? "-" },
-                  {
-                    label: "Chiều cao",
-                    value: row.height ? `${row.height} cm` : "-",
-                  },
-                  {
-                    label: "Cân nặng",
-                    value: row.weight ? `${row.weight} kg` : "-",
-                  },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-                footer={
-                  row.allergies || row.medical_history ? (
-                    <div className="space-y-3">
-                      {row.allergies ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Dị ứng
+    <div className="space-y-4">
+      <FilterBar hasActiveFilters={hasActiveFilters} onReset={resetFilters}>
+        <SelectFilter
+          id="health-profiles-blood-type-filter"
+          label="Nhóm máu"
+          value={bloodTypeFilter}
+          onChange={(value) => {
+            setBloodTypeFilter(value);
+            onPageChange(1);
+          }}
+          options={BLOOD_TYPE_FILTER_OPTIONS}
+          placeholder="Tất cả nhóm máu"
+        />
+        <NumberRangeFilter
+          label="Nhịp tim (bpm)"
+          minId="health-profiles-min-heart-rate"
+          maxId="health-profiles-max-heart-rate"
+          minValue={minHeartRate}
+          maxValue={maxHeartRate}
+          onMinChange={(v) => {
+            setMinHeartRate(v);
+            onPageChange(1);
+          }}
+          onMaxChange={(v) => {
+            setMaxHeartRate(v);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            minHeartRate &&
+            maxHeartRate &&
+            Number(minHeartRate) > Number(maxHeartRate)
+              ? "Khoảng không hợp lệ"
+              : undefined
+          }
+        />
+        <NumberRangeFilter
+          label="Đường huyết"
+          minId="health-profiles-min-glucose"
+          maxId="health-profiles-max-glucose"
+          minValue={minGlucose}
+          maxValue={maxGlucose}
+          onMinChange={(v) => {
+            setMinGlucose(v);
+            onPageChange(1);
+          }}
+          onMaxChange={(v) => {
+            setMaxGlucose(v);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            minGlucose && maxGlucose && Number(minGlucose) > Number(maxGlucose)
+              ? "Khoảng không hợp lệ"
+              : undefined
+          }
+        />
+        <NumberRangeFilter
+          label="Cholesterol"
+          minId="health-profiles-min-cholesterol"
+          maxId="health-profiles-max-cholesterol"
+          minValue={minCholesterol}
+          maxValue={maxCholesterol}
+          onMinChange={(v) => {
+            setMinCholesterol(v);
+            onPageChange(1);
+          }}
+          onMaxChange={(v) => {
+            setMaxCholesterol(v);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            minCholesterol &&
+            maxCholesterol &&
+            Number(minCholesterol) > Number(maxCholesterol)
+              ? "Khoảng không hợp lệ"
+              : undefined
+          }
+        />
+        <NumberRangeFilter
+          label="Cân nặng (kg)"
+          minId="health-profiles-min-weight"
+          maxId="health-profiles-max-weight"
+          minValue={minWeight}
+          maxValue={maxWeight}
+          onMinChange={(v) => {
+            setMinWeight(v);
+            onPageChange(1);
+          }}
+          onMaxChange={(v) => {
+            setMaxWeight(v);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            minWeight && maxWeight && Number(minWeight) > Number(maxWeight)
+              ? "Khoảng không hợp lệ"
+              : undefined
+          }
+        />
+        <NumberRangeFilter
+          label="Chiều cao (cm)"
+          minId="health-profiles-min-height"
+          maxId="health-profiles-max-height"
+          minValue={minHeight}
+          maxValue={maxHeight}
+          onMinChange={(v) => {
+            setMinHeight(v);
+            onPageChange(1);
+          }}
+          onMaxChange={(v) => {
+            setMaxHeight(v);
+            onPageChange(1);
+          }}
+          min={0}
+          error={
+            minHeight && maxHeight && Number(minHeight) > Number(maxHeight)
+              ? "Khoảng không hợp lệ"
+              : undefined
+          }
+        />
+      </FilterBar>
+      <GenericList
+        title="Hồ sơ sức khỏe"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          {
+            key: "patient",
+            label: "Người dùng",
+            render: (row) => row.patient?.fullname ?? "-",
+          },
+          {
+            key: "blood_type",
+            label: "Nhóm máu",
+            render: (row) => row.blood_type ?? "-",
+          },
+          {
+            key: "height",
+            label: "Chiều cao",
+            render: (row) => (row.height ? `${row.height} cm` : "-"),
+          },
+          {
+            key: "weight",
+            label: "Cân nặng",
+            render: (row) => (row.weight ? `${row.weight} kg` : "-"),
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Hồ sơ sức khỏe #${row.id}`}
+                  description={row.patient?.fullname ?? ""}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    {
+                      label: "Người dùng",
+                      value: row.patient?.fullname ?? "-",
+                    },
+                    {
+                      label: "Quan hệ",
+                      value:
+                        row.patient?.relationship?.name ??
+                        row.patient?.relationship?.relationship_code ??
+                        "-",
+                    },
+                    { label: "Nhóm máu", value: row.blood_type ?? "-" },
+                    {
+                      label: "Chiều cao",
+                      value: row.height ? `${row.height} cm` : "-",
+                    },
+                    {
+                      label: "Cân nặng",
+                      value: row.weight ? `${row.weight} kg` : "-",
+                    },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                  footer={
+                    row.allergies || row.medical_history ? (
+                      <div className="space-y-3">
+                        {row.allergies ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Dị ứng
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.allergies}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.allergies}
-                          </p>
-                        </div>
-                      ) : null}
-                      {row.medical_history ? (
-                        <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                          <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                            Tiền sử bệnh
+                        ) : null}
+                        {row.medical_history ? (
+                          <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                            <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                              Tiền sử bệnh
+                            </div>
+                            <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                              {row.medical_history}
+                            </p>
                           </div>
-                          <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                            {row.medical_history}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null
-                }
-              />
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                        ) : null}
+                      </div>
+                    ) : null
+                  }
+                />
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -3758,7 +5105,10 @@ function RelationshipFormDialog({
           id="relationship-name"
           value={form.relationship_name}
           onChange={(event) =>
-            setForm((prev) => ({ ...prev, relationship_name: event.target.value }))
+            setForm((prev) => ({
+              ...prev,
+              relationship_name: event.target.value,
+            }))
           }
         />
       </FormField>
@@ -3782,10 +5132,12 @@ function RelationshipsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
+  const [arrangeFilter, setArrangeFilter] = useState<"" | "asc" | "desc">("");
   const { data, isLoading, isError, refetch } = useRelationships({
     page,
     limit,
     search: search || undefined,
+    arrange: arrangeFilter || undefined,
   });
   const rows = data?.data?.relationships ?? [];
   const total = data?.data?.total ?? 0;
@@ -3806,93 +5158,121 @@ function RelationshipsModule({
   );
 
   return (
-    <GenericList
-      title="Quan hệ"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.relationship_code}
-      toolbar={
-        canCreate ? (
-          <RelationshipFormDialog
-            mode="create"
-            trigger={<Button size="sm">+ Thêm quan hệ</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        {
-          key: "relationship_name",
-          label: "Tên hiển thị",
-          render: (row) => (
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                {row.relationship_name || row.name || row.relationship_code}
-              </span>
-              {row.relationship_name || row.name ? (
-                <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Mã: {row.relationship_code}
+    <div className="space-y-4">
+      <FilterBar
+        hasActiveFilters={Boolean(arrangeFilter)}
+        activeFilterCount={arrangeFilter ? 1 : 0}
+        onReset={() => {
+          setArrangeFilter("");
+          onPageChange(1);
+        }}
+      >
+        <SelectFilter
+          id="relationships-arrange-filter"
+          label="Sắp xếp tên"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter(value as "" | "asc" | "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "asc", label: "A → Z" },
+            { value: "desc", label: "Z → A" },
+          ]}
+          placeholder="Mặc định"
+        />
+      </FilterBar>
+      <GenericList
+        title="Quan hệ"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.relationship_code}
+        toolbar={
+          canCreate ? (
+            <RelationshipFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Thêm quan hệ</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          {
+            key: "relationship_name",
+            label: "Tên hiển thị",
+            render: (row) => (
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {row.relationship_name || row.name || row.relationship_code}
                 </span>
-              ) : null}
-            </div>
-          ),
-        },
-        {
-          key: "description",
-          label: "Mô tả",
-          render: (row) => row.description ?? "-",
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Quan hệ "${row.relationship_name || row.name || row.relationship_code}"`}
-                rows={[
-                  { label: "Mã quan hệ", value: row.relationship_code },
-                  { label: "Tên hiển thị", value: row.relationship_name || row.name || "-" },
-                  { label: "Mô tả", value: row.description ?? "-" },
-                ]}
-              />
-              {canUpdate ? (
-                <RelationshipFormDialog
-                  mode="edit"
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
-                  }
+                {row.relationship_name || row.name ? (
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Mã: {row.relationship_code}
+                  </span>
+                ) : null}
+              </div>
+            ),
+          },
+          {
+            key: "description",
+            label: "Mô tả",
+            render: (row) => row.description ?? "-",
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Quan hệ "${row.relationship_name || row.name || row.relationship_code}"`}
+                  rows={[
+                    { label: "Mã quan hệ", value: row.relationship_code },
+                    {
+                      label: "Tên hiển thị",
+                      value: row.relationship_name || row.name || "-",
+                    },
+                    { label: "Mô tả", value: row.description ?? "-" },
+                  ]}
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa quan hệ"
-                  description={`Xóa quan hệ "${row.name || row.relationship_code}"?`}
-                  destructive
-                  isSubmitting={deleteRelationship.isPending}
-                  onConfirm={() =>
-                    deleteRelationship.mutateAsync(row.relationship_code)
-                  }
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <RelationshipFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa quan hệ"
+                    description={`Xóa quan hệ "${row.name || row.relationship_code}"?`}
+                    destructive
+                    isSubmitting={deleteRelationship.isPending}
+                    onConfirm={() =>
+                      deleteRelationship.mutateAsync(row.relationship_code)
+                    }
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -4030,11 +5410,23 @@ function SpecialtiesModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useSpecialties({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrange, setArrange] = useState<"" | "asc" | "desc">("");
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
+  );
+  const { data, isLoading, isError, refetch } = useSpecialties(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      arrange: arrange || undefined,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = data?.data?.specialties ?? [];
   const total = data?.data?.total ?? 0;
   const deleteSpecialty = useDeleteSpecialty();
@@ -4053,94 +5445,120 @@ function SpecialtiesModule({
   );
 
   return (
-    <GenericList
-      title="Chuyên khoa"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <SpecialtyCreateDialog
-            trigger={<Button size="sm">+ Thêm chuyên khoa</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "name", label: "Tên", render: (row) => row.name },
-        {
-          key: "description",
-          label: "Mô tả",
-          render: (row) => row.description,
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Chuyên khoa #${row.id}`}
-                description={row.name}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Tên", value: row.name },
-                  { label: "Slug", value: row.slug ?? "-" },
-                  { label: "Mô tả", value: row.description ?? "-" },
-                  { label: "Ảnh", value: row.img_url ?? "-" },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-                footer={
-                  row.img_url ? (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                        Ảnh đại diện
+    <div className="space-y-4">
+      <CreatedSortFilters
+        prefix="specialties"
+        from={createdFrom}
+        to={createdTo}
+        arrange={arrange}
+        onFromChange={(value) => {
+          setCreatedFrom(value);
+          onPageChange(1);
+        }}
+        onToChange={(value) => {
+          setCreatedTo(value);
+          onPageChange(1);
+        }}
+        onArrangeChange={(value) => {
+          setArrange(value);
+          onPageChange(1);
+        }}
+        onReset={() => {
+          setCreatedFrom("");
+          setCreatedTo("");
+          setArrange("");
+          onPageChange(1);
+        }}
+      />
+      <GenericList
+        title="Chuyên khoa"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <SpecialtyCreateDialog
+              trigger={<Button size="sm">+ Thêm chuyên khoa</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "name", label: "Tên", render: (row) => row.name },
+          {
+            key: "description",
+            label: "Mô tả",
+            render: (row) => row.description,
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Chuyên khoa #${row.id}`}
+                  description={row.name}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Tên", value: row.name },
+                    { label: "Slug", value: row.slug ?? "-" },
+                    { label: "Mô tả", value: row.description ?? "-" },
+                    { label: "Ảnh", value: row.img_url ?? "-" },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                  footer={
+                    row.img_url ? (
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                          Ảnh đại diện
+                        </div>
+                        <img
+                          src={row.img_url}
+                          alt={row.name}
+                          className="mt-2 max-h-48 w-full rounded-md object-cover"
+                        />
                       </div>
-                      <img
-                        src={row.img_url}
-                        alt={row.name}
-                        className="mt-2 max-h-48 w-full rounded-md object-cover"
-                      />
-                    </div>
-                  ) : null
-                }
-              />
-              {canUpdate ? (
-                <SpecialtyEditDialog
-                  specialty={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
+                    ) : null
                   }
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa chuyên khoa"
-                  description={`Xóa chuyên khoa #${row.id}?`}
-                  destructive
-                  isSubmitting={deleteSpecialty.isPending}
-                  onConfirm={() => deleteSpecialty.mutateAsync(row.id)}
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <SpecialtyEditDialog
+                    specialty={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa chuyên khoa"
+                    description={`Xóa chuyên khoa #${row.id}?`}
+                    destructive
+                    isSubmitting={deleteSpecialty.isPending}
+                    onConfirm={() => deleteSpecialty.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -4191,11 +5609,23 @@ function TagsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useTags({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrange, setArrange] = useState<"" | "asc" | "desc">("");
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
+  );
+  const { data, isLoading, isError, refetch } = useTags(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      arrange: arrange || undefined,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = data?.data?.tags ?? [];
   const total = data?.data?.total ?? 0;
   const deleteTag = useDeleteTag();
@@ -4205,75 +5635,101 @@ function TagsModule({
   const canDelete = can(PERMISSIONS.TAG_DELETE, PERMISSIONS.TAG_MANAGE);
 
   return (
-    <GenericList
-      title="Tags"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <TagFormDialog
-            mode="create"
-            trigger={<Button size="sm">+ Thêm tag</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "name", label: "Tên tag", render: (row) => row.name },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Tag #${row.id}`}
-                description={row.name}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Tên", value: row.name },
-                  { label: "Slug", value: row.slug ?? "-" },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-              />
-              {canUpdate ? (
-                <TagFormDialog
-                  mode="edit"
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
-                  }
+    <div className="space-y-4">
+      <CreatedSortFilters
+        prefix="tags"
+        from={createdFrom}
+        to={createdTo}
+        arrange={arrange}
+        onFromChange={(value) => {
+          setCreatedFrom(value);
+          onPageChange(1);
+        }}
+        onToChange={(value) => {
+          setCreatedTo(value);
+          onPageChange(1);
+        }}
+        onArrangeChange={(value) => {
+          setArrange(value);
+          onPageChange(1);
+        }}
+        onReset={() => {
+          setCreatedFrom("");
+          setCreatedTo("");
+          setArrange("");
+          onPageChange(1);
+        }}
+      />
+      <GenericList
+        title="Tags"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <TagFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Thêm tag</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "name", label: "Tên tag", render: (row) => row.name },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Tag #${row.id}`}
+                  description={row.name}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Tên", value: row.name },
+                    { label: "Slug", value: row.slug ?? "-" },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa tag"
-                  description={`Xóa tag #${row.id}?`}
-                  destructive
-                  isSubmitting={deleteTag.isPending}
-                  onConfirm={() => deleteTag.mutateAsync(row.id)}
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <TagFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa tag"
+                    description={`Xóa tag #${row.id}?`}
+                    destructive
+                    isSubmitting={deleteTag.isPending}
+                    onConfirm={() => deleteTag.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -4349,11 +5805,23 @@ function TopicsModule({
   onPageChange,
   onLimitChange,
 }: ModuleViewProps) {
-  const { data, isLoading, isError, refetch } = useTopics({
-    page,
-    limit,
-    search: search || undefined,
-  });
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrange, setArrange] = useState<"" | "asc" | "desc">("");
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
+  );
+  const { data, isLoading, isError, refetch } = useTopics(
+    {
+      page,
+      limit,
+      search: search || undefined,
+      createdFrom: createdFrom || undefined,
+      createdTo: createdTo || undefined,
+      arrange: arrange || undefined,
+    },
+    { enabled: !invalidDateRange },
+  );
   const rows = data?.data?.topics ?? [];
   const total = data?.data?.total ?? 0;
   const deleteTopic = useDeleteTopic();
@@ -4363,92 +5831,118 @@ function TopicsModule({
   const canDelete = can(PERMISSIONS.TOPIC_DELETE, PERMISSIONS.TOPIC_MANAGE);
 
   return (
-    <GenericList
-      title="Topics"
-      rows={rows}
-      total={total}
-      page={page}
-      limit={limit}
-      onPageChange={onPageChange}
-      onLimitChange={onLimitChange}
-      isLoading={isLoading}
-      isError={isError}
-      onRetry={refetch}
-      rowKey={(row) => row.id}
-      toolbar={
-        canCreate ? (
-          <TopicFormDialog
-            mode="create"
-            trigger={<Button size="sm">+ Thêm chủ đề</Button>}
-          />
-        ) : null
-      }
-      columns={[
-        { key: "id", label: "ID", render: (row) => row.id },
-        { key: "name", label: "Chủ đề", render: (row) => row.name },
-        {
-          key: "description",
-          label: "Mô tả",
-          render: (row) => row.description,
-        },
-        {
-          key: "actions",
-          label: "Thao tác",
-          render: (row) => (
-            <ActionCell>
-              <ViewDetailButton
-                title={`Chủ đề #${row.id}`}
-                description={row.name}
-                rows={[
-                  { label: "ID", value: row.id },
-                  { label: "Tên", value: row.name },
-                  { label: "Slug", value: row.slug ?? "-" },
-                  { label: "Tạo lúc", value: formatDate(row.created_at) },
-                  { label: "Cập nhật", value: formatDate(row.updated_at) },
-                ]}
-                footer={
-                  row.description ? (
-                    <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
-                      <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
-                        Mô tả
+    <div className="space-y-4">
+      <CreatedSortFilters
+        prefix="topics"
+        from={createdFrom}
+        to={createdTo}
+        arrange={arrange}
+        onFromChange={(value) => {
+          setCreatedFrom(value);
+          onPageChange(1);
+        }}
+        onToChange={(value) => {
+          setCreatedTo(value);
+          onPageChange(1);
+        }}
+        onArrangeChange={(value) => {
+          setArrange(value);
+          onPageChange(1);
+        }}
+        onReset={() => {
+          setCreatedFrom("");
+          setCreatedTo("");
+          setArrange("");
+          onPageChange(1);
+        }}
+      />
+      <GenericList
+        title="Topics"
+        rows={rows}
+        total={total}
+        page={page}
+        limit={limit}
+        onPageChange={onPageChange}
+        onLimitChange={onLimitChange}
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={refetch}
+        rowKey={(row) => row.id}
+        toolbar={
+          canCreate ? (
+            <TopicFormDialog
+              mode="create"
+              trigger={<Button size="sm">+ Thêm chủ đề</Button>}
+            />
+          ) : null
+        }
+        columns={[
+          { key: "id", label: "ID", render: (row) => row.id },
+          { key: "name", label: "Chủ đề", render: (row) => row.name },
+          {
+            key: "description",
+            label: "Mô tả",
+            render: (row) => row.description,
+          },
+          {
+            key: "actions",
+            label: "Thao tác",
+            render: (row) => (
+              <ActionCell>
+                <ViewDetailButton
+                  title={`Chủ đề #${row.id}`}
+                  description={row.name}
+                  rows={[
+                    { label: "ID", value: row.id },
+                    { label: "Tên", value: row.name },
+                    { label: "Slug", value: row.slug ?? "-" },
+                    { label: "Tạo lúc", value: formatDate(row.created_at) },
+                    { label: "Cập nhật", value: formatDate(row.updated_at) },
+                  ]}
+                  footer={
+                    row.description ? (
+                      <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
+                        <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
+                          Mô tả
+                        </div>
+                        <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                          {row.description}
+                        </p>
                       </div>
-                      <p className="mt-2 whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
-                        {row.description}
-                      </p>
-                    </div>
-                  ) : null
-                }
-              />
-              {canUpdate ? (
-                <TopicFormDialog
-                  mode="edit"
-                  initial={row}
-                  trigger={
-                    <Button type="button" variant="outline" size="sm">
-                      Sửa
-                    </Button>
+                    ) : null
                   }
                 />
-              ) : null}
-              {canDelete ? (
-                <ConfirmDialog
-                  trigger={
-                    <Button type="button" variant="destructive" size="sm">
-                      Xóa
-                    </Button>
-                  }
-                  title="Xóa chủ đề"
-                  description={`Xóa chủ đề #${row.id}?`}
-                  destructive
-                  isSubmitting={deleteTopic.isPending}
-                  onConfirm={() => deleteTopic.mutateAsync(row.id)}
-                />
-              ) : null}
-            </ActionCell>
-          ),
-        },
-      ]}
-    />
+                {canUpdate ? (
+                  <TopicFormDialog
+                    mode="edit"
+                    initial={row}
+                    trigger={
+                      <Button type="button" variant="outline" size="sm">
+                        Sửa
+                      </Button>
+                    }
+                  />
+                ) : null}
+                {canDelete ? (
+                  <ConfirmDialog
+                    trigger={
+                      <Button type="button" variant="destructive" size="sm">
+                        Xóa
+                      </Button>
+                    }
+                    title="Xóa chủ đề"
+                    description={`Xóa chủ đề #${row.id}?`}
+                    destructive
+                    isSubmitting={deleteTopic.isPending}
+                    onConfirm={() => deleteTopic.mutateAsync(row.id)}
+                  />
+                ) : null}
+              </ActionCell>
+            ),
+          },
+        ]}
+      />
+    </div>
   );
 }
 
@@ -4584,7 +6078,9 @@ function ArticleFormDialog({
   return (
     <FormDialog
       trigger={trigger}
-      title={mode === "create" ? "Tạo bài viết" : `Sửa bài viết #${initial?.id}`}
+      title={
+        mode === "create" ? "Tạo bài viết" : `Sửa bài viết #${initial?.id}`
+      }
       isSubmitting={create.isPending || update.isPending}
       onOpen={() => setForm(buildInitialForm())}
       onSubmit={() => {
@@ -4705,9 +6201,7 @@ function ArticleFormDialog({
           <FileDropzone
             id="article-files"
             files={form.files}
-            onFilesChange={(files) =>
-              setForm((prev) => ({ ...prev, files }))
-            }
+            onFilesChange={(files) => setForm((prev) => ({ ...prev, files }))}
           />
         </FormField>
       ) : null}
@@ -4726,17 +6220,50 @@ function ArticlesModule({
   const [approvalFilter, setApprovalFilter] = useState<
     "all" | "true" | "false"
   >("all");
+  const [topicFilter, setTopicFilter] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
+  const [arrangeFilter, setArrangeFilter] = useState<"" | "asc" | "desc">("");
+  const [authorFilter, setAuthorFilter] = useState<number | undefined>();
+  const [authorSearch, setAuthorSearch] = useState("");
+  const debouncedAuthorSearch = useDebouncedValue(authorSearch, 350);
+  const [authorPickerPage, setAuthorPickerPage] = useState(1);
+  const authorPickerQuery = useDoctors(
+    {
+      page: authorPickerPage,
+      limit: 20,
+      search: debouncedAuthorSearch || undefined,
+    },
+    { enabled: scope !== "doctor" },
+  );
+  const topicsQuery = useTopics({ page: 1, limit: 100 });
+  const topics = topicsQuery.data?.data?.topics ?? [];
+  const authorPickerItems = (authorPickerQuery.data?.data?.doctors ?? []).map(
+    (d) => ({ value: d.user_id, label: d.fullname }),
+  );
+  const selectedAuthor = (authorPickerQuery.data?.data?.doctors ?? []).find(
+    (d) => d.user_id === authorFilter,
+  );
+  const invalidDateRange = Boolean(
+    createdFrom && createdTo && createdFrom > createdTo,
+  );
+
   const listFilters = {
     page,
     limit,
     search: search || undefined,
     is_approve: approvalFilter,
+    topic_slug: topicFilter || undefined,
+    createdFrom: createdFrom || undefined,
+    createdTo: createdTo || undefined,
+    arrange: arrangeFilter || undefined,
+    ...(scope !== "doctor" ? { author_id: authorFilter } : {}),
   };
   const allArticles = useArticles(listFilters, {
-    enabled: scope !== "doctor",
+    enabled: scope !== "doctor" && !invalidDateRange,
   });
   const myArticles = useDoctorArticles(listFilters, {
-    enabled: scope === "doctor",
+    enabled: scope === "doctor" && !invalidDateRange,
   });
   const { data, isLoading, isError, refetch } =
     scope === "doctor" ? myArticles : allArticles;
@@ -4746,22 +6273,13 @@ function ArticlesModule({
   const deleteArticle = useDeleteArticle();
   const isMutating = approveArticle.isPending || deleteArticle.isPending;
   const { can } = usePermission();
-  const canCreate = can(
-    PERMISSIONS.ARTICLE_CREATE,
-    PERMISSIONS.ARTICLE_MANAGE,
-  );
-  const canEdit = can(
-    PERMISSIONS.ARTICLE_UPDATE,
-    PERMISSIONS.ARTICLE_MANAGE,
-  );
+  const canCreate = can(PERMISSIONS.ARTICLE_CREATE, PERMISSIONS.ARTICLE_MANAGE);
+  const canEdit = can(PERMISSIONS.ARTICLE_UPDATE, PERMISSIONS.ARTICLE_MANAGE);
   const canApprove = can(
     PERMISSIONS.ARTICLE_APPROVE,
     PERMISSIONS.ARTICLE_MANAGE,
   );
-  const canDelete = can(
-    PERMISSIONS.ARTICLE_DELETE,
-    PERMISSIONS.ARTICLE_MANAGE,
-  );
+  const canDelete = can(PERMISSIONS.ARTICLE_DELETE, PERMISSIONS.ARTICLE_MANAGE);
 
   const approvalTabs: Array<{
     key: "all" | "true" | "false";
@@ -4789,6 +6307,99 @@ function ArticlesModule({
             {tab.label}
           </Button>
         ))}
+        {scope !== "doctor" ? (
+          <div className="flex flex-col gap-1 w-56">
+            <SearchableSelect
+              id="articles-author-filter"
+              placeholder="Tất cả tác giả"
+              searchPlaceholder="Tìm theo tên bác sĩ..."
+              search={authorSearch}
+              onSearchChange={(value) => {
+                setAuthorSearch(value);
+                setAuthorPickerPage(1);
+              }}
+              isLoading={authorPickerQuery.isLoading}
+              page={authorPickerPage}
+              totalPages={authorPickerQuery.data?.data?.totalPages ?? 1}
+              onPageChange={setAuthorPickerPage}
+              items={authorPickerItems}
+              selectedValue={authorFilter}
+              selectedLabel={selectedAuthor ? selectedAuthor.fullname : null}
+              onSelect={(value) => {
+                setAuthorFilter(typeof value === "number" ? value : undefined);
+                onPageChange(1);
+              }}
+            />
+          </div>
+        ) : null}
+        <SelectFilter
+          id="articles-topic-filter"
+          label="Chủ đề"
+          value={topicFilter}
+          onChange={(value) => {
+            setTopicFilter(value);
+            onPageChange(1);
+          }}
+          options={topics.map((topic) => ({
+            value: topic.slug ?? String(topic.id),
+            label: topic.name,
+          }))}
+          placeholder="Tất cả chủ đề"
+        />
+        <DateRangeFilter
+          fromId="articles-created-from"
+          fromValue={createdFrom}
+          onFromChange={(value) => {
+            setCreatedFrom(value);
+            onPageChange(1);
+          }}
+          toId="articles-created-to"
+          toValue={createdTo}
+          onToChange={(value) => {
+            setCreatedTo(value);
+            onPageChange(1);
+          }}
+          error={invalidDateRange ? "Khoảng ngày không hợp lệ" : undefined}
+        />
+        <SelectFilter
+          id="articles-arrange-filter"
+          label="Sắp xếp"
+          value={arrangeFilter}
+          onChange={(value) => {
+            setArrangeFilter(value as "" | "asc" | "desc");
+            onPageChange(1);
+          }}
+          options={[
+            { value: "desc", label: "Mới nhất" },
+            { value: "asc", label: "Cũ nhất" },
+          ]}
+          placeholder="Mặc định"
+        />
+        {approvalFilter !== "all" ||
+        authorFilter !== undefined ||
+        topicFilter ||
+        createdFrom ||
+        createdTo ||
+        arrangeFilter ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setApprovalFilter("all");
+              setAuthorFilter(undefined);
+              setAuthorSearch("");
+              setAuthorPickerPage(1);
+              setTopicFilter("");
+              setCreatedFrom("");
+              setCreatedTo("");
+              setArrangeFilter("");
+              onPageChange(1);
+            }}
+          >
+            Xóa lọc
+          </Button>
+        ) : null}
       </div>
       <GenericList
         title="Bài viết"
@@ -4867,7 +6478,9 @@ function ArticlesModule({
                     { label: "Cập nhật", value: formatDate(row.updated_at) },
                   ]}
                   footer={
-                    row.summary || row.content || (row.files && row.files.length) ? (
+                    row.summary ||
+                    row.content ||
+                    (row.files && row.files.length) ? (
                       <div className="space-y-3">
                         {row.summary ? (
                           <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/80 p-4">
@@ -5086,9 +6699,7 @@ function DoctorSchedulesModule() {
     () =>
       DAYS_OF_WEEK.filter((day) => availableDays.includes(day.value)).concat(
         availableDays
-          .filter(
-            (day) => !DAYS_OF_WEEK.some((known) => known.value === day),
-          )
+          .filter((day) => !DAYS_OF_WEEK.some((known) => known.value === day))
           .map((day) => ({ value: day, label: day })),
       ),
     [availableDays],
@@ -5096,6 +6707,7 @@ function DoctorSchedulesModule() {
 
   // null = no filter applied, show every day's shifts in one table.
   const [dayFilter, setDayFilter] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("");
 
   const isMutating =
     createSchedule.isPending ||
@@ -5112,9 +6724,11 @@ function DoctorSchedulesModule() {
       day_label: day.label,
     })),
   );
-  const rows = dayFilter
-    ? allRows.filter((row) => row.day_of_week === dayFilter)
-    : allRows;
+  const rows = allRows
+    .filter((row) => !dayFilter || row.day_of_week === dayFilter)
+    .filter(
+      (row) => !activeFilter || String(Boolean(row.is_active)) === activeFilter,
+    );
 
   return (
     <Card className="rounded-2xl border-slate-200/80 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
@@ -5186,6 +6800,26 @@ function DoctorSchedulesModule() {
             );
           })}
         </div>
+        <FilterBar
+          hasActiveFilters={Boolean(activeFilter || dayFilter)}
+          activeFilterCount={[activeFilter, dayFilter].filter(Boolean).length}
+          onReset={() => {
+            setActiveFilter("");
+            setDayFilter(null);
+          }}
+        >
+          <SelectFilter
+            id="doctor-schedules-active-filter"
+            label="Trạng thái"
+            value={activeFilter}
+            onChange={setActiveFilter}
+            options={[
+              { value: "true", label: "Đang hoạt động" },
+              { value: "false", label: "Ngừng hoạt động" },
+            ]}
+            placeholder="Tất cả"
+          />
+        </FilterBar>
       </CardHeader>
       <CardContent className="space-y-4 overflow-x-auto pb-6">
         {rows.length === 0 ? (
@@ -5194,8 +6828,8 @@ function DoctorSchedulesModule() {
             description={
               dayFilter
                 ? `Không có ca khám nào cho ${
-                    orderedDays.find((day) => day.value === dayFilter)
-                      ?.label ?? dayFilter
+                    orderedDays.find((day) => day.value === dayFilter)?.label ??
+                    dayFilter
                   }.`
                 : "Chưa có ca khám nào trong tuần."
             }
@@ -5223,9 +6857,16 @@ function DoctorSchedulesModule() {
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {rows.map((row) => (
-                <tr key={row.id} className="align-top hover:bg-slate-50 dark:hover:bg-slate-800/60">
-                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.id}</td>
-                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">{row.day_label}</td>
+                <tr
+                  key={row.id}
+                  className="align-top hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                >
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">
+                    {row.id}
+                  </td>
+                  <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">
+                    {row.day_label}
+                  </td>
                   <td className="px-3 py-4 text-sm text-slate-800 dark:text-slate-200">
                     {row.start_time ?? "-"} - {row.end_time ?? "-"}
                   </td>
@@ -5457,9 +7098,16 @@ const moduleMeta: Record<
 
 export function GenericModulePage({ moduleId }: { moduleId: string }) {
   const meta = moduleMeta[moduleId];
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebouncedValue(searchInput, 350);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
+
+  useEffect(() => {
+    setSearchInput("");
+    setPage(1);
+    setLimit(10);
+  }, [moduleId]);
 
   const headerProps = meta ?? {
     eyebrow: "Module",
@@ -5548,19 +7196,20 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
           <div className="relative w-full sm:max-w-md">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
             <Input
-              value={search}
+              value={searchInput}
               onChange={(event) => {
-                setSearch(event.target.value);
+                setSearchInput(event.target.value);
                 setPage(1);
               }}
+              aria-label={`Tìm kiếm trong ${headerProps.title.toLowerCase()}`}
               placeholder={`Tìm kiếm trong ${headerProps.title.toLowerCase()}...`}
               className="pl-10 h-10 rounded-xl"
             />
-            {search ? (
+            {searchInput ? (
               <button
                 type="button"
                 onClick={() => {
-                  setSearch("");
+                  setSearchInput("");
                   setPage(1);
                 }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
@@ -5571,7 +7220,10 @@ export function GenericModulePage({ moduleId }: { moduleId: string }) {
           </div>
           {headerProps.permissionLevel ? (
             <ToolbarCreateButton>
-              <Badge variant="outline" className="text-xs font-bold self-start sm:self-center">
+              <Badge
+                variant="outline"
+                className="text-xs font-bold self-start sm:self-center"
+              >
                 🔒 Quyền: {headerProps.permissionLevel}
               </Badge>
             </ToolbarCreateButton>

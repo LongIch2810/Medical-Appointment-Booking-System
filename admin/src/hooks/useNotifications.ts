@@ -44,10 +44,14 @@ export const notificationQueryKeys = {
   ) => [...notificationQueryKeys.all, "recipients", "infinite", filters] as const,
 };
 
-export function useNotifications(filters: NotificationListPayload) {
+export function useNotifications(
+  filters: NotificationListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: notificationQueryKeys.list(filters),
     queryFn: () => fetchNotifications(filters),
+    enabled: options?.enabled,
   });
 }
 

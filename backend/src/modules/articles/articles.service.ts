@@ -30,6 +30,7 @@ import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { ArticleResponseDto } from './dto/response/articleResponse.dto';
 import { ArticleMapper } from './article.mapper';
 import { BodyFilterArticlesImproveDto } from './dto/request/bodyFilterArticlesImprove.dto';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class ArticlesService {
@@ -225,9 +226,13 @@ export class ArticlesService {
     return { message: 'Duyệt bài viết thành công.' };
   }
 
-  async filterAndPagination(objectFilters: BodyFilterArticlesDto) {
+  async filterAndPagination(
+    objectFilters: BodyFilterArticlesDto | BodyFilterArticlesImproveDto,
+  ) {
     let { page, limit } = objectFilters;
     const { topic_slug, search, arrange, is_approve } = objectFilters;
+    const { author_id, createdFrom, createdTo } =
+      objectFilters as BodyFilterArticlesImproveDto;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -262,17 +267,32 @@ export class ArticlesService {
         key: 'topic_slug',
       },
       {
-        condition: `(LOWER(article.title) LIKE LOWER(:search) 
-      OR LOWER(author.fullname) LIKE LOWER(:search) 
-      OR LOWER(topic.name) LIKE LOWER(:search) 
+        condition: `(LOWER(article.title) LIKE LOWER(:search)
+      OR LOWER(author.fullname) LIKE LOWER(:search)
+      OR LOWER(topic.name) LIKE LOWER(:search)
       OR LOWER(tag.name) LIKE LOWER(:search))`,
         value: search,
         key: 'search',
       },
+      {
+        condition: 'author.id = :author_id',
+        value: author_id,
+        key: 'author_id',
+      },
+      {
+        condition: 'article.created_at >= :createdFrom',
+        value: createdFrom,
+        key: 'createdFrom',
+      },
+      {
+        condition: 'article.created_at < :createdTo',
+        value: createdTo ? startOfNextDay(createdTo) : undefined,
+        key: 'createdTo',
+      },
     ];
 
     filters.forEach(({ condition, value, key }) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         query.andWhere(condition, { [key]: value });
       }
     });
@@ -323,8 +343,15 @@ export class ArticlesService {
     objectFilters: BodyFilterArticlesImproveDto,
   ) {
     let { page, limit } = objectFilters;
-    const { topic_slug, search, arrange, author_id, is_approve } =
-      objectFilters;
+    const {
+      topic_slug,
+      search,
+      arrange,
+      author_id,
+      is_approve,
+      createdFrom,
+      createdTo,
+    } = objectFilters;
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -370,6 +397,16 @@ export class ArticlesService {
         condition: 'author.id = :author_id',
         value: author_id,
         key: 'author_id',
+      },
+      {
+        condition: 'article.created_at >= :createdFrom',
+        value: createdFrom,
+        key: 'createdFrom',
+      },
+      {
+        condition: 'article.created_at < :createdTo',
+        value: createdTo ? startOfNextDay(createdTo) : undefined,
+        key: 'createdTo',
       },
     ];
 

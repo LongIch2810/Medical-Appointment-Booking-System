@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -187,7 +188,36 @@ export class HealthProfileService {
 
   async filterAndPagination(objectFilters: BodyFilterHealthProfilesDto) {
     let { page, limit } = objectFilters;
-    const { search, arrange } = objectFilters;
+    const {
+      search,
+      arrange,
+      blood_type,
+      minHeartRate,
+      maxHeartRate,
+      minGlucoseLevel,
+      maxGlucoseLevel,
+      minCholesterolLevel,
+      maxCholesterolLevel,
+      minWeight,
+      maxWeight,
+      minHeight,
+      maxHeight,
+    } = objectFilters;
+    const ranges: Array<[number | undefined, number | undefined, string]> = [
+      [minHeartRate, maxHeartRate, 'heart rate'],
+      [minGlucoseLevel, maxGlucoseLevel, 'glucose level'],
+      [minCholesterolLevel, maxCholesterolLevel, 'cholesterol level'],
+      [minWeight, maxWeight, 'weight'],
+      [minHeight, maxHeight, 'height'],
+    ];
+    const invalidRange = ranges.find(
+      ([min, max]) => min !== undefined && max !== undefined && min > max,
+    );
+    if (invalidRange) {
+      throw new BadRequestException(
+        `Minimum ${invalidRange[2]} must be less than maximum`,
+      );
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -207,15 +237,70 @@ export class HealthProfileService {
       .take(limit);
 
     if (search) {
-      query.where('LOWER(relative.fullname) LIKE LOWER(:search)', {
-        search: `%${search}%`,
+      query.andWhere(
+        new Brackets((searchQuery) => {
+          searchQuery
+            .where('LOWER(relative.fullname) LIKE LOWER(:search)', {
+              search: `%${search}%`,
+            })
+            .orWhere('relative.phone LIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('LOWER(user.fullname) LIKE LOWER(:search)', {
+              search: `%${search}%`,
+            });
+        }),
+      );
+    }
+
+    if (blood_type) {
+      query.andWhere('health_profile.blood_type = :blood_type', {
+        blood_type,
       });
-      query.orWhere('relative.phone LIKE :search', {
-        search: `%${search}%`,
+    }
+    if (minHeartRate !== undefined) {
+      query.andWhere('health_profile.heart_rate >= :minHeartRate', {
+        minHeartRate,
       });
-      query.orWhere('LOWER(user.fullname) LIKE LOWER(:search)', {
-        search: `%${search}%`,
+    }
+    if (maxHeartRate !== undefined) {
+      query.andWhere('health_profile.heart_rate <= :maxHeartRate', {
+        maxHeartRate,
       });
+    }
+    if (minGlucoseLevel !== undefined) {
+      query.andWhere('health_profile.glucose_level >= :minGlucoseLevel', {
+        minGlucoseLevel,
+      });
+    }
+    if (maxGlucoseLevel !== undefined) {
+      query.andWhere('health_profile.glucose_level <= :maxGlucoseLevel', {
+        maxGlucoseLevel,
+      });
+    }
+    if (minCholesterolLevel !== undefined) {
+      query.andWhere(
+        'health_profile.cholesterol_level >= :minCholesterolLevel',
+        { minCholesterolLevel },
+      );
+    }
+    if (maxCholesterolLevel !== undefined) {
+      query.andWhere(
+        'health_profile.cholesterol_level <= :maxCholesterolLevel',
+        { maxCholesterolLevel },
+      );
+    }
+    if (minWeight !== undefined) {
+      query.andWhere('health_profile.weight >= :minWeight', { minWeight });
+    }
+    if (maxWeight !== undefined) {
+      query.andWhere('health_profile.weight <= :maxWeight', { maxWeight });
+    }
+    if (minHeight !== undefined) {
+      query.andWhere('health_profile.height >= :minHeight', { minHeight });
+    }
+    if (maxHeight !== undefined) {
+      query.andWhere('health_profile.height <= :maxHeight', { maxHeight });
     }
 
     const [healthProfiles, total] = await query

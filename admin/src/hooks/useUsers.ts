@@ -38,17 +38,25 @@ export function useCurrentUser() {
   });
 }
 
-export function useUsers(filters: UserListPayload) {
+export function useUsers(
+  filters: UserListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: userQueryKeys.list(filters),
     queryFn: () => fetchUsers(filters),
+    enabled: options?.enabled,
   });
 }
 
-export function usePatients(filters: UserListPayload) {
+export function usePatients(
+  filters: UserListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: userQueryKeys.patients(filters),
     queryFn: () => fetchPatients(filters),
+    enabled: options?.enabled,
   });
 }
 

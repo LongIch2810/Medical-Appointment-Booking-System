@@ -51,6 +51,10 @@ export interface AppointmentListPayload extends PaginationPayload {
   appointmentStatus?: AppointmentStatus;
   relativeId?: number;
   appointmentDate?: string;
+  search?: string;
+  bookingMode?: BookingMode;
+  appointmentFrom?: string;
+  appointmentTo?: string;
 }
 
 export interface AdminAppointmentListPayload extends AppointmentListPayload {

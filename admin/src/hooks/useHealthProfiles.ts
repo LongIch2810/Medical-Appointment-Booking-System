@@ -21,10 +21,14 @@ export const healthProfileQueryKeys = {
     ["health-profile", "relative", relativeId] as const,
 };
 
-export function useAdminHealthProfiles(filters: HealthProfileListPayload) {
+export function useAdminHealthProfiles(
+  filters: HealthProfileListPayload,
+  options?: { enabled?: boolean },
+) {
   return useQuery({
     queryKey: healthProfileQueryKeys.admin(filters),
     queryFn: () => fetchAdminHealthProfiles(filters),
+    enabled: options?.enabled,
   });
 }
 

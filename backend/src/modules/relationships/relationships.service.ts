@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Relationship from 'src/entities/relationship.entity';
-import { QueryFailedError, Repository } from 'typeorm';
+import { Brackets, QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateRelationshipDto } from './dto/request/bodyCreateRelationship.dto';
 import { BodyFilterRelationshipsDto } from './dto/request/bodyFilterRelationships.dto';
 import { RelationshipsMapper } from './relationships.mapper';
@@ -102,7 +102,7 @@ export class RelationshipsService {
 
   async filterAndPagination(objectFilters: BodyFilterRelationshipsDto) {
     let { page, limit } = objectFilters;
-    const { search, arrange } = objectFilters;
+    const { search, code, arrange } = objectFilters;
     page = Math.max(page, 1);
     limit = Math.max(limit, 1);
     const skip = (page - 1) * limit;
@@ -116,11 +116,25 @@ export class RelationshipsService {
       .take(limit);
 
     if (search) {
-      query.where('relationship.relationship_name ILIKE :search', {
-        search: `%${search}%`,
-      });
-      query.orWhere('relationship.description ILIKE :search', {
-        search: `%${search}%`,
+      query.andWhere(
+        new Brackets((searchQuery) => {
+          searchQuery
+            .where('relationship.relationship_code ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('relationship.relationship_name ILIKE :search', {
+              search: `%${search}%`,
+            })
+            .orWhere('relationship.description ILIKE :search', {
+              search: `%${search}%`,
+            });
+        }),
+      );
+    }
+
+    if (code) {
+      query.andWhere('relationship.relationship_code ILIKE :code', {
+        code: `%${code}%`,
       });
     }
 

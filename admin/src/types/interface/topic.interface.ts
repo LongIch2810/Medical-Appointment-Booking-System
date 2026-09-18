@@ -11,6 +11,8 @@ export interface Topic {
 
 export interface TopicListPayload extends PaginationPayload {
   search?: string;
+  createdFrom?: string;
+  createdTo?: string;
   arrange?: SortOrder;
 }
 

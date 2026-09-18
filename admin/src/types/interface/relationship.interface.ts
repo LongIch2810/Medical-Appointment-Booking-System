@@ -10,6 +10,7 @@ export interface Relationship {
 
 export interface RelationshipListPayload extends PaginationPayload {
   search?: string;
+  code?: string;
   arrange?: SortOrder;
 }
 

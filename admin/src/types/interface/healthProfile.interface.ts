@@ -22,6 +22,17 @@ export interface HealthProfile {
 
 export interface HealthProfileListPayload extends PaginationPayload {
   search?: string;
+  blood_type?: string;
+  minHeartRate?: number;
+  maxHeartRate?: number;
+  minGlucoseLevel?: number;
+  maxGlucoseLevel?: number;
+  minCholesterolLevel?: number;
+  maxCholesterolLevel?: number;
+  minWeight?: number;
+  maxWeight?: number;
+  minHeight?: number;
+  maxHeight?: number;
 }
 
 export interface HealthProfileListResponse extends PaginationMeta {

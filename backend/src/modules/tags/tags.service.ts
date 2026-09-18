@@ -1,14 +1,16 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Tag from 'src/entities/tag.entity';
-import { ILike, QueryFailedError, Repository } from 'typeorm';
+import { Brackets, ILike, QueryFailedError, Repository } from 'typeorm';
 import { BodyCreateTagDto } from './dto/request/bodyCreateTag.dto';
 import { BodyFilterTagsDto } from './dto/request/bodyFilterTags.dto';
 import { generateSlug } from 'src/utils/generateSlug';
+import { startOfNextDay } from 'src/utils/filterDate';
 
 @Injectable()
 export class TagsService {
@@ -75,7 +77,14 @@ export class TagsService {
 
   async filterAndPagination(objectFilters: BodyFilterTagsDto) {
     let { page, limit } = objectFilters;
-    const { search, arrange } = objectFilters;
+    const { search, createdFrom, createdTo, arrange } = objectFilters;
+    if (
+      createdFrom &&
+      createdTo &&
+      new Date(createdFrom) > new Date(createdTo)
+    ) {
+      throw new BadRequestException('createdFrom must be before createdTo');
+    }
     page = Math.max(1, page);
     limit = Math.max(1, limit);
     const skip = (page - 1) * limit;
@@ -86,8 +95,24 @@ export class TagsService {
       .take(limit);
 
     if (search) {
-      query.where('tag.name ILIKE :search', { search: `%${search}%` });
-      query.orWhere('tag.slug ILIKE :search', { search: `%${search}%` });
+      query.andWhere(
+        new Brackets((searchQuery) => {
+          searchQuery
+            .where('tag.name ILIKE :search', { search: `%${search}%` })
+            .orWhere('tag.slug ILIKE :search', { search: `%${search}%` });
+        }),
+      );
+    }
+
+    if (createdFrom) {
+      query.andWhere('tag.created_at >= :createdFrom', {
+        createdFrom: new Date(createdFrom),
+      });
+    }
+    if (createdTo) {
+      query.andWhere('tag.created_at < :createdTo', {
+        createdTo: startOfNextDay(createdTo),
+      });
     }
 
     const [tags, total] = await query.getManyAndCount();
