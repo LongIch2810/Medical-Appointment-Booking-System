@@ -5,6 +5,9 @@ import {
   IsMilitaryTime,
   IsNumber,
   IsOptional,
+  IsUUID,
+  IsInt,
+  Min,
   Validate,
   ValidateNested,
   ValidationArguments,
@@ -91,6 +94,15 @@ export class BodyCreateAppointmentDto {
 
   @IsEnum(BookingMode)
   booking_mode!: BookingMode;
+
+  @IsOptional()
+  @IsUUID()
+  ai_booking_operation_id?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  patient_chat_conversation_id?: number;
 
   // Không phải field payload thực — chỉ là điểm neo cho 2 validator liên-field
   // bên dưới, để chúng luôn chạy bất kể field nào trong nhóm mà chúng kiểm tra

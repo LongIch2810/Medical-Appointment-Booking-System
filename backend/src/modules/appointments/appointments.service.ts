@@ -36,6 +36,7 @@ import { formatDateDDMMYYYY } from 'src/utils/formatDate';
 import { isPgDriverError } from '../../utils/isPgDriverError';
 import { toHHMM, toMinutes } from '../../utils/toMinutes';
 import Relative from '../../entities/relative.entity';
+import PatientChatConversation from '../../entities/patientChatConversation.entity';
 import { AppointmentResponseDto } from './dto/response/appointmentResponse.dto';
 import { BodyFilterImproveDto } from './dto/request/bodyFilterImprove.dto';
 import { BodyCreateRelativeDto } from '../relatives/dto/request/bodyCreateRelative.dto';
@@ -205,6 +206,10 @@ export class AppointmentsService {
     userId: number,
     body: BodyCreateAppointmentDto,
   ) {
+    if (body.ai_booking_operation_id) {
+      const existing = await this.findAiBookingByOperation(userId, body);
+      if (existing) return existing;
+    }
     try {
       const newAppointment: AppointmentResponseDto = await this.create(
         userId,
@@ -221,6 +226,14 @@ export class AppointmentsService {
       if (error instanceof QueryFailedError) {
         const driverError: unknown = error.driverError;
         if (isPgDriverError(driverError)) {
+          isPgUnique = driverError.code === '23505';
+          if (
+            body.ai_booking_operation_id &&
+            driverError.constraint === 'UQ_appointments_ai_booking_operation_id'
+          ) {
+            const existing = await this.findAiBookingByOperation(userId, body);
+            if (existing) return existing;
+          }
           isPgUnique =
             driverError.code === '23505' &&
             driverError.constraint === 'unique_doctor_schedule_date';
@@ -245,6 +258,30 @@ export class AppointmentsService {
     }
   }
 
+  private async findAiBookingByOperation(
+    userId: number,
+    body: BodyCreateAppointmentDto,
+  ): Promise<AppointmentResponseDto | null> {
+    if (!body.ai_booking_operation_id) return null;
+    const existing = await this.appointmentRepo.findOne({
+      where: { ai_booking_operation_id: body.ai_booking_operation_id },
+      relations: { booked_by_user: true, patient_chat_conversation: true },
+    });
+    if (!existing) return null;
+    if (
+      existing.booked_by_user.id !== userId ||
+      (body.patient_chat_conversation_id !== undefined &&
+        existing.patient_chat_conversation?.id !==
+          body.patient_chat_conversation_id)
+    ) {
+      throw new ConflictException('Yêu cầu đặt lịch này đã được sử dụng.');
+    }
+    return (await this.getAppointmentDetail(
+      userId,
+      existing.id,
+    )) as AppointmentResponseDto;
+  }
+
   async create(userId: number, body: BodyCreateAppointmentDto) {
     const appointmentDetail = await this.dataSource.transaction(
       async (manager) => {
@@ -264,6 +301,32 @@ export class AppointmentsService {
           start_time,
           end_time,
         } = body;
+
+        if (
+          Boolean(body.ai_booking_operation_id) !==
+          Boolean(body.patient_chat_conversation_id)
+        ) {
+          throw new BadRequestException(
+            'Mã thao tác AI và cuộc trò chuyện phải được cung cấp cùng nhau.',
+          );
+        }
+        let patientChatConversation: PatientChatConversation | null = null;
+        if (body.patient_chat_conversation_id) {
+          patientChatConversation = await manager.findOne(
+            PatientChatConversation,
+            {
+              where: {
+                id: body.patient_chat_conversation_id,
+                user: { id: userId },
+              },
+            },
+          );
+          if (!patientChatConversation) {
+            throw new NotFoundException(
+              'Không tìm thấy cuộc trò chuyện đặt lịch.',
+            );
+          }
+        }
 
         const { appointmentDate, appointmentDateOnly } =
           this.assertNotPastDate(appointment_date);
@@ -329,6 +392,8 @@ export class AppointmentsService {
           booked_by_user: user_booked,
           patient,
           booking_mode,
+          ai_booking_operation_id: body.ai_booking_operation_id ?? null,
+          patient_chat_conversation: patientChatConversation,
         });
 
         const saved = await manager.save(Appointment, appointment);

@@ -18,6 +18,7 @@ import DoctorSchedule from './doctorSchedule.entity';
 import { BookingMode } from 'src/shared/enums/bookingMode';
 import Relative from './relative.entity';
 import User from './user.entity';
+import PatientChatConversation from './patientChatConversation.entity';
 
 @Entity('appointments')
 @Index('unique_doctor_schedule_date', ['doctor_schedule', 'appointment_date'], {
@@ -68,6 +69,16 @@ export default class Appointment {
   @ManyToOne(() => User, (u) => u.appointments, { nullable: false })
   @JoinColumn({ name: 'user_id' })
   booked_by_user!: Relation<User>;
+
+  @Column({ type: 'uuid', nullable: true, name: 'ai_booking_operation_id' })
+  ai_booking_operation_id!: string | null;
+
+  @ManyToOne(() => PatientChatConversation, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'patient_chat_conversation_id' })
+  patient_chat_conversation!: Relation<PatientChatConversation> | null;
 
   @CreateDateColumn({ name: 'created_at' })
   created_at!: Date;

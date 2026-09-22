@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  HttpException,
   Get,
   HttpCode,
   HttpStatus,
@@ -21,7 +22,12 @@ import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { PERMISSIONS } from 'src/utils/constants';
 import { AdminReportsService } from './admin-reports.service';
 import { BodyGenerateAdminReportDto } from './dto/request/bodyGenerateAdminReport.dto';
+import {
+  CreateReportAssistantConversationDto,
+  ReportAssistantMessageDto,
+} from './dto/request/reportAssistantMessage.dto';
 import type { Response } from 'express';
+import { getRequestAccessToken } from 'src/utils/authContext';
 
 @ApiTags('admin-reports')
 @ApiCookieAuth()
@@ -39,6 +45,78 @@ export class AdminReportsController {
   @AuditLogAction({ action: 'READ', entityName: 'admin-reports' })
   async generate(@Request() req, @Body() body: BodyGenerateAdminReportDto) {
     return this.adminReportsService.generate(req.user.userId, body);
+  }
+
+  @ApiOperation({ summary: 'Tạo hội thoại trợ lý báo cáo AI' })
+  @Post('assistant/conversations')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async createAssistantConversation(
+    @Request() req,
+    @Body() body: CreateReportAssistantConversationDto,
+  ) {
+    const token = getRequestAccessToken(req);
+    if (!token) {
+      throw new HttpException('Token không hợp lệ.', HttpStatus.UNAUTHORIZED);
+    }
+    return this.adminReportsService.createAssistantConversation(
+      req.user.userId,
+      token,
+      body,
+    );
+  }
+
+  @ApiOperation({ summary: 'Danh sách hội thoại trợ lý báo cáo của admin' })
+  @Get('assistant/conversations')
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async listAssistantConversations(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.adminReportsService.listAssistantConversations(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @ApiOperation({ summary: 'Đọc hội thoại trợ lý báo cáo' })
+  @Get('assistant/conversations/:id')
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async getAssistantConversation(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('beforeMessageId') beforeMessageId?: string,
+    @Query('limit') limit = '50',
+  ) {
+    return this.adminReportsService.getAssistantConversation(
+      req.user.userId,
+      id,
+      beforeMessageId ? Number(beforeMessageId) : undefined,
+      Number(limit),
+    );
+  }
+
+  @ApiOperation({ summary: 'Gửi tin nhắn hoặc xác nhận kế hoạch báo cáo' })
+  @Post('assistant/conversations/:id/messages')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async sendAssistantMessage(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: ReportAssistantMessageDto,
+  ) {
+    const token = getRequestAccessToken(req);
+    if (!token) {
+      throw new HttpException('Token không hợp lệ.', HttpStatus.UNAUTHORIZED);
+    }
+    return this.adminReportsService.sendAssistantMessage(
+      req.user.userId,
+      token,
+      id,
+      body,
+    );
   }
 
   @Get('history')

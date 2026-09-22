@@ -26,6 +26,7 @@ import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { BodyBuildHealthRoadmapDto } from './dto/request/bodyBuildHealthRoadmap.dto';
 import type { Response } from 'express';
 import { getRequestAccessToken } from 'src/utils/authContext';
+import { SendPatientChatMessageDto } from './dto/request/patientChat.dto';
 
 @ApiTags('chat-history')
 @ApiCookieAuth()
@@ -77,6 +78,77 @@ export class ChatHistoryController {
       token,
     );
     return { answer };
+  }
+
+  @Post('conversations')
+  @HttpCode(HttpStatus.CREATED)
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  createPatientChatConversation(@Request() req) {
+    return this.chatHistoryService.createPatientChatConversation(
+      req.user.userId,
+    );
+  }
+
+  @Get('conversations')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  listPatientChatConversations(
+    @Request() req,
+    @Query('page') page = '1',
+    @Query('limit') limit = '20',
+  ) {
+    return this.chatHistoryService.listPatientChatConversations(
+      req.user.userId,
+      Number(page),
+      Number(limit),
+    );
+  }
+
+  @Get('conversations/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  getPatientChatConversation(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Query('beforeMessageId') beforeMessageId?: string,
+    @Query('limit') limit = '50',
+  ) {
+    return this.chatHistoryService.getPatientChatConversation(
+      req.user.userId,
+      id,
+      beforeMessageId ? Number(beforeMessageId) : undefined,
+      Number(limit),
+    );
+  }
+
+  @Delete('conversations/:id')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  deletePatientChatConversation(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    const token = getRequestAccessToken(req);
+    if (!token) throw new UnauthorizedException('Token không hợp lệ.');
+    return this.chatHistoryService.deletePatientChatConversation(
+      req.user.userId,
+      id,
+      token,
+    );
+  }
+
+  @Post('conversations/:id/messages')
+  @Permissions(PERMISSIONS.CHATBOT_CHAT)
+  sendPatientChatMessage(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: SendPatientChatMessageDto,
+  ) {
+    const token = getRequestAccessToken(req);
+    if (!token) throw new UnauthorizedException('Token không hợp lệ.');
+    return this.chatHistoryService.sendPatientChatMessage(
+      req.user.userId,
+      id,
+      token,
+      body,
+    );
   }
 
   @ApiOperation({ summary: 'Tạo lộ trình sức khỏe bằng AI cho một hồ sơ' })

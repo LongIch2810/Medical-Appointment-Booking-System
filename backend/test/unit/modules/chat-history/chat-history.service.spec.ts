@@ -10,6 +10,8 @@ import axios from 'axios';
 import Conversation from 'src/entities/conversation.entity';
 import AiHealthRoadmap from 'src/entities/aiHealthRoadmap.entity';
 import Relative from 'src/entities/relative.entity';
+import PatientChatConversation from 'src/entities/patientChatConversation.entity';
+import PatientChatMessage from 'src/entities/patientChatMessage.entity';
 import { UsersService } from 'src/modules/users/users.service';
 import { ChatHistoryService } from 'src/modules/chat-history/chat-history.service';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
@@ -23,6 +25,8 @@ describe('ChatHistoryService', () => {
   let roadmapRepo: { save: jest.Mock };
   let relativeRepo: { findOne: jest.Mock };
   let documentStorage: { deleteAsset: jest.Mock };
+  let patientConversationRepo: Record<string, jest.Mock>;
+  let patientMessageRepo: Record<string, jest.Mock>;
 
   beforeEach(async () => {
     usersService = {
@@ -36,6 +40,40 @@ describe('ChatHistoryService', () => {
       findOne: jest.fn().mockResolvedValue({ id: 7, fullname: 'Patient' }),
     };
     documentStorage = { deleteAsset: jest.fn().mockResolvedValue(undefined) };
+    const patientConversation = {
+      id: 22,
+      title: 'Cuộc trò chuyện mới',
+      user: { id: 9 },
+      created_at: new Date(),
+      updated_at: new Date(),
+      deleted_at: null,
+    };
+    patientConversationRepo = {
+      findOne: jest.fn().mockResolvedValue(patientConversation),
+      save: jest.fn().mockResolvedValue(patientConversation),
+      update: jest.fn().mockResolvedValue(undefined),
+      softDelete: jest.fn().mockResolvedValue(undefined),
+    };
+    patientMessageRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
+      find: jest.fn().mockImplementation(async () => [
+        {
+          id: 1,
+          role: 'USER',
+          content: 'Nên uống bao nhiêu nước?',
+          action: null,
+          payload: null,
+          turn_id: 'turn-id',
+          created_at: new Date(),
+        },
+      ]),
+      count: jest.fn().mockResolvedValue(0),
+      save: jest.fn().mockImplementation(async (message) => ({
+        id: message.role === 'USER' ? 1 : 2,
+        ...message,
+        created_at: new Date(),
+      })),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -46,6 +84,14 @@ describe('ChatHistoryService', () => {
           useValue: roadmapRepo,
         },
         { provide: getRepositoryToken(Relative), useValue: relativeRepo },
+        {
+          provide: getRepositoryToken(PatientChatConversation),
+          useValue: patientConversationRepo,
+        },
+        {
+          provide: getRepositoryToken(PatientChatMessage),
+          useValue: patientMessageRepo,
+        },
         { provide: AiDocumentStorageService, useValue: documentStorage },
         { provide: UsersService, useValue: usersService },
         {
@@ -274,21 +320,34 @@ describe('ChatHistoryService', () => {
   });
 
   describe('chatbotAnswer', () => {
-    it('sends an explicit timeout and returns the chatbot answer', async () => {
-      postSpy.mockResolvedValue({ data: { answer: 'Uống đủ nước mỗi ngày.' } });
+    it('routes the legacy chat helper through the patient conversation flow', async () => {
+      postSpy.mockResolvedValue({
+        data: { data: { action: 'ANSWER', message: 'Uống đủ nước mỗi ngày.' } },
+      });
 
       await expect(
         service.chatbotAnswer(9, 'Nên uống bao nhiêu nước?', 'access-token'),
       ).resolves.toBe('Uống đủ nước mỗi ngày.');
       expect(postSpy).toHaveBeenCalledWith(
-        'http://chatbot:5000/chatbot/chat',
-        {
-          question: 'Nên uống bao nhiêu nước?',
+        'http://chatbot:5000/chatbot/patient-chat',
+        expect.objectContaining({
           userId: 9,
-          token: 'access-token',
-        },
+          conversationId: 22,
+          threadId: 'patient-chat:v1:9:22',
+          mode: 'MESSAGE',
+          message: 'Nên uống bao nhiêu nước?',
+          historySeed: expect.arrayContaining([
+            expect.objectContaining({
+              role: 'user',
+              content: 'Nên uống bao nhiêu nước?',
+            }),
+          ]),
+        }),
         {
-          headers: { 'x-chatbot-internal-key': 'test-internal-key' },
+          headers: {
+            'x-chatbot-internal-key': 'test-internal-key',
+            Authorization: 'Bearer access-token',
+          },
           timeout: expect.any(Number),
         },
       );
@@ -332,12 +391,10 @@ describe('ChatHistoryService', () => {
       } catch (error) {
         expect(error).toBeInstanceOf(HttpException);
         expect((error as HttpException).getStatus()).toBe(504);
-        expect((error as HttpException).getResponse()).toEqual({
-          code: 'CHATBOT_CHAT_TIMEOUT',
-          message: 'Chatbot chưa phản hồi kịp thời. Vui lòng thử lại sau.',
+        expect((error as HttpException).getResponse()).toMatchObject({
+          code: 'PATIENT_CHAT_TIMEOUT',
         });
       }
     });
   });
-
 });

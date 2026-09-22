@@ -12,6 +12,7 @@ import {
 } from 'typeorm';
 import User from './user.entity';
 import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
+import AiReportConversation from './aiReportConversation.entity';
 
 @Entity('ai_admin_reports')
 @Index('IDX_ai_admin_reports_created_by_created_at', [
@@ -35,6 +36,16 @@ export default class AiAdminReport {
 
   @Column({ type: 'varchar', length: 80 })
   report_type!: string;
+
+  @ManyToOne(() => AiReportConversation, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'conversation_id' })
+  conversation!: Relation<AiReportConversation> | null;
+
+  @Column({ type: 'text', nullable: true })
+  source_request!: string | null;
 
   @Column({ type: 'varchar', length: 40 })
   range_preset!: string;

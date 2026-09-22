@@ -98,6 +98,7 @@ describe('AppointmentsService', () => {
   let redisCacheService: jest.Mocked<RedisCacheService>;
   let appointmentRepo: {
     createQueryBuilder: jest.Mock;
+    findOne: jest.Mock;
     update: jest.Mock;
     save: jest.Mock;
   };
@@ -130,6 +131,7 @@ describe('AppointmentsService', () => {
 
     appointmentRepo = {
       createQueryBuilder: jest.fn(() => makeQb()),
+      findOne: jest.fn().mockResolvedValue(null),
       update: jest.fn(),
       save: jest.fn(),
     };
@@ -268,7 +270,7 @@ describe('AppointmentsService', () => {
       expect(result).toBeNull();
     });
 
-    it("returns the mapped appointment when one exists for today", async () => {
+    it('returns the mapped appointment when one exists for today', async () => {
       const mockAppointment = {
         id: 3,
         status: AppointmentStatus.CONFIRMED,
@@ -1280,6 +1282,47 @@ describe('AppointmentsService', () => {
   });
 
   describe('createWithNotifications', () => {
+    it('returns the existing appointment for an operation retry without repeating side effects', async () => {
+      const appointment = {
+        id: 100,
+        booked_by_user: { id: 9 },
+        patient_chat_conversation: { id: 24 },
+      };
+      const appointmentResponse = {
+        id: 100,
+        status: AppointmentStatus.PENDING,
+      };
+      appointmentRepo.findOne.mockResolvedValue(appointment);
+      const detailSpy = jest
+        .spyOn(service, 'getAppointmentDetail')
+        .mockResolvedValue(appointmentResponse as any);
+      const createSpy = jest.spyOn(service, 'create');
+      const body: BodyCreateAppointmentDto = {
+        appointment_date: '2099-01-05',
+        specialty_id: 2,
+        start_time: '08:00',
+        relative_id: 5,
+        booking_mode: BookingMode.AI_SELECT,
+        ai_booking_operation_id: '4d7f8c38-b3a4-47a0-9cb3-2d7a48ed98e8',
+        patient_chat_conversation_id: 24,
+      };
+
+      await expect(service.createWithNotifications(9, body)).resolves.toBe(
+        appointmentResponse,
+      );
+      expect(appointmentRepo.findOne).toHaveBeenCalledWith({
+        where: { ai_booking_operation_id: body.ai_booking_operation_id },
+        relations: { booked_by_user: true, patient_chat_conversation: true },
+      });
+      expect(detailSpy).toHaveBeenCalledWith(9, 100);
+      expect(createSpy).not.toHaveBeenCalled();
+      expect(gateway.notifyBookAppointmentSuccess).not.toHaveBeenCalled();
+      expect(gateway.notifyBookAppointmentFail).not.toHaveBeenCalled();
+      expect(
+        notificationsService.createAppointmentNotifications,
+      ).not.toHaveBeenCalled();
+    });
+
     it('maps a unique_doctor_schedule_date race (23505) to a 409 Conflict for either booking mode', async () => {
       const raceError = new QueryFailedError(
         'INSERT INTO appointments...',

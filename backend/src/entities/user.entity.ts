@@ -25,6 +25,8 @@ import { UserSetting } from './userSetting.entity';
 import Complaint from './complaint.entity';
 import AiAdminReport from './aiAdminReport.entity';
 import AiHealthRoadmap from './aiHealthRoadmap.entity';
+import AiReportConversation from './aiReportConversation.entity';
+import PatientChatConversation from './patientChatConversation.entity';
 
 @Entity('users')
 export default class User {
@@ -108,6 +110,15 @@ export default class User {
 
   @OneToMany(() => AiAdminReport, (report) => report.createdBy)
   ai_admin_reports!: Relation<AiAdminReport[]>;
+
+  @OneToMany(
+    () => AiReportConversation,
+    (conversation) => conversation.createdBy,
+  )
+  ai_report_conversations!: Relation<AiReportConversation[]>;
+
+  @OneToMany(() => PatientChatConversation, (conversation) => conversation.user)
+  patient_chat_conversations!: Relation<PatientChatConversation[]>;
 
   @OneToMany(() => AiHealthRoadmap, (roadmap) => roadmap.user)
   ai_health_roadmaps!: Relation<AiHealthRoadmap[]>;
