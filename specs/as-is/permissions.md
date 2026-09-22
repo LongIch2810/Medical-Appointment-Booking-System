@@ -114,3 +114,15 @@ Permission **có seed nhưng không route backend nào gate tới** (không kế
 - `admin/src/config/permissions.ts`, `admin/src/hooks/usePermission.ts`, `admin/src/store/useAuthStore.ts`, `admin/src/routes/AppRoutes.tsx`
 - `frontend/src/routes/RouteProtected.tsx`
 - `chatbot/src/middlewares/internalServiceAuth.ts`, `requestIdentity.ts`
+
+## Admin report assistant ownership (2026-09)
+
+The new assistant create/list/detail/message routes reuse `ai-coach-report:read`; no permission catalogue or seed change was added. In addition to the normal JWT/RBAC check, every conversation lookup includes both the conversation ID and authenticated `created_by_user_id`. One admin therefore cannot list, load, continue, or confirm another admin's conversation. The chatbot independently verifies the forwarded Bearer JWT subject against the body `userId` before using per-user rate-limit buckets.
+
+LangGraph thread IDs are constructed server-side from the verified user ID and owned conversation ID; callers cannot supply an arbitrary thread. Long-term memory uses a namespace containing the verified admin ID, and the graph accepts only validated report-preference enums there. The chatbot's `chatbot_report_assistant` database role is isolated to its own `langgraph` schema and has no grants to business/report tables; the existing `chatbot_readonly` role remains the only chatbot role with SELECT access to the approved reporting views.
+
+## Patient chat ownership and booking approval (2026-09)
+
+Patient multi-thread routes reuse the existing `chatbot:chat` permission; no new permission was added. Backend conversation/message reads and writes include both the conversation ID and authenticated `user_id`, so a patient cannot list, load, continue, approve, or delete another patient's thread. The backend derives the LangGraph thread ID and forwards the current access token in the Bearer header. The chatbot rejects a missing/mismatched verified JWT subject and does not accept a caller-chosen thread ID.
+
+Booking approval requires the newest `BOOKING_APPROVAL` message in the owned conversation and its stored operation ID/summary. A free-form “yes/agree” message never commits an appointment; it is treated as revision while a native approval interrupt is pending. The LangGraph database role is shared with the report assistant but remains limited to the `langgraph` schema; it cannot access patient-chat business tables or health-profile data. Patient long-term Store namespaces contain only a validated preference profile and include the verified patient ID.

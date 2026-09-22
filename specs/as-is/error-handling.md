@@ -63,6 +63,18 @@
 - `chatbot/src/langgraph/*.graph.ts`
 - `chatbot/test/integration/chatbot.route.integration.spec.ts`
 
+## Conversational report assistant errors (2026-09)
+
+The backend assistant API returns stable codes for invalid input, missing conversation/plan, stale plan, chatbot quota, malformed chatbot response, timeout, persistence failure, and generic assistant failure: `REPORT_ASSISTANT_INVALID_INPUT`, `REPORT_CONVERSATION_NOT_FOUND`, `REPORT_PLAN_NOT_FOUND`, `REPORT_PLAN_STALE`, `CHATBOT_RATE_LIMITED`, `REPORT_ASSISTANT_INVALID_RESPONSE`, `REPORT_ASSISTANT_TIMEOUT`, `REPORT_ASSISTANT_PERSISTENCE_FAILED`, and `REPORT_ASSISTANT_FAILED`. Chatbot 5xx responses remain redacted by its existing HTTP error handler. User messages are persisted before the upstream call; report plus assistant-message persistence uses a short transaction after PDF generation, and a newly uploaded asset is deleted if that transaction fails. Numeric-grounding failures stop before PDF creation and return a failure state through the existing pipeline.
+
+Native LangGraph persistence adds `REPORT_ASSISTANT_STATE_UNAVAILABLE` (503) when the Postgres checkpointer/Store cannot initialize or restore required state, and `REPORT_ASSISTANT_MEMORY_FAILED` (503) for explicit preference-memory operations that fail validation or persistence. The feature fails closed: it never falls back to a stateless graph. Missing/mismatched pending interrupts, duplicate confirmations, and confirmations after a graph restart without a valid checkpoint return `REPORT_PLAN_STALE` (409); no second PDF is generated. A normal user message that arrives while the approval interrupt is pending resumes it as a revision and invalidates that plan.
+
+## Patient chat and booking errors (2026-09)
+
+Patient multi-thread endpoints use stable codes including `PATIENT_CHAT_INVALID_INPUT` (400), `PATIENT_CHAT_APPROVAL_NOT_FOUND` (404), `PATIENT_CHAT_ACTION_STALE` (409), `PATIENT_CHAT_TIMEOUT` (504), and `PATIENT_CHAT_INVALID_RESPONSE` (502). `PATIENT_CHAT_STATE_UNAVAILABLE` and `PATIENT_CHAT_MEMORY_UNAVAILABLE` are 503 errors when the shared LangGraph checkpoint/Store cannot be safely used; requests do not fall back to a stateless graph. Upstream user messages are already persisted before chatbot execution, so a failed turn can be retried without losing the request.
+
+Booking resume requires a pending interrupt, matching operation UUID, matching stored summary and latest owner-scoped approval. Duplicate/mismatched confirmations return `PATIENT_CHAT_ACTION_STALE` (409) and do not create another appointment. Appointment idempotency by `ai_booking_operation_id` prevents a network retry from creating duplicate rows or notifications. A normal message while approval is pending resumes as `REVISE`; `CANCEL` finalizes without calling the appointment API. Chat deletion is checkpoint-first, so a checkpoint deletion error leaves the application conversation undeleted and retryable. Explicit preference-memory storage/read/delete failures return `PATIENT_CHAT_MEMORY_UNAVAILABLE` rather than silently ignoring the request.
+
 ## Kết luận từ vòng xác minh: không tự động suy ra "an toàn y tế" từ code
 
 Code có nhiều lớp phòng vệ kỹ thuật (validate schema, XOR upload, rate-limit, không rò rỉ lỗi nội bộ, dò red-flag khẩn cấp bằng regex độc lập với LLM), nhưng đây là bằng chứng về **cách hệ thống xử lý lỗi kỹ thuật**, không phải bằng chứng về tính an toàn/đúng đắn y khoa của nội dung do AI sinh ra — output AI phải được coi là không mang tính chẩn đoán trừ khi có chính sách sản phẩm khác nói rõ.

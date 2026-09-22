@@ -91,3 +91,27 @@ Dữ liệu seed (role/permission/chuyên khoa/user/doctor/lịch/relative/healt
 - Toàn bộ file entity dưới `backend/src/entities/`
 - `backend/src/database/migrations/` (danh sách nêu trên)
 - `chatbot/src/entities_view/`, `chatbot/src/database/data-source.ts`
+
+## Conversational report assistant tables (2026-09)
+
+Migration `1788700000000-createAiReportAssistant.ts` adds:
+
+- `ai_report_conversations`: owner FK to `users` with cascade delete, 160-character title, created/updated/soft-delete timestamps, and owner/updated-time index.
+- `ai_report_messages`: immutable user/assistant transcript rows, optional action, JSONB proposed plan, optional report FK (`ON DELETE SET NULL`), and conversation/id index. Conversation deletion cascades to messages.
+- `ai_admin_reports.conversation_id` (nullable FK, `ON DELETE SET NULL`) and `source_request` (nullable text). Assistant reports use `report_type=CONVERSATIONAL` and `range_preset=CONVERSATION`; every confirmed generation creates a new report row.
+
+Conversation/message reads are owner-scoped in the service. Patient chat's existing `conversation` table remains separate and is not reused.
+
+Migrations `1788800000000-setupLangGraphPersistence.ts` and `1788900000000-renameLangGraphRole.ts` provision the dedicated `chatbot_report_assistant` login and `langgraph` schema, with the latter preserving databases where the original role was already created. The native LangGraph `PostgresSaver` checkpoint tables and `PostgresStore` tables are created/updated by their package-managed `setup()` migrations inside that schema; they are not TypeORM entities or the application transcript source of record. The role has no grants to `public` business tables and does not replace the separate read-only reporting role. Checkpoints are keyed per report conversation thread. Long-term Store data is a single versioned per-admin preference profile under `report-assistant/user/{userId}/preferences`, with enum-validated range, comparison, metrics, grouping, chart and detail defaults only.
+
+## Patient multi-thread chat tables (2026-09)
+
+Migration `1789000000000-createPatientChatAssistant.ts` adds:
+
+- `patient_chat_conversations`: `user_id` owner FK with cascade delete; 160-character title; create/update/soft-delete timestamps; index by `(user_id, updated_at DESC)`.
+- `patient_chat_messages`: conversation FK with cascade delete; constrained `USER|ASSISTANT` role and patient action; transcript content, JSONB public payload, optional appointment FK (`ON DELETE SET NULL`), UUID `turn_id`, and `(conversation_id, id DESC)` cursor index.
+- `appointments.ai_booking_operation_id`: nullable UUID with a unique partial index; `appointments.patient_chat_conversation_id`: nullable FK (`ON DELETE SET NULL`) for booking audit.
+
+Legacy `conversations` rows are retained without backfill and are still available through the legacy history API; new multi-thread screens use only these patient-chat tables. The application transcript remains the complete business history. The LangGraph checkpoint keyed by `patient-chat:v1:{userId}:{conversationId}` is execution state only; deleting a conversation removes that checkpoint and soft-deletes the application row, but does not delete long-term preference memory.
+
+The shared `chatbot_report_assistant` role and `langgraph` schema host both report-assistant and patient-chat persistence. Patient preferences use a user-specific `patient-chat/user/{userId}/preferences` namespace and the strict profile allowlist: language, detail level, preferred weekdays and time of day. No symptoms, medication, diagnosis, allergy, SQL, JWT, or chat text are written to long-term memory. The role remains isolated from public business tables; `chatbot_readonly` remains the only direct SELECT role for approved chatbot views.
