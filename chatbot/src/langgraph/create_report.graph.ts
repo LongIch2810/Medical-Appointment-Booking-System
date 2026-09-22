@@ -15,12 +15,15 @@ import { renderChartToImage } from "../utils/renderChartToImage.js";
 import { getChatModel } from "../configs/llm.js";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { logSafeError } from "../utils/safeLog.js";
+import { assertNumericGrounding } from "../utils/validateNumericGrounding.js";
 
 type ChartConfig = z.infer<typeof ChartSchema>;
 type Report = z.infer<typeof ReportSchema>;
 
 const CreateReportState = Annotation.Root({
   question: Annotation<string>(),
+  preferredChartType: Annotation<"BAR" | "LINE" | "PIE" | undefined>(),
+  detailLevel: Annotation<"BRIEF" | "STANDARD" | "DETAILED" | undefined>(),
   result: Annotation<string>(),
   chartConfig: Annotation<ChartConfig>(),
   report: Annotation<Report>(),
@@ -45,6 +48,7 @@ const CreateReportState = Annotation.Root({
     status: number;
     message: string;
     node: string;
+    code?: string;
   } | null>(),
   nextNodeReport: Annotation<string>(),
 
@@ -102,6 +106,17 @@ async function LLMGenerateErrorAnswerNode(
       state.errorReport,
       state.errorPdf,
     ].filter(Boolean);
+
+    if (errors.some((error: any) => error?.code === "REPORT_NUMERIC_GROUNDING_FAILED")) {
+      return {
+        final_result: {
+          status: 422,
+          success: false,
+          code: "REPORT_NUMERIC_GROUNDING_FAILED",
+          message: "Không thể hoàn tất báo cáo vì AI đưa ra số liệu chưa được dữ liệu truy vấn xác nhận. Vui lòng thử diễn đạt lại yêu cầu.",
+        },
+      };
+    }
 
     if (errors.length === 0) {
       return {
@@ -253,6 +268,9 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
       {
         question: state.question,
         data_json: state.result,
+        ...(state.preferredChartType
+          ? { preferredChartType: state.preferredChartType }
+          : {}),
       },
     );
 
@@ -294,19 +312,32 @@ async function generateContentNode(state: typeof CreateReportState.State) {
       };
     }
 
-    const res = await runTool(
-      WriteProfessionalReportTool as DynamicStructuredTool,
-      {
+    let res: Report | undefined;
+    let groundingError = false;
+    for (let attempt = 0; attempt <= 4; attempt++) {
+      res = await WriteProfessionalReportTool.invoke({
         question: state.question,
         data_json: state.result,
-      },
-    );
+        ...(state.detailLevel ? { detailLevel: state.detailLevel } : {}),
+      });
+      if (!res) continue;
+      try {
+        assertNumericGrounding(res, state.result);
+        break;
+      } catch {
+        groundingError = true;
+        res = undefined;
+      }
+    }
 
     if (!res) {
       return {
         errorReport: {
-          status: 404,
-          message: "Không thể sinh nội dung báo cáo từ dữ liệu hiện có.",
+          status: groundingError ? 422 : 404,
+          code: groundingError ? "REPORT_NUMERIC_GROUNDING_FAILED" : undefined,
+          message: groundingError
+            ? "Nội dung AI chứa số liệu không được kết quả truy vấn hỗ trợ."
+            : "Không thể sinh nội dung báo cáo từ dữ liệu hiện có.",
           node: "generate_content_node",
         },
         nextNodeReport: "llm_generate_error_answer_node",
@@ -401,5 +432,21 @@ const workflow = new StateGraph(CreateReportState)
   .addEdge("llm_generate_error_answer_node", "__end__");
 
 const createReportGraph = workflow.compile();
+
+export async function runReportPipeline(input: {
+  question: string;
+  fileName?: string;
+  preferredChartType?: "BAR" | "LINE" | "PIE";
+  detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
+}) {
+  return createReportGraph.invoke({
+    question: input.question,
+    ...(input.preferredChartType
+      ? { preferredChartType: input.preferredChartType }
+      : {}),
+    ...(input.detailLevel ? { detailLevel: input.detailLevel } : {}),
+    ...(input.fileName ? { file_name: input.fileName } : {}),
+  });
+}
 
 export default createReportGraph;

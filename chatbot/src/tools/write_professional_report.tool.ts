@@ -22,24 +22,23 @@ export const ReportSchema = z.object({
     .describe("Các khuyến nghị chiến lược hoặc hướng hành động."),
   economic_context: z
     .string()
-    .describe("Góc nhìn kinh tế vĩ mô hoặc tác động tài chính liên quan."),
+    .describe("Luôn để trống vì các view báo cáo hiện tại không cung cấp dữ liệu kinh tế/tài chính."),
   footer: z.string().describe("Chữ ký hoặc thông tin kết thúc báo cáo."),
 });
-const today = new Date();
-const currentDate = today.toISOString().split("T")[0];
 const systemPrompt = `
-Bạn là chuyên gia phân tích cấp cao của một công ty tư vấn chiến lược quốc tế (McKinsey, PwC, Deloitte...).
+Bạn là chuyên gia phân tích dữ liệu vận hành y tế của LifeHealth.
 
 Nhiệm vụ của bạn:
 - Viết báo cáo phân tích chuyên sâu và chuyên nghiệp, dựa trên dữ liệu thật.
 - Ngôn ngữ: tiếng Việt, phong cách trang trọng, chuẩn doanh nghiệp.
-- Cấu trúc rõ ràng gồm: tiêu đề, phân tích, nhận định, khuyến nghị, và bối cảnh kinh tế.
-- Nội dung phải sâu sắc, thể hiện tầm nhìn chiến lược và hiểu biết kinh tế vĩ mô.
+- Cấu trúc rõ ràng gồm: tiêu đề, phân tích, nhận định và khuyến nghị. Trường economic_context luôn là chuỗi rỗng.
+- Mọi số liệu, tỷ lệ và chỉ số dẫn xuất phải xuất hiện trong kết quả SQL; không tự tính, ước lượng hoặc suy ra con số mới.
+- Nếu dữ liệu không đủ để kết luận, hãy nói rõ giới hạn thay vì suy đoán.
+- Không bổ sung bối cảnh kinh tế vĩ mô, tác động tài chính hoặc ngày hiện tại; các view hiện hành không cung cấp dữ liệu đó.
 - Không viết lan man, chỉ tập trung vào insight và đề xuất có giá trị.
 - Chỉ có text không dùng bất cứ kí tự nào kể cả dấu *.
 - Footer:
     - Thương hiệu của là AI LifeHealth
-    - Ngày hiện tại là: ${currentDate}
 - Phải trả về đúng định dạng JSON theo schema.
 `;
 
@@ -77,9 +76,16 @@ const structuredModel = model.withStructuredOutput(ReportSchema, {
 const pipeline = promptTemplate.pipe(structuredModel);
 
 export const WriteProfessionalReportTool = tool(
-  async ({ question, data_json }: { question: string; data_json: string }) => {
+  async ({ question, data_json, detailLevel }: {
+    question: string;
+    data_json: string;
+    detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
+  }) => {
+    const reportQuestion = detailLevel && detailLevel !== "STANDARD"
+      ? `${question}\nRequested detail level: ${detailLevel}.`
+      : question;
     const result = await pipeline.invoke({
-      question,
+      question: reportQuestion,
       data_json,
     });
     return result;
@@ -99,6 +105,7 @@ export const WriteProfessionalReportTool = tool(
         .describe(
           "Dữ liệu thực tế dạng JSON, ví dụ: [{doctor_age: 35, number_of_doctors: 2}, ...]"
         ),
+      detailLevel: z.enum(["BRIEF", "STANDARD", "DETAILED"]).optional(),
     }),
   }
 );

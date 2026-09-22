@@ -69,6 +69,10 @@ async function warmUpChatbot(): Promise<void> {
   }
 
   await getChatbotRouter();
+  const { initializeReportAssistantRuntime } = await import(
+    "./langgraph/reportAssistantRuntime.js"
+  );
+  await initializeReportAssistantRuntime();
 }
 
 function startServer(): void {

@@ -8,7 +8,7 @@ import request from "supertest";
 import { registerEsmMocks } from "../unit/_helpers/registerMocks.mjs";
 import { InMemoryRateLimitStore } from "../../src/middlewares/rateLimitStore.js";
 
-type ServiceName = "chat" | "report" | "roadmap";
+type ServiceName = "chat" | "report" | "assistant" | "roadmap" | "patient" | "deletePatient";
 
 type ServiceStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -36,11 +36,14 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_ROUTE_SERVICE_STUB__ = {
-  calls: { chat: [], report: [], roadmap: [] },
+  calls: { chat: [], report: [], assistant: [], roadmap: [], patient: [], deletePatient: [] },
   results: {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
+    assistant: { action: "ANSWER", message: "Assistant response" },
     roadmap: { pdfUrl: "roadmap.pdf" },
+    patient: { action: "ANSWER", message: "Patient response" },
+    deletePatient: { success: true },
   },
   errors: {},
 };
@@ -61,6 +64,9 @@ registerEsmMocks(controllerDirUrl, {
     };
     export const handleChatService = (args) => invoke("chat", args);
     export const handleCreateReportService = (args) => invoke("report", args);
+    export const handleReportAssistantService = (args) => invoke("assistant", args);
+    export const handlePatientChatService = (args) => invoke("patient", args);
+    export const handleDeletePatientChatConversationService = (...args) => invoke("deletePatient", args);
     export const handleBuildHealthRoadMapService = (args) => invoke("roadmap", args);
     export const handleDiagnosisService = () => {
       throw new Error("Diagnosis is not exposed by the production router");
@@ -81,7 +87,10 @@ function resetStub() {
   stub.results = {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
+    assistant: { action: "ANSWER", message: "Assistant response" },
     roadmap: { pdfUrl: "roadmap.pdf" },
+    patient: { action: "ANSWER", message: "Patient response" },
+    deletePatient: { success: true },
   };
 }
 
@@ -97,6 +106,20 @@ function buildApp() {
 function authenticated(postRequest: request.Test) {
   return postRequest.set("x-chatbot-internal-key", INTERNAL_KEY);
 }
+
+const assistantPlan = {
+  schemaVersion: 1,
+  title: "Lịch hẹn theo chuyên khoa",
+  objective: "So sánh số lịch hẹn theo chuyên khoa.",
+  query: "Tổng hợp số lịch hẹn theo chuyên khoa trong kỳ.",
+  fromDate: "2026-08-01",
+  toDate: "2026-08-31",
+  comparisonFromDate: null,
+  comparisonToDate: null,
+  metrics: ["appointment_count"],
+  groupBy: ["specialty_name"],
+  sourceViews: ["chatbot_report_appointments_view", "chatbot_report_specialties_view"],
+};
 
 describe("chatbot production router integration", () => {
   before(() => {
@@ -173,6 +196,112 @@ describe("chatbot production router integration", () => {
     assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.report, [
       { question: "monthly report" },
     ]);
+  });
+
+  it("verifies forwarded identity and passes assistant context to the service", async () => {
+    const response = await authenticated(
+      request(buildApp()).post("/chatbot/report-assistant"),
+    )
+      .set("Authorization", `Bearer ${tokenForUser7}`)
+      .send({ userId: "7", conversationId: 11, turnId: 1, threadId: "report-assistant:v1:7:11", mode: "MESSAGE", message: "Tóm tắt lịch hẹn", historySeed: [] });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, {
+      success: true,
+      data: { action: "ANSWER", message: "Assistant response" },
+    });
+    assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.assistant, [
+      { userId: 7, conversationId: 11, turnId: 1, threadId: "report-assistant:v1:7:11", mode: "MESSAGE", message: "Tóm tắt lịch hẹn", historySeed: [] },
+    ]);
+    assert.equal(response.headers["ratelimit-limit"], "30");
+  });
+
+  it("rejects a user id that does not match the verified JWT subject", async () => {
+    const response = await authenticated(
+      request(buildApp()).post("/chatbot/report-assistant"),
+    )
+      .set("Authorization", `Bearer ${tokenForUser7}`)
+      .send({ userId: 1, conversationId: 11, turnId: 1, threadId: "report-assistant:v1:1:11", mode: "MESSAGE", message: "report", historySeed: [] });
+
+    assert.equal(response.status, 401);
+    assert.equal(response.body.code, "CHATBOT_ACTOR_MISMATCH");
+    assert.equal(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.assistant.length, 0);
+  });
+
+  it("validates patient thread identity and forwards only a verified patient JWT", async () => {
+    const body = {
+      userId: "7",
+      conversationId: 23,
+      turnId: "e9ed5cae-574c-4f32-bfef-c5fc141c11db",
+      threadId: "patient-chat:v1:7:23",
+      mode: "MESSAGE",
+      message: "  Xin chào  ",
+      historySeed: [{ role: "user", content: "hello" }],
+    };
+    const response = await authenticated(request(buildApp()).post("/chatbot/patient-chat"))
+      .set("Authorization", `Bearer ${tokenForUser7}`)
+      .send(body);
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(response.body, {
+      success: true,
+      data: { action: "ANSWER", message: "Patient response" },
+    });
+    assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.patient, [{
+      userId: 7,
+      conversationId: 23,
+      turnId: body.turnId,
+      threadId: body.threadId,
+      mode: "MESSAGE",
+      message: "Xin chào",
+      historySeed: body.historySeed,
+      token: tokenForUser7,
+    }]);
+  });
+
+  it("rejects a caller-selected patient thread belonging to another identity", async () => {
+    const response = await authenticated(request(buildApp()).post("/chatbot/patient-chat"))
+      .set("Authorization", `Bearer ${tokenForUser7}`)
+      .send({
+        userId: 7,
+        conversationId: 23,
+        turnId: "e9ed5cae-574c-4f32-bfef-c5fc141c11db",
+        threadId: "patient-chat:v1:1:23",
+        mode: "MESSAGE",
+        message: "hello",
+        historySeed: [],
+      });
+    assert.equal(response.status, 400);
+    assert.equal(response.body.code, "PATIENT_CHAT_INVALID_INPUT");
+    assert.equal(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.patient.length, 0);
+  });
+
+  it("applies the confirmed-report quota independently of the chat quota", async () => {
+    const app = buildApp();
+    const postAssistant = (confirm = true) => {
+      const body = {
+        userId: 7,
+        conversationId: 11,
+        turnId: 1,
+        threadId: "report-assistant:v1:7:11",
+        mode: confirm ? "CONFIRM_PLAN" : "MESSAGE",
+        message: "Tạo báo cáo theo kế hoạch đã duyệt",
+        ...(confirm ? { confirmedPlan: assistantPlan } : { historySeed: [] }),
+      };
+      return authenticated(request(app).post("/chatbot/report-assistant"))
+        .set("Authorization", `Bearer ${tokenForUser7}`)
+        .send(body);
+    };
+
+    for (let index = 0; index < 3; index += 1) {
+      assert.equal((await postAssistant()).status, 200);
+    }
+    const blocked = await postAssistant();
+    assert.equal(blocked.status, 429);
+    assert.equal(blocked.body.code, "CHATBOT_RATE_LIMITED");
+
+    const chatStillAllowed = await postAssistant(false);
+    assert.equal(chatStillAllowed.status, 200);
   });
 
   it("exposes build-health-roadmap and validates its body", async () => {

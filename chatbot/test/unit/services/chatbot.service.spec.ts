@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { ChatbotOperationError } from "../../../src/utils/retry.js";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type Step = "agent" | "report" | "roadmap" | "diagnosis";
+type Step = "agent" | "report" | "assistant" | "roadmap" | "diagnosis" | "patientChat";
 type ServiceStub = {
   calls: Record<Step, unknown[]>;
   results: Record<Step, unknown>;
@@ -17,7 +17,7 @@ const globals = globalThis as typeof globalThis & {
 
 function resetStub() {
   globals.__CHATBOT_SERVICE_STUB__ = {
-    calls: { agent: [], report: [], roadmap: [], diagnosis: [] },
+    calls: { agent: [], report: [], assistant: [], roadmap: [], diagnosis: [], patientChat: [] },
     results: {
       agent: { messages: [{ content: "agent answer", _getType: () => "ai" }] },
       report: {
@@ -26,8 +26,10 @@ function resetStub() {
         report: { title: "Report" },
         chartConfig: { type: "bar" },
       },
+      assistant: { action: "ANSWER", message: "Assistant response" },
       roadmap: { pdf_url: "roadmap.pdf" },
       diagnosis: { answer: "diagnosis answer" },
+      patientChat: { action: "ANSWER", message: "patient answer" },
     },
   };
 }
@@ -70,11 +72,35 @@ const graphModule = (step: Step) => `
     },
   };
   export default graph;
+  ${step === "report" ? `export async function runReportPipeline(input) {
+    return graph.invoke({ question: input.question, file_name: input.fileName });
+  }` : ""}
 `;
 
 registerEsmMocks(subjectDirUrl, {
   "../agents/agents.js": graphModule("agent"),
   "../langgraph/create_report.graph.js": graphModule("report"),
+  "../langgraph/report_assistant.graph.js": `
+    export async function runReportAssistant(graph, input) {
+      const state = globalThis.__CHATBOT_SERVICE_STUB__;
+      state.calls.assistant.push([graph, input]);
+      if (state.errorAt === "assistant") throw new Error("assistant failed");
+      return state.results.assistant;
+    }
+  `,
+  "../langgraph/reportAssistantRuntime.js": `
+    export function getReportAssistantGraph() { return { name: "runtime-graph" }; }
+    export function getPatientChatGraph() { return { name: "patient-runtime-graph" }; }
+    export async function deletePatientChatThread(userId, conversationId) { return { userId, conversationId }; }
+  `,
+  "../langgraph/patient_chat.graph.js": `
+    export async function runPatientChat(graph, input) {
+      const state = globalThis.__CHATBOT_SERVICE_STUB__;
+      state.calls.patientChat.push([graph, input]);
+      if (state.errorAt === "patientChat") throw new Error("patientChat failed");
+      return state.results.patientChat;
+    }
+  `,
   "../langgraph/build_health_roadmap.graph.js": graphModule("roadmap"),
   "../langgraph/diagnosis.graph.js": graphModule("diagnosis"),
   "../configs/httpClient.js": `
@@ -247,4 +273,29 @@ test("diagnosis service maps success and normalizes failures", async (t) => {
     (error: unknown) =>
       error instanceof ChatbotOperationError && error.status === 400,
   );
+});
+
+test("patient chat service invokes the persistent graph with its conversation identity", async () => {
+  const input = {
+    userId: 7,
+    conversationId: 11,
+    turnId: "723693c0-bd0c-4a04-b7b0-6f18dd9842f1",
+    threadId: "patient-chat:v1:7:11",
+    mode: "MESSAGE" as const,
+    message: "Xin chào",
+    token: "user-token",
+  };
+  const result = await services.handlePatientChatService(input);
+  assert.deepEqual(result, { action: "ANSWER", message: "patient answer" });
+  const [graph, passedInput] = globals.__CHATBOT_SERVICE_STUB__.calls.patientChat[0] as [
+    { name: string },
+    typeof input,
+  ];
+  assert.equal(graph.name, "patient-runtime-graph");
+  assert.deepEqual(passedInput, input);
+});
+
+test("patient conversation deletion removes its LangGraph checkpoint", async () => {
+  const result = await services.handleDeletePatientChatConversationService(7, 11);
+  assert.deepEqual(result, { success: true });
 });

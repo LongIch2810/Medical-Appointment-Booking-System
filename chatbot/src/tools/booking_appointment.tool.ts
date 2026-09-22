@@ -1,4 +1,5 @@
 import * as dotenv from "dotenv";
+import { randomUUID } from "node:crypto";
 import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import bookingGraph from "../langgraph/booking.graph.js";
@@ -174,8 +175,18 @@ export const bookingAppointmentTool = tool(
       const result = await bookingGraph.invoke({
         text_input: full_text_input,
         token,
+        proposal_only: true,
       });
-
+      if (result.booking_proposal) {
+        return JSON.stringify({
+          type: "PATIENT_BOOKING_PROPOSAL",
+          // Create this before the outer patient graph checkpoints the tool
+          // result. Resuming that checkpoint therefore always uses the same
+          // idempotency key.
+          operationId: randomUUID(),
+          proposal: result.booking_proposal,
+        });
+      }
       return formatBookingResult(result);
     } catch (error) {
       logSafeError("bookingAppointmentTool failed", error);

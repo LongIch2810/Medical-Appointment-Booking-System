@@ -4,7 +4,7 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type ServiceName = "chat" | "report" | "roadmap" | "diagnosis";
+type ServiceName = "chat" | "report" | "assistant" | "roadmap" | "diagnosis" | "patientChat" | "deletePatientConversation";
 
 type ControllerStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -17,12 +17,15 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_CONTROLLER_STUB__ = {
-  calls: { chat: [], report: [], roadmap: [], diagnosis: [] },
+  calls: { chat: [], report: [], assistant: [], roadmap: [], diagnosis: [], patientChat: [], deletePatientConversation: [] },
   results: {
     chat: { answer: "chat answer" },
     report: { pdfUrl: "report.pdf" },
+    assistant: { action: "ANSWER", message: "Assistant response" },
     roadmap: { pdfUrl: "roadmap.pdf" },
     diagnosis: { answer: "diagnosis answer" },
+    patientChat: { action: "ANSWER", message: "patient answer" },
+    deletePatientConversation: { success: true },
   },
   errors: {},
 };
@@ -41,8 +44,11 @@ registerEsmMocks(subjectDirUrl, {
     };
     export const handleChatService = (args) => invoke("chat", args);
     export const handleCreateReportService = (args) => invoke("report", args);
+    export const handleReportAssistantService = (args) => invoke("assistant", args);
     export const handleBuildHealthRoadMapService = (args) => invoke("roadmap", args);
     export const handleDiagnosisService = (args) => invoke("diagnosis", args);
+    export const handlePatientChatService = (args) => invoke("patientChat", args);
+    export const handleDeletePatientChatConversationService = (...args) => invoke("deletePatientConversation", args);
   `,
 });
 
@@ -96,6 +102,54 @@ test("handleChatController trims input, parses the user id, and returns the answ
   assert.deepEqual(state.body, { success: true, answer: "chat answer" });
   assert.deepEqual(globals.__CHATBOT_CONTROLLER_STUB__.calls.chat, [
     { question: "hello", userId: 7, token: "token" },
+  ]);
+});
+
+test("report assistant rejects missing or mismatched verified actors", async () => {
+  for (const request of [
+    { body: { userId: 7, message: "report", conversationId: 11, turnId: 1, threadId: "report-assistant:v1:7:11", mode: "MESSAGE", historySeed: [] } },
+    { body: { userId: 7, message: "report", conversationId: 11, turnId: 1, threadId: "report-assistant:v1:7:11", mode: "MESSAGE", historySeed: [] }, actorUserId: 8 },
+  ]) {
+    const { response, state } = createResponse();
+    await controllers.handleReportAssistantController(request as never, response as never);
+    assert.equal(state.status, 401);
+  }
+  assert.equal(globals.__CHATBOT_CONTROLLER_STUB__.calls.assistant.length, 0);
+});
+
+test("report assistant validates bounded history and forwards normalized input", async () => {
+  const { response, state } = createResponse();
+  await controllers.handleReportAssistantController(
+    {
+      actorUserId: 7,
+      body: {
+        userId: "7",
+        message: "  summarize schedules  ",
+        conversationId: "11",
+        turnId: "12",
+        threadId: "report-assistant:v1:7:11",
+        mode: "MESSAGE",
+        historySeed: [{ role: "user", content: "prior request" }],
+      },
+    } as never,
+    response as never,
+  );
+
+  assert.equal(state.status, 200);
+  assert.deepEqual(state.body, {
+    success: true,
+    data: { action: "ANSWER", message: "Assistant response" },
+  });
+  assert.deepEqual(globals.__CHATBOT_CONTROLLER_STUB__.calls.assistant, [
+    {
+      userId: 7,
+      conversationId: 11,
+      turnId: 12,
+      threadId: "report-assistant:v1:7:11",
+      mode: "MESSAGE",
+      message: "summarize schedules",
+      historySeed: [{ role: "user", content: "prior request" }],
+    },
   ]);
 });
 

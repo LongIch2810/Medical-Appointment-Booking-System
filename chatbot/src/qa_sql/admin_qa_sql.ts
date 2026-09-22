@@ -30,7 +30,7 @@ const db = await SqlDatabase.fromDataSourceParams({
   ],
 });
 
-const ADMIN_REPORT_TABLES = [
+export const ADMIN_REPORT_TABLES = [
   "chatbot_report_users_view",
   "chatbot_report_health_profiles_view",
   "chatbot_report_health_roadmaps_view",
@@ -40,6 +40,10 @@ const ADMIN_REPORT_TABLES = [
   "chatbot_report_doctors_view",
   "chatbot_report_specialties_view",
 ] as const;
+
+export async function getAdminReportSchema(): Promise<string> {
+  return db.getTableInfo();
+}
 
 const InputStateAnnotation = Annotation.Root({
   question: Annotation<string>,

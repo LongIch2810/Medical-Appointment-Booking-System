@@ -5,7 +5,13 @@ import agent from "../agents/agents.js";
 import { ChatInput } from "../types/ChatInput.js";
 import axios from "axios";
 import httpClient from "../configs/httpClient.js";
-import createReportGraph from "../langgraph/create_report.graph.js";
+import { runReportPipeline } from "../langgraph/create_report.graph.js";
+import { runReportAssistant } from "../langgraph/report_assistant.graph.js";
+import { getReportAssistantGraph } from "../langgraph/reportAssistantRuntime.js";
+import type { ReportAssistantInput } from "../types/ReportAssistant.js";
+import { deletePatientChatThread, getPatientChatGraph } from "../langgraph/reportAssistantRuntime.js";
+import { runPatientChat } from "../langgraph/patient_chat.graph.js";
+import type { PatientChatInput } from "../types/PatientChat.js";
 import buildHealthRoadmapGraph from "../langgraph/build_health_roadmap.graph.js";
 import diagnosisGraph from "../langgraph/diagnosis.graph.js";
 import { randomUUID } from "node:crypto";
@@ -135,10 +141,7 @@ const handleCreateReportService = async ({
   fileName?: string;
 }) => {
   try {
-    const result: any = await createReportGraph.invoke({
-      question,
-      ...(fileName ? { file_name: fileName } : {}),
-    });
+    const result: any = await runReportPipeline({ question, fileName });
     const asset = result?.pdf_asset;
     const legacyPdfUrl = result?.pdf_url;
 
@@ -187,6 +190,34 @@ const handleCreateReportService = async ({
         };
   } catch (error) {
     logSafeError("Create report failed", error);
+    throw normalizeChatbotError(error);
+  }
+};
+
+const handleReportAssistantService = async (input: ReportAssistantInput) => {
+  try {
+    return await runReportAssistant(getReportAssistantGraph(), input);
+  } catch (error) {
+    logSafeError("Report assistant failed", error);
+    throw normalizeChatbotError(error);
+  }
+};
+
+const handlePatientChatService = async (input: PatientChatInput) => {
+  try {
+    return await runPatientChat(getPatientChatGraph(), input);
+  } catch (error) {
+    logSafeError("Patient chat failed", error);
+    throw normalizeChatbotError(error);
+  }
+};
+
+const handleDeletePatientChatConversationService = async (userId: number, conversationId: number) => {
+  try {
+    await deletePatientChatThread(userId, conversationId);
+    return { success: true };
+  } catch (error) {
+    logSafeError("Patient chat checkpoint deletion failed", error);
     throw normalizeChatbotError(error);
   }
 };
@@ -327,6 +358,9 @@ const handleDiagnosisService = async ({
 export {
   handleChatService,
   handleCreateReportService,
+  handleReportAssistantService,
+  handlePatientChatService,
+  handleDeletePatientChatConversationService,
   handleBuildHealthRoadMapService,
   handleDiagnosisService,
 };

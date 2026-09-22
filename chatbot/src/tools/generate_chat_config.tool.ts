@@ -138,8 +138,18 @@ function createGenerateChartConfigTool() {
   const pipeline = promptTemplate.pipe(structuredModel);
 
   return tool(
-    async ({ question, data_json }: { question: string; data_json: string }) => {
-      const result = await pipeline.invoke({ question, data_json });
+    async ({ question, data_json, preferredChartType }: {
+      question: string;
+      data_json: string;
+      preferredChartType?: "AUTO" | "BAR" | "LINE" | "PIE";
+    }) => {
+      const chartQuestion = preferredChartType && preferredChartType !== "AUTO"
+        ? `${question}\nPreferred chart type, if the data supports it: ${preferredChartType}.`
+        : question;
+      const result = await pipeline.invoke({
+        question: chartQuestion,
+        data_json,
+      });
       return result;
     },
     {
@@ -155,6 +165,7 @@ function createGenerateChartConfigTool() {
           .describe(
             "Dữ liệu thực tế dưới dạng JSON, ví dụ: [{doctor_age:35, number_of_doctors:2}, ...]"
           ),
+        preferredChartType: z.enum(["AUTO", "BAR", "LINE", "PIE"]).optional(),
       }),
     }
   );

@@ -11,6 +11,7 @@ import {
   type BookingFailure,
 } from "../utils/bookingFailureMessage.js";
 import { logSafeError } from "../utils/safeLog.js";
+import { withRetry } from "../utils/retry.js";
 
 dotenv.config();
 
@@ -106,6 +107,8 @@ const BookingState = Annotation.Root({
   // field này để booking_appointment.tool.ts format văn phong nhất quán,
   // cùng pattern với relative_lookup_error/specialty_resolve_error.
   booking_error: Annotation<BookingFailure | null>({ reducer: (_o, n) => n }),
+  proposal_only: Annotation<boolean>(),
+  booking_proposal: Annotation<any>(),
 });
 
 // Các node phân tích chạy song song (fan-out từ __start__) và hội tụ ở
@@ -331,6 +334,29 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     booking_mode: "ai_select",
   };
 
+  if (state.proposal_only) {
+    const selectedRelative = state.relatives?.find(
+      (relative) => relative.id === state.selected_relative_id,
+    );
+    const specialty = state.specialty_candidates?.find(
+      (candidate) => candidate.id === state.selected_specialty_id,
+    );
+    return {
+      booking_proposal: {
+        ...payload,
+        display: {
+          patientName:
+            state.new_relative_candidate?.fullname || selectedRelative?.fullname || "Bản thân",
+          createsRelative: !hasSelectedRelative,
+          specialtyName: specialty?.name || "Chuyên khoa",
+          appointmentDate: state.time?.appointment_date,
+          startTime: state.time?.start_time,
+          endTime: state.time?.end_time || null,
+        },
+      },
+    };
+  }
+
   try {
     const token = state?.token;
 
@@ -418,6 +444,30 @@ const workflow = new StateGraph(BookingState)
   .addEdge("booking_appointment", "__end__");
 
 const bookingGraph = workflow.compile();
+
+export async function commitBookingProposal(
+  proposal: Record<string, any>,
+  token: string,
+  operationId: string,
+  conversationId: number,
+) {
+  const response = await withRetry(
+    () => httpClient.post(
+      `${process.env.BACKEND_URL}/api/v1/appointments/booking`,
+      {
+        ...proposal,
+        ai_booking_operation_id: operationId,
+        patient_chat_conversation_id: conversationId,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        timeout: 20_000,
+      },
+    ),
+    { operation: 'patient_booking_commit', maxAttempts: 3, totalTimeoutMs: 60_000 },
+  );
+  return response.data?.data;
+}
 
 export default bookingGraph;
 
