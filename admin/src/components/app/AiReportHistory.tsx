@@ -32,6 +32,7 @@ import type {
 } from "@/types/interface/adminReport.interface";
 
 const REPORT_TYPE_LABELS: Record<AdminReportType, string> = {
+  CONVERSATIONAL: "Báo cáo hội thoại",
   BOOKING_CANCELLATION_NOSHOW: "Đặt lịch & hủy/no-show",
   PATIENT_FLOW_BY_TIMESLOT: "Lưu lượng theo khung giờ",
   APPOINTMENTS_BY_SPECIALTY: "Lịch hẹn theo chuyên khoa",
@@ -43,6 +44,7 @@ const REPORT_TYPE_LABELS: Record<AdminReportType, string> = {
 };
 
 const ALL_REPORT_TYPES: { value: AdminReportType; label: string }[] = [
+  { value: "CONVERSATIONAL", label: "Báo cáo hội thoại" },
   {
     value: "BOOKING_CANCELLATION_NOSHOW",
     label: "Thống kê đặt lịch & hủy/no-show",

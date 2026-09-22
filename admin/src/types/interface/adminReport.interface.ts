@@ -6,7 +6,77 @@ export type AdminReportType =
   | "PATIENT_FLOW_BY_TIMESLOT"
   | "APPOINTMENTS_BY_SPECIALTY"
   | "DOCTOR_FILL_RATE"
-  | "USER_DEMOGRAPHICS";
+  | "USER_DEMOGRAPHICS"
+  | "CONVERSATIONAL";
+
+export type ReportAssistantAction =
+  | "CLARIFY"
+  | "ANSWER"
+  | "PROPOSE_PLAN"
+  | "GENERATE_REPORT"
+  | "REFUSE";
+
+export type ReportAssistantPlan = {
+  schemaVersion: 1;
+  title: string;
+  objective: string;
+  query: string;
+  fromDate: string;
+  toDate: string;
+  comparisonFromDate?: string | null;
+  comparisonToDate?: string | null;
+  metrics: string[];
+  groupBy: string[];
+  sourceViews: string[];
+  chartType?: "AUTO" | "BAR" | "LINE" | "PIE" | "TABLE";
+  detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
+  appliedPreferences?: {
+    rangePreset?: "TODAY" | "THIS_WEEK" | "THIS_MONTH" | "THIS_YEAR";
+    comparison?: "NONE" | "PREVIOUS_PERIOD" | "PREVIOUS_YEAR";
+    metrics?: string[];
+    groupBy?: string[];
+    chartType?: "AUTO" | "BAR" | "LINE" | "PIE" | "TABLE";
+    detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
+  };
+};
+
+export type ReportAssistantMessage = {
+  id: number;
+  role: "USER" | "ASSISTANT";
+  action: ReportAssistantAction | null;
+  content: string;
+  plan: ReportAssistantPlan | null;
+  report: AdminReport | null;
+  createdAt: string;
+};
+
+export type ReportAssistantConversation = {
+  id: number;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AssistantTurnResponse = {
+  conversation: ReportAssistantConversation;
+  userMessage: ReportAssistantMessage;
+  assistantMessage: ReportAssistantMessage;
+  report: AdminReport | null;
+};
+
+export type ReportAssistantConversationListResponse = {
+  conversations: ReportAssistantConversation[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export type ReportAssistantConversationDetailResponse = {
+  conversation: ReportAssistantConversation;
+  messages: ReportAssistantMessage[];
+  nextBeforeMessageId: number | null;
+};
 
 export type AdminReportRangePreset =
   | "TODAY"

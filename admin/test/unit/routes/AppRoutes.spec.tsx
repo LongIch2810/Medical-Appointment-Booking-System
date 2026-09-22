@@ -1,10 +1,23 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ProtectedRoute, PermissionRoute, RootRedirect } from "@/routes/AppRoutes";
+import { AppRoutes, ProtectedRoute, PermissionRoute, RootRedirect } from "@/routes/AppRoutes";
+import { menuItems } from "@/config/menu";
+import { permissions } from "@/config/permissions";
 import { useAuthStore } from "@/store/useAuthStore";
 import type { User } from "@/types/interface/user.interface";
+
+vi.mock("@/layouts/AdminLayout", async () => {
+  const { Outlet } = await import("react-router-dom");
+  return { AdminLayout: () => <Outlet /> };
+});
+vi.mock("@/pages/AdminAiReportAssistantPage", () => ({
+  AdminAiReportAssistantPage: () => <div>Assistant report route</div>,
+}));
+vi.mock("@/pages/AdminAiReportGeneratorPage", () => ({
+  AdminAiReportGeneratorPage: () => <div>Legacy report generator route</div>,
+}));
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -193,5 +206,34 @@ describe("RootRedirect", () => {
     );
 
     expect(screen.getByText("Forbidden page")).toBeInTheDocument();
+  });
+});
+
+describe("admin report routes", () => {
+  it.each([
+    ["/admin/ai-report-assistant", "Assistant report route"],
+    ["/admin/ai-coach-reports", "Legacy report generator route"],
+  ])("keeps %s behind the existing report permission", (path, pageText) => {
+    useAuthStore.setState({
+      currentUser: makeUser(),
+      permissions: [permissions.aiCoachReport],
+    });
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText(pageText)).toBeInTheDocument();
+  });
+
+  it("registers both assistant and legacy generator menu entries with the same permission", () => {
+    const entries = menuItems.filter((item) =>
+      ["/admin/ai-report-assistant", "/admin/ai-coach-reports"].includes(item.path),
+    );
+    expect(entries.map((item) => item.path)).toEqual([
+      "/admin/ai-coach-reports",
+      "/admin/ai-report-assistant",
+    ]);
+    expect(entries.every((item) => item.requiredPermissions.includes(permissions.aiCoachReport))).toBe(true);
   });
 });
