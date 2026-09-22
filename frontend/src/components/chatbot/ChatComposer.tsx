@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
 import { ArrowUp } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ interface ChatComposerProps {
   onChange: (value: string) => void;
   onSend: () => void;
   isPending: boolean;
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
 }
 
 export default function ChatComposer({
@@ -19,16 +20,18 @@ export default function ChatComposer({
   onChange,
   onSend,
   isPending,
+  textareaRef: forwardedTextareaRef,
 }: ChatComposerProps) {
   const { t } = useTranslation();
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const localTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = forwardedTextareaRef ?? localTextareaRef;
 
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight, MAX_TEXTAREA_HEIGHT_PX)}px`;
-  }, [value]);
+  }, [value, textareaRef]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -42,6 +45,7 @@ export default function ChatComposer({
       <div className="flex items-end gap-2 rounded-2xl border border-slate-200 dark:border-[#293548] bg-white dark:bg-[#172033] px-3 py-2 shadow-xs focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/15 transition-colors">
         <Textarea
           ref={textareaRef}
+          aria-label="Nhập câu hỏi hoặc yêu cầu"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
