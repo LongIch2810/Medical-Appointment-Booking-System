@@ -24,7 +24,6 @@ const Careers = lazy(() => import("@/pages/Careers"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const Test = lazy(() => import("@/pages/Test"));
 const Forbidden = lazy(() => import("@/pages/Forbidden"));
-const AICoachHealth = lazy(() => import("@/pages/AICoachHealth"));
 
 // Patient Portal Pages (Code-split into dedicated patient bundle)
 const Dashboard = lazy(() => import("@/pages/patient/Dashboard"));
@@ -66,7 +65,6 @@ const AppRoutes: React.FC = () => {
               <Route path="messages" element={<Messages />} />
               <Route path="health-records" element={<HealthRecords />} />
               <Route path="visit-results" element={<VisitResults />} />
-              <Route path="ai-coach-health" element={<AICoachHealth />} />
               <Route path="complaints" element={<MyComplaints />} />
             </Route>
           </Route>

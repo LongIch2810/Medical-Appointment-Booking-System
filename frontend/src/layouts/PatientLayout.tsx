@@ -10,7 +10,6 @@ import {
   MessageCircleMore,
   Settings,
   ShieldCheck,
-  Sparkles,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -44,11 +43,6 @@ const PatientNavigation: React.FC = () => {
       label: t("nav.messages"),
       to: "/patient/messages",
       icon: MessageCircleMore,
-    },
-    {
-      label: t("nav.aiCoachHealth"),
-      to: "/patient/ai-coach-health",
-      icon: Sparkles,
     },
     { label: t("nav.healthRecords"), to: "/patient/health-records", icon: FileHeart },
     { label: t("nav.visitResults"), to: "/patient/visit-results", icon: FileSearch },
@@ -233,4 +227,3 @@ const PatientLayout: React.FC = () => {
 };
 
 export default PatientLayout;
-

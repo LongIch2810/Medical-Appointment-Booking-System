@@ -3,11 +3,10 @@ import { CloudinaryModule } from 'src/uploads/cloudinary.module';
 import { AiDocumentStorageService } from './ai-document-storage.service';
 import { forwardRef } from '@nestjs/common';
 import { ChatHistoryModule } from '../chat-history/chat-history.module';
-import { AiDocumentsController } from './ai-documents.controller';
 
 @Module({
   imports: [CloudinaryModule, forwardRef(() => ChatHistoryModule)],
-  controllers: [AiDocumentsController],
+  controllers: [],
   providers: [AiDocumentStorageService],
   exports: [AiDocumentStorageService],
 })

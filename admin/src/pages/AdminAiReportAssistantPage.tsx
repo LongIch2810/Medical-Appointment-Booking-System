@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { MessageSquarePlus, Send } from "lucide-react";
+import { AlertCircle, MessageSquarePlus, Send, Sparkles } from "lucide-react";
 
 import { AiReportLoadingOverlay } from "@/components/app/AiReportLoadingOverlay";
-import { PageHeader } from "@/components/app/PageHeader";
 import { ReportAssistantConversationList } from "@/components/app/ReportAssistantConversationList";
 import { ReportAssistantChat } from "@/components/app/ReportAssistantChat";
 import { Button } from "@/components/ui/button";
@@ -131,26 +130,37 @@ export function AdminAiReportAssistantPage() {
   return (
     <>
       <AiReportLoadingOverlay isLoading={isPending} />
-      <div className="space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <PageHeader
-            eyebrow="Admin reports"
-            title="Trợ lý báo cáo AI"
-            description="Trao đổi nhiều lượt để làm rõ câu hỏi, xác nhận kế hoạch và tạo báo cáo từ dữ liệu hệ thống."
-          />
+      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
+        {/* Compact page title bar */}
+        <div className="flex shrink-0 items-center justify-between gap-3 pb-2.5 sm:pb-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                Admin reports
+              </span>
+              <h1 className="truncate font-display text-base font-bold text-slate-900 dark:text-slate-100 sm:text-lg">
+                Trợ lý báo cáo AI
+              </h1>
+            </div>
+            <p className="mt-0.5 line-clamp-1 text-xs text-slate-500 dark:text-slate-400 sm:line-clamp-none">
+              Trao đổi nhiều lượt để làm rõ câu hỏi, xác nhận kế hoạch và tạo báo cáo từ dữ liệu hệ thống.
+            </p>
+          </div>
           <Button
             type="button"
             variant="outline"
-            className="min-h-11 shrink-0 gap-2 lg:hidden"
+            size="sm"
+            className="h-9 shrink-0 gap-1.5 border-slate-200 shadow-xs lg:hidden dark:border-slate-800"
             onClick={() => setIsRailOpen(true)}
           >
             <MessageSquarePlus aria-hidden="true" className="size-4" />
-            Hội thoại
+            <span>Hội thoại</span>
           </Button>
         </div>
 
-        <div className="flex h-[70vh] min-h-[34rem] overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
-          <aside className="hidden w-72 shrink-0 border-r border-slate-200 lg:flex lg:flex-col dark:border-slate-800">
+        {/* Main Workspace Frame */}
+        <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-slate-800/90 dark:bg-slate-950">
+          <aside className="hidden min-h-0 w-72 shrink-0 border-r border-slate-200/80 lg:flex lg:flex-col overflow-hidden xl:w-80 dark:border-slate-800/80">
             <ReportAssistantConversationList
               conversations={conversations.data?.data.conversations ?? []}
               selectedId={selectedId}
@@ -166,28 +176,35 @@ export function AdminAiReportAssistantPage() {
             />
           </aside>
 
-          <main className="flex min-w-0 flex-1 flex-col">
-            <header className="flex min-h-14 items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 dark:border-slate-800 sm:px-6">
+          <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+            <header className="flex h-13 shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/50 px-4 py-2.5 dark:border-slate-800 dark:bg-slate-900/30 sm:px-5">
               <div className="min-w-0">
-                <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {selectedTitle || "Cuộc hội thoại mới"}
-                </h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Phạm vi: dữ liệu quản trị hiện có
+                <div className="flex items-center gap-2">
+                  <h2 className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {selectedTitle || "Cuộc hội thoại mới"}
+                  </h2>
+                  <span className="hidden items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 sm:inline-flex dark:text-emerald-300">
+                    <span className="size-1.5 rounded-full bg-emerald-500" />
+                    Sẵn sàng
+                  </span>
+                </div>
+                <p className="truncate text-[11px] text-slate-500 dark:text-slate-400">
+                  Phạm vi: Dữ liệu vận hành & quản trị hệ thống
                 </p>
               </div>
               <Button
                 type="button"
                 variant="outline"
-                className="hidden min-h-11 shrink-0 gap-2 sm:inline-flex"
+                size="sm"
+                className="hidden h-8.5 shrink-0 gap-1.5 border-slate-200 text-xs font-medium shadow-xs hover:bg-slate-100 sm:inline-flex dark:border-slate-800 dark:hover:bg-slate-850"
                 onClick={() => {
                   clearTurnErrors();
                   setSelectedId(null);
                   setDraft("");
                 }}
               >
-                <MessageSquarePlus aria-hidden="true" className="size-4" />
-                Hội thoại mới
+                <Sparkles aria-hidden="true" className="size-3.5 text-primary" />
+                <span>Hội thoại mới</span>
               </Button>
             </header>
 
@@ -206,43 +223,59 @@ export function AdminAiReportAssistantPage() {
               onQuickPrompt={(prompt) => void runMessage(prompt)}
             />
 
-            <div className="border-t border-slate-100 bg-white p-3 dark:border-slate-800 dark:bg-slate-950 sm:p-4">
+            <div className="shrink-0 border-t border-slate-100 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-950 sm:p-3.5">
               {retryError ? (
-                <div className="mb-3 flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between" role="alert">
-                  <span>Không thể hoàn tất yêu cầu. Tin nhắn đã được giữ lại nếu đã lưu; bạn có thể thử lại.</span>
+                <div
+                  className="mb-2.5 flex flex-col gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-xs sm:text-sm text-destructive sm:flex-row sm:items-center sm:justify-between"
+                  role="alert"
+                >
+                  <div className="flex items-center gap-2">
+                    <AlertCircle aria-hidden="true" className="size-4 shrink-0" />
+                    <span>Không thể hoàn tất yêu cầu. Tin nhắn đã được giữ lại; bạn có thể thử lại.</span>
+                  </div>
                   {retryAction ? (
                     <Button
                       type="button"
                       variant="outline"
-                      className="min-h-11 border-destructive/30 text-destructive"
+                      size="sm"
+                      className="h-8 border-destructive/30 text-xs text-destructive hover:bg-destructive/10"
                       disabled={isPending}
-                      onClick={() => retryAction.kind === "message"
-                        ? void runMessage(retryAction.value)
-                        : void runConfirm(retryAction.value)}
+                      onClick={() =>
+                        retryAction.kind === "message"
+                          ? void runMessage(retryAction.value)
+                          : void runConfirm(retryAction.value)
+                      }
                     >
                       Thử lại
                     </Button>
                   ) : null}
                 </div>
               ) : null}
-              <label htmlFor="report-assistant-composer" className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
+
+              {/* Accessible label for testing and screen readers */}
+              <label
+                htmlFor="report-assistant-composer"
+                className="sr-only"
+              >
                 Tin nhắn của bạn
               </label>
+
               <div className="flex items-end gap-2">
                 <Textarea
                   id="report-assistant-composer"
+                  aria-label="Tin nhắn của bạn"
                   value={draft}
                   onChange={(event) => setDraft(event.target.value.slice(0, 4000))}
                   onKeyDown={handleComposerKeyDown}
-                  placeholder="Mô tả báo cáo bạn cần…"
+                  placeholder="Mô tả báo cáo bạn cần (ví dụ: So sánh số lịch hẹn tháng này theo chuyên khoa)..."
                   maxLength={4000}
                   disabled={isPending}
-                  className="min-h-12 max-h-36 resize-y"
+                  className="min-h-[44px] max-h-32 resize-none text-xs sm:text-sm focus-visible:ring-primary py-2.5"
                   aria-describedby="report-assistant-composer-help"
                 />
                 <Button
                   type="button"
-                  className="min-h-12 min-w-12 shrink-0 px-3"
+                  className="h-[44px] w-[44px] shrink-0 p-0 shadow-xs cursor-pointer"
                   onClick={handleSubmit}
                   disabled={isPending || !draft.trim()}
                   aria-label="Gửi tin nhắn"
@@ -250,7 +283,10 @@ export function AdminAiReportAssistantPage() {
                   <Send aria-hidden="true" className="size-4" />
                 </Button>
               </div>
-              <div id="report-assistant-composer-help" className="mt-1 flex justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <div
+                id="report-assistant-composer-help"
+                className="mt-1 flex justify-between gap-2 text-[11px] text-slate-400 dark:text-slate-500"
+              >
                 <span>Enter để gửi · Shift+Enter để xuống dòng</span>
                 <span>{draft.length}/4000</span>
               </div>
@@ -260,7 +296,11 @@ export function AdminAiReportAssistantPage() {
       </div>
 
       <Sheet open={isRailOpen} onOpenChange={setIsRailOpen}>
-        <SheetContent side="left" className="p-0">
+        <SheetContent side="left" className="flex h-full min-h-0 w-[300px] sm:w-[340px] max-w-[85vw] flex-col overflow-hidden p-0">
+          <div className="sr-only">
+            <h2>Danh sách cuộc hội thoại</h2>
+            <p>Chọn hoặc tạo mới cuộc hội thoại phân tích báo cáo</p>
+          </div>
           <ReportAssistantConversationList
             conversations={conversations.data?.data.conversations ?? []}
             selectedId={selectedId}

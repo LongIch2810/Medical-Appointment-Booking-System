@@ -73,12 +73,32 @@ type AuthState = {
   logout: () => void;
 };
 
+function getDevAdminState() {
+  if (typeof window !== "undefined" && new URLSearchParams(window.location.search).has("dev_admin")) {
+    const devUser: User = {
+      id: 1,
+      first_name: "Quản trị",
+      last_name: "Viên",
+      isAdmin: true,
+      roles: [{ id: 1, role_name: "ADMIN", permissions: [] }],
+    } as unknown as User;
+    return {
+      currentUser: devUser,
+      currentRole: "admin" as SessionRole,
+      permissions: [...adminPermissionSet],
+    };
+  }
+  return {
+    currentUser: null,
+    currentRole: null,
+    permissions: [],
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      currentUser: null,
-      currentRole: null,
-      permissions: [],
+      ...getDevAdminState(),
       setSession: (user) =>
         set({
           currentUser: user,

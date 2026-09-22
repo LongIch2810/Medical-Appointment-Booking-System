@@ -21,7 +21,7 @@ export function createRateLimit({ bucket, max, windowMs, store }: RateLimitOptio
     // Danh tính đã verify (JWT thật, xem requestIdentity.ts) là actor đáng
     // tin cậy cho rate limit — KHÔNG bao giờ dùng req.body.userId do client
     // tự khai báo. Chỉ fallback về IP cho các route không mang token người
-    // dùng (vd. create-report).
+    // dùng cho các route không gắn actor.
     const actorUserId = (req as RequestWithActor).actorUserId;
     const actor =
       typeof actorUserId === "number"

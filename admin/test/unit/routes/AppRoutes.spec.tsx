@@ -15,9 +15,6 @@ vi.mock("@/layouts/AdminLayout", async () => {
 vi.mock("@/pages/AdminAiReportAssistantPage", () => ({
   AdminAiReportAssistantPage: () => <div>Assistant report route</div>,
 }));
-vi.mock("@/pages/AdminAiReportGeneratorPage", () => ({
-  AdminAiReportGeneratorPage: () => <div>Legacy report generator route</div>,
-}));
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -210,10 +207,8 @@ describe("RootRedirect", () => {
 });
 
 describe("admin report routes", () => {
-  it.each([
-    ["/admin/ai-report-assistant", "Assistant report route"],
-    ["/admin/ai-coach-reports", "Legacy report generator route"],
-  ])("keeps %s behind the existing report permission", (path, pageText) => {
+  it("keeps the assistant route behind the existing report permission", () => {
+    const path = "/admin/ai-report-assistant";
     useAuthStore.setState({
       currentUser: makeUser(),
       permissions: [permissions.aiCoachReport],
@@ -223,17 +218,12 @@ describe("admin report routes", () => {
         <AppRoutes />
       </MemoryRouter>,
     );
-    expect(screen.getByText(pageText)).toBeInTheDocument();
+    expect(screen.getByText("Assistant report route")).toBeInTheDocument();
   });
 
-  it("registers both assistant and legacy generator menu entries with the same permission", () => {
-    const entries = menuItems.filter((item) =>
-      ["/admin/ai-report-assistant", "/admin/ai-coach-reports"].includes(item.path),
-    );
-    expect(entries.map((item) => item.path)).toEqual([
-      "/admin/ai-coach-reports",
-      "/admin/ai-report-assistant",
-    ]);
+  it("registers only the assistant menu entry with the report permission", () => {
+    const entries = menuItems.filter((item) => item.path === "/admin/ai-report-assistant");
+    expect(entries.map((item) => item.path)).toEqual(["/admin/ai-report-assistant"]);
     expect(entries.every((item) => item.requiredPermissions.includes(permissions.aiCoachReport))).toBe(true);
   });
 });

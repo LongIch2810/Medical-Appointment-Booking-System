@@ -23,8 +23,6 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { PERMISSIONS } from 'src/utils/constants';
 import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { BodyBuildHealthRoadmapDto } from './dto/request/bodyBuildHealthRoadmap.dto';
-import type { Response } from 'express';
 import { getRequestAccessToken } from 'src/utils/authContext';
 import { SendPatientChatMessageDto } from './dto/request/patientChat.dto';
 
@@ -149,70 +147,6 @@ export class ChatHistoryController {
       token,
       body,
     );
-  }
-
-  @ApiOperation({ summary: 'Tạo lộ trình sức khỏe bằng AI cho một hồ sơ' })
-  @Post('build-health-roadmap')
-  @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.CHATBOT_CHAT)
-  async buildHealthRoadmap(
-    @Request() req,
-    @Body() body: BodyBuildHealthRoadmapDto,
-  ) {
-    const { userId } = req.user;
-    const token = getRequestAccessToken(req);
-    if (!token) throw new UnauthorizedException('Token không hợp lệ.');
-
-    return this.chatHistoryService.buildHealthRoadmap(
-      userId,
-      body.relative_id,
-      token,
-    );
-  }
-
-  @Get('health-roadmaps')
-  @Permissions(PERMISSIONS.CHATBOT_CHAT)
-  getHealthRoadmapHistory(
-    @Request() req,
-    @Query('page') page = '1',
-    @Query('limit') limit = '10',
-    @Query('relativeId') relativeId?: string,
-  ) {
-    return this.chatHistoryService.getHealthRoadmapHistory(
-      req.user.userId,
-      Number(page),
-      Number(limit),
-      relativeId ? Number(relativeId) : undefined,
-    );
-  }
-
-  @Get('health-roadmaps/:id')
-  @Permissions(PERMISSIONS.CHATBOT_CHAT)
-  getHealthRoadmap(@Request() req, @Param('id', ParseIntPipe) id: number) {
-    return this.chatHistoryService.getHealthRoadmap(req.user.userId, id);
-  }
-
-  @Get('health-roadmaps/:id/file')
-  @Permissions(PERMISSIONS.CHATBOT_CHAT)
-  async getHealthRoadmapFile(
-    @Request() req,
-    @Param('id', ParseIntPipe) id: number,
-    @Query('download') download: string,
-    @Res() response: Response,
-  ) {
-    response.redirect(
-      await this.chatHistoryService.getHealthRoadmapFile(
-        req.user.userId,
-        id,
-        download === 'true',
-      ),
-    );
-  }
-
-  @Delete('health-roadmaps/:id')
-  @Permissions(PERMISSIONS.CHATBOT_CHAT)
-  deleteHealthRoadmap(@Request() req, @Param('id', ParseIntPipe) id: number) {
-    return this.chatHistoryService.deleteHealthRoadmap(req.user.userId, id);
   }
 
   @ApiOperation({ summary: 'Lịch sử hội thoại của người dùng' })

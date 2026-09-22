@@ -4,7 +4,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  Optional,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,13 +15,6 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
-import AiHealthRoadmap from 'src/entities/aiHealthRoadmap.entity';
-import Relative from 'src/entities/relative.entity';
-import { AiDocumentAsset } from 'src/shared/types/aiDocumentAsset.type';
-import { AiDocumentStorageService } from '../ai-documents/ai-document-storage.service';
-import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
-import { buildHealthRoadmapFileName } from 'src/utils/aiDocumentFileName';
-import { getDatabaseErrorMetadata } from 'src/utils/databaseErrorMetadata';
 import { getChatbotUpstreamError } from 'src/utils/chatbotUpstreamError';
 import PatientChatConversation from 'src/entities/patientChatConversation.entity';
 import PatientChatMessage, {
@@ -30,13 +22,13 @@ import PatientChatMessage, {
 } from 'src/entities/patientChatMessage.entity';
 import { randomUUID } from 'node:crypto';
 
-// Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
-// default (không timeout), request có thể treo vô thời hạn nếu chatbot
-// không phản hồi.
-// Chatbot service (Render free plan) tự spin-down sau ~15 phút không có
-// traffic; cold-start phải load xong Qdrant/LangChain trước khi bind port,
-// đo thực tế mất ~80-90s. 30s cũ luôn timeout ngay lần chat đầu sau khi
-// service ngủ — nới lên 100s để chờ hết cold-start thay vì báo lỗi giả.
+// Má»i call ra chatbot Ä‘á»u pháº£i cÃ³ timeout rÃµ rÃ ng â€” trÆ°á»›c Ä‘Ã¢y axios dÃ¹ng
+// default (khÃ´ng timeout), request cÃ³ thá»ƒ treo vÃ´ thá»i háº¡n náº¿u chatbot
+// khÃ´ng pháº£n há»“i.
+// Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng cÃ³
+// traffic; cold-start pháº£i load xong Qdrant/LangChain trÆ°á»›c khi bind port,
+// Ä‘o thá»±c táº¿ máº¥t ~80-90s. 30s cÅ© luÃ´n timeout ngay láº§n chat Ä‘áº§u sau khi
+// service ngá»§ â€” ná»›i lÃªn 100s Ä‘á»ƒ chá» háº¿t cold-start thay vÃ¬ bÃ¡o lá»—i giáº£.
 const CHATBOT_REQUEST_TIMEOUT_MS = 100_000;
 const CHATBOT_KEEP_ALIVE_TIMEOUT_MS = 5_000;
 const CHAT_HISTORY_CONTEXT_LIMIT = 10;
@@ -57,13 +49,6 @@ export class ChatHistoryService {
     private readonly usersService: UsersService,
     private readonly configService: ConfigService,
     private readonly redisCacheService: RedisCacheService,
-    @Optional()
-    @InjectRepository(AiHealthRoadmap)
-    private readonly roadmapRepo: Repository<AiHealthRoadmap>,
-    @Optional()
-    @InjectRepository(Relative)
-    private readonly relativeRepo: Repository<Relative>,
-    @Optional() private readonly documentStorage: AiDocumentStorageService,
     @InjectRepository(PatientChatConversation)
     private readonly patientChatConversationRepo: Repository<PatientChatConversation>,
     @InjectRepository(PatientChatMessage)
@@ -75,16 +60,16 @@ export class ChatHistoryService {
       where: { id, user: { id: userId } },
     });
     if (!conversation)
-      throw new NotFoundException('Không tìm thấy cuộc trò chuyện.');
+      throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y cuá»™c trÃ² chuyá»‡n.');
     return conversation;
   }
 
   async createPatientChatConversation(userId: number) {
     const user = await this.usersService.findByUserId(userId);
-    if (!user) throw new NotFoundException('Người dùng không tồn tại!');
+    if (!user) throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
     const conversation = await this.patientChatConversationRepo.save({
       user,
-      title: 'Cuộc trò chuyện mới',
+      title: 'Cuá»™c trÃ² chuyá»‡n má»›i',
     });
     return this.mapPatientChatConversation(conversation);
   }
@@ -178,7 +163,7 @@ export class ChatHistoryService {
       throw new HttpException(
         {
           code: 'PATIENT_CHAT_INVALID_INPUT',
-          message: 'Yêu cầu gửi tin nhắn không hợp lệ.',
+          message: 'YÃªu cáº§u gá»­i tin nháº¯n khÃ´ng há»£p lá»‡.',
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -238,7 +223,7 @@ export class ChatHistoryService {
               status === HttpStatus.CONFLICT
                 ? 'PATIENT_CHAT_ACTION_STALE'
                 : 'PATIENT_CHAT_APPROVAL_NOT_FOUND',
-            message: 'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
+            message: 'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
           },
           status,
         );
@@ -253,7 +238,7 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_ACTION_STALE',
-            message: 'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
+            message: 'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
           },
           HttpStatus.CONFLICT,
         );
@@ -264,7 +249,7 @@ export class ChatHistoryService {
       approvalMessageId = approvalMessage.id;
       mode = 'RESUME_BOOKING';
       message =
-        decision === 'APPROVE' ? 'Xác nhận đặt lịch' : 'Hủy yêu cầu đặt lịch';
+        decision === 'APPROVE' ? 'XÃ¡c nháº­n Ä‘áº·t lá»‹ch' : 'Há»§y yÃªu cáº§u Ä‘áº·t lá»‹ch';
       if (!userMessage) {
         userMessage = await this.patientChatMessageRepo.save({
           conversation,
@@ -282,7 +267,7 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_INVALID_INPUT',
-            message: 'Tin nhắn không hợp lệ hoặc quá dài.',
+            message: 'Tin nháº¯n khÃ´ng há»£p lá»‡ hoáº·c quÃ¡ dÃ i.',
           },
           HttpStatus.BAD_REQUEST,
         );
@@ -321,7 +306,7 @@ export class ChatHistoryService {
       if (firstUserMessage) {
         conversation.title =
           message.replace(/\s+/g, ' ').trim().slice(0, 160) ||
-          'Cuộc trò chuyện mới';
+          'Cuá»™c trÃ² chuyá»‡n má»›i';
       }
     }
 
@@ -333,7 +318,7 @@ export class ChatHistoryService {
         ? {
             title:
               userMessage.content.replace(/\s+/g, ' ').trim().slice(0, 160) ||
-              'Cuộc trò chuyện mới',
+              'Cuá»™c trÃ² chuyá»‡n má»›i',
           }
         : {}),
       updated_at: new Date(),
@@ -389,7 +374,7 @@ export class ChatHistoryService {
       throw new HttpException(
         {
           code: 'PATIENT_CHAT_INVALID_RESPONSE',
-          message: 'Chatbot trả về phản hồi không hợp lệ.',
+          message: 'Chatbot tráº£ vá» pháº£n há»“i khÃ´ng há»£p lá»‡.',
         },
         HttpStatus.BAD_GATEWAY,
       );
@@ -476,7 +461,7 @@ export class ChatHistoryService {
     const upstream = getChatbotUpstreamError(error);
     if (upstream.status === 401) {
       throw new UnauthorizedException(
-        'XÃ¡c thá»±c vá»›i trá»£ lÃ½ khÃ´ng há»£p lá»‡.',
+        'XÃƒÂ¡c thÃ¡Â»Â±c vÃ¡Â»â€ºi trÃ¡Â»Â£ lÃƒÂ½ khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡.',
       );
     }
     const status =
@@ -493,7 +478,7 @@ export class ChatHistoryService {
       {
         code,
         message:
-          upstream.message || 'Không thể nhận phản hồi từ trợ lý lúc này.',
+          upstream.message || 'KhÃ´ng thá»ƒ nháº­n pháº£n há»“i tá»« trá»£ lÃ½ lÃºc nÃ y.',
       },
       status,
     );
@@ -541,10 +526,10 @@ export class ChatHistoryService {
     return history.map(({ role, content }) => ({ role, content }));
   }
 
-  // Chatbot service (Render free plan) tự spin-down sau ~15 phút không
-  // traffic và cold-start mất ~80-90s, khiến tin nhắn chat đầu tiên sau
-  // thời gian nghỉ luôn bị chờ lâu/timeout. Ping /healthy định kỳ để giữ
-  // service "ấm" trong lúc site còn có người dùng hoạt động.
+  // Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng
+  // traffic vÃ  cold-start máº¥t ~80-90s, khiáº¿n tin nháº¯n chat Ä‘áº§u tiÃªn sau
+  // thá»i gian nghá»‰ luÃ´n bá»‹ chá» lÃ¢u/timeout. Ping /healthy Ä‘á»‹nh ká»³ Ä‘á»ƒ giá»¯
+  // service "áº¥m" trong lÃºc site cÃ²n cÃ³ ngÆ°á»i dÃ¹ng hoáº¡t Ä‘á»™ng.
   @Cron(CronExpression.EVERY_10_MINUTES)
   async pingChatbotKeepAlive() {
     try {
@@ -563,7 +548,7 @@ export class ChatHistoryService {
   async saveMessage(userId: number, role: RoleMessage, content: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại!');
+      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
     }
     await this.conversationRepo.save({
       user,
@@ -576,7 +561,7 @@ export class ChatHistoryService {
   async getChatHistoryContext(userId: number) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại!');
+      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
     }
     try {
       const cached = await this.redisCacheService.getData<CachedChatMessage[]>(
@@ -603,11 +588,11 @@ export class ChatHistoryService {
   async chatbotAnswer(userId: number, question: string, token: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại!');
+      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
     }
 
     if (!token) {
-      throw new UnauthorizedException('Không có token xác thực.');
+      throw new UnauthorizedException('KhÃ´ng cÃ³ token xÃ¡c thá»±c.');
     }
 
     const conversation =
@@ -617,7 +602,7 @@ export class ChatHistoryService {
       })) ??
       (await this.patientChatConversationRepo.save({
         user: { id: userId },
-        title: 'Cuộc trò chuyện mới',
+        title: 'Cuá»™c trÃ² chuyá»‡n má»›i',
       }));
     const result = await this.sendPatientChatMessage(
       userId,
@@ -626,225 +611,6 @@ export class ChatHistoryService {
       { message: question },
     );
     return result.assistantMessage.content;
-  }
-
-  async buildHealthRoadmap(userId: number, relativeId: number, token: string) {
-    const relative = this.relativeRepo
-      ? await this.relativeRepo.findOne({
-          where: { id: relativeId, user: { id: userId } },
-        })
-      : null;
-    if (this.relativeRepo && !relative) {
-      throw new NotFoundException(
-        'Hồ sơ người thân không thuộc tài khoản này.',
-      );
-    }
-
-    const user = await this.usersService.findByUserId(userId);
-    if (!user) {
-      throw new NotFoundException('Người dùng không tồn tại!');
-    }
-
-    if (!token) {
-      throw new UnauthorizedException('Không có token xác thực.');
-    }
-
-    const outputFileName = buildHealthRoadmapFileName(relativeId);
-    try {
-      const response = await axios.post(
-        `${this.configService.get<string>('CHATBOT_URL')}/chatbot/build-health-roadmap`,
-        {
-          relative_id: relativeId,
-          token,
-          fileName: outputFileName,
-        },
-        {
-          headers: {
-            'x-chatbot-internal-key': this.configService.getOrThrow<string>(
-              'CHATBOT_INTERNAL_KEY',
-            ),
-          },
-          timeout: CHATBOT_REQUEST_TIMEOUT_MS,
-        },
-      );
-
-      const data = response.data?.data as {
-        asset?: AiDocumentAsset;
-        title?: string;
-        pdfUrl?: string;
-        fileName?: string;
-      };
-      if (!data?.asset?.publicId && data?.pdfUrl) {
-        return { ...data, fileName: data.fileName || outputFileName };
-      }
-      if (!data?.asset?.publicId) {
-        throw new HttpException(
-          'Chatbot không trả về tài liệu lộ trình hợp lệ.',
-          HttpStatus.BAD_GATEWAY,
-        );
-      }
-      try {
-        const saved = await this.roadmapRepo.save({
-          user: { id: userId },
-          relative: { id: relativeId },
-          title:
-            data.title ||
-            `Lộ trình sức khỏe của ${relative?.fullname || 'hồ sơ'}`,
-          output_asset: {
-            ...data.asset,
-            fileName: data.asset.fileName || outputFileName,
-          },
-        });
-        return {
-          id: saved.id,
-          createdAt: saved.created_at,
-          title: saved.title,
-          fileName: saved.output_asset.fileName,
-          pdfUrl: `/api/v1/health-roadmaps/${saved.id}/file`,
-        };
-      } catch (saveError) {
-        if (this.documentStorage)
-          await this.documentStorage
-            .deleteAsset(data.asset)
-            .catch(() => undefined);
-        this.logger.error(
-          JSON.stringify({
-            scope: 'ai_health_roadmap',
-            event: 'persistence_failed',
-            userId,
-            relativeId,
-            ...getDatabaseErrorMetadata(saveError),
-          }),
-        );
-        throw new HttpException(
-          {
-            code: 'AI_HEALTH_ROADMAP_PERSISTENCE_FAILED',
-            message:
-              'Không thể lưu lộ trình sức khỏe lúc này. Vui lòng thử lại sau.',
-          },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-    } catch (error: unknown) {
-      if (error instanceof HttpException) throw error;
-
-      if (!axios.isAxiosError(error)) {
-        throw new HttpException(
-          {
-            code: 'CHATBOT_HEALTH_ROADMAP_FAILED',
-            message: 'Không thể tạo lộ trình sức khỏe từ chatbot.',
-          },
-          HttpStatus.INTERNAL_SERVER_ERROR,
-        );
-      }
-
-      const upstream = getChatbotUpstreamError(error);
-      const status = upstream.status;
-
-      if (
-        status === 504 ||
-        error.code === 'ECONNABORTED' ||
-        error.code === 'ETIMEDOUT'
-      ) {
-        throw new HttpException(
-          {
-            code: 'CHATBOT_HEALTH_ROADMAP_TIMEOUT',
-            message: 'AI chưa phản hồi sau 5 lần thử. Vui lòng thử lại sau.',
-          },
-          HttpStatus.GATEWAY_TIMEOUT,
-        );
-      }
-
-      if (status === 401) {
-        throw new UnauthorizedException(
-          'Token chatbot không hợp lệ hoặc đã hết hạn.',
-        );
-      }
-
-      throw new HttpException(
-        {
-          code: upstream.code || 'CHATBOT_HEALTH_ROADMAP_FAILED',
-          message:
-            upstream.message || 'Không thể tạo lộ trình sức khỏe từ chatbot.',
-        },
-        status,
-      );
-    }
-  }
-
-  async getHealthRoadmapHistory(
-    userId: number,
-    page = 1,
-    limit = 10,
-    relativeId?: number,
-  ) {
-    page = Math.max(1, page);
-    limit = Math.min(50, Math.max(1, limit));
-    const query = this.roadmapRepo
-      .createQueryBuilder('roadmap')
-      .leftJoinAndSelect('roadmap.relative', 'relative')
-      .where('roadmap.user_id = :userId', { userId });
-    if (relativeId)
-      query.andWhere('roadmap.relative_id = :relativeId', { relativeId });
-    const [rows, total] = await Promise.all([
-      query
-        .clone()
-        .orderBy('roadmap.created_at', 'DESC')
-        .skip((page - 1) * limit)
-        .take(limit)
-        .getMany(),
-      query.getCount(),
-    ]);
-    return new PaginationResultDto(
-      'roadmaps',
-      rows.map((row) => ({
-        id: row.id,
-        title: row.title,
-        createdAt: row.created_at,
-        relative: row.relative
-          ? { id: row.relative.id, fullname: row.relative.fullname }
-          : null,
-        pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
-        fileName: row.output_asset.fileName,
-      })),
-      total,
-      page,
-      limit,
-    );
-  }
-
-  async getHealthRoadmap(userId: number, id: number) {
-    const row = await this.roadmapRepo.findOne({
-      where: { id, user: { id: userId } },
-      relations: { relative: true },
-    });
-    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
-    return {
-      id: row.id,
-      title: row.title,
-      createdAt: row.created_at,
-      relative: { id: row.relative.id, fullname: row.relative.fullname },
-      pdfUrl: `/api/v1/health-roadmaps/${row.id}/file`,
-      fileName: row.output_asset.fileName,
-    };
-  }
-
-  async getHealthRoadmapFile(userId: number, id: number, download = false) {
-    const row = await this.roadmapRepo.findOne({
-      where: { id, user: { id: userId } },
-    });
-    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
-    return this.documentStorage.getDownloadUrl(row.output_asset, download);
-  }
-
-  async deleteHealthRoadmap(userId: number, id: number) {
-    const row = await this.roadmapRepo.findOne({
-      where: { id, user: { id: userId } },
-    });
-    if (!row) throw new NotFoundException('Không tìm thấy lộ trình sức khỏe.');
-    await this.documentStorage.deleteAsset(row.output_asset);
-    await this.roadmapRepo.softDelete(id);
-    return { success: true };
   }
 
   async getChatHistory(userId: number, page: number = 1, limit: number = 50) {

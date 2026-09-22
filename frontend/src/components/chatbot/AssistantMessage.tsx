@@ -22,21 +22,27 @@ export default function AssistantMessage({
   const { t } = useTranslation();
 
   return (
-    <div className="flex flex-col gap-1.5 items-start animate-in fade-in-0 slide-in-from-bottom-2 duration-200">
-      <div className="flex items-center gap-1.5">
-        <MedAiMark imgClassName="w-4 h-4 rounded-md" checkClassName="w-2.5 h-2.5" />
-        <span className="text-xs font-semibold text-primary">{t("chatbot.pageTitle")}</span>
+    <div className="flex flex-col items-start gap-1.5">
+      <div className="flex items-center gap-1.5 pl-1 text-xs font-semibold text-primary">
+        <MedAiMark imgClassName="size-4 rounded-md" checkClassName="size-2.5" />
+        <span>{t("chatbot.pageTitle")}</span>
+        <span className="text-[10px] font-normal text-muted-foreground">· Cố vấn y tế</span>
       </div>
 
       {isTyping ? (
-        <MedicalAILoading elapsed={elapsed ?? 0} />
+        <div className="rounded-2xl rounded-tl-xs border border-border/70 bg-card p-4 shadow-2xs">
+          <MedicalAILoading elapsed={elapsed ?? 0} />
+        </div>
       ) : isError && onRetry ? (
         <ChatError onRetry={onRetry} />
       ) : (
-        <div className="max-w-[92%] text-slate-800 dark:text-[#F1F5F9] text-sm md:text-base leading-relaxed">
-          <MarkdownMessage content={content} />
+        <div className="max-w-[95%] sm:max-w-[88%] rounded-2xl rounded-tl-xs border border-border/70 bg-card p-4 sm:p-5 text-sm sm:text-[15px] leading-relaxed text-foreground shadow-2xs">
+          <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+            <MarkdownMessage content={content} />
+          </div>
         </div>
       )}
     </div>
   );
 }
+

@@ -18,14 +18,12 @@ import {
   Pencil,
   Phone,
   RotateCcw,
-  Sparkles,
   Trash2,
   UserCheck,
   UserPlus,
   UsersRound,
   X,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -85,7 +83,6 @@ const getInitial = (name?: string | null) =>
 
 const Relatives: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const {
     data: relativesResponse,
     isLoading: isRelativesLoading,
@@ -192,10 +189,6 @@ const Relatives: React.FC = () => {
         setDeletingRelative(null);
       },
     });
-  };
-
-  const handleNavigateToAICoach = (relativeId: number) => {
-    navigate(`/patient/ai-coach-health?relativeId=${relativeId}`);
   };
 
   return (
@@ -316,19 +309,6 @@ const Relatives: React.FC = () => {
 
                       {/* Actions */}
                       <div className="flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-start">
-                        {/* Quick AI Coach Link */}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleNavigateToAICoach(relative.id)}
-                          className="h-8 gap-1 rounded-lg border-emerald-200 bg-emerald-50/60 text-emerald-700 dark:border-emerald-800/60 dark:bg-emerald-950/40 dark:text-emerald-300 hover:bg-emerald-100 hover:text-emerald-800 text-xs font-semibold cursor-pointer"
-                          title={t("relatives.aiCoachBtn")}
-                        >
-                          <Sparkles className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-                          {t("relatives.aiCoachBtn")}
-                        </Button>
-
                         {/* Edit Button */}
                         <Button
                           type="button"

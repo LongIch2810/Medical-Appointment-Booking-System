@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { AlertCircle, ArrowRight, Bot, HeartHandshake, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowRight, Bot, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../ui/button";
 import { useUserStore } from "@/store/useUserStore";
@@ -34,7 +34,7 @@ export const AiHealthcareAssistantSection: React.FC = () => {
               </p>
 
               {/* 2 Feature Pills */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div className="grid max-w-md grid-cols-1 gap-3.5">
                 <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-900/60 text-[#159a98] dark:text-[#2cd4d1] flex items-center justify-center shrink-0">
                     <Bot className="w-5 h-5" />
@@ -49,19 +49,6 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-100 dark:bg-teal-900/60 text-[#159a98] dark:text-[#2cd4d1] flex items-center justify-center shrink-0">
-                    <HeartHandshake className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
-                      {t("home.aiFeature2Title")}
-                    </h4>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {t("home.aiFeature2Desc")}
-                    </p>
-                  </div>
-                </div>
               </div>
 
               {/* Strict Medical Disclaimer */}
@@ -88,19 +75,6 @@ export const AiHealthcareAssistantSection: React.FC = () => {
                   </Link>
                 </Button>
 
-                <Button
-                  asChild
-                  variant="outline"
-                  className="h-11 px-5 rounded-xl border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-[#159a98] hover:text-[#159a98] font-semibold text-xs sm:text-sm cursor-pointer"
-                >
-                  <Link
-                    to={userInfo ? "/patient/ai-coach-health" : "/sign-in"}
-                    className="inline-flex items-center justify-center gap-2"
-                  >
-                    <HeartHandshake className="w-4 h-4 text-[#159a98]" />
-                    <span>{t("home.viewCoachBtn")}</span>
-                  </Link>
-                </Button>
               </div>
             </div>
 

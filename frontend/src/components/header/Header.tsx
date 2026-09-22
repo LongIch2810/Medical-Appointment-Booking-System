@@ -20,7 +20,6 @@ import {
   LayoutDashboard,
   Calendar,
   Users,
-  Sparkles,
   ClipboardList,
   Settings,
   LogOut,
@@ -45,6 +44,13 @@ type HeaderProps = {
   userInfo: User | null;
 };
 
+type HeaderNavItem = {
+  name: string;
+  to: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: string;
+};
+
 const Header: React.FC<HeaderProps> = ({ userInfo }) => {
   const { t } = useTranslation();
   const { mutate, isPending } = useLogout();
@@ -52,7 +58,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
     mutate();
   };
 
-  const headerItems = [
+  const headerItems: HeaderNavItem[] = [
     {
       name: t("nav.doctors"),
       to: "/doctors",
@@ -76,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
     },
   ];
 
-  const headerSubItems = [
+  const headerSubItems: HeaderNavItem[] = [
     {
       name: t("nav.dashboard"),
       to: "/patient",
@@ -101,12 +107,6 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
       name: t("nav.messages"),
       to: "/patient/messages",
       icon: MessageSquare,
-    },
-    {
-      name: t("nav.aiCoachHealth"),
-      to: "/patient/ai-coach-health",
-      icon: Sparkles,
-      badge: t("common.new", { defaultValue: "Mới" }),
     },
     {
       name: t("nav.healthRecords"),

@@ -19,12 +19,12 @@ function parsePositiveInteger(value: unknown): number | null {
 /**
  * Backend luôn forward chính access token thật của user (cookie accessToken)
  * trong `req.body.token` cho các route có ngữ cảnh người dùng (chat,
- * build-health-roadmap). Middleware này verify token đó bằng CHÍNH secret
+ * patient-chat/report-assistant routes). Middleware này verify token đó bằng CHÍNH secret
  * mà backend dùng để ký (ACCESS_TOKEN_SECRET, phải khớp giữa 2 service) và
  * gắn `req.actorUserId` = subject đã verify — đây là danh tính đáng tin cậy
  * dùng cho rate limit, KHÔNG phải `req.body.userId` do client tự khai báo.
  *
- * Route không mang `token` (vd. create-report) sẽ không có actorUserId —
+ * Route không mang user token sẽ không có actorUserId —
  * rate limiter sẽ fallback về IP cho các route đó (xem rateLimit.ts).
  */
 export function attachVerifiedActor(

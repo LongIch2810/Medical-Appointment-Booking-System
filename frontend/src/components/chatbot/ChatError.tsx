@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatErrorProps {
   onRetry: () => void;
@@ -9,18 +10,27 @@ export default function ChatError({ onRetry }: ChatErrorProps) {
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-start gap-2.5 px-3.5 py-2.5 rounded-xl bg-rose-50/80 dark:bg-rose-950/25 text-rose-700 dark:text-rose-300 max-w-[80%]">
-      <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-      <div className="min-w-0 space-y-1.5">
-        <p className="text-sm leading-snug">{t("chatbot.requestFailed")}</p>
-        <button
+    <div
+      role="alert"
+      className="flex items-start gap-3 rounded-2xl border border-destructive/30 bg-destructive/5 p-3.5 text-destructive shadow-2xs dark:border-destructive/40 sm:max-w-md"
+    >
+      <AlertCircle className="mt-0.5 size-4.5 shrink-0" aria-hidden="true" />
+      <div className="min-w-0 flex-1 space-y-2">
+        <p className="text-xs sm:text-sm font-medium leading-relaxed">
+          {t("chatbot.requestFailed")}
+        </p>
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onRetry}
-          className="text-xs font-semibold underline underline-offset-2 hover:no-underline cursor-pointer"
+          className="h-8 gap-1.5 rounded-lg border-destructive/40 text-xs font-semibold text-destructive hover:bg-destructive/10 cursor-pointer"
         >
-          {t("chatbot.retryBtn")}
-        </button>
+          <RotateCcw className="size-3" aria-hidden="true" />
+          <span>{t("chatbot.retryBtn")}</span>
+        </Button>
       </div>
     </div>
   );
 }
+

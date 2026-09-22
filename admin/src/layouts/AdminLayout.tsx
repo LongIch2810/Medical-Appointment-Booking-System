@@ -148,19 +148,30 @@ export function AdminLayout() {
 
   const fullname = displayUser.fullname ?? displayUser.username ?? "Admin";
   const isDoctor = currentRole === "doctor";
+  const isReportAssistant = location.pathname.startsWith("/admin/ai-report-assistant");
 
   return (
     <SocketProvider userId={displayUser.id}>
       <NotificationRealtimeProvider enabled>
-        <div className="min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+        <div
+          className={cn(
+            "min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100",
+            isReportAssistant && "h-[100dvh] overflow-hidden"
+          )}
+        >
           <CommandPaletteDialog />
-          <div className="flex min-h-screen">
+          <div className={cn("flex min-h-screen", isReportAssistant && "h-[100dvh] overflow-hidden")}>
         <aside className="hidden h-screen shrink-0 border-r border-slate-200 transition-all duration-300 xl:sticky xl:top-0 xl:block dark:border-slate-800">
           <SidebarNav />
         </aside>
 
-        <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-950/90">
+        <div className={cn("flex min-h-screen min-w-0 flex-1 flex-col", isReportAssistant && "h-[100dvh] min-h-0 overflow-hidden")}>
+          <header
+            className={cn(
+              "sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur-md transition-colors duration-200 dark:border-slate-800 dark:bg-slate-950/90",
+              isReportAssistant && "shrink-0"
+            )}
+          >
             {/* Top real-time ticker */}
             <div className="flex h-8 items-center justify-between gap-4 bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950 border-b border-slate-800">
               <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold text-emerald-400">
@@ -282,7 +293,14 @@ export function AdminLayout() {
             </div>
           </header>
 
-          <main className="flex-1 bg-slate-50/70 px-4 py-6 lg:px-8 lg:py-8 transition-colors duration-200 dark:bg-slate-950">
+          <main
+            className={cn(
+              "flex-1 bg-slate-50/70 transition-colors duration-200 dark:bg-slate-950",
+              isReportAssistant
+                ? "flex flex-col min-h-0 overflow-hidden p-3 sm:p-4 lg:p-5"
+                : "px-4 py-6 lg:px-8 lg:py-8"
+            )}
+          >
             <Outlet />
           </main>
         </div>

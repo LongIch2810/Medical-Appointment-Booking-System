@@ -7,7 +7,6 @@ import { AdminLayout } from "@/layouts/AdminLayout";
 import { getFirstAccessiblePath, hasPermissions } from "@/lib/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 
-import { AdminAiReportGeneratorPage } from "@/pages/AdminAiReportGeneratorPage";
 import { AdminAiReportAssistantPage } from "@/pages/AdminAiReportAssistantPage";
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { DoctorSettingsPage } from "@/pages/DoctorSettingsPage";
@@ -119,14 +118,6 @@ export function AppRoutes() {
           element={
             <PermissionRoute requiredPermissions={[permissions.adminDashboard]}>
               <AdminDashboardPage />
-            </PermissionRoute>
-          }
-        />
-        <Route
-          path="admin/ai-coach-reports"
-          element={
-            <PermissionRoute requiredPermissions={[permissions.aiCoachReport]}>
-              <AdminAiReportGeneratorPage />
             </PermissionRoute>
           }
         />

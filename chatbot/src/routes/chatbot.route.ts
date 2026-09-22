@@ -1,8 +1,6 @@
 import express from "express";
 import {
-  handleBuildHealthRoadMapController,
   handleChatController,
-  handleCreateReportController,
   handleReportAssistantController,
   handlePatientChatController,
   handleDeletePatientChatConversationController,
@@ -27,12 +25,6 @@ export function createChatbotRouter(
   const chatRateLimit = createRateLimit({
     bucket: "chat",
     max: 120,
-    windowMs: 60_000,
-    store: rateLimitStore,
-  });
-  const reportRateLimit = createRateLimit({
-    bucket: "report",
-    max: 12,
     windowMs: 60_000,
     store: rateLimitStore,
   });
@@ -65,12 +57,6 @@ export function createChatbotRouter(
     }
     void reportAssistantGenerationRateLimit(req, res, next);
   };
-  const healthRoadmapRateLimit = createRateLimit({
-    bucket: "health-roadmap",
-    max: 12,
-    windowMs: 60_000,
-    store: rateLimitStore,
-  });
   router.use(requireInternalServiceKey);
   router.use(attachVerifiedActor);
 
@@ -81,17 +67,11 @@ export function createChatbotRouter(
     patientChatRateLimit,
     handleDeletePatientChatConversationController,
   );
-  router.post("/create-report", reportRateLimit, handleCreateReportController);
   router.post(
     "/report-assistant",
     reportAssistantRateLimit,
     limitConfirmedReportGeneration,
     handleReportAssistantController,
-  );
-  router.post(
-    "/build-health-roadmap",
-    healthRoadmapRateLimit,
-    handleBuildHealthRoadMapController,
   );
   return router;
 }

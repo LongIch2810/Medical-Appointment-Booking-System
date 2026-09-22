@@ -107,7 +107,6 @@ const Footer = () => {
               <Link to="/chatbot" className="hover:text-primary transition-colors">{t("footer.aiMedAi", { defaultValue: "Trợ lý AI MedAI" })}</Link>
             </li>
             <li>
-              <Link to="/patient/ai-coach-health" className="hover:text-primary transition-colors">AI Health Coach</Link>
             </li>
             <li>
               <Link to="/patient/visit-results" className="hover:text-primary transition-colors">{t("footer.checkRecords", { defaultValue: "Tra cứu bệnh án" })}</Link>

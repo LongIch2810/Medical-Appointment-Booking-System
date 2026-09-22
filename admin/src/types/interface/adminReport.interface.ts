@@ -78,20 +78,6 @@ export type ReportAssistantConversationDetailResponse = {
   nextBeforeMessageId: number | null;
 };
 
-export type AdminReportRangePreset =
-  | "TODAY"
-  | "THIS_WEEK"
-  | "THIS_MONTH"
-  | "THIS_YEAR"
-  | "CUSTOM";
-
-export type GenerateAdminReportPayload = {
-  reportType: AdminReportType;
-  rangePreset: AdminReportRangePreset;
-  fromDate?: string;
-  toDate?: string;
-};
-
 export type AdminReportAnalysisItem = {
   section_title: string;
   content: string;
@@ -126,12 +112,4 @@ export type AdminReport = {
   chartConfig: Record<string, unknown> | null;
   tableColumns: AdminReportTableColumn[];
   tableRows: Record<string, string | number>[];
-};
-
-export type AdminReportHistoryResponse = {
-  reports: AdminReport[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
 };

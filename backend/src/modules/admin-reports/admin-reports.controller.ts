@@ -21,7 +21,6 @@ import { Permissions } from 'src/common/decorators/permission.decorator';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { PERMISSIONS } from 'src/utils/constants';
 import { AdminReportsService } from './admin-reports.service';
-import { BodyGenerateAdminReportDto } from './dto/request/bodyGenerateAdminReport.dto';
 import {
   CreateReportAssistantConversationDto,
   ReportAssistantMessageDto,
@@ -35,17 +34,6 @@ import { getRequestAccessToken } from 'src/utils/authContext';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AdminReportsController {
   constructor(private readonly adminReportsService: AdminReportsService) {}
-
-  @ApiOperation({
-    summary: 'Tạo báo cáo hiệu suất hệ thống AI Coach Healthy (chỉ admin)',
-  })
-  @Post('generate')
-  @HttpCode(HttpStatus.OK)
-  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
-  @AuditLogAction({ action: 'READ', entityName: 'admin-reports' })
-  async generate(@Request() req, @Body() body: BodyGenerateAdminReportDto) {
-    return this.adminReportsService.generate(req.user.userId, body);
-  }
 
   @ApiOperation({ summary: 'Tạo hội thoại trợ lý báo cáo AI' })
   @Post('assistant/conversations')

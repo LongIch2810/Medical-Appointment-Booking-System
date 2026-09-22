@@ -7,16 +7,13 @@ import { PatientChatHistorySchema, type PatientChatInput } from "../types/Patien
 import { z } from "zod";
 import {
   handleChatService,
-  handleCreateReportService,
   handleReportAssistantService,
-  handleBuildHealthRoadMapService,
   handleDiagnosisService,
   handlePatientChatService,
   handleDeletePatientChatConversationService,
 } from "../services/chatbot.service.js";
 
 const MAX_CHAT_QUESTION_LENGTH = 4_000;
-const MAX_REPORT_QUESTION_LENGTH = 2_000;
 const MAX_TOKEN_LENGTH = 16_384;
 const MAX_REPORT_ASSISTANT_MESSAGE_LENGTH = 4_000;
 const bookingSummarySchema = z.object({
@@ -74,24 +71,6 @@ const handleChatController = async (
     token,
   });
   return res.status(200).json({ success: true, answer: result.answer });
-};
-
-const handleCreateReportController = async (
-  req: Request,
-  res: Response,
-): Promise<any> => {
-  const { question, fileName } = req.body;
-  if (!isNonEmptyString(question, MAX_REPORT_QUESTION_LENGTH)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "Question is invalid or too long." });
-  }
-
-  const result = await handleCreateReportService({
-    question: question.trim(),
-    ...(isNonEmptyString(fileName, 200) ? { fileName: fileName.trim() } : {}),
-  });
-  return res.status(200).json({ success: true, data: result });
 };
 
 const handleReportAssistantController = async (
@@ -336,28 +315,6 @@ const handleDeletePatientChatConversationController = async (req: Request, res: 
   return res.status(200).json({ success: true, data: result });
 };
 
-const handleBuildHealthRoadMapController = async (
-  req: Request,
-  res: Response,
-): Promise<any> => {
-  const { relative_id, token, fileName } = req.body;
-  const relativeId = parsePositiveInteger(relative_id);
-
-  if (!relativeId || !isNonEmptyString(token, MAX_TOKEN_LENGTH)) {
-    return res
-      .status(400)
-      .json({ success: false, message: "relative_id and token are required." });
-  }
-
-  const result = await handleBuildHealthRoadMapService({
-    relative_id: relativeId,
-    token,
-    ...(isNonEmptyString(fileName, 200) ? { fileName: fileName.trim() } : {}),
-  });
-
-  return res.status(200).json({ success: true, data: result });
-};
-
 const handleDiagnosisController = async (
   req: Request,
   res: Response,
@@ -387,10 +344,8 @@ const handleDiagnosisController = async (
 
 export {
   handleChatController,
-  handleCreateReportController,
   handleReportAssistantController,
   handlePatientChatController,
   handleDeletePatientChatConversationController,
-  handleBuildHealthRoadMapController,
   handleDiagnosisController,
 };

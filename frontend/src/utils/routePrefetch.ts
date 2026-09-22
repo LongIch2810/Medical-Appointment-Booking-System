@@ -22,7 +22,6 @@ const routeLoaders: Record<string, () => Promise<unknown>> = {
   "/patient/messages": () => import("@/pages/patient/Messages"),
   "/patient/health-records": () => import("@/pages/patient/HealthRecords"),
   "/patient/visit-results": () => import("@/pages/patient/VisitResults"),
-  "/patient/ai-coach-health": () => import("@/pages/AICoachHealth"),
   "/patient/complaints": () => import("@/pages/patient/Complaints"),
   "/doctors": () => import("@/pages/Doctor"),
   "/news": () => import("@/pages/News"),

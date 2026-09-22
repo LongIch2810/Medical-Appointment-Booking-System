@@ -199,21 +199,21 @@ const REPORT_QUESTION_BUILDERS: Record<
   (from: string, to: string) => string
 > = {
   [ReportType.NEW_USER_REGISTRATIONS]: (from, to) =>
-    `Thống kê số lượng người dùng đăng ký mới từ view chatbot_report_users_view, lọc registration_date trong khoảng ${from} đến ${to}; dùng SUM(user_count), phân loại theo roles và từng ngày.`,
+    `Thá»‘ng kÃª sá»‘ lÆ°á»£ng ngÆ°á»i dÃ¹ng Ä‘Äƒng kÃ½ má»›i tá»« view chatbot_report_users_view, lá»c registration_date trong khoáº£ng ${from} Ä‘áº¿n ${to}; dÃ¹ng SUM(user_count), phÃ¢n loáº¡i theo roles vÃ  tá»«ng ngÃ y.`,
   [ReportType.AI_COACH_ACTIVITY]: (from, to) =>
-    `Thống kê số lộ trình sức khỏe AI được tạo từ view chatbot_report_health_roadmaps_view, lọc roadmap_date trong khoảng ${from} đến ${to}; dùng SUM(roadmap_count), đồng thời phân tích user_count và profile_count theo ngày.`,
+    `Thá»‘ng kÃª sá»‘ lá»™ trÃ¬nh sá»©c khá»e AI Ä‘Æ°á»£c táº¡o tá»« view chatbot_report_health_roadmaps_view, lá»c roadmap_date trong khoáº£ng ${from} Ä‘áº¿n ${to}; dÃ¹ng SUM(roadmap_count), Ä‘á»“ng thá»i phÃ¢n tÃ­ch user_count vÃ  profile_count theo ngÃ y.`,
   [ReportType.HEALTH_TRENDS]: (from, to) =>
-    `Phân tích xu hướng tổng hợp từ view chatbot_report_health_profiles_view, lọc profile_date trong khoảng ${from} đến ${to}: average_height, average_weight, average_heart_rate, average_glucose_level, average_cholesterol_level và SUM(profile_count) theo ngày; giá trị NULL là nhóm chưa đủ 5 hồ sơ và phải được bỏ qua.`,
+    `PhÃ¢n tÃ­ch xu hÆ°á»›ng tá»•ng há»£p tá»« view chatbot_report_health_profiles_view, lá»c profile_date trong khoáº£ng ${from} Ä‘áº¿n ${to}: average_height, average_weight, average_heart_rate, average_glucose_level, average_cholesterol_level vÃ  SUM(profile_count) theo ngÃ y; giÃ¡ trá»‹ NULL lÃ  nhÃ³m chÆ°a Ä‘á»§ 5 há»“ sÆ¡ vÃ  pháº£i Ä‘Æ°á»£c bá» qua.`,
   [ReportType.BOOKING_CANCELLATION_NOSHOW]: (from, to) =>
-    `Thống kê từ view chatbot_report_appointments_view, lọc appointment_date trong khoảng ${from} đến ${to}: dùng SUM(appointment_count) để tính tổng số lịch, tỷ lệ status = 'CANCELLED', tỷ lệ status = 'ABSENT', và số lượng theo status.`,
+    `Thá»‘ng kÃª tá»« view chatbot_report_appointments_view, lá»c appointment_date trong khoáº£ng ${from} Ä‘áº¿n ${to}: dÃ¹ng SUM(appointment_count) Ä‘á»ƒ tÃ­nh tá»•ng sá»‘ lá»‹ch, tá»· lá»‡ status = 'CANCELLED', tá»· lá»‡ status = 'ABSENT', vÃ  sá»‘ lÆ°á»£ng theo status.`,
   [ReportType.PATIENT_FLOW_BY_TIMESLOT]: (from, to) =>
-    `Thống kê lưu lượng trong khoảng ${from} đến ${to} bằng cách join chatbot_report_appointments_view với chatbot_report_doctor_schedules_view qua doctor_schedule_id; dùng SUM(appointment_count), nhóm theo start_time và day_of_week.`,
+    `Thá»‘ng kÃª lÆ°u lÆ°á»£ng trong khoáº£ng ${from} Ä‘áº¿n ${to} báº±ng cÃ¡ch join chatbot_report_appointments_view vá»›i chatbot_report_doctor_schedules_view qua doctor_schedule_id; dÃ¹ng SUM(appointment_count), nhÃ³m theo start_time vÃ  day_of_week.`,
   [ReportType.APPOINTMENTS_BY_SPECIALTY]: (from, to) =>
-    `Thống kê lịch hẹn theo specialty_name trong khoảng ${from} đến ${to}, join các view chatbot_report_appointments_view, chatbot_report_doctor_schedules_view và chatbot_report_doctors_view; dùng SUM(appointment_count).`,
+    `Thá»‘ng kÃª lá»‹ch háº¹n theo specialty_name trong khoáº£ng ${from} Ä‘áº¿n ${to}, join cÃ¡c view chatbot_report_appointments_view, chatbot_report_doctor_schedules_view vÃ  chatbot_report_doctors_view; dÃ¹ng SUM(appointment_count).`,
   [ReportType.DOCTOR_FILL_RATE]: (from, to) =>
-    `Tính tỷ lệ lấp đầy lịch khám theo từng doctor_name trong khoảng ${from} đến ${to}, bằng cách join chatbot_report_doctors_view d với chatbot_report_doctor_schedules_view s qua d.id = s.doctor_id và LEFT JOIN chatbot_report_appointments_view a qua s.id = a.doctor_schedule_id. Dùng appointment_count để tính tổng lượt đặt; appointment status khác 'CANCELLED' là lượt đặt hợp lệ. Kết quả bắt buộc gồm doctor_name, tổng appointment_count và tỷ lệ; mọi cột không aggregate phải nằm trong GROUP BY, ít nhất GROUP BY d.doctor_name, không dùng SELECT * và giới hạn tối đa 1000 dòng.`,
+    `TÃ­nh tá»· lá»‡ láº¥p Ä‘áº§y lá»‹ch khÃ¡m theo tá»«ng doctor_name trong khoáº£ng ${from} Ä‘áº¿n ${to}, báº±ng cÃ¡ch join chatbot_report_doctors_view d vá»›i chatbot_report_doctor_schedules_view s qua d.id = s.doctor_id vÃ  LEFT JOIN chatbot_report_appointments_view a qua s.id = a.doctor_schedule_id. DÃ¹ng appointment_count Ä‘á»ƒ tÃ­nh tá»•ng lÆ°á»£t Ä‘áº·t; appointment status khÃ¡c 'CANCELLED' lÃ  lÆ°á»£t Ä‘áº·t há»£p lá»‡. Káº¿t quáº£ báº¯t buá»™c gá»“m doctor_name, tá»•ng appointment_count vÃ  tá»· lá»‡; má»i cá»™t khÃ´ng aggregate pháº£i náº±m trong GROUP BY, Ã­t nháº¥t GROUP BY d.doctor_name, khÃ´ng dÃ¹ng SELECT * vÃ  giá»›i háº¡n tá»‘i Ä‘a 1000 dÃ²ng.`,
   [ReportType.USER_DEMOGRAPHICS]: (from, to) =>
-    `Phân tích dữ liệu tổng hợp đã khử định danh từ chatbot_report_users_view, lọc registration_date trong khoảng ${from} đến ${to}: dùng SUM(user_count) để tính phân bố theo gender, age_group và region.`,
+    `PhÃ¢n tÃ­ch dá»¯ liá»‡u tá»•ng há»£p Ä‘Ã£ khá»­ Ä‘á»‹nh danh tá»« chatbot_report_users_view, lá»c registration_date trong khoáº£ng ${from} Ä‘áº¿n ${to}: dÃ¹ng SUM(user_count) Ä‘á»ƒ tÃ­nh phÃ¢n bá»‘ theo gender, age_group vÃ  region.`,
 };
 
 @Injectable()
@@ -240,7 +240,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_ASSISTANT_FAILED',
-          message: 'Trợ lý báo cáo chưa sẵn sàng.',
+          message: 'Trá»£ lÃ½ bÃ¡o cÃ¡o chÆ°a sáºµn sÃ ng.',
         },
         500,
       );
@@ -421,7 +421,7 @@ export class AdminReportsService {
         throw new HttpException(
           {
             code: 'REPORT_ASSISTANT_INVALID_RESPONSE',
-            message: 'AI trả về kết quả không hợp lệ.',
+            message: 'AI tráº£ vá» káº¿t quáº£ khÃ´ng há»£p lá»‡.',
           },
           502,
         );
@@ -439,8 +439,8 @@ export class AdminReportsService {
             code: upstream.code,
             message:
               upstream.code === 'REPORT_ASSISTANT_MEMORY_FAILED'
-                ? 'Không thể truy cập sở thích báo cáo đã nhớ.'
-                : 'Trợ lý báo cáo đang tạm thời chưa sẵn sàng.',
+                ? 'KhÃ´ng thá»ƒ truy cáº­p sá»Ÿ thÃ­ch bÃ¡o cÃ¡o Ä‘Ã£ nhá»›.'
+                : 'Trá»£ lÃ½ bÃ¡o cÃ¡o Ä‘ang táº¡m thá»i chÆ°a sáºµn sÃ ng.',
           },
           503,
         );
@@ -466,10 +466,10 @@ export class AdminReportsService {
           code,
           message:
             status === 429
-              ? 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
+              ? 'Báº¡n Ä‘Ã£ gá»­i quÃ¡ nhiá»u yÃªu cáº§u. Vui lÃ²ng thá»­ láº¡i sau.'
               : status === 504
-                ? 'AI chưa phản hồi kịp thời. Vui lòng thử lại.'
-                : 'Không thể xử lý yêu cầu báo cáo lúc này.',
+                ? 'AI chÆ°a pháº£n há»“i ká»‹p thá»i. Vui lÃ²ng thá»­ láº¡i.'
+                : 'KhÃ´ng thá»ƒ xá»­ lÃ½ yÃªu cáº§u bÃ¡o cÃ¡o lÃºc nÃ y.',
         },
         status === 429 ? 429 : status === 504 ? 504 : 502,
       );
@@ -557,7 +557,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_ASSISTANT_PERSISTENCE_FAILED',
-          message: 'Không thể lưu kết quả trợ lý báo cáo.',
+          message: 'KhÃ´ng thá»ƒ lÆ°u káº¿t quáº£ trá»£ lÃ½ bÃ¡o cÃ¡o.',
         },
         500,
       );
@@ -586,7 +586,7 @@ export class AdminReportsService {
     if (!message || message.length > REPORT_ASSISTANT_MESSAGE_MAX_LENGTH) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'Tin nhắn không hợp lệ.',
+        message: 'Tin nháº¯n khÃ´ng há»£p lá»‡.',
       });
     }
     const conversation = await this.conversationRepo.save({
@@ -651,7 +651,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_CONVERSATION_NOT_FOUND',
-          message: 'Không tìm thấy hội thoại.',
+          message: 'KhÃ´ng tÃ¬m tháº¥y há»™i thoáº¡i.',
         },
         404,
       );
@@ -661,7 +661,7 @@ export class AdminReportsService {
     ) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'Mã tin nhắn không hợp lệ.',
+        message: 'MÃ£ tin nháº¯n khÃ´ng há»£p lá»‡.',
       });
     }
     limit = normalizePage(limit, 50, 100);
@@ -702,7 +702,7 @@ export class AdminReportsService {
     ) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'Gửi tin nhắn hoặc xác nhận kế hoạch.',
+        message: 'Gá»­i tin nháº¯n hoáº·c xÃ¡c nháº­n káº¿ hoáº¡ch.',
       });
     }
     const conversation = await this.conversationRepo.findOne({
@@ -712,7 +712,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_CONVERSATION_NOT_FOUND',
-          message: 'Không tìm thấy hội thoại.',
+          message: 'KhÃ´ng tÃ¬m tháº¥y há»™i thoáº¡i.',
         },
         404,
       );
@@ -735,7 +735,7 @@ export class AdminReportsService {
         throw new HttpException(
           {
             code: 'REPORT_PLAN_NOT_FOUND',
-            message: 'Không tìm thấy kế hoạch báo cáo.',
+            message: 'KhÃ´ng tÃ¬m tháº¥y káº¿ hoáº¡ch bÃ¡o cÃ¡o.',
           },
           404,
         );
@@ -743,7 +743,7 @@ export class AdminReportsService {
         where: { conversation: { id } },
         order: { id: 'DESC' },
       });
-      promptMessage = `Xác nhận tạo báo cáo theo kế hoạch #${planMessage.id}.`;
+      promptMessage = `XÃ¡c nháº­n táº¡o bÃ¡o cÃ¡o theo káº¿ hoáº¡ch #${planMessage.id}.`;
       if (latestMessage?.id !== planMessage.id) {
         if (
           latestMessage?.role === 'USER' &&
@@ -754,7 +754,7 @@ export class AdminReportsService {
           throw new HttpException(
             {
               code: 'REPORT_PLAN_STALE',
-              message: 'Kế hoạch đã cũ. Hãy yêu cầu trợ lý lập kế hoạch mới.',
+              message: 'Káº¿ hoáº¡ch Ä‘Ã£ cÅ©. HÃ£y yÃªu cáº§u trá»£ lÃ½ láº­p káº¿ hoáº¡ch má»›i.',
             },
             409,
           );
@@ -766,13 +766,13 @@ export class AdminReportsService {
       if (promptMessage.length > REPORT_ASSISTANT_MESSAGE_MAX_LENGTH) {
         throw new BadRequestException({
           code: 'REPORT_ASSISTANT_INVALID_INPUT',
-          message: 'Tin nhắn không hợp lệ.',
+          message: 'Tin nháº¯n khÃ´ng há»£p lá»‡.',
         });
       }
       if (!promptMessage)
         throw new BadRequestException({
           code: 'REPORT_ASSISTANT_INVALID_INPUT',
-          message: 'Tin nhắn không được để trống.',
+          message: 'Tin nháº¯n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.',
         });
     }
 
@@ -878,132 +878,6 @@ export class AdminReportsService {
     );
   }
 
-  async generate(
-    userIdOrDto: number | BodyGenerateAdminReportDto,
-    dtoArg?: BodyGenerateAdminReportDto,
-  ) {
-    const userId = typeof userIdOrDto === 'number' ? userIdOrDto : undefined;
-    const dto = (typeof userIdOrDto === 'number' ? dtoArg : userIdOrDto)!;
-    const range = this.resolveDateRange(dto);
-    const outputFileName = buildAdminReportFileName(
-      dto.reportType,
-      range.fromDate,
-      range.toDate,
-    );
-    const question = REPORT_QUESTION_BUILDERS[dto.reportType](
-      range.from,
-      range.to,
-    );
-    let data: any;
-    try {
-      const response = await axios.post(
-        `${this.configService.get<string>('CHATBOT_URL')}/chatbot/create-report`,
-        { question, fileName: outputFileName },
-        {
-          timeout: 240_000,
-          headers: {
-            'x-chatbot-internal-key': this.configService.getOrThrow<string>(
-              'CHATBOT_INTERNAL_KEY',
-            ),
-          },
-        },
-      );
-      data = response.data?.data;
-    } catch (error: unknown) {
-      const upstream = getChatbotUpstreamError(error);
-      this.logger.error(
-        JSON.stringify({
-          scope: 'ai_admin_report',
-          event: 'chatbot_request_failed',
-          reportType: dto.reportType,
-          status: upstream.status,
-          code: upstream.code,
-        }),
-      );
-      throw new HttpException(
-        {
-          code:
-            upstream.code ||
-            (upstream.status === 504
-              ? 'AI_REPORT_TIMEOUT'
-              : 'AI_REPORT_GENERATION_FAILED'),
-          message:
-            upstream.message ||
-            'Không thể tạo báo cáo từ AI Coach lúc này. Vui lòng thử lại sau.',
-        },
-        upstream.status,
-      );
-    }
-
-    if (!this.reportRepo || !userId) {
-      return AdminReportsMapper.toResponse(
-        dto.reportType,
-        range.rangeLabel,
-        data,
-        { fileName: outputFileName },
-      );
-    }
-
-    let asset: AiDocumentAsset | undefined = data?.asset ?? data?.pdfAsset;
-    asset = asset
-      ? { ...asset, fileName: asset.fileName || outputFileName }
-      : asset;
-    if (!asset?.publicId) {
-      throw new HttpException(
-        {
-          code: 'AI_REPORT_INVALID_RESPONSE',
-          message: 'AI không trả về tài liệu PDF hợp lệ.',
-        },
-        502,
-      );
-    }
-
-    const raw = data?.raw ?? {};
-    const tableRows = this.parseTableRows(raw.result);
-    const tableColumns = tableRows.length
-      ? Object.keys(tableRows[0]).map((key) => ({
-          key,
-          label: key.replace(/_/g, ' '),
-        }))
-      : [];
-
-    try {
-      const entity = await this.reportRepo.save({
-        createdBy: { id: userId },
-        report_type: dto.reportType,
-        range_preset: dto.rangePreset,
-        from_date: range.fromDate,
-        to_date: range.toDate,
-        range_label: range.rangeLabel,
-        report: raw.report ?? null,
-        chart_config: raw.chartConfig ?? null,
-        table_columns: tableColumns,
-        table_rows: tableRows,
-        output_asset: asset,
-      });
-      return this.toResponse(entity);
-    } catch (error: unknown) {
-      if (this.storage)
-        await this.storage.deleteAsset(asset).catch(() => undefined);
-      this.logger.error(
-        JSON.stringify({
-          scope: 'ai_admin_report',
-          event: 'persistence_failed',
-          userId,
-          reportType: dto.reportType,
-          ...getDatabaseErrorMetadata(error),
-        }),
-      );
-      throw new HttpException(
-        {
-          code: 'AI_REPORT_PERSISTENCE_FAILED',
-          message: 'Không thể lưu báo cáo AI lúc này. Vui lòng thử lại sau.',
-        },
-        500,
-      );
-    }
-  }
-
   async history(page = 1, limit = 10, reportType?: string) {
     page = Math.max(1, page);
     limit = Math.min(50, Math.max(1, limit));
@@ -1029,13 +903,13 @@ export class AdminReportsService {
       where: { id },
       relations: { createdBy: true },
     });
-    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
     return this.toResponse(row);
   }
 
   async file(id: number, download = false) {
     const row = await this.reportRepo.findOne({ where: { id } });
-    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
     return this.storage.getDownloadUrl(row.output_asset, download);
   }
 
@@ -1044,11 +918,13 @@ export class AdminReportsService {
       where: { id },
       relations: { createdBy: true },
     });
-    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
+    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
     if (row.createdBy.id !== userId && !roles.includes('ADMIN'))
-      throw new HttpException('Bạn không có quyền xóa báo cáo này.', 403);
+      throw new HttpException('Báº¡n khÃ´ng cÃ³ quyá»n xÃ³a bÃ¡o cÃ¡o nÃ y.', 403);
     await this.storage.deleteAsset(row.output_asset);
     await this.reportRepo.softDelete(id);
     return { success: true };
   }
 }
+
+
