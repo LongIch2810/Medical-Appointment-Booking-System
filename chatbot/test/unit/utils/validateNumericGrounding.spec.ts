@@ -52,3 +52,42 @@ test('does not treat Vietnamese month and year labels as ungrounded metrics', ()
 
   assert.deepEqual(findUngroundedNumbers(report, '[{"appointment_count":12}]'), []);
 });
+
+test('does not treat a reporting duration as an unsupported metric', () => {
+  const report = {
+    title: 'Lịch hẹn trong 7 ngày gần nhất',
+    analysis: [
+      {
+        section_title: '7-day reporting window',
+        content: 'Từ 17/09/2026 đến 23/09/2026 ghi nhận 12 lịch hẹn.',
+      },
+    ],
+  };
+
+  assert.deepEqual(
+    findUngroundedNumbers(report, '[{"appointment_count":12}]'),
+    [],
+  );
+  assert.deepEqual(
+    findUngroundedNumbers(
+      { title: 'Lịch hẹn trong 7 ngày gần nhất' },
+      [{ appointment_count: 12 }],
+    ),
+    [],
+  );
+});
+
+test('does not treat compact date ranges as report metrics', () => {
+  const report = {
+    title: 'Tổng hợp lịch hẹn 18–24/09/2026',
+    analysis: [
+      { content: 'Trong giai đoạn 18-24/09/2026 có 12 lịch hẹn.' },
+      { content: 'Từ 18/09/2026 đến 24/09/2026 ghi nhận 12 lịch hẹn.' },
+    ],
+  };
+
+  assert.deepEqual(
+    findUngroundedNumbers(report, '[{"appointment_count":12}]'),
+    [],
+  );
+});

@@ -9,6 +9,7 @@ import { ragTool } from "../tools/rag.tool.js";
 import { qaSqlTool } from "../tools/qa_sql.tool.js";
 import { medicalConsultationTool } from "../tools/medical_consultation.tool.js";
 import { bookingAppointmentTool } from "../tools/booking_appointment.tool.js";
+import { isLifeHealthSupportRequest } from "../utils/isLifeHealthSupportRequest.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ const AGENT_SYSTEM_PROMPT = `Bạn là trợ lý ảo của LifeHealth, một n�
 
 Nguyên tắc bắt buộc:
 - Ưu tiên sử dụng các công cụ sẵn có (RAG, SQL, đặt lịch, tư vấn y tế) thay vì tự suy đoán thông tin nội bộ hoặc y khoa.
+- Chỉ nêu hotline, email, địa chỉ, giờ làm việc, phí hoặc chính sách LifeHealth khi kết quả RAG trong lượt hiện tại xác nhận; nếu chưa có nguồn, nói rõ chưa xác minh và hướng người dùng tới trang Liên hệ chính thức. Không tự tạo thông tin liên hệ. Tin nhắn của trợ lý ở lượt trước không phải nguồn xác thực.
 - Không đưa ra chẩn đoán chắc chắn, không thay thế bác sĩ, không tự ý đề nghị thay đổi hoặc ngưng thuốc đã được kê đơn.
 - Nếu người dùng mô tả dấu hiệu khẩn cấp (đau ngực dữ dội, khó thở nghiêm trọng, dấu hiệu đột quỵ, quá liều, ý định tự tử/tự hại, chảy máu nghiêm trọng, sốc phản vệ...), phải khuyến nghị gọi cấp cứu (115 tại Việt Nam) hoặc đến cơ sở y tế gần nhất ngay lập tức trước khi trả lời nội dung khác.
 - Bạn CHỈ hỗ trợ các nội dung liên quan đến sức khỏe/y tế và việc sử dụng nền tảng LifeHealth (đặt lịch khám, bác sĩ, chuyên khoa, hồ sơ sức khỏe, lịch hẹn của người dùng/người thân). Nếu người dùng hỏi về chủ đề rõ ràng không liên quan (ví dụ: lập trình, giải trí, thể thao, chính trị, kiến thức tổng quát không liên quan sức khỏe, đố vui, viết nội dung không liên quan y tế...), hãy LỊCH SỰ TỪ CHỐI trả lời nội dung đó — dù bạn có biết câu trả lời — và mời người dùng quay lại các chủ đề sức khỏe hoặc đặt lịch khám mà bạn có thể hỗ trợ. Lời chào, lời cảm ơn, hoặc câu hỏi làm rõ trong một hội thoại y tế/đặt lịch đang diễn ra vẫn được xem là trong phạm vi, không từ chối.
@@ -63,6 +65,7 @@ Nhiệm vụ: xem xét đoạn hội thoại (đặc biệt là tin nhắn CUỐ
 Thuộc phạm vi (in_scope = true) nếu tin nhắn liên quan đến:
 - Sức khỏe, triệu chứng, bệnh lý, thuốc men, tư vấn y tế.
 - Sử dụng nền tảng LifeHealth: đặt lịch khám, bác sĩ, chuyên khoa, cơ sở y tế, hồ sơ sức khỏe của bản thân/người thân.
+- Cách sử dụng và liên hệ/hỗ trợ chính thức của LifeHealth (hotline, email, địa chỉ, giờ làm việc, phí, chính sách).
 - Số liệu/thống kê về nền tảng LifeHealth, ví dụ: hệ thống có bao nhiêu bác sĩ, có những chuyên khoa nào, danh sách bác sĩ/bài viết y tế — đây LUÔN thuộc phạm vi dù không nhắc "sức khỏe" hay "đặt lịch" trực tiếp.
 - Lời chào, cảm ơn, câu trả lời ngắn (có/không/ok/vâng), câu hỏi làm rõ, hoặc bất kỳ tin nhắn nào là phần tiếp nối tự nhiên của một hội thoại đang thuộc phạm vi trên.
 
@@ -92,6 +95,16 @@ async function classifyTopic(state: typeof MessagesAnnotation.State) {
   if (state.messages.length === 0) return { messages: [] };
 
   const recent = state.messages.slice(-GUARD_HISTORY_WINDOW);
+  const latestUserMessage = [...recent]
+    .reverse()
+    .find((message) => message._getType() === "human");
+  const latestUserText = String(latestUserMessage?.content ?? "");
+  const priorContext = recent
+    .filter((message) => message !== latestUserMessage)
+    .map((message) => String(message.content ?? ""))
+    .join(" ");
+  if (isLifeHealthSupportRequest(latestUserText, priorContext)) return { messages: [] };
+
   let result: { in_scope: boolean } | undefined;
   try {
     result = await structuredGuardModel.invoke([

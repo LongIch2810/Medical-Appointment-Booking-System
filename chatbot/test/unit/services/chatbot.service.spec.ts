@@ -5,7 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { ChatbotOperationError } from "../../../src/utils/retry.js";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type Step = "agent" | "report" | "assistant" | "roadmap" | "diagnosis" | "patientChat";
+type Step = "agent" | "assistant" | "diagnosis" | "patientChat";
 type ServiceStub = {
   calls: Record<Step, unknown[]>;
   results: Record<Step, unknown>;
@@ -17,17 +17,10 @@ const globals = globalThis as typeof globalThis & {
 
 function resetStub() {
   globals.__CHATBOT_SERVICE_STUB__ = {
-    calls: { agent: [], report: [], assistant: [], roadmap: [], diagnosis: [], patientChat: [] },
+    calls: { agent: [], assistant: [], diagnosis: [], patientChat: [] },
     results: {
       agent: { messages: [{ content: "agent answer", _getType: () => "ai" }] },
-      report: {
-        pdf_url: "report.pdf",
-        result: "[]",
-        report: { title: "Report" },
-        chartConfig: { type: "bar" },
-      },
       assistant: { action: "ANSWER", message: "Assistant response" },
-      roadmap: { pdf_url: "roadmap.pdf" },
       diagnosis: { answer: "diagnosis answer" },
       patientChat: { action: "ANSWER", message: "patient answer" },
     },
@@ -72,14 +65,10 @@ const graphModule = (step: Step) => `
     },
   };
   export default graph;
-  ${step === "report" ? `export async function runReportPipeline(input) {
-    return graph.invoke({ question: input.question, file_name: input.fileName });
-  }` : ""}
 `;
 
 registerEsmMocks(subjectDirUrl, {
   "../agents/agents.js": graphModule("agent"),
-  "../langgraph/create_report.graph.js": graphModule("report"),
   "../langgraph/report_assistant.graph.js": `
     export async function runReportAssistant(graph, input) {
       const state = globalThis.__CHATBOT_SERVICE_STUB__;
@@ -101,7 +90,6 @@ registerEsmMocks(subjectDirUrl, {
       return state.results.patientChat;
     }
   `,
-  "../langgraph/build_health_roadmap.graph.js": graphModule("roadmap"),
   "../langgraph/diagnosis.graph.js": graphModule("diagnosis"),
   "../configs/httpClient.js": `
     export default {
@@ -194,62 +182,6 @@ test("handleChatService normalizes backend failures", async () => {
     services.handleChatService({ question: "hello", userId: 1, token: "token" }),
     (error: unknown) =>
       error instanceof ChatbotOperationError && error.status === 400,
-  );
-});
-
-test("handleCreateReportService maps successful graph output", async () => {
-  const result = await services.handleCreateReportService({ question: "report" });
-
-  assert.deepEqual(result, {
-    pdfUrl: "report.pdf",
-    raw: {
-      result: "[]",
-      report: { title: "Report" },
-      chartConfig: { type: "bar" },
-    },
-  });
-});
-
-test("handleCreateReportService normalizes a graph-level failure", async (t) => {
-  t.mock.method(console, "error", () => undefined);
-  globals.__CHATBOT_SERVICE_STUB__.results.report = {
-    errorChartConfig: { status: 422, code: "BAD_CHART", message: "bad chart" },
-    final_result: { status: 422, success: false, message: "report failed" },
-  };
-
-  await assert.rejects(
-    services.handleCreateReportService({ question: "report" }),
-    (error: unknown) =>
-      error instanceof ChatbotOperationError &&
-      error.status === 422 &&
-      error.code === "BAD_CHART",
-  );
-});
-
-test("handleBuildHealthRoadMapService returns the PDF and passes a request id", async (t) => {
-  t.mock.method(console, "log", () => undefined);
-  const result = await services.handleBuildHealthRoadMapService({
-    relative_id: 9,
-    token: "token",
-  });
-
-  assert.deepEqual(result, { pdfUrl: "roadmap.pdf" });
-  const [input] = globals.__CHATBOT_SERVICE_STUB__.calls.roadmap[0] as [
-    { request_id: string; relative_id: number; token: string },
-  ];
-  assert.match(input.request_id, /^[0-9a-f-]{36}$/i);
-  assert.equal(input.relative_id, 9);
-  assert.equal(input.token, "token");
-});
-
-test("handleBuildHealthRoadMapService rejects a missing PDF URL", async (t) => {
-  t.mock.method(console, "log", () => undefined);
-  globals.__CHATBOT_SERVICE_STUB__.results.roadmap = { final_result: { success: true } };
-
-  await assert.rejects(
-    services.handleBuildHealthRoadMapService({ relative_id: 9, token: "token" }),
-    (error: unknown) =>
-      error instanceof ChatbotOperationError && error.status === 500,
   );
 });
 

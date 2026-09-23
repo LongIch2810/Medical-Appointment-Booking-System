@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertCircle, MessageSquarePlus, Send, Sparkles } from "lucide-react";
 
 import { AiReportLoadingOverlay } from "@/components/app/AiReportLoadingOverlay";
@@ -34,6 +34,7 @@ export function AdminAiReportAssistantPage() {
     nextBeforeMessageId: number | null;
   }>>>({});
   const [retryAction, setRetryAction] = useState<RetryAction>(null);
+  const hasResolvedInitialSelection = useRef(false);
   const conversations = useReportAssistantConversations();
   const conversation = useReportAssistantConversation(selectedId);
   const createMutation = useCreateReportAssistantConversation();
@@ -58,8 +59,15 @@ export function AdminAiReportAssistantPage() {
     ...(currentPage?.messages ?? []),
   ];
   useEffect(() => {
-    if (selectedId === null && conversations.data?.data.conversations.length) {
-      setSelectedId(conversations.data.data.conversations[0].id);
+    if (selectedId !== null) {
+      hasResolvedInitialSelection.current = true;
+      return;
+    }
+    if (hasResolvedInitialSelection.current) return;
+    const firstConversationId = conversations.data?.data.conversations[0]?.id;
+    if (firstConversationId !== undefined) {
+      hasResolvedInitialSelection.current = true;
+      setSelectedId(firstConversationId);
     }
   }, [conversations.data, selectedId]);
 
@@ -167,9 +175,13 @@ export function AdminAiReportAssistantPage() {
               isLoading={conversations.isLoading}
               isError={conversations.isError}
               onRetry={() => void conversations.refetch()}
-              onSelect={(id) => setSelectedId(id)}
+              onSelect={(id) => {
+                hasResolvedInitialSelection.current = true;
+                setSelectedId(id);
+              }}
               onNew={() => {
                 clearTurnErrors();
+                hasResolvedInitialSelection.current = true;
                 setSelectedId(null);
                 setDraft("");
               }}
@@ -199,6 +211,7 @@ export function AdminAiReportAssistantPage() {
                 className="hidden h-8.5 shrink-0 gap-1.5 border-slate-200 text-xs font-medium shadow-xs hover:bg-slate-100 sm:inline-flex dark:border-slate-800 dark:hover:bg-slate-850"
                 onClick={() => {
                   clearTurnErrors();
+                  hasResolvedInitialSelection.current = true;
                   setSelectedId(null);
                   setDraft("");
                 }}

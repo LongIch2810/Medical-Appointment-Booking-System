@@ -122,6 +122,10 @@ test("prepends the product safety SystemMessage to every model call, ahead of co
   );
   assert.match(
     (firstCallMessages[0] as { content: string }).content,
+    /Không tự tạo thông tin liên hệ/,
+  );
+  assert.match(
+    (firstCallMessages[0] as { content: string }).content,
     /CHỈ hỗ trợ các nội dung liên quan đến sức khỏe/,
   );
   assert.match(
@@ -176,6 +180,18 @@ test("topic guard: refuses an out-of-scope message without ever invoking the mai
   );
 });
 
+test("topic guard: sends LifeHealth contact requests to the grounded support flow", async () => {
+  globals.__AGENT_STUB__.guardMode = "out_of_scope";
+
+  const result = await agent.invoke({
+    messages: [new HumanMessage("Số hotline chính thức của LifeHealth là gì?")],
+  });
+
+  assert.equal(globals.__AGENT_STUB__.guardCalls.length, 0);
+  assert.equal(globals.__AGENT_STUB__.llmCalls.length, 1);
+  assert.equal(result.messages.at(-1)?.content, "final answer");
+});
+
 test("topic guard: an in-scope message proceeds to the main agent as before", async () => {
   globals.__AGENT_STUB__.guardMode = "in_scope";
 
@@ -199,6 +215,10 @@ test("topic guard: sends the full recent history (not just the latest message) s
   // guardMessages[0] is the guard's own SystemMessage; the rest is the
   // conversation history it was asked to classify.
   assert.equal(guardMessages.length, 1 + history.length);
+  assert.match(
+    String((guardMessages[0] as { content: string }).content),
+    /liên hệ\/hỗ trợ chính thức của LifeHealth/,
+  );
 });
 
 test("topic guard: fails open (proceeds to the agent) when the classifier throws", async () => {

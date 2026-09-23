@@ -57,6 +57,7 @@ Câu hỏi yêu cầu phân tích: {question}
 Dữ liệu đầu vào (JSON): {data_json}
 
 Hãy viết báo cáo phân tích chuyên nghiệp theo định dạng đã nêu.
+{groundingFeedback}
     `,
   ],
 ]);
@@ -76,10 +77,11 @@ const structuredModel = model.withStructuredOutput(ReportSchema, {
 const pipeline = promptTemplate.pipe(structuredModel);
 
 export const WriteProfessionalReportTool = tool(
-  async ({ question, data_json, detailLevel }: {
+  async ({ question, data_json, detailLevel, groundingFeedback }: {
     question: string;
     data_json: string;
     detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
+    groundingFeedback?: string[];
   }) => {
     const reportQuestion = detailLevel && detailLevel !== "STANDARD"
       ? `${question}\nRequested detail level: ${detailLevel}.`
@@ -87,6 +89,9 @@ export const WriteProfessionalReportTool = tool(
     const result = await pipeline.invoke({
       question: reportQuestion,
       data_json,
+      groundingFeedback: groundingFeedback?.length
+        ? `\nBản trước có các số liệu không xuất hiện trong kết quả SQL: ${groundingFeedback.join(", ")}. Hãy viết lại, bỏ các số liệu đó và mọi nhận định phụ thuộc vào chúng. Chỉ giữ số liệu chép nguyên văn từ dữ liệu SQL; không thay thế bằng phép tính hoặc ước lượng.`
+        : "",
     });
     return result;
   },
@@ -106,6 +111,7 @@ export const WriteProfessionalReportTool = tool(
           "Dữ liệu thực tế dạng JSON, ví dụ: [{doctor_age: 35, number_of_doctors: 2}, ...]"
         ),
       detailLevel: z.enum(["BRIEF", "STANDARD", "DETAILED"]).optional(),
+      groundingFeedback: z.array(z.string()).optional(),
     }),
   }
 );

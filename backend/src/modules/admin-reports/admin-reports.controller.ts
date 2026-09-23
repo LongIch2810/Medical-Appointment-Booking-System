@@ -18,7 +18,6 @@ import { ApiCookieAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { PermissionsGuard } from 'src/common/guards/permissions.guard';
 import { Permissions } from 'src/common/decorators/permission.decorator';
-import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
 import { PERMISSIONS } from 'src/utils/constants';
 import { AdminReportsService } from './admin-reports.service';
 import {
@@ -125,6 +124,17 @@ export class AdminReportsController {
   @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
   async detail(@Param('id', ParseIntPipe) id: number) {
     return this.adminReportsService.detail(id);
+  }
+
+  @Get('history/:id/file-url')
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async fileUrl(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('download') download: string,
+  ) {
+    return {
+      url: await this.adminReportsService.file(id, download === 'true'),
+    };
   }
 
   @Get('history/:id/file')

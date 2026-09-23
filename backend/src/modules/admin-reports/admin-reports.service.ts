@@ -743,7 +743,7 @@ export class AdminReportsService {
         where: { conversation: { id } },
         order: { id: 'DESC' },
       });
-      promptMessage = `XÃ¡c nháº­n táº¡o bÃ¡o cÃ¡o theo káº¿ hoáº¡ch #${planMessage.id}.`;
+      promptMessage = `Xác nhận tạo báo cáo theo kế hoạch #${planMessage.id}.`;
       if (latestMessage?.id !== planMessage.id) {
         if (
           latestMessage?.role === 'USER' &&
@@ -926,5 +926,4 @@ export class AdminReportsService {
     return { success: true };
   }
 }
-
 

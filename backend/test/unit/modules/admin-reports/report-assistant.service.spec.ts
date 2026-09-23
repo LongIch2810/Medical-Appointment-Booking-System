@@ -101,7 +101,7 @@ describe('AdminReportsService report assistant', () => {
     };
   }
 
-  beforeEach(() => jest.clearAllMocks());
+  beforeEach(() => jest.resetAllMocks());
 
   it('scopes conversation reads by owner and clamps list pagination', async () => {
     const { service, conversationRepo } = setup();

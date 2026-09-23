@@ -15,7 +15,10 @@ import { renderChartToImage } from "../utils/renderChartToImage.js";
 import { getChatModel } from "../configs/llm.js";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { logSafeError } from "../utils/safeLog.js";
-import { assertNumericGrounding } from "../utils/validateNumericGrounding.js";
+import {
+  assertNumericGrounding,
+  findUngroundedNumbers,
+} from "../utils/validateNumericGrounding.js";
 
 type ChartConfig = z.infer<typeof ChartSchema>;
 type Report = z.infer<typeof ReportSchema>;
@@ -314,10 +317,12 @@ async function generateContentNode(state: typeof CreateReportState.State) {
 
     let res: Report | undefined;
     let groundingError = false;
+    let groundingFeedback: string[] = [];
     for (let attempt = 0; attempt <= 4; attempt++) {
       res = await WriteProfessionalReportTool.invoke({
         question: state.question,
         data_json: state.result,
+        ...(groundingFeedback.length ? { groundingFeedback } : {}),
         ...(state.detailLevel ? { detailLevel: state.detailLevel } : {}),
       });
       if (!res) continue;
@@ -326,6 +331,7 @@ async function generateContentNode(state: typeof CreateReportState.State) {
         break;
       } catch {
         groundingError = true;
+        groundingFeedback = findUngroundedNumbers(res, state.result);
         res = undefined;
       }
     }

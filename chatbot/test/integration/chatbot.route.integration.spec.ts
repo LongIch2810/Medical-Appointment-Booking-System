@@ -8,7 +8,7 @@ import request from "supertest";
 import { registerEsmMocks } from "../unit/_helpers/registerMocks.mjs";
 import { InMemoryRateLimitStore } from "../../src/middlewares/rateLimitStore.js";
 
-type ServiceName = "chat" | "report" | "assistant" | "roadmap" | "patient" | "deletePatient";
+type ServiceName = "chat" | "assistant" | "patient" | "deletePatient";
 
 type ServiceStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -36,12 +36,10 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_ROUTE_SERVICE_STUB__ = {
-  calls: { chat: [], report: [], assistant: [], roadmap: [], patient: [], deletePatient: [] },
+  calls: { chat: [], assistant: [], patient: [], deletePatient: [] },
   results: {
     chat: { answer: "chat answer" },
-    report: { pdfUrl: "report.pdf" },
     assistant: { action: "ANSWER", message: "Assistant response" },
-    roadmap: { pdfUrl: "roadmap.pdf" },
     patient: { action: "ANSWER", message: "Patient response" },
     deletePatient: { success: true },
   },
@@ -63,11 +61,9 @@ registerEsmMocks(controllerDirUrl, {
       return state.results[name];
     };
     export const handleChatService = (args) => invoke("chat", args);
-    export const handleCreateReportService = (args) => invoke("report", args);
     export const handleReportAssistantService = (args) => invoke("assistant", args);
     export const handlePatientChatService = (args) => invoke("patient", args);
     export const handleDeletePatientChatConversationService = (...args) => invoke("deletePatient", args);
-    export const handleBuildHealthRoadMapService = (args) => invoke("roadmap", args);
     export const handleDiagnosisService = () => {
       throw new Error("Diagnosis is not exposed by the production router");
     };
@@ -86,9 +82,7 @@ function resetStub() {
   stub.errors = {};
   stub.results = {
     chat: { answer: "chat answer" },
-    report: { pdfUrl: "report.pdf" },
     assistant: { action: "ANSWER", message: "Assistant response" },
-    roadmap: { pdfUrl: "roadmap.pdf" },
     patient: { action: "ANSWER", message: "Patient response" },
     deletePatient: { success: true },
   };
@@ -183,19 +177,16 @@ describe("chatbot production router integration", () => {
     assert.equal(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.chat.length, 0);
   });
 
-  it("routes create-report through the real controller", async () => {
-    const response = await authenticated(
-      request(buildApp()).post("/chatbot/create-report"),
-    ).send({ question: "  monthly report  " });
+  it("does not expose retired generic report and health-roadmap routes", async () => {
+    for (const route of ["/chatbot/create-report", "/chatbot/build-health-roadmap"]) {
+      const response = await authenticated(
+        request(buildApp()).post(route),
+      ).send({ question: "monthly report" });
 
-    assert.equal(response.status, 200);
-    assert.deepEqual(response.body, {
-      success: true,
-      data: { pdfUrl: "report.pdf" },
-    });
-    assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.report, [
-      { question: "monthly report" },
-    ]);
+      assert.equal(response.status, 404);
+    }
+    assert.equal(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.assistant.length, 0);
+    assert.equal(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.patient.length, 0);
   });
 
   it("verifies forwarded identity and passes assistant context to the service", async () => {
@@ -304,30 +295,6 @@ describe("chatbot production router integration", () => {
     assert.equal(chatStillAllowed.status, 200);
   });
 
-  it("exposes build-health-roadmap and validates its body", async () => {
-    const invalid = await authenticated(
-      request(buildApp()).post("/chatbot/build-health-roadmap"),
-    ).send({ relative_id: 0, token: tokenForUser1 });
-    assert.equal(invalid.status, 400);
-    assert.equal(
-      globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.roadmap.length,
-      0,
-    );
-
-    const response = await authenticated(
-      request(buildApp()).post("/chatbot/build-health-roadmap"),
-    ).send({ relative_id: "8", token: tokenForUser1 });
-
-    assert.equal(response.status, 200);
-    assert.deepEqual(response.body, {
-      success: true,
-      data: { pdfUrl: "roadmap.pdf" },
-    });
-    assert.deepEqual(globals.__CHATBOT_ROUTE_SERVICE_STUB__.calls.roadmap, [
-      { relative_id: 8, token: tokenForUser1 },
-    ]);
-  });
-
   it("passes business errors through and hides internal service error details", async () => {
     globals.__CHATBOT_ROUTE_SERVICE_STUB__.errors.chat = Object.assign(
       new Error("The requested slot is unavailable."),
@@ -345,13 +312,23 @@ describe("chatbot production router integration", () => {
     });
 
     resetStub();
-    globals.__CHATBOT_ROUTE_SERVICE_STUB__.errors.report = Object.assign(
+    globals.__CHATBOT_ROUTE_SERVICE_STUB__.errors.assistant = Object.assign(
       new Error("database password leaked"),
       { status: 500 },
     );
     const failure = await authenticated(
-      request(buildApp()).post("/chatbot/create-report"),
-    ).send({ question: "report" });
+      request(buildApp()).post("/chatbot/report-assistant"),
+    )
+      .set("Authorization", `Bearer ${tokenForUser1}`)
+      .send({
+        userId: 1,
+        conversationId: 12,
+        turnId: 2,
+        threadId: "report-assistant:v1:1:12",
+        mode: "MESSAGE",
+        message: "report",
+        historySeed: [],
+      });
 
     assert.equal(failure.status, 500);
     assert.equal(failure.body.code, "UPSTREAM_INTERNAL_ERROR");
@@ -362,25 +339,32 @@ describe("chatbot production router integration", () => {
     assert.doesNotMatch(JSON.stringify(failure.body), /database password/i);
   });
 
-  it("returns 429 after the production expensive-endpoint quota", async () => {
+  it("returns 429 after the production report-assistant chat quota", async () => {
     const app = buildApp();
-    const first = await authenticated(
-      request(app).post("/chatbot/create-report"),
-    ).send({ question: "report" });
+    const postAssistantMessage = () =>
+      authenticated(request(app).post("/chatbot/report-assistant"))
+        .set("Authorization", `Bearer ${tokenForUser7}`)
+        .send({
+          userId: 7,
+          conversationId: 11,
+          turnId: 3,
+          threadId: "report-assistant:v1:7:11",
+          mode: "MESSAGE",
+          message: "Summarize the approved report plan.",
+          historySeed: [],
+        });
+    const first = await postAssistantMessage();
     assert.equal(first.status, 200);
 
+    assert.equal(first.headers["ratelimit-limit"], "30");
     const remaining = Number(first.headers["ratelimit-remaining"]);
-    assert.ok(Number.isInteger(remaining) && remaining > 0);
+    assert.ok(Number.isInteger(remaining) && remaining >= 0);
     for (let index = 0; index < remaining; index += 1) {
-      const withinQuota = await authenticated(
-        request(app).post("/chatbot/create-report"),
-      ).send({ question: "report" });
+      const withinQuota = await postAssistantMessage();
       assert.equal(withinQuota.status, 200);
     }
 
-    const blocked = await authenticated(
-      request(app).post("/chatbot/create-report"),
-    ).send({ question: "report" });
+    const blocked = await postAssistantMessage();
     assert.equal(blocked.status, 429);
     assert.equal(blocked.body.code, "CHATBOT_RATE_LIMITED");
     assert.equal(blocked.headers["ratelimit-remaining"], "0");

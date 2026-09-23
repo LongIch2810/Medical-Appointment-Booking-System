@@ -4,7 +4,7 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 
-type ServiceName = "chat" | "report" | "assistant" | "roadmap" | "diagnosis" | "patientChat" | "deletePatientConversation";
+type ServiceName = "chat" | "assistant" | "diagnosis" | "patientChat" | "deletePatientConversation";
 
 type ControllerStub = {
   calls: Record<ServiceName, unknown[]>;
@@ -17,12 +17,10 @@ const globals = globalThis as typeof globalThis & {
 };
 
 globals.__CHATBOT_CONTROLLER_STUB__ = {
-  calls: { chat: [], report: [], assistant: [], roadmap: [], diagnosis: [], patientChat: [], deletePatientConversation: [] },
+  calls: { chat: [], assistant: [], diagnosis: [], patientChat: [], deletePatientConversation: [] },
   results: {
     chat: { answer: "chat answer" },
-    report: { pdfUrl: "report.pdf" },
     assistant: { action: "ANSWER", message: "Assistant response" },
-    roadmap: { pdfUrl: "roadmap.pdf" },
     diagnosis: { answer: "diagnosis answer" },
     patientChat: { action: "ANSWER", message: "patient answer" },
     deletePatientConversation: { success: true },
@@ -43,9 +41,7 @@ registerEsmMocks(subjectDirUrl, {
       return state.results[name];
     };
     export const handleChatService = (args) => invoke("chat", args);
-    export const handleCreateReportService = (args) => invoke("report", args);
     export const handleReportAssistantService = (args) => invoke("assistant", args);
-    export const handleBuildHealthRoadMapService = (args) => invoke("roadmap", args);
     export const handleDiagnosisService = (args) => invoke("diagnosis", args);
     export const handlePatientChatService = (args) => invoke("patientChat", args);
     export const handleDeletePatientChatConversationService = (...args) => invoke("deletePatientConversation", args);
@@ -153,30 +149,7 @@ test("report assistant validates bounded history and forwards normalized input",
   ]);
 });
 
-test("report, roadmap, and diagnosis controllers validate and map successful responses", async () => {
-  const report = createResponse();
-  await controllers.handleCreateReportController(
-    { body: { question: "  monthly report  " } } as never,
-    report.response as never,
-  );
-  assert.deepEqual(report.state.body, {
-    success: true,
-    data: { pdfUrl: "report.pdf" },
-  });
-  assert.deepEqual(globals.__CHATBOT_CONTROLLER_STUB__.calls.report, [
-    { question: "monthly report" },
-  ]);
-
-  const roadmap = createResponse();
-  await controllers.handleBuildHealthRoadMapController(
-    { body: { relative_id: "8", token: "token" } } as never,
-    roadmap.response as never,
-  );
-  assert.deepEqual(roadmap.state.body, {
-    success: true,
-    data: { pdfUrl: "roadmap.pdf" },
-  });
-
+test("diagnosis controller validates and maps successful responses", async () => {
   const diagnosis = createResponse();
   await controllers.handleDiagnosisController(
     { body: { text_input: "  headache  ", relative_id: 9, token: "token" } } as never,
@@ -191,21 +164,13 @@ test("report, roadmap, and diagnosis controllers validate and map successful res
   ]);
 });
 
-test("roadmap and diagnosis reject invalid identifiers or tokens", async () => {
-  const roadmap = createResponse();
-  await controllers.handleBuildHealthRoadMapController(
-    { body: { relative_id: -1, token: "token" } } as never,
-    roadmap.response as never,
-  );
-  assert.equal(roadmap.state.status, 400);
-
+test("diagnosis rejects invalid identifiers or tokens", async () => {
   const diagnosis = createResponse();
   await controllers.handleDiagnosisController(
     { body: { text_input: "headache", relative_id: 1, token: "" } } as never,
     diagnosis.response as never,
   );
   assert.equal(diagnosis.state.status, 400);
-  assert.equal(globals.__CHATBOT_CONTROLLER_STUB__.calls.roadmap.length, 0);
   assert.equal(globals.__CHATBOT_CONTROLLER_STUB__.calls.diagnosis.length, 0);
 });
 

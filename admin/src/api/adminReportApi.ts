@@ -55,3 +55,10 @@ export async function confirmReportAssistantPlan(
   );
   return res.data;
 }
+
+export async function getAdminReportFileUrl(id: number, download = false) {
+  const res = await axiosInstance.get<
+    ApiResponse<{ url: string }>
+  >(`/admin-reports/history/${id}/file-url`, { params: { download } });
+  return res.data.data.url;
+}

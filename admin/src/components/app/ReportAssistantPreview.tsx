@@ -9,12 +9,13 @@ import {
   FileText,
   Sparkles,
 } from "lucide-react";
+import { toast } from "react-toastify";
 import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
 import { GenericList } from "@/components/app/GenericList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { exportReportCsv } from "@/lib/exportReportCsv";
-import { openBackendDocument } from "@/utils/open-backend-document";
+import { openAdminReportFile } from "@/utils/open-admin-report-file";
 import type { AdminReport } from "@/types/interface/adminReport.interface";
 
 export function ReportAssistantPreview({ report }: { report: AdminReport }) {
@@ -72,7 +73,12 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             size="sm"
             className="h-8.5 gap-1.5 rounded-lg px-2.5 text-xs font-semibold cursor-pointer shadow-2xs"
             disabled={!hasPdf}
-            onClick={() => report.pdfUrl && openBackendDocument(report.pdfUrl)}
+            onClick={() => {
+              if (!report.pdfUrl) return;
+              void openAdminReportFile(report.id).catch(() =>
+                toast.error("Không thể mở PDF. Vui lòng thử lại."),
+              );
+            }}
           >
             <ExternalLink aria-hidden="true" className="size-3.5" />
             <span>Mở PDF</span>
@@ -84,7 +90,12 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             size="sm"
             className="h-8.5 gap-1.5 rounded-lg px-2.5 text-xs font-semibold cursor-pointer shadow-2xs"
             disabled={!hasPdf}
-            onClick={() => report.pdfUrl && openBackendDocument(report.pdfUrl, true)}
+            onClick={() => {
+              if (!report.pdfUrl) return;
+              void openAdminReportFile(report.id, true).catch(() =>
+                toast.error("Không thể tải PDF. Vui lòng thử lại."),
+              );
+            }}
           >
             <Download aria-hidden="true" className="size-3.5" />
             <span>Tải PDF</span>
@@ -212,4 +223,3 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
     </div>
   );
 }
-

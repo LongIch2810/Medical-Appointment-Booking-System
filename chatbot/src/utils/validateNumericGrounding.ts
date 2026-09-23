@@ -79,9 +79,24 @@ export function findUngroundedNumbers(
     .join(' ')
     // Dates are temporal references, not numeric claims; compare only the
     // remaining numeric values against SQL provenance.
+    // Remove compact ranges before individual dates so the first day in
+    // formats such as "18–24/09/2026" is not mistaken for a metric.
+    .replace(
+      /\b\d{1,2}\s*(?:[-–]|đến|to)\s*\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?\b/gi,
+      ' ',
+    )
+    .replace(
+      /\b\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?\s*(?:[-–]|đến|to)\s*\d{1,2}[/.]\d{1,2}(?:[/.]\d{2,4})?\b/gi,
+      ' ',
+    )
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, ' ')
     .replace(/\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b/g, ' ')
     .replace(/\b(?:tháng|month)\s+\d{1,2}(?:\s*(?:[/.|-]\s*|\b(?:năm|year)\s*)\d{4})?/gi, ' ')
+    // Durations describe the requested reporting window, not a derived KPI.
+    .replace(
+      /\b\d+(?:[.,]\d+)?\s*(?:[-–]\s*)?(?:ngày|days?|tuần|weeks?|tháng|months?|năm|years?|giờ|hours?|phút|minutes?|giây|seconds?)(?![A-Za-z0-9_])/gi,
+      ' ',
+    )
     .replace(/\b(?:năm|year)\s+\d{4}\b/gi, ' ');
   const tokens = reportText.match(
     /-?(?:\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)(?:\s*%)?/g,
