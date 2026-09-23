@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 
 export const Sheet = SheetPrimitive.Root;
 export const SheetTrigger = SheetPrimitive.Trigger;
+export const SheetTitle = SheetPrimitive.Title;
+export const SheetDescription = SheetPrimitive.Description;
 
 export function SheetContent({
   className,

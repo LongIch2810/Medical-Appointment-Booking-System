@@ -173,7 +173,12 @@ export function AdminLayout() {
             )}
           >
             {/* Top real-time ticker */}
-            <div className="flex h-8 items-center justify-between gap-4 bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950 border-b border-slate-800">
+            <div
+              className={cn(
+                "flex h-8 items-center justify-between gap-4 border-b border-slate-800 bg-slate-900 px-4 text-center text-xs text-white dark:bg-slate-950",
+                isReportAssistant && "hidden",
+              )}
+            >
               <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span>LifeHealth Command Center v2.5</span>
@@ -184,7 +189,12 @@ export function AdminLayout() {
             </div>
 
             {/* Main Header Bar */}
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 lg:px-6 xl:grid-cols-[auto_minmax(220px,1fr)_auto]">
+            <div
+              className={cn(
+                "grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 px-4 py-3 lg:px-6 xl:grid-cols-[auto_minmax(220px,1fr)_auto]",
+                isReportAssistant && "py-2",
+              )}
+            >
               <div className="flex min-w-0 items-center gap-2.5">
                 <Sheet>
                   <SheetTrigger asChild>
@@ -297,7 +307,7 @@ export function AdminLayout() {
             className={cn(
               "flex-1 bg-slate-50/70 transition-colors duration-200 dark:bg-slate-950",
               isReportAssistant
-                ? "flex flex-col min-h-0 overflow-hidden p-3 sm:p-4 lg:p-5"
+                ? "flex flex-col min-h-0 overflow-hidden p-2 sm:p-3"
                 : "px-4 py-6 lg:px-8 lg:py-8"
             )}
           >
