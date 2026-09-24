@@ -20,6 +20,7 @@ const bookingSummarySchema = z.object({
   patientName: z.string().min(1).max(200),
   createsRelative: z.boolean(),
   specialtyName: z.string().min(1).max(200),
+  doctorName: z.string().min(1).max(200).optional(),
   appointmentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTime: z.string().regex(/^\d{2}:\d{2}$/),
   endTime: z.string().regex(/^\d{2}:\d{2}$/).nullable(),
@@ -112,6 +113,16 @@ const handleReportAssistantController = async (
       message: "Message is invalid or too long.",
     });
   }
+  if (
+    body.sourceRequest !== undefined &&
+    !isNonEmptyString(body.sourceRequest, MAX_REPORT_ASSISTANT_MESSAGE_LENGTH)
+  ) {
+    return res.status(400).json({
+      success: false,
+      code: "REPORT_ASSISTANT_INVALID_INPUT",
+      message: "Source request is invalid or too long.",
+    });
+  }
   if (body.mode === 'CONFIRM_PLAN' && !body.confirmedPlan) {
     return res.status(409).json({
       success: false,
@@ -201,6 +212,9 @@ const handleReportAssistantController = async (
     threadId: body.threadId,
     mode,
     message: body.message.trim(),
+    ...(isNonEmptyString(body.sourceRequest, MAX_REPORT_ASSISTANT_MESSAGE_LENGTH)
+      ? { sourceRequest: body.sourceRequest.trim() }
+      : {}),
     ...(body.mode === 'MESSAGE' && body.historySeed !== undefined ? { historySeed } : {}),
     ...(confirmedPlan?.success ? { confirmedPlan: confirmedPlan.data } : {}),
     ...(isNonEmptyString(body.fileName, 200) ? { fileName: body.fileName.trim() } : {}),

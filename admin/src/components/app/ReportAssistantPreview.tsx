@@ -2,30 +2,71 @@ import {
   AlertCircle,
   BarChart3,
   CheckCircle2,
+  ChevronDown,
+  Copy,
   Database,
   Download,
+  Eye,
+  EyeOff,
   ExternalLink,
   FileDown,
   FileText,
   Lightbulb,
+  LockKeyhole,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "react-toastify";
+import { revealAdminReportQuery } from "@/api/adminReportApi";
 import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
 import { GenericList } from "@/components/app/GenericList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { exportReportCsv } from "@/lib/exportReportCsv";
 import { openAdminReportFile } from "@/utils/open-admin-report-file";
 import type { AdminReport } from "@/types/interface/adminReport.interface";
 
 export function ReportAssistantPreview({ report }: { report: AdminReport }) {
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [isCheckingPassword, setIsCheckingPassword] = useState(false);
+  const [verifiedQuery, setVerifiedQuery] = useState<string | null>(null);
+  const [isQueryVisible, setIsQueryVisible] = useState(false);
   const content = report.report;
   const fileName = report.fileName || `bao-cao-quan-tri-${report.id}.pdf`;
   const hasRows = Boolean(report.tableRows && report.tableRows.length > 0);
   const hasPdf = Boolean(report.pdfUrl);
+
+  const confirmPassword = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!password || isCheckingPassword) return;
+    setIsCheckingPassword(true);
+    setPasswordError("");
+    try {
+      const query = await revealAdminReportQuery(report.id, password);
+      setVerifiedQuery(query);
+      setIsQueryVisible(true);
+      setIsPasswordDialogOpen(false);
+      setPassword("");
+    } catch {
+      setPasswordError("Không thể xác nhận mật khẩu. Vui lòng kiểm tra và thử lại.");
+    } finally {
+      setIsCheckingPassword(false);
+    }
+  };
 
   return (
     <div
@@ -148,7 +189,208 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         )}
       </div>
 
-      {/* 2. Key Insights (Phát hiện chính) - High priority, placed right after header */}
+      <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-slate-100 dark:hover:bg-slate-800/60 [&::-webkit-details-marker]:hidden">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+            <Database className="size-4" aria-hidden="true" />
+          </span>
+          <span className="min-w-0 flex-1 text-sm font-semibold">
+            Câu SQL và yêu cầu dùng để tạo báo cáo
+          </span>
+          <ChevronDown
+            className="size-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="space-y-4 border-t border-slate-100 p-4 dark:border-slate-800 sm:p-5">
+          {report.sourceRequest && (
+            <div className="space-y-1.5">
+              <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Yêu cầu báo cáo
+              </h4>
+              <p className="whitespace-pre-wrap text-sm leading-6 text-slate-800 dark:text-slate-200">
+                {report.sourceRequest}
+              </p>
+            </div>
+          )}
+          <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-950/40">
+            <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-700 sm:px-5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-xs dark:bg-slate-800 dark:text-slate-300">
+                {verifiedQuery ? (
+                  <ShieldCheck className="size-4" aria-hidden="true" />
+                ) : (
+                  <LockKeyhole className="size-4" aria-hidden="true" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  SQL đã thực thi
+                </h4>
+                {report.hasExecutedQuery && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {verifiedQuery
+                      ? "Đã xác nhận cho báo cáo này"
+                      : "Cần xác nhận mật khẩu để xem"}
+                  </p>
+                )}
+              </div>
+              {report.hasExecutedQuery && (
+                <div className="flex flex-wrap items-center gap-2">
+                  {verifiedQuery && isQueryVisible && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-1.5 rounded-lg bg-white px-3 text-xs font-medium dark:bg-slate-900"
+                      onClick={() =>
+                        void navigator.clipboard
+                          .writeText(verifiedQuery)
+                          .then(() => toast.success("Đã sao chép câu SQL."))
+                          .catch(() => toast.error("Không thể sao chép câu SQL."))
+                      }
+                    >
+                      <Copy className="size-3.5" aria-hidden="true" />
+                      Sao chép SQL
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-600 dark:bg-slate-900"
+                    onClick={() => {
+                      if (verifiedQuery) {
+                        setIsQueryVisible((visible) => !visible);
+                      } else {
+                        setIsPasswordDialogOpen(true);
+                      }
+                    }}
+                    aria-pressed={Boolean(verifiedQuery && isQueryVisible)}
+                  >
+                    {verifiedQuery && isQueryVisible ? (
+                      <EyeOff className="size-4" aria-hidden="true" />
+                    ) : (
+                      <Eye className="size-4" aria-hidden="true" />
+                    )}
+                    {verifiedQuery && isQueryVisible ? "Ẩn SQL" : "Xem SQL"}
+                  </Button>
+                </div>
+              )}
+            </div>
+            {report.hasExecutedQuery ? (
+              <div className="bg-slate-950 px-4 py-4 sm:px-5">
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-6 text-slate-100 sm:text-[13px]">
+                  <code>
+                    {verifiedQuery && isQueryVisible ? verifiedQuery : "********"}
+                  </code>
+                </pre>
+              </div>
+            ) : (
+              <p className="px-4 py-4 text-sm text-slate-500 dark:text-slate-400 sm:px-5">
+                Báo cáo này chưa lưu câu SQL đã chạy.
+              </p>
+            )}
+          </div>
+        </div>
+      </details>
+
+      <Dialog
+        open={isPasswordDialogOpen}
+        onOpenChange={(open) => {
+          setIsPasswordDialogOpen(open);
+          if (!open) {
+            setPassword("");
+            setPasswordError("");
+          }
+        }}
+      >
+        <DialogContent className="max-w-[440px] gap-0 rounded-2xl p-0">
+          <DialogHeader className="gap-0 border-0 px-6 pt-6 pb-0 pr-14 sm:px-7 sm:pt-7 sm:pr-14">
+            <div className="flex items-start gap-3.5">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
+                <LockKeyhole className="size-5" aria-hidden="true" />
+              </span>
+              <div className="min-w-0 pt-0.5">
+                <DialogTitle className="text-lg">Xác nhận mật khẩu</DialogTitle>
+                <DialogDescription className="mt-1.5">
+                  Xem câu SQL đã dùng để tạo báo cáo này.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <form
+            onSubmit={(event) => void confirmPassword(event)}
+            className="px-6 pt-5 pb-6 sm:px-7 sm:pb-7"
+          >
+            <div className="mb-5 border-l-2 border-emerald-500 pl-3">
+              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                Báo cáo đang xem
+              </p>
+              <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">
+                {content?.title || report.sourceRequest || "Báo cáo quản trị"}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <label
+                htmlFor={`report-query-password-${report.id}`}
+                className="text-sm font-semibold text-slate-800 dark:text-slate-100"
+              >
+                Mật khẩu quản trị
+              </label>
+              <Input
+                id={`report-query-password-${report.id}`}
+                type="password"
+                autoComplete="current-password"
+                autoFocus
+                placeholder="Nhập mật khẩu của bạn"
+                aria-invalid={Boolean(passwordError)}
+                aria-describedby={
+                  passwordError
+                    ? `report-query-password-error-${report.id}`
+                    : undefined
+                }
+                className="h-11 rounded-lg border-slate-300 dark:border-slate-700"
+                value={password}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setPasswordError("");
+                }}
+              />
+              {passwordError && (
+                <p
+                  id={`report-query-password-error-${report.id}`}
+                  role="alert"
+                  className="text-sm text-red-600 dark:text-red-400"
+                >
+                  {passwordError}
+                </p>
+              )}
+            </div>
+            <p className="mt-3 flex items-center gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+              <ShieldCheck
+                className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+                aria-hidden="true"
+              />
+              Chỉ cần xác nhận một lần cho báo cáo này.
+            </p>
+            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-5 dark:border-slate-800">
+              <DialogClose asChild>
+                <Button type="button" variant="ghost" className="h-10 rounded-lg px-4">
+                  Hủy
+                </Button>
+              </DialogClose>
+              <Button
+                type="submit"
+                disabled={!password || isCheckingPassword}
+                className="h-10 rounded-lg bg-emerald-600 px-5 font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
+              >
+                {isCheckingPassword ? "Đang xác nhận..." : "Xác nhận và xem SQL"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
       {content && content.insights && content.insights.length > 0 && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/40 p-4 dark:border-emerald-500/40 dark:bg-emerald-950/20">
           <div className="flex items-center gap-2">

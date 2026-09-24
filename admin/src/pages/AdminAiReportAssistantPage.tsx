@@ -37,6 +37,21 @@ type RetryAction =
   | { kind: "confirm"; value: number }
   | null;
 
+function getApiErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+
+  const response = (error as { response?: { data?: unknown } }).response;
+  const data = response?.data;
+  if (!data || typeof data !== "object") return undefined;
+
+  const payload = data as {
+    code?: unknown;
+    error?: { code?: unknown };
+  };
+  if (typeof payload.error?.code === "string") return payload.error.code;
+  return typeof payload.code === "string" ? payload.code : undefined;
+}
+
 export function AdminAiReportAssistantPage() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [draft, setDraft] = useState("");
@@ -207,6 +222,7 @@ export function AdminAiReportAssistantPage() {
 
   const retryError =
     createMutation.error || sendMutation.error || confirmMutation.error;
+  const isRateLimited = getApiErrorCode(retryError) === "CHATBOT_RATE_LIMITED";
   const selectedTitle = conversation.data?.data.conversation.title;
 
   return (
@@ -398,11 +414,12 @@ export function AdminAiReportAssistantPage() {
                           className="size-4 shrink-0"
                         />
                         <span>
-                          Không thể hoàn tất yêu cầu. Tin nhắn đã được giữ lại;
-                          bạn có thể thử lại.
+                          {isRateLimited
+                            ? "Đã đạt giới hạn tạo báo cáo trong giờ hiện tại. Vui lòng thử lại sau."
+                            : "Không thể hoàn tất yêu cầu. Tin nhắn đã được giữ lại; bạn có thể thử lại."}
                         </span>
                       </div>
-                      {retryAction ? (
+                      {retryAction && !isRateLimited ? (
                         <Button
                           type="button"
                           variant="outline"
@@ -545,6 +562,7 @@ export function AdminAiReportAssistantPage() {
                       />
                     ) : activeArtifactMessage?.report ? (
                       <ReportAssistantPreview
+                        key={activeArtifactMessage.report.id}
                         report={activeArtifactMessage.report}
                       />
                     ) : null}

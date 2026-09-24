@@ -684,6 +684,22 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
       const detailLevel = plan.detailLevel;
       const result: any = await runPipeline({
         question: plan.query,
+        reportContext: {
+          sourceRequest: state.input.sourceRequest ?? plan.query,
+          objective: plan.objective,
+          query: plan.query,
+          fromDate: plan.fromDate,
+          toDate: plan.toDate,
+          ...(plan.comparisonFromDate !== undefined
+            ? { comparisonFromDate: plan.comparisonFromDate }
+            : {}),
+          ...(plan.comparisonToDate !== undefined
+            ? { comparisonToDate: plan.comparisonToDate }
+            : {}),
+          metrics: plan.metrics,
+          groupBy: plan.groupBy,
+          sourceViews: plan.sourceViews,
+        },
         ...(state.input.fileName ? { fileName: state.input.fileName } : {}),
         ...(chartType && chartType !== 'AUTO' && chartType !== 'TABLE' ? { preferredChartType: chartType } : {}),
         ...(detailLevel ? { detailLevel } : {}),
@@ -697,6 +713,12 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
           failure.message ?? 'Report generation failed.',
         );
       }
+      if (
+        typeof result?.executedQuery !== 'string' ||
+        !result.executedQuery.trim()
+      ) {
+        throw assistantError(502, 'REPORT_ASSISTANT_INVALID_RESPONSE', 'Executed SQL is missing.');
+      }
       const asset = result?.pdf_asset;
       if (!asset?.publicId) throw assistantError(502, 'REPORT_ASSISTANT_INVALID_RESPONSE', 'Generated report asset is missing.');
       return {
@@ -708,6 +730,7 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
             asset,
             raw: {
               result: result?.result ?? null,
+              query: result?.executedQuery ?? null,
               report: result?.report ?? null,
               chartConfig: result?.chartConfig ?? null,
             },

@@ -142,6 +142,7 @@ test('booking proposal pauses in interrupt and only a matching approval commits 
     patientName: 'Nguyễn An',
     createsRelative: false,
     specialtyName: 'Nội tổng quát',
+    doctorName: 'Bác sĩ Minh',
     appointmentDate: '2026-09-22',
     startTime: '09:00',
     endTime: '09:30',
@@ -166,6 +167,7 @@ test('booking proposal pauses in interrupt and only a matching approval commits 
   const input = makeInput({ message: 'Đặt lịch khám ngày 22/09', historySeed: [{ role: 'user', content: 'Đặt lịch khám ngày 22/09' }] });
   const proposal = await runPatientChat(graph, input);
   assert.equal(proposal.action, 'BOOKING_APPROVAL');
+  assert.deepEqual(proposal.payload?.bookingSummary, bookingSummary);
   assert.equal(globals.__PATIENT_CHAT_GRAPH_STUB__.commits.length, 0);
 
   const confirmation = makeInput({

@@ -37,7 +37,10 @@ const { AdminQaSqlTool } = await import(
 test.beforeEach(() => {
   globals.__ADMIN_QA_SQL_TOOL_STUB__ = {
     calls: [],
-    result: { result: '[{"count":2}]' },
+    result: {
+      query: "SELECT COUNT(*) AS count FROM chatbot_report_users_view LIMIT 1000",
+      result: '[{"count":2}]',
+    },
   };
 });
 
@@ -54,7 +57,10 @@ test("exposes the expected metadata and schema", () => {
 test("returns the graph result for a successful admin query", async () => {
   const result = await AdminQaSqlTool.invoke({ question: "monthly report" });
 
-  assert.equal(result, '[{"count":2}]');
+  assert.equal(
+    result,
+    '{"query":"SELECT COUNT(*) AS count FROM chatbot_report_users_view LIMIT 1000","rows":[{"count":2}]}',
+  );
   assert.deepEqual(globals.__ADMIN_QA_SQL_TOOL_STUB__.calls, [
     { question: "monthly report" },
   ]);

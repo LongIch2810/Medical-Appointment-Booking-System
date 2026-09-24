@@ -26,6 +26,9 @@ import {
 } from './dto/request/reportAssistantMessage.dto';
 import type { Response } from 'express';
 import { getRequestAccessToken } from 'src/utils/authContext';
+import { Throttle } from '@nestjs/throttler';
+import { RATE_LIMIT_POLICIES } from 'src/common/rate-limit/rate-limit.constants';
+import { RevealReportQueryDto } from './dto/request/revealReportQuery.dto';
 
 @ApiTags('admin-reports')
 @ApiCookieAuth()
@@ -124,6 +127,27 @@ export class AdminReportsController {
   @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
   async detail(@Param('id', ParseIntPipe) id: number) {
     return this.adminReportsService.detail(id);
+  }
+
+  @ApiOperation({ summary: 'Xác nhận mật khẩu để xem SQL đã thực thi' })
+  @Post('history/:id/reveal-query')
+  @HttpCode(HttpStatus.OK)
+  @Throttle(RATE_LIMIT_POLICIES.login)
+  @Permissions(PERMISSIONS.AI_COACH_REPORT_READ)
+  async revealQuery(
+    @Request() req,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: RevealReportQueryDto,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+    response.setHeader('Cache-Control', 'no-store');
+    return {
+      executedQuery: await this.adminReportsService.revealQuery(
+        req.user.userId,
+        id,
+        body.password,
+      ),
+    };
   }
 
   @Get('history/:id/file-url')

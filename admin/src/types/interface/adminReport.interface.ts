@@ -103,6 +103,9 @@ export type AdminReport = {
   createdBy?: { id: number; fullname: string | null };
   reportType: AdminReportType;
   rangeLabel: string;
+  sourceRequest?: string | null;
+  executedQuery?: string | null;
+  hasExecutedQuery?: boolean;
   pdfUrl: string | null;
   fileName?: string | null;
   report: AdminReportContent | null;

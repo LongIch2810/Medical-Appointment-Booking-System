@@ -3,6 +3,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { UnsafeSqlQueryError } from "../../../src/utils/assertSelectOnlyQuery.js";
+import type { ReportExecutionContext } from "../../../src/types/ReportAssistant.js";
 import { registerEsmMocks } from "../_helpers/registerMocks.mjs";
 import { resetState, state } from "./qaSqlTestControl.mjs";
 
@@ -93,7 +94,38 @@ test("executes an allow-listed SELECT and applies the 1000-row cap", async () =>
   assert.deepEqual(state.queryCalls, [
     "SELECT id FROM chatbot_report_users_view LIMIT 1000",
   ]);
+  assert.equal(result.query, "SELECT id FROM chatbot_report_users_view LIMIT 1000");
   assert.equal(result.result, JSON.stringify([{ id: 1 }]));
+});
+
+test("passes the confirmed report contract to SQL generation", async () => {
+  resetState();
+  state.toolInvokeResult = {
+    tool_calls: [
+      {
+        args: {
+          query: "SELECT COUNT(*) AS appointment_count FROM chatbot_report_appointments_view WHERE appointment_date BETWEEN '2026-08-01' AND '2026-08-31'",
+        },
+      },
+    ],
+  };
+  const reportContext: ReportExecutionContext = {
+    sourceRequest: "Show appointment totals from August 1 through August 31.",
+    objective: "Count appointments for August",
+    query: "Count appointments during August 2026",
+    fromDate: "2026-08-01",
+    toDate: "2026-08-31",
+    metrics: ["appointment_count"],
+    groupBy: [],
+    sourceViews: ["chatbot_report_appointments_view"],
+  };
+
+  await adminQaSqlGraph.invoke({ question: reportContext.query, reportContext });
+
+  assert.match(String(state.toolInvokeCalls[0]), /2026-08-01/);
+  assert.match(String(state.toolInvokeCalls[0]), /appointment_count/);
+  assert.match(String(state.toolInvokeCalls[0]), /sourceViews/);
+  assert.match(String(state.toolInvokeCalls[0]), /COALESCE\(SUM\(column\), 0\)/);
 });
 
 test("preserves an existing limit below the admin cap", async () => {
@@ -132,6 +164,37 @@ for (const [name, query] of [
     assert.equal(state.queryCalls.length, 0);
   });
 }
+
+test("restricts a confirmed report to the source views in its plan", async () => {
+  resetState();
+  state.toolInvokeResult = {
+    tool_calls: [
+      {
+        args: {
+          query: "SELECT id FROM chatbot_report_users_view",
+        },
+      },
+    ],
+  };
+
+  await assert.rejects(
+    adminQaSqlGraph.invoke({
+      question: "Count August appointments",
+      reportContext: {
+        sourceRequest: "Count August appointments.",
+        objective: "Count appointments",
+        query: "Count appointments in August",
+        fromDate: "2026-08-01",
+        toDate: "2026-08-31",
+        metrics: ["appointment_count"],
+        groupBy: [],
+        sourceViews: ["chatbot_report_appointments_view"],
+      },
+    }),
+    (error: unknown) => error instanceof UnsafeSqlQueryError,
+  );
+  assert.equal(state.queryCalls.length, 0);
+});
 
 test("rejects malformed LLM output before touching the admin datasource", async () => {
   resetState();

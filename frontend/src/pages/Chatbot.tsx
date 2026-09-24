@@ -105,10 +105,26 @@ export default function Chatbot() {
       : null;
   const isBusy = isPending || createConversation.isPending || deleteConversation.isPending;
   const latestMessage = messages.at(-1);
+  const retryDecision =
+    latestMessage?.role === "USER" &&
+    (latestMessage.payload?.decision === "APPROVE" ||
+      latestMessage.payload?.decision === "CANCEL") &&
+    typeof latestMessage.payload.approvalMessageId === "number"
+      ? {
+          approvalMessageId: latestMessage.payload.approvalMessageId,
+          decision: latestMessage.payload.decision as "APPROVE" | "CANCEL",
+        }
+      : null;
   const latestApproval =
     latestMessage?.role === "ASSISTANT" && latestMessage.action === "BOOKING_APPROVAL"
       ? latestMessage
-      : undefined;
+      : retryDecision
+        ? messages.find(
+            (message) =>
+              message.id === retryDecision.approvalMessageId &&
+              message.action === "BOOKING_APPROVAL",
+          )
+        : undefined;
 
   useEffect(() => {
     if (!userInfo) navigate("/sign-in");
@@ -379,15 +395,29 @@ export default function Chatbot() {
 
                   {messages.map((message) =>
                     message.role === "USER" ? (
-                      <UserMessage key={message.id} content={message.content} />
+                      <UserMessage
+                        key={message.id}
+                        content={
+                          message.payload?.decision === "APPROVE"
+                            ? "Đã bấm nút xác nhận đặt lịch"
+                            : message.payload?.decision === "CANCEL"
+                              ? "Đã bấm nút hủy yêu cầu đặt lịch"
+                              : message.content
+                        }
+                      />
                     ) : (
                       <div key={message.id} className="space-y-3">
                         <AssistantMessage content={message.content} />
-                        {message.action === "BOOKING_APPROVAL" &&
-                          message.id === latestApproval?.id && (
+                        {message.action === "BOOKING_APPROVAL" && (
                             <div className="pl-0 sm:pl-7">
                               <BookingApprovalCard
                                 message={message}
+                                isPendingApproval={message.id === latestApproval?.id}
+                                retryDecision={
+                                  message.id === latestApproval?.id
+                                    ? retryDecision?.decision ?? null
+                                    : null
+                                }
                                 isBusy={isBusy}
                                 onApprove={(id) => void handleBookingDecision(id, "APPROVE")}
                                 onCancel={(id) => void handleBookingDecision(id, "CANCEL")}
@@ -478,4 +508,3 @@ export default function Chatbot() {
     </section>
   );
 }
-

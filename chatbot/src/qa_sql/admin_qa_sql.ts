@@ -11,6 +11,7 @@ import {
 } from "../database/data-source.js";
 import { assertSelectOnlyQuery } from "../utils/assertSelectOnlyQuery.js";
 import { withRetry } from "../utils/retry.js";
+import type { ReportExecutionContext } from "../types/ReportAssistant.js";
 
 dotenv.config();
 
@@ -47,10 +48,12 @@ export async function getAdminReportSchema(): Promise<string> {
 
 const InputStateAnnotation = Annotation.Root({
   question: Annotation<string>,
+  reportContext: Annotation<ReportExecutionContext | undefined>,
 });
 
 const StateAnnotation = Annotation.Root({
   question: Annotation<string>,
+  reportContext: Annotation<ReportExecutionContext | undefined>,
   query: Annotation<string>,
   result: Annotation<string>,
 });
@@ -69,12 +72,15 @@ với các trường cần thiết với cấu trúc cơ sở dữ liệu.
 - Chỉ truy vấn các view chatbot_report_* được cung cấp trong schema.
 - Luôn giới hạn kết quả ở mức tối đa 1000 dòng.
 - Nếu dùng hàm aggregate như SUM, COUNT hoặc AVG, mọi cột/biểu thức không aggregate trong SELECT bắt buộc phải nằm trong GROUP BY; không dùng SELECT * cùng aggregate.
+- Khi tính tổng từ cột đếm có hậu tố _count bằng SUM, bọc bằng COALESCE(SUM(column), 0) để kỳ không có bản ghi trả về 0 thay vì NULL. Không thay thế AVG bằng 0 và không tự tạo nhóm cho kết quả đã GROUP BY.
 - Với tỷ lệ hoặc chỉ số dẫn xuất, dùng CTE/subquery để tính các tổng phụ trước rồi tính tỷ lệ ở query ngoài; bảo đảm mỗi query aggregate đều hợp lệ với PostgreSQL.
 - Trả về câu SQL hợp lệ duy nhất, không thêm lời giải thích.
     `;
 
 const queryPromptTemplate = ChatPromptTemplate.fromMessages([
-  ["system", systemQaSqlPrompt],
+  ["system", `${systemQaSqlPrompt}
+
+For a confirmed report plan, use its dates, comparison period, metrics, grouping, and source views exactly. Date ranges include both endpoint dates. Do not add or omit filters, metrics, or groups, and do not substitute a different metric. Keep comparison periods distinguishable in the result. If the requested metric cannot be derived from the approved views, do not invent or approximate it.`],
   [
     "human",
     `
@@ -100,7 +106,9 @@ const writeQuery = async (state: typeof InputStateAnnotation.State) => {
   const promptValue = await queryPromptTemplate.invoke({
     dialect: db.appDataSourceOptions.type,
     table_info: await db.getTableInfo(),
-    input: state.question,
+    input: state.reportContext
+      ? `${state.question}\n\nConfirmed report plan: ${JSON.stringify(state.reportContext)}`
+      : state.question,
   });
 
   const response = await llmWithQueryTool.invoke(promptValue);
@@ -110,13 +118,14 @@ const writeQuery = async (state: typeof InputStateAnnotation.State) => {
 
 const executeQuery = async (state: typeof StateAnnotation.State) => {
   const safeQuery = assertSelectOnlyQuery(state.query, {
-    allowedTables: ADMIN_REPORT_TABLES,
+    allowedTables: state.reportContext?.sourceViews ?? ADMIN_REPORT_TABLES,
     maxRows: 1_000,
   });
   const rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
     operation: "admin_qa_sql_select",
   });
   return {
+    query: safeQuery,
     result: JSON.stringify(rows),
   };
 };

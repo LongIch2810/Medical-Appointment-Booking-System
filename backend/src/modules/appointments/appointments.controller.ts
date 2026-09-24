@@ -16,6 +16,7 @@ import {
 import { AppointmentsService } from './appointments.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateAppointmentDto } from './dto/request/bodyCreateAppointment.dto';
+import { BodyPreviewAppointmentDto } from './dto/request/bodyPreviewAppointment.dto';
 import { BodyPersonalAppointmentsDto } from './dto/request/bodyPersonalAppointments.dto';
 import { BodyFilterImproveDto } from './dto/request/bodyFilterImprove.dto';
 import { AuditLogAction } from 'src/common/decorators/auditLogAction.decorator';
@@ -32,6 +33,16 @@ import { RequestPaylaod } from 'src/shared/types/global.type';
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
+
+  @ApiOperation({
+    summary: 'Xem ca khám thực tế còn trống trước khi xác nhận đặt lịch',
+  })
+  @Post('booking-preview')
+  @HttpCode(HttpStatus.OK)
+  @Permissions(PERMISSIONS.APPOINTMENT_CREATE)
+  async previewAppointment(@Body() body: BodyPreviewAppointmentDto) {
+    return this.appointmentsService.previewAutoSelect(body);
+  }
 
   @ApiOperation({ summary: 'Đặt lịch khám (bệnh nhân tự đặt)' })
   @Post('booking')

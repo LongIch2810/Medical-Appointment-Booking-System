@@ -33,6 +33,7 @@ function makeManagerQb(overrides: Partial<Record<string, any>> = {}) {
   return {
     setLock: jest.fn().mockReturnThis(),
     innerJoin: jest.fn().mockReturnThis(),
+    innerJoinAndSelect: jest.fn().mockReturnThis(),
     leftJoinAndSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
@@ -104,7 +105,7 @@ describe('AppointmentsService', () => {
   };
   let usersService: { findByUserId: jest.Mock; isUserExists: jest.Mock };
   let specialtiesService: { findSpecialtyById: jest.Mock };
-  let dataSource: { transaction: jest.Mock; createQueryBuilder: jest.Mock };
+  let dataSource: { transaction: jest.Mock; createQueryBuilder: jest.Mock; manager: any };
   let gateway: {
     notifyBookAppointmentSuccess: jest.Mock;
     notifyBookAppointmentFail: jest.Mock;
@@ -150,6 +151,7 @@ describe('AppointmentsService', () => {
     dataSource = {
       transaction: jest.fn(),
       createQueryBuilder: jest.fn(),
+      manager: null,
     };
 
     gateway = {
@@ -714,6 +716,60 @@ describe('AppointmentsService', () => {
     function wireTransaction(manager: any) {
       dataSource.transaction.mockImplementation((cb: any) => cb(manager));
     }
+
+    it('previews a real free schedule and doctor without creating an appointment', async () => {
+      const candidate = {
+        id: 42,
+        start_time: '08:00:00',
+        end_time: '09:00:00',
+        doctor: { user: { fullname: 'Bác sĩ An' } },
+      };
+      const doctorScheduleQb = makeManagerQb({
+        getMany: jest.fn().mockResolvedValue([candidate]),
+      });
+      dataSource.manager = makeMockManager({ doctorScheduleQb });
+
+      await expect(service.previewAutoSelect({
+        appointment_date: futureDate,
+        specialty_id: 2,
+        start_time: '08:00',
+      })).resolves.toEqual({
+        scheduleId: 42,
+        doctorName: 'Bác sĩ An',
+        appointmentDate: futureDate,
+        startTime: '08:00',
+        endTime: '09:00',
+      });
+      expect(doctorScheduleQb.setLock).not.toHaveBeenCalled();
+      expect(dataSource.transaction).not.toHaveBeenCalled();
+      expect(dataSource.manager.save).not.toHaveBeenCalled();
+    });
+
+    it('refuses to book a different schedule from the one shown in the preview', async () => {
+      const relativeQb = makeManagerQb({ getOne: jest.fn().mockResolvedValue(patient) });
+      const doctorScheduleQb = makeManagerQb({
+        getMany: jest.fn().mockResolvedValue([{
+          id: 43,
+          start_time: '08:00:00',
+          end_time: '09:00:00',
+        }]),
+      });
+      const manager = makeMockManager({ relativeQb, doctorScheduleQb });
+      wireTransaction(manager);
+
+      await expect(service.create(9, {
+        appointment_date: futureDate,
+        specialty_id: 2,
+        start_time: '08:00',
+        expected_doctor_schedule_id: 42,
+        relative_id: 5,
+        booking_mode: BookingMode.AI_SELECT,
+      })).rejects.toMatchObject({
+        response: { code: APPOINTMENT_SLOT_UNAVAILABLE },
+        status: 409,
+      });
+      expect(manager.save).not.toHaveBeenCalled();
+    });
 
     it('specific-schedule request (doctor_schedule_id) behaves exactly as before and never queries auto-select candidates', async () => {
       const chosenSchedule = {

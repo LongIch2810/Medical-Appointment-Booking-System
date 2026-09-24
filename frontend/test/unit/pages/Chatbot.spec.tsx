@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { renderWithProviders, screen, waitFor } from "@/test/test-utils";
 import { useUserStore } from "@/store/useUserStore";
+import "@/i18n";
 
 const axiosMock = vi.hoisted(() => ({ get: vi.fn(), post: vi.fn(), delete: vi.fn() }));
 vi.mock("@/configs/axios", () => ({ default: axiosMock }));
@@ -62,17 +63,17 @@ describe("Patient multi-thread chatbot", () => {
         conversations = [conversation];
         return { data: { data: conversation } };
       }
+      const isApproval = body?.approvalMessageId !== undefined;
       const userMessage = {
         id: messages.length + 1,
         role: "USER",
         action: null,
         content: body?.message ?? "Xác nhận đặt lịch",
-        payload: null,
+        payload: isApproval ? { decision: body?.decision, approvalMessageId: body?.approvalMessageId } : null,
         appointmentId: null,
         turnId: "test-turn",
         createdAt: "20/09/2026",
       };
-      const isApproval = body?.approvalMessageId !== undefined;
       const assistantMessage = isApproval
         ? {
             id: messages.length + 2,
@@ -96,6 +97,7 @@ describe("Patient multi-thread chatbot", () => {
                 createsRelative: false,
                 specialtyName: "Nội tổng quát",
                 appointmentDate: "2026-09-22",
+                doctorName: "Bác sĩ Minh",
                 startTime: "09:00",
                 endTime: "09:30",
               },
@@ -131,6 +133,7 @@ describe("Patient multi-thread chatbot", () => {
     ));
 
     expect(await screen.findByRole("region", { name: "Xác nhận thông tin đặt lịch" })).toBeInTheDocument();
+    expect(screen.getByText("Bác sĩ Minh")).toBeInTheDocument();
     expect(screen.getByText("Nguyễn An")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Xác nhận đặt lịch" })).toBeEnabled();
 
@@ -140,5 +143,35 @@ describe("Patient multi-thread chatbot", () => {
       { approvalMessageId: 2, decision: "APPROVE" },
     ));
     expect(await screen.findByText("Đặt lịch khám thành công")).toBeInTheDocument();
+    expect(screen.getByText("Đã bấm nút xác nhận đặt lịch")).toBeInTheDocument();
+    expect(screen.getByText("Bác sĩ Minh")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Xác nhận đặt lịch" })).not.toBeInTheDocument();
+  });
+
+  it("restores the retry button after an approval response is lost", async () => {
+    const user = userEvent.setup();
+    conversations = [{ id: 31, title: "Đặt lịch khám", createdAt: "20/09/2026", updatedAt: "20/09/2026" }];
+    messages = [
+      {
+        id: 1, role: "ASSISTANT", action: "BOOKING_APPROVAL", content: "Kiểm tra lịch hẹn",
+        payload: { operationId: "4d7f8c38-b3a4-47a0-9cb3-2d7a48ed98e8", bookingSummary: {
+          patientName: "Nguyễn An", createsRelative: false, specialtyName: "Nội tổng quát",
+          doctorName: "Bác sĩ Minh", appointmentDate: "2026-09-22", startTime: "09:00", endTime: "09:30",
+        } },
+        appointmentId: null, turnId: "test-turn-1", createdAt: "20/09/2026",
+      },
+      {
+        id: 2, role: "USER", action: null, content: "Xác nhận đặt lịch",
+        payload: { decision: "APPROVE", approvalMessageId: 1 },
+        appointmentId: null, turnId: "test-turn-2", createdAt: "20/09/2026",
+      },
+    ];
+    renderWithProviders(<Chatbot />);
+
+    await user.click(await screen.findByRole("button", { name: "Thử lại xác nhận" }));
+    await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith(
+      "/chat-history/conversations/31/messages",
+      { approvalMessageId: 1, decision: "APPROVE" },
+    ));
   });
 });

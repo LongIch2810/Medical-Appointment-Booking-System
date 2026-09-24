@@ -2,14 +2,26 @@ import { tool } from "@langchain/core/tools";
 import { z } from "zod";
 import adminQaSqlGraph from "../qa_sql/admin_qa_sql.js";
 import { logSafeError } from "../utils/safeLog.js";
+import { ReportPlanSchema } from "../types/ReportAssistant.js";
+import type { ReportExecutionContext } from "../types/ReportAssistant.js";
 
 export const AdminQaSqlTool = tool(
-  async ({ question }: { question: string }) => {
+  async ({
+    question,
+    reportContext,
+  }: {
+    question: string;
+    reportContext?: ReportExecutionContext;
+  }) => {
     try {
       const result = await adminQaSqlGraph.invoke({
         question,
+        ...(reportContext ? { reportContext } : {}),
       });
-      return result.result;
+      return JSON.stringify({
+        query: result.query,
+        rows: JSON.parse(result.result),
+      });
     } catch (error: any) {
       logSafeError("AdminQaSqlTool failed", error);
       return "Lỗi hệ thống khi phân tích báo cáo.";
@@ -32,6 +44,19 @@ Ví dụ:
         .describe(
           "Câu hỏi của người dùng bằng tiếng Việt, ví dụ: 'Thống kê số lượng bác sĩ theo độ tuổi.'",
         ),
+      reportContext: ReportPlanSchema.pick({
+        objective: true,
+        query: true,
+        fromDate: true,
+        toDate: true,
+        comparisonFromDate: true,
+        comparisonToDate: true,
+        metrics: true,
+        groupBy: true,
+        sourceViews: true,
+      })
+        .extend({ sourceRequest: z.string().max(4_000) })
+        .optional(),
     }),
   },
 );

@@ -26,6 +26,7 @@ export class AdminReportsMapper {
           asset?: AiDocumentAsset;
           pdfAsset?: AiDocumentAsset;
           pdfUrl?: string | null;
+          query?: string | null;
           raw?: Record<string, any>;
         }
       | undefined,
@@ -35,6 +36,8 @@ export class AdminReportsMapper {
       createdBy?: { id: number; fullname: string | null };
       pdfUrl?: string | null;
       fileName?: string | null;
+      sourceRequest?: string | null;
+      executedQuery?: string | null;
     } = {},
   ): AdminReportResponseDto {
     const raw = chatbotData?.raw ?? {};
@@ -54,6 +57,11 @@ export class AdminReportsMapper {
         createdBy: metadata.createdBy,
         reportType,
         rangeLabel,
+        sourceRequest: metadata.sourceRequest ?? null,
+        hasExecutedQuery: Boolean(
+          metadata.executedQuery ?? chatbotData?.query ?? raw.query,
+        ),
+        executedQuery: null,
         pdfUrl: metadata.pdfUrl ?? chatbotData?.pdfUrl ?? null,
         fileName:
           metadata.fileName ??

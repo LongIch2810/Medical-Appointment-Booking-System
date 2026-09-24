@@ -9,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
+import * as bcrypt from 'bcryptjs';
 import {
   endOfDay,
   endOfMonth,
@@ -21,6 +22,7 @@ import {
 } from 'date-fns';
 import { LessThan, Repository } from 'typeorm';
 import AiAdminReport from 'src/entities/aiAdminReport.entity';
+import User from 'src/entities/user.entity';
 import AiReportConversation from 'src/entities/aiReportConversation.entity';
 import AiReportMessage, {
   ReportAssistantAction,
@@ -335,9 +337,12 @@ export class AdminReportsService {
         (response.report.raw.report !== null &&
           typeof response.report.raw.report !== 'object') ||
         (response.report.raw.chartConfig !== null &&
-          typeof response.report.raw.chartConfig !== 'object'))
+          typeof response.report.raw.chartConfig !== 'object') ||
+        typeof response.report.raw.query !== 'string' ||
+        !response.report.raw.query.trim() ||
+        response.report.raw.query.length > 20_000)
     ) {
-      throw new Error('missing report asset');
+      throw new Error('invalid generated report payload');
     }
     return response as ReportAssistantUpstreamResponse;
   }
@@ -378,6 +383,7 @@ export class AdminReportsService {
     conversationId: number;
     turnId: number;
     message: string;
+    sourceRequest: string;
     token: string;
     mode: 'MESSAGE' | 'CONFIRM_PLAN';
     historySeed?: ReportAssistantHistoryItem[];
@@ -394,6 +400,7 @@ export class AdminReportsService {
           threadId: `report-assistant:v1:${args.userId}:${args.conversationId}`,
           mode: args.mode,
           message: args.message,
+          sourceRequest: args.sourceRequest,
           ...(args.historySeed ? { historySeed: args.historySeed } : {}),
           ...(args.confirmedPlan ? { confirmedPlan: args.confirmedPlan } : {}),
           ...(args.fileName ? { fileName: args.fileName } : {}),
@@ -414,9 +421,11 @@ export class AdminReportsService {
     } catch (error: unknown) {
       if (
         error instanceof Error &&
-        ['invalid response', 'invalid plan', 'missing report asset'].includes(
-          error.message,
-        )
+        [
+          'invalid response',
+          'invalid plan',
+          'invalid generated report payload',
+        ].includes(error.message)
       ) {
         throw new HttpException(
           {
@@ -505,6 +514,7 @@ export class AdminReportsService {
               createdBy: { id: args.userId },
               conversation: { id: args.conversation.id },
               source_request: args.sourceRequest ?? reportPlan.query,
+              executed_query: raw.query,
               report_type: 'CONVERSATIONAL',
               range_preset: 'CONVERSATION',
               from_date: reportPlan.fromDate,
@@ -607,6 +617,7 @@ export class AdminReportsService {
       token,
       mode: 'MESSAGE',
       message,
+      sourceRequest: message,
       historySeed: [],
     });
     return this.saveAssistantTurn({
@@ -719,6 +730,7 @@ export class AdminReportsService {
 
     let confirmedPlan: ReportPlan | undefined;
     let promptMessage: string;
+    let sourceRequest: string;
     let planMessageId: number | undefined;
     let retryConfirmationMessage: AiReportMessage | null = null;
     if (hasConfirmation) {
@@ -761,6 +773,15 @@ export class AdminReportsService {
         }
       }
       confirmedPlan = planMessage.plan;
+      const requestMessage = await this.messageRepo.findOne({
+        where: {
+          conversation: { id },
+          role: 'USER',
+          id: LessThan(planMessage.id),
+        },
+        order: { id: 'DESC' },
+      });
+      sourceRequest = requestMessage?.content?.trim() || confirmedPlan.query;
     } else {
       promptMessage = dto.message!.trim();
       if (promptMessage.length > REPORT_ASSISTANT_MESSAGE_MAX_LENGTH) {
@@ -774,6 +795,7 @@ export class AdminReportsService {
           code: 'REPORT_ASSISTANT_INVALID_INPUT',
           message: 'Tin nháº¯n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.',
         });
+      sourceRequest = promptMessage;
     }
 
     const userMessage =
@@ -799,6 +821,7 @@ export class AdminReportsService {
       token,
       mode: confirmedPlan ? 'CONFIRM_PLAN' : 'MESSAGE',
       message: promptMessage,
+      sourceRequest,
       ...(confirmedPlan ? {} : { historySeed: history }),
       ...(confirmedPlan ? { confirmedPlan } : {}),
       ...(confirmedPlan
@@ -816,7 +839,7 @@ export class AdminReportsService {
       conversation,
       userMessage,
       assistant,
-      sourceRequest: confirmedPlan?.query ?? promptMessage,
+      sourceRequest,
       ...(confirmedPlan ? { confirmedPlan } : {}),
     });
   }
@@ -865,11 +888,14 @@ export class AdminReportsService {
           report: entity.report,
           chartConfig: entity.chart_config,
           result: JSON.stringify(entity.table_rows),
+          query: entity.executed_query,
         },
       },
       {
         id: entity.id,
         createdAt: entity.created_at,
+        sourceRequest: entity.source_request,
+        executedQuery: entity.executed_query,
         createdBy: entity.createdBy
           ? { id: entity.createdBy.id, fullname: entity.createdBy.fullname }
           : undefined,
@@ -907,6 +933,33 @@ export class AdminReportsService {
     return this.toResponse(row);
   }
 
+  async revealQuery(userId: number, id: number, password: string) {
+    const row = await this.reportRepo.findOne({ where: { id } });
+    if (!row?.executed_query) {
+      throw new NotFoundException(
+        'Không tìm thấy SQL đã thực thi của báo cáo.',
+      );
+    }
+    const user = await this.reportRepo.manager.getRepository(User).findOne({
+      where: { id: userId },
+    });
+    if (
+      !user?.password ||
+      !user.is_active ||
+      user.is_locking ||
+      !(await bcrypt.compare(password, user.password))
+    ) {
+      throw new HttpException(
+        {
+          code: 'REPORT_QUERY_PASSWORD_INVALID',
+          message: 'Mật khẩu không đúng.',
+        },
+        403,
+      );
+    }
+    return row.executed_query;
+  }
+
   async file(id: number, download = false) {
     const row = await this.reportRepo.findOne({ where: { id } });
     if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
@@ -926,4 +979,3 @@ export class AdminReportsService {
     return { success: true };
   }
 }
-

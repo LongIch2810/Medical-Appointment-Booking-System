@@ -284,7 +284,7 @@ describe("chatbot production router integration", () => {
         .send(body);
     };
 
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 10; index += 1) {
       assert.equal((await postAssistant()).status, 200);
     }
     const blocked = await postAssistant();

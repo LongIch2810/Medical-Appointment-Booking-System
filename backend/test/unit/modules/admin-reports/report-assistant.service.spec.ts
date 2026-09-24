@@ -4,6 +4,9 @@ import axios from 'axios';
 import AiReportConversation from 'src/entities/aiReportConversation.entity';
 import AiReportMessage from 'src/entities/aiReportMessage.entity';
 import { AdminReportsService } from 'src/modules/admin-reports/admin-reports.service';
+import AiAdminReport from 'src/entities/aiAdminReport.entity';
+import User from 'src/entities/user.entity';
+import * as bcrypt from 'bcryptjs';
 
 jest.mock('axios');
 
@@ -42,7 +45,9 @@ describe('AdminReportsService report assistant', () => {
       }),
     };
     const reportRepo = {
+      findOne: jest.fn(),
       manager: {
+        getRepository: jest.fn(),
         transaction: jest.fn(async (callback: (manager: unknown) => unknown) =>
           callback(manager),
         ),
@@ -103,6 +108,43 @@ describe('AdminReportsService report assistant', () => {
 
   beforeEach(() => jest.resetAllMocks());
 
+  it('redacts SQL in ordinary responses and only reveals it after password verification', async () => {
+    const { service, reportRepo } = setup();
+    const report = {
+      id: 44,
+      report_type: 'CONVERSATIONAL',
+      range_label: '01/09/2026 - 30/09/2026',
+      executed_query: 'SELECT status FROM chatbot_report_appointments_view LIMIT 1',
+      table_rows: [],
+      output_asset: null,
+      created_at: new Date('2026-09-25T00:00:00Z'),
+    } as unknown as AiAdminReport;
+    const findReport = jest.fn().mockResolvedValue(report);
+    const findUser = jest.fn().mockResolvedValue({
+      id: 9,
+      password: await bcrypt.hash('correct-password', 4),
+      is_active: true,
+      is_locking: false,
+    });
+    reportRepo.findOne.mockImplementation(findReport);
+    reportRepo.manager.getRepository.mockImplementation((entity: unknown) => {
+      expect(entity).toBe(User);
+      return { findOne: findUser };
+    });
+
+    const ordinary = await service.detail(44);
+    expect(ordinary.hasExecutedQuery).toBe(true);
+    expect(ordinary.executedQuery).toBeNull();
+    expect(JSON.stringify(ordinary)).not.toContain(report.executed_query);
+
+    await expect(service.revealQuery(9, 44, 'wrong-password')).rejects.toMatchObject({
+      status: 403,
+      response: expect.objectContaining({ code: 'REPORT_QUERY_PASSWORD_INVALID' }),
+    });
+    expect(await service.revealQuery(9, 44, 'correct-password')).toBe(report.executed_query);
+    expect(findUser).toHaveBeenCalledWith({ where: { id: 9 } });
+  });
+
   it('scopes conversation reads by owner and clamps list pagination', async () => {
     const { service, conversationRepo } = setup();
 
@@ -154,6 +196,37 @@ describe('AdminReportsService report assistant', () => {
     ).rejects.toMatchObject(invalidInput);
   });
 
+  it('rejects generated reports that omit the SQL actually executed', async () => {
+    const { service } = setup();
+    mockedAxios.post.mockResolvedValue({
+      data: {
+        data: {
+          action: 'GENERATE_REPORT',
+          message: 'Report generated.',
+          report: {
+            asset: { publicId: 'reports/report.pdf' },
+            raw: {
+              result: '[{"appointment_count":3}]',
+              report: { title: 'Appointments' },
+              chartConfig: { type: 'bar' },
+            },
+          },
+        },
+      },
+    } as never);
+
+    await expect(
+      service.createAssistantConversation(9, 'token', {
+        message: 'Show appointment totals for August.',
+      }),
+    ).rejects.toMatchObject({
+      status: 502,
+      response: expect.objectContaining({
+        code: 'REPORT_ASSISTANT_INVALID_RESPONSE',
+      }),
+    });
+  });
+
   it('forwards the access token and bounds context to 12 messages/12,000 characters', async () => {
     const { service, messageRepo, conversationRepo } = setup();
     mockedAxios.post.mockResolvedValue({
@@ -176,6 +249,7 @@ describe('AdminReportsService report assistant', () => {
         threadId: 'report-assistant:v1:9:22',
         mode: 'MESSAGE',
         message: 'Follow-up',
+        sourceRequest: 'Follow-up',
       }),
     );
     expect(config?.headers).toEqual(
@@ -265,11 +339,19 @@ describe('AdminReportsService report assistant', () => {
       plan: null,
       created_at: new Date('2026-08-01T00:01:00Z'),
     } as AiReportMessage;
+    const requestMessage = {
+      id: 16,
+      conversation,
+      role: 'USER',
+      content: 'Count appointments during August 2026.',
+    } as AiReportMessage;
     messageRepo.findOne
       .mockResolvedValueOnce(planMessage)
       .mockResolvedValueOnce(planMessage)
+      .mockResolvedValueOnce(requestMessage)
       .mockResolvedValueOnce(planMessage)
       .mockResolvedValueOnce(confirmationMessage)
+      .mockResolvedValueOnce(requestMessage)
       .mockResolvedValueOnce({
         id: 31,
         conversation,
@@ -297,6 +379,11 @@ describe('AdminReportsService report assistant', () => {
     });
 
     expect(mockedAxios.post).toHaveBeenCalledTimes(2);
+    expect(mockedAxios.post.mock.calls[1][1]).toEqual(
+      expect.objectContaining({
+        sourceRequest: 'Count appointments during August 2026.',
+      }),
+    );
     expect(messageRepo.save).toHaveBeenCalledTimes(1);
   });
 

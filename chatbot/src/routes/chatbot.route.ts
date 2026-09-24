@@ -42,7 +42,7 @@ export function createChatbotRouter(
   });
   const reportAssistantGenerationRateLimit = createRateLimit({
     bucket: "report-assistant-generation",
-    max: 3,
+    max: 10,
     windowMs: 60 * 60_000,
     store: rateLimitStore,
   });

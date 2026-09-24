@@ -6,7 +6,6 @@ import { InMemoryStore, MemorySaver } from '@langchain/langgraph';
 import { registerEsmMocks } from '../_helpers/registerMocks.mjs';
 import type {
   ReportAssistantInput,
-  ReportAssistantResponse,
   ReportPlan,
 } from '../../../src/types/ReportAssistant.js';
 
@@ -30,6 +29,7 @@ function resetStub() {
     pipelineInputs: [],
     pipelineResult: {
       pdf_asset: { publicId: 'reports/report.pdf', format: 'pdf' },
+      executedQuery: 'SELECT COUNT(*) AS appointment_count FROM chatbot_report_appointments_view',
       result: '[{"appointment_count":12}]',
       report: { title: 'Appointments', analysis: [], insights: [], strategic_recommendations: [], economic_context: '', footer: '' },
       chartConfig: { type: 'bar' },
@@ -188,8 +188,21 @@ test('restarts a graph instance against the same checkpointer and resumes approv
   assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 1);
   assert.deepEqual(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs[0], {
     question: plan.query,
+    reportContext: {
+      sourceRequest: plan.query,
+      objective: plan.objective,
+      query: plan.query,
+      fromDate: plan.fromDate,
+      toDate: plan.toDate,
+      comparisonFromDate: null,
+      comparisonToDate: null,
+      metrics: plan.metrics,
+      groupBy: plan.groupBy,
+      sourceViews: plan.sourceViews,
+    },
     fileName: 'report.pdf',
   });
+  assert.equal(generated.report?.raw?.query, 'SELECT COUNT(*) AS appointment_count FROM chatbot_report_appointments_view');
   await assert.rejects(
     runReportAssistant(restartedGraph, makeInput({
       mode: 'CONFIRM_PLAN', message: 'Duplicate confirmation', turnId: 3, confirmedPlan: plan,
@@ -322,6 +335,18 @@ test('current chart/detail instructions take priority over remembered defaults',
   assert.equal(generated.action, 'GENERATE_REPORT');
   assert.deepEqual(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs[0], {
     question: plan.query,
+    reportContext: {
+      sourceRequest: plan.query,
+      objective: plan.objective,
+      query: plan.query,
+      fromDate: plan.fromDate,
+      toDate: plan.toDate,
+      comparisonFromDate: null,
+      comparisonToDate: null,
+      metrics: plan.metrics,
+      groupBy: plan.groupBy,
+      sourceViews: plan.sourceViews,
+    },
     preferredChartType: 'LINE',
     detailLevel: 'BRIEF',
   });

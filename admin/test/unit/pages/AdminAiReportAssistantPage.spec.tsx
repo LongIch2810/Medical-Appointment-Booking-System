@@ -208,6 +208,60 @@ describe("AdminAiReportAssistantPage", () => {
     expect(confirm).toHaveBeenCalledWith({ id: 5, messageId: 19 });
   });
 
+  it("explains report rate limits and does not offer an immediate retry", async () => {
+    const user = userEvent.setup();
+    const { confirm } = setDefaultHooks(
+      [
+        {
+          id: 19,
+          role: "ASSISTANT",
+          action: "PROPOSE_PLAN",
+          content: "Đây là kế hoạch. Hãy xác nhận trước khi tạo.",
+          plan: {
+            schemaVersion: 1,
+            title: "Lịch hẹn theo chuyên khoa",
+            objective: "So sánh số lịch hẹn theo chuyên khoa.",
+            query: "Tổng hợp số lịch hẹn theo chuyên khoa trong kỳ.",
+            fromDate: "2026-08-01",
+            toDate: "2026-08-31",
+            comparisonFromDate: null,
+            comparisonToDate: null,
+            metrics: ["appointment_count"],
+            groupBy: ["specialty_name"],
+            sourceViews: ["chatbot_report_appointments_view"],
+          },
+          report: null,
+          createdAt: "2026-08-20T10:00:00Z",
+        },
+      ],
+      true,
+    );
+    const rateLimitError = {
+      response: { data: { error: { code: "CHATBOT_RATE_LIMITED" } } },
+    };
+    confirm.mockRejectedValue(rateLimitError);
+    hookMocks.useConfirmReportAssistantPlan.mockReturnValue({
+      mutateAsync: confirm,
+      reset: vi.fn(),
+      isPending: false,
+      error: rateLimitError,
+    });
+    render(<AdminAiReportAssistantPage />);
+
+    await user.click(
+      screen.getByRole("button", { name: "Xác nhận và tạo báo cáo" }),
+    );
+
+    expect(
+      await screen.findByText(
+        "Đã đạt giới hạn tạo báo cáo trong giờ hiện tại. Vui lòng thử lại sau.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Thử lại" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("loads older conversation messages by cursor", async () => {
     const user = userEvent.setup();
     const { loadOlder } = setDefaultHooks(

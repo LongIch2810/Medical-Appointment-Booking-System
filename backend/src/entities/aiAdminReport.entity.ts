@@ -47,6 +47,9 @@ export default class AiAdminReport {
   @Column({ type: 'text', nullable: true })
   source_request!: string | null;
 
+  @Column({ type: 'text', nullable: true })
+  executed_query!: string | null;
+
   @Column({ type: 'varchar', length: 40 })
   range_preset!: string;
 

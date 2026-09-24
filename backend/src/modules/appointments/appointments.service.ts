@@ -19,6 +19,7 @@ import {
   Repository,
 } from 'typeorm';
 import { BodyCreateAppointmentDto } from './dto/request/bodyCreateAppointment.dto';
+import { BodyPreviewAppointmentDto } from './dto/request/bodyPreviewAppointment.dto';
 import DoctorSchedule from 'src/entities/doctorSchedule.entity';
 import { AppointmentStatus } from 'src/shared/enums/appointmentStatus';
 import { dayNumberToEnum } from 'src/shared/enums/dayOfWeek';
@@ -70,6 +71,31 @@ export class AppointmentsService {
     private readonly settingsService: SettingsService,
     private readonly emailProducer: EmailProducer,
   ) {}
+
+  async previewAutoSelect(body: BodyPreviewAppointmentDto) {
+    const { appointmentDate, appointmentDateOnly } = this.assertNotPastDate(
+      body.appointment_date,
+    );
+    const schedule = await this.findAutoSelectSchedule(
+      this.dataSource.manager,
+      {
+        specialty_id: body.specialty_id,
+        weekday: dayNumberToEnum[appointmentDate.getDay()],
+        appointmentDateOnly,
+        start_time: body.start_time,
+        end_time: body.end_time,
+      },
+      false,
+    );
+    this.assertNotPastTimeSlot(appointmentDateOnly, schedule.start_time);
+    return {
+      scheduleId: schedule.id,
+      doctorName: schedule.doctor.user.fullname,
+      appointmentDate: appointmentDateOnly,
+      startTime: toHHMM(schedule.start_time),
+      endTime: toHHMM(schedule.end_time),
+    };
+  }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async sendAppointmentReminders() {
@@ -373,6 +399,17 @@ export class AppointmentsService {
           });
         }
 
+        if (
+          body.expected_doctor_schedule_id !== undefined &&
+          chosenSchedule.id !== body.expected_doctor_schedule_id
+        ) {
+          throw new ConflictException({
+            code: APPOINTMENT_SLOT_UNAVAILABLE,
+            message:
+              'Ca khám đã xem trước không còn trống. Vui lòng chọn lịch khác.',
+          });
+        }
+
         this.assertNotPastTimeSlot(
           appointmentDateOnly,
           chosenSchedule.start_time,
@@ -536,15 +573,16 @@ export class AppointmentsService {
       start_time: string;
       end_time?: string;
     },
+    lock = true,
   ): Promise<DoctorSchedule> {
     await this.specialtiesService.findSpecialtyById(params.specialty_id);
 
     const query = manager
       .getRepository(DoctorSchedule)
       .createQueryBuilder('doctor_schedule')
-      .innerJoin('doctor_schedule.doctor', 'doctor')
+      .innerJoinAndSelect('doctor_schedule.doctor', 'doctor')
+      .innerJoinAndSelect('doctor.user', 'doctor_user')
       .innerJoin('doctor.specialty', 'specialty')
-      .setLock('pessimistic_write', undefined, ['doctor_schedule'])
       .where('doctor_schedule.is_active = true')
       .andWhere('doctor_schedule.day_of_week = :weekday', {
         weekday: params.weekday,
@@ -552,6 +590,9 @@ export class AppointmentsService {
       .andWhere('specialty.id = :specialty_id', {
         specialty_id: params.specialty_id,
       });
+
+    if (lock)
+      query.setLock('pessimistic_write', undefined, ['doctor_schedule']);
 
     if (params.end_time) {
       query

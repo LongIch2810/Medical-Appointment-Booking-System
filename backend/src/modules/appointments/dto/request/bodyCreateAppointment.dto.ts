@@ -65,6 +65,12 @@ export class BodyCreateAppointmentDto {
   @IsNumber()
   doctor_schedule_id?: number;
 
+  // Ca đã hiển thị trong bản xem trước AI; backend từ chối nếu ca chọn lại khác.
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  expected_doctor_schedule_id?: number;
+
   @IsOptional()
   @IsNumber()
   specialty_id?: number;

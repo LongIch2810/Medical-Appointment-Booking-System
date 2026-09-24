@@ -22,7 +22,7 @@ import PatientChatMessage, {
 } from 'src/entities/patientChatMessage.entity';
 import { randomUUID } from 'node:crypto';
 
-// Má»i call ra chatbot Ä‘á»u pháº£i cÃ³ timeout rÃµ rÃ ng â€” trÆ°á»›c Ä‘Ã¢y axios dÃ¹ng
+// Má»i call ra chatbot Ä‘á»u pháº£i cÃ³ timeout rÃµ rÃ ng â€” trÆ°á»›c Ä‘Ã¢y axios dÃ¹ng
 // default (khÃ´ng timeout), request cÃ³ thá»ƒ treo vÃ´ thá»i háº¡n náº¿u chatbot
 // khÃ´ng pháº£n há»“i.
 // Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng cÃ³
@@ -223,7 +223,8 @@ export class ChatHistoryService {
               status === HttpStatus.CONFLICT
                 ? 'PATIENT_CHAT_ACTION_STALE'
                 : 'PATIENT_CHAT_APPROVAL_NOT_FOUND',
-            message: 'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
+            message:
+              'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
           },
           status,
         );
@@ -238,7 +239,8 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_ACTION_STALE',
-            message: 'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
+            message:
+              'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
           },
           HttpStatus.CONFLICT,
         );
@@ -249,7 +251,9 @@ export class ChatHistoryService {
       approvalMessageId = approvalMessage.id;
       mode = 'RESUME_BOOKING';
       message =
-        decision === 'APPROVE' ? 'XÃ¡c nháº­n Ä‘áº·t lá»‹ch' : 'Há»§y yÃªu cáº§u Ä‘áº·t lá»‹ch';
+        decision === 'APPROVE'
+          ? 'Đã bấm nút xác nhận đặt lịch'
+          : 'Đã bấm nút hủy yêu cầu đặt lịch';
       if (!userMessage) {
         userMessage = await this.patientChatMessageRepo.save({
           conversation,
@@ -267,7 +271,7 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_INVALID_INPUT',
-            message: 'Tin nháº¯n khÃ´ng há»£p lá»‡ hoáº·c quÃ¡ dÃ i.',
+            message: 'Tin nháº¯n khÃ´ng há»£p lá»‡ hoáº·c quÃ¡ dÃ i.',
           },
           HttpStatus.BAD_REQUEST,
         );
@@ -478,7 +482,8 @@ export class ChatHistoryService {
       {
         code,
         message:
-          upstream.message || 'KhÃ´ng thá»ƒ nháº­n pháº£n há»“i tá»« trá»£ lÃ½ lÃºc nÃ y.',
+          upstream.message ||
+          'KhÃ´ng thá»ƒ nháº­n pháº£n há»“i tá»« trá»£ lÃ½ lÃºc nÃ y.',
       },
       status,
     );
@@ -527,7 +532,7 @@ export class ChatHistoryService {
   }
 
   // Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng
-  // traffic vÃ  cold-start máº¥t ~80-90s, khiáº¿n tin nháº¯n chat Ä‘áº§u tiÃªn sau
+  // traffic vÃ  cold-start máº¥t ~80-90s, khiáº¿n tin nháº¯n chat Ä‘áº§u tiÃªn sau
   // thá»i gian nghá»‰ luÃ´n bá»‹ chá» lÃ¢u/timeout. Ping /healthy Ä‘á»‹nh ká»³ Ä‘á»ƒ giá»¯
   // service "áº¥m" trong lÃºc site cÃ²n cÃ³ ngÆ°á»i dÃ¹ng hoáº¡t Ä‘á»™ng.
   @Cron(CronExpression.EVERY_10_MINUTES)

@@ -110,6 +110,18 @@ export const ReportAssistantIntentSchema = z.object({
 
 export type ReportAssistantAction = (typeof REPORT_ASSISTANT_ACTIONS)[number];
 export type ReportPlan = z.infer<typeof ReportPlanSchema>;
+export type ReportExecutionContext = Pick<
+  ReportPlan,
+  | 'objective'
+  | 'query'
+  | 'fromDate'
+  | 'toDate'
+  | 'comparisonFromDate'
+  | 'comparisonToDate'
+  | 'metrics'
+  | 'groupBy'
+  | 'sourceViews'
+> & { sourceRequest: string };
 export type ReportAssistantHistoryItem = {
   role: 'user' | 'assistant';
   content: string;
@@ -124,6 +136,7 @@ export type ReportAssistantInput = {
   threadId: string;
   mode: 'MESSAGE' | 'CONFIRM_PLAN';
   message: string;
+  sourceRequest?: string;
   historySeed?: ReportAssistantHistoryItem[];
   confirmedPlan?: ReportPlan;
   fileName?: string;

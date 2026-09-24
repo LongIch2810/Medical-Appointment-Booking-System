@@ -57,6 +57,15 @@ export class AdminReportResponseDto {
   rangeLabel!: string;
 
   @Expose()
+  sourceRequest!: string | null;
+
+  @Expose()
+  executedQuery!: string | null;
+
+  @Expose()
+  hasExecutedQuery!: boolean;
+
+  @Expose()
   pdfUrl!: string | null;
 
   @Expose()

@@ -19,7 +19,10 @@ function resetStub() {
   globals.__CREATE_REPORT_GRAPH_STUB__ = {
     calls: { sql: [], chart: [], report: [], render: [], pdf: [] },
     results: {
-      sql: '[{"total":"4","rate":"1.5"}]',
+      sql: JSON.stringify({
+        query: "SELECT total, rate FROM chatbot_report_appointments_view LIMIT 1000",
+        rows: [{ total: "4", rate: "1.5" }],
+      }),
       chart: { type: "bar", data: { labels: [], datasets: [] } },
       report: { title: "Monthly report", sections: [] },
       render: "chart.png",
@@ -110,6 +113,10 @@ test("runs SQL, chart, content, and PDF nodes end to end", async (t) => {
   const stub = globals.__CREATE_REPORT_GRAPH_STUB__;
 
   assert.equal(result.pdf_url, "https://cdn.example/report.pdf");
+  assert.equal(
+    result.executedQuery,
+    "SELECT total, rate FROM chatbot_report_appointments_view LIMIT 1000",
+  );
   assert.equal(result.final_result?.success, true);
   assert.equal(stub.calls.sql.length, 1);
   assert.deepEqual(stub.calls.chart[0], {
@@ -125,6 +132,43 @@ test("runs SQL, chart, content, and PDF nodes end to end", async (t) => {
     "chart.png",
     "monthly-report.pdf",
   ]);
+});
+
+test("uses the original request for chart and report text while SQL follows the approved query", async (t) => {
+  t.mock.method(console, "log", () => undefined);
+  const approvedQuery =
+    "SELECT status, SUM(appointment_count) FROM chatbot_report_appointments_view WHERE appointment_date BETWEEN '2026-09-01' AND '2026-09-30' GROUP BY status";
+  const sourceRequest =
+    "Báo cáo số lịch hẹn theo trạng thái trong tháng 9, không chia theo bác sĩ hay ngày.";
+  const reportContext = {
+    sourceRequest,
+    objective: "Tổng hợp số lịch hẹn theo trạng thái.",
+    query: approvedQuery,
+    fromDate: "2026-09-01",
+    toDate: "2026-09-30",
+    metrics: ["appointment_count"],
+    groupBy: ["status"],
+    sourceViews: ["chatbot_report_appointments_view" as const],
+  };
+
+  await createReportGraph.invoke({ question: approvedQuery, reportContext });
+  const calls = globals.__CREATE_REPORT_GRAPH_STUB__.calls;
+
+  assert.deepEqual(calls.sql[0], { question: approvedQuery, reportContext });
+  assert.equal((calls.chart[0] as { question: string }).question, sourceRequest);
+  assert.equal((calls.report[0] as { question: string }).question, sourceRequest);
+});
+
+test("stops report generation when SQL execution metadata is missing", async (t) => {
+  t.mock.method(console, "log", () => undefined);
+  globals.__CREATE_REPORT_GRAPH_STUB__.results.sql = '[{"total":4}]';
+
+  const result = await createReportGraph.invoke({ question: "monthly totals" });
+
+  assert.equal(result.final_result?.success, false);
+  assert.equal(globals.__CREATE_REPORT_GRAPH_STUB__.calls.chart.length, 0);
+  assert.equal(globals.__CREATE_REPORT_GRAPH_STUB__.calls.report.length, 0);
+  assert.equal(globals.__CREATE_REPORT_GRAPH_STUB__.calls.pdf.length, 0);
 });
 
 test("routes invalid input directly to the friendly error node", async (t) => {

@@ -62,6 +62,7 @@ type BookingSummary = {
   patientName: string;
   createsRelative: boolean;
   specialtyName: string;
+  doctorName?: string;
   appointmentDate: string;
   startTime: string;
   endTime: string | null;
@@ -170,6 +171,7 @@ function parseProposal(content: unknown): PendingBooking | null {
         patientName: summary.patientName,
         createsRelative: summary.createsRelative,
         specialtyName: summary.specialtyName,
+        ...(typeof summary.doctorName === 'string' ? { doctorName: summary.doctorName } : {}),
         appointmentDate: summary.appointmentDate,
         startTime: summary.startTime,
         endTime: typeof summary.endTime === 'string' ? summary.endTime : null,
@@ -181,7 +183,16 @@ function parseProposal(content: unknown): PendingBooking | null {
 }
 
 function sameSummary(left: unknown, right: unknown): boolean {
-  return JSON.stringify(left) === JSON.stringify(right);
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+  const a = left as BookingSummary;
+  const b = right as BookingSummary;
+  return a.patientName === b.patientName &&
+    a.createsRelative === b.createsRelative &&
+    a.specialtyName === b.specialtyName &&
+    (a.doctorName ?? null) === (b.doctorName ?? null) &&
+    a.appointmentDate === b.appointmentDate &&
+    a.startTime === b.startTime &&
+    (a.endTime ?? null) === (b.endTime ?? null);
 }
 
 function appendAssistant(messages: BaseMessage[], response: PatientChatResponse) {

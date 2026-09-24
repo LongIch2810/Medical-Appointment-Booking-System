@@ -341,20 +341,55 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     const specialty = state.specialty_candidates?.find(
       (candidate) => candidate.id === state.selected_specialty_id,
     );
-    return {
-      booking_proposal: {
-        ...payload,
-        display: {
-          patientName:
-            state.new_relative_candidate?.fullname || selectedRelative?.fullname || "Bản thân",
-          createsRelative: !hasSelectedRelative,
-          specialtyName: specialty?.name || "Chuyên khoa",
+    const patientName =
+      state.new_relative_candidate?.fullname || selectedRelative?.fullname || "Bản thân";
+    const specialtyName = specialty?.name || "Chuyên khoa";
+    try {
+      const response = await httpClient.post(
+        `${process.env.BACKEND_URL}/api/v1/appointments/booking-preview`,
+        {
+          specialty_id: state.selected_specialty_id,
+          appointment_date: state.time?.appointment_date,
+          start_time: state.time?.start_time,
+          ...(state.time?.end_time ? { end_time: state.time.end_time } : {}),
+        },
+        { headers: { Authorization: `Bearer ${state.token}` }, timeout: 20_000 },
+      );
+      const preview = response.data?.data;
+      if (
+        !Number.isSafeInteger(preview?.scheduleId) ||
+        typeof preview?.doctorName !== "string" ||
+        typeof preview?.startTime !== "string" ||
+        typeof preview?.endTime !== "string"
+      ) throw new Error("Invalid booking preview response");
+      return {
+        booking_proposal: {
+          ...payload,
+          expected_doctor_schedule_id: preview.scheduleId,
+          display: {
+            patientName,
+            createsRelative: !hasSelectedRelative,
+            specialtyName,
+            doctorName: preview.doctorName,
+            appointmentDate: state.time?.appointment_date,
+            startTime: preview.startTime,
+            endTime: preview.endTime,
+          },
+        },
+      };
+    } catch (error) {
+      const bookingApiError = axios.isAxiosError(error) ? error.response?.data?.error : null;
+      return {
+        booking_error: {
+          code: bookingApiError?.code || "BOOKING_PREVIEW_FAILED",
+          details: bookingApiError?.message || "Không thể kiểm tra ca khám còn trống. Vui lòng thử lại.",
+          patientName,
+          specialtyName,
           appointmentDate: state.time?.appointment_date,
           startTime: state.time?.start_time,
-          endTime: state.time?.end_time || null,
         },
-      },
-    };
+      };
+    }
   }
 
   try {

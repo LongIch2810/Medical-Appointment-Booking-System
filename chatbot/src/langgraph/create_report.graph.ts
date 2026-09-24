@@ -19,15 +19,18 @@ import {
   assertNumericGrounding,
   findUngroundedNumbers,
 } from "../utils/validateNumericGrounding.js";
+import type { ReportExecutionContext } from "../types/ReportAssistant.js";
 
 type ChartConfig = z.infer<typeof ChartSchema>;
 type Report = z.infer<typeof ReportSchema>;
 
 const CreateReportState = Annotation.Root({
   question: Annotation<string>(),
+  reportContext: Annotation<ReportExecutionContext | undefined>(),
   preferredChartType: Annotation<"BAR" | "LINE" | "PIE" | undefined>(),
   detailLevel: Annotation<"BRIEF" | "STANDARD" | "DETAILED" | undefined>(),
   result: Annotation<string>(),
+  executedQuery: Annotation<string>(),
   chartConfig: Annotation<ChartConfig>(),
   report: Annotation<Report>(),
   file_name: Annotation<string | undefined>(),
@@ -220,6 +223,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
 
     const res = await runTool(AdminQaSqlTool as DynamicStructuredTool, {
       question: state.question,
+      ...(state.reportContext ? { reportContext: state.reportContext } : {}),
     });
 
     if (!res || (typeof res === "string" && res.startsWith("Lỗi"))) {
@@ -234,10 +238,29 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       };
     }
 
-    const normalizedResult =
-      typeof res === "string" ? normalizeNumericStrings(res) : res;
+    const execution = typeof res === "string" ? JSON.parse(res) : res;
+    if (
+      !execution ||
+      typeof execution !== "object" ||
+      typeof execution.query !== "string" ||
+      !execution.query.trim() ||
+      !Array.isArray(execution.rows)
+    ) {
+      return {
+        errorAnalyzeData: {
+          status: 502,
+          message: "SQL query metadata or report rows are missing.",
+          node: "analyze_data_node",
+        },
+        nextNodeAnalyzeData: "llm_generate_error_answer_node",
+      };
+    }
+    const normalizedResult = normalizeNumericStrings(
+      JSON.stringify(execution.rows),
+    );
     return {
       result: normalizedResult,
+      executedQuery: execution.query,
       nextNodeAnalyzeData: "generate_chart_config_node",
     };
   } catch (error: any) {
@@ -269,7 +292,7 @@ async function generateChartConfigNode(state: typeof CreateReportState.State) {
     const res = await runTool(
       GenerateChartConfigTool as DynamicStructuredTool,
       {
-        question: state.question,
+        question: state.reportContext?.sourceRequest?.trim() || state.question,
         data_json: state.result,
         ...(state.preferredChartType
           ? { preferredChartType: state.preferredChartType }
@@ -320,7 +343,7 @@ async function generateContentNode(state: typeof CreateReportState.State) {
     let groundingFeedback: string[] = [];
     for (let attempt = 0; attempt <= 4; attempt++) {
       res = await WriteProfessionalReportTool.invoke({
-        question: state.question,
+        question: state.reportContext?.sourceRequest?.trim() || state.question,
         data_json: state.result,
         ...(groundingFeedback.length ? { groundingFeedback } : {}),
         ...(state.detailLevel ? { detailLevel: state.detailLevel } : {}),
@@ -441,12 +464,14 @@ const createReportGraph = workflow.compile();
 
 export async function runReportPipeline(input: {
   question: string;
+  reportContext?: ReportExecutionContext;
   fileName?: string;
   preferredChartType?: "BAR" | "LINE" | "PIE";
   detailLevel?: "BRIEF" | "STANDARD" | "DETAILED";
 }) {
   return createReportGraph.invoke({
     question: input.question,
+    ...(input.reportContext ? { reportContext: input.reportContext } : {}),
     ...(input.preferredChartType
       ? { preferredChartType: input.preferredChartType }
       : {}),
