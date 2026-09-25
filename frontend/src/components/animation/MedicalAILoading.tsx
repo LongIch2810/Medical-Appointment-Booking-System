@@ -6,10 +6,10 @@ import { Clock } from "lucide-react";
 // Dấu "..." được render riêng bằng animate-ai-dot (nhấp nháy tuần tự) nên
 // các câu ở đây không tự có "..." ở cuối, tránh bị lặp dấu chấm tĩnh + động.
 const LOADING_MESSAGES = [
-  "Đang phân tích triệu chứng của bạn",
-  "Đang xử lý dữ liệu y tế",
-  "Đang tìm bác sĩ và chuyên khoa phù hợp",
-  "Sắp có kết quả, bạn chờ chút nhé",
+  "Đang phân tích triệu chứng và câu hỏi của bạn",
+  "Đang đối chiếu dữ liệu y khoa & chuyên khoa",
+  "Đang tìm kiếm thông tin bác sĩ & lịch khám",
+  "Đang hoàn tất câu trả lời tối ưu cho bạn",
 ];
 
 // Chatbot service backend chạy trên free-tier tự "ngủ" sau thời gian dài
@@ -17,7 +17,7 @@ const LOADING_MESSAGES = [
 // thích sau ngưỡng này để người dùng không tưởng nhầm là app bị treo/lỗi.
 const COLD_START_HINT_THRESHOLD_SECONDS = 12;
 const COLD_START_HINT =
-  "Hệ thống AI có thể đang khởi động lại sau thời gian nghỉ, việc này đôi khi mất đến 1 phút";
+  "Hệ thống AI đang khởi động phiên xử lý, có thể mất thêm ít giây…";
 
 // Hiệu ứng loading "máy y tế đang phân tích" — SVG thuần + CSS @keyframes
 // (mrx-ecg-scroll/mrx-scan-sweep/mrx-cross-glow, xem frontend/src/index.css),
@@ -32,8 +32,8 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
       : LOADING_MESSAGES[Math.floor(elapsed / 3) % LOADING_MESSAGES.length];
 
   return (
-    <div className="flex items-center gap-3 py-0.5">
-      <div className="w-16 h-16 shrink-0">
+    <div className="flex items-center gap-3.5 py-1">
+      <div className="size-14 sm:size-16 shrink-0">
         <svg viewBox="0 0 100 100" className="w-full h-full" aria-hidden="true">
           <defs>
             <clipPath id={clipId}>
@@ -42,7 +42,7 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
           </defs>
 
           {/* Vỏ đầu — mũ phi hành gia mini */}
-          <circle cx="50" cy="50" r="28" className="fill-white stroke-primary" strokeWidth="3" />
+          <circle cx="50" cy="50" r="28" className="fill-card dark:fill-slate-900 stroke-primary" strokeWidth="3" />
           {/* Vòm kính (visor) */}
           <path
             d="M24 46 Q50 18 76 46 Q76 62 50 66 Q24 62 24 46 Z"
@@ -76,10 +76,10 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
 
           {/* Hiệu ứng 3: chữ thập y tế toả sáng nhịp nhàng — "đang suy nghĩ" */}
           <g className="animate-mrx-cross-glow">
-            <circle cx="50" cy="26" r="7" className="fill-white stroke-red-500" strokeWidth="2.2" />
+            <circle cx="50" cy="26" r="7" className="fill-card dark:fill-slate-900 stroke-rose-500" strokeWidth="2.2" />
             <path
               d="M50 21.6 V30.4 M45.6 26 H54.4"
-              className="stroke-red-500"
+              className="stroke-rose-500"
               strokeWidth="2.2"
               strokeLinecap="round"
             />
@@ -88,13 +88,13 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
       </div>
 
       <div className="flex flex-col min-w-0">
-        <span className="text-sm text-gray-700 inline-flex items-baseline">
+        <span className="text-sm font-semibold text-foreground inline-flex items-baseline">
           {message}
           <span className="inline-flex ml-0.5" aria-hidden="true">
             {[0, 1, 2].map((dot) => (
               <span
                 key={dot}
-                className="animate-ai-dot"
+                className="animate-ai-dot font-bold text-primary"
                 style={{ animationDelay: `${dot * 0.2}s` }}
               >
                 .
@@ -102,10 +102,17 @@ export default function MedicalAILoading({ elapsed }: { elapsed: number }) {
             ))}
           </span>
         </span>
-        <span className="inline-flex items-center gap-1 text-xs text-gray-400">
-          <Clock className="w-3 h-3" aria-hidden="true" />
-          {elapsed}s
-        </span>
+        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+          <span className="inline-flex items-center gap-1 font-medium text-slate-500 dark:text-slate-400">
+            <Clock className="size-3 text-primary/70" aria-hidden="true" />
+            <span>{elapsed}s</span>
+          </span>
+          {elapsed >= COLD_START_HINT_THRESHOLD_SECONDS && (
+            <span className="inline-flex items-center rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+              Đang tối ưu tài nguyên
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

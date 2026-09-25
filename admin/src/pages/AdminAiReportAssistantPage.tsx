@@ -156,6 +156,7 @@ export function AdminAiReportAssistantPage() {
   >({});
   const [retryAction, setRetryAction] = useState<RetryAction>(null);
   const hasResolvedInitialSelection = useRef(false);
+  const lastAutoCollapsedArtifactId = useRef<number | null>(null);
 
   const conversations = useReportAssistantConversations();
   const conversation = useReportAssistantConversation(selectedId);
@@ -215,6 +216,21 @@ export function AdminAiReportAssistantPage() {
     activeArtifactMessage &&
     (activeArtifactMessage.plan || activeArtifactMessage.report),
   );
+
+  // On standard desktop screens (< 1536px), when an artifact is active,
+  // prioritize Chat + Artifact by default so the chat column is not squeezed.
+  useEffect(() => {
+    if (
+      hasArtifact &&
+      activeArtifactMessage &&
+      activeArtifactMessage.id !== lastAutoCollapsedArtifactId.current &&
+      typeof window !== "undefined" &&
+      window.innerWidth < 1536
+    ) {
+      lastAutoCollapsedArtifactId.current = activeArtifactMessage.id;
+      setIsHistorySidebarOpen(false);
+    }
+  }, [hasArtifact, activeArtifactMessage]);
 
   useEffect(() => {
     if (selectedId !== null) {
@@ -340,7 +356,7 @@ export function AdminAiReportAssistantPage() {
         <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-xs dark:border-slate-800/90 dark:bg-slate-950">
           {/* Left Aside: Conversation List (Desktop ≥ 1024px) */}
           {isHistorySidebarOpen && (
-            <aside className="hidden min-h-0 w-72 shrink-0 border-r border-slate-200/80 lg:flex lg:flex-col overflow-hidden dark:border-slate-800/80">
+            <aside className="hidden min-h-0 w-64 shrink-0 border-r border-slate-200/80 lg:flex lg:flex-col overflow-hidden dark:border-slate-800/80">
               <ReportAssistantConversationList
                 conversations={conversations.data?.data.conversations ?? []}
                 selectedId={selectedId}
@@ -360,6 +376,7 @@ export function AdminAiReportAssistantPage() {
                   setSelectedArtifactMessageId(null);
                   setDraft("");
                   setMobileView("chat");
+                  setIsHistorySidebarOpen(true);
                 }}
                 onCollapse={() => setIsHistorySidebarOpen(false)}
               />
@@ -418,7 +435,7 @@ export function AdminAiReportAssistantPage() {
             <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
               {/* Chat Column */}
               <main
-                className={`min-h-0 min-w-0 flex-1 flex-col overflow-hidden ${
+                className={`min-h-0 min-w-0 flex-1 flex-col overflow-hidden lg:min-w-[400px] ${
                   mobileView === "artifact" ? "hidden xl:flex" : "flex"
                 }`}
               >
@@ -430,8 +447,14 @@ export function AdminAiReportAssistantPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="hidden h-8.5 shrink-0 gap-1.5 rounded-lg border-slate-200 px-2.5 text-xs font-semibold shadow-2xs hover:border-primary/40 hover:bg-primary/5 hover:text-primary lg:inline-flex dark:border-slate-800 dark:hover:bg-slate-850 cursor-pointer"
-                        onClick={() => setIsHistorySidebarOpen(true)}
+                        className="hidden h-8.5 shrink-0 gap-1.5 rounded-lg border-slate-200 px-2.5 text-xs font-semibold shadow-2xs hover:border-primary/40 hover:bg-primary/5 hover:text-primary lg:inline-flex dark:border-slate-800 dark:hover:bg-slate-800 cursor-pointer"
+                        onClick={() => {
+                          setIsHistorySidebarOpen(true);
+                          if (typeof window !== "undefined" && window.innerWidth < 1536) {
+                            setIsArtifactPanelOpen(false);
+                            setMobileView("chat");
+                          }
+                        }}
                         title="Mở rộng danh sách hội thoại"
                         aria-label="Mở rộng danh sách hội thoại"
                       >
@@ -477,20 +500,35 @@ export function AdminAiReportAssistantPage() {
                       />
                     </Button>
 
-                    {/* On wide layouts (≥ 1280px), allow the artifact panel to be collapsed and reopened. */}
+                    {/* On wide layouts (≥ 1024px), allow the artifact panel to be collapsed and reopened with context badge. */}
                     {hasArtifact && !isArtifactPanelOpen && (
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        className="hidden h-8.5 shrink-0 gap-1.5 border-emerald-500/30 text-xs font-semibold text-emerald-700 shadow-2xs hover:bg-emerald-50 xl:inline-flex dark:border-emerald-500/40 dark:text-emerald-300 dark:hover:bg-slate-850 cursor-pointer"
-                        onClick={() => setIsArtifactPanelOpen(true)}
+                        className="hidden h-8.5 shrink-0 gap-1.5 rounded-lg border-primary/30 bg-primary/5 px-2.5 text-xs font-semibold text-primary shadow-2xs hover:border-primary/50 hover:bg-primary/10 lg:inline-flex dark:border-primary/40 dark:bg-primary/15 dark:text-teal-300 cursor-pointer"
+                        onClick={() => {
+                          setIsArtifactPanelOpen(true);
+                          setMobileView("artifact");
+                          if (typeof window !== "undefined" && window.innerWidth < 1536) {
+                            setIsHistorySidebarOpen(false);
+                          }
+                        }}
+                        title="Mở lại bảng phân tích & kế hoạch"
+                        aria-label="Mở bảng kết quả"
                       >
+                        {activeArtifactMessage?.report ? (
+                          <BarChart3 className="size-3.5 text-primary" aria-hidden="true" />
+                        ) : (
+                          <FileCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                        )}
+                        <span>
+                          {activeArtifactMessage?.report ? "Xem lại báo cáo" : "Xem lại kế hoạch"}
+                        </span>
                         <PanelRightOpen
                           aria-hidden="true"
-                          className="size-3.5"
+                          className="size-3.5 opacity-70"
                         />
-                        <span>Mở bảng kết quả</span>
                       </Button>
                     )}
 
@@ -498,7 +536,7 @@ export function AdminAiReportAssistantPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="hidden h-9 shrink-0 gap-1.5 whitespace-nowrap rounded-lg border-slate-200 px-3 text-xs font-semibold shadow-2xs transition-colors hover:border-primary/40 hover:bg-primary/5 sm:inline-flex dark:border-slate-800 dark:hover:bg-slate-850 cursor-pointer"
+                      className="hidden h-9 shrink-0 gap-1.5 whitespace-nowrap rounded-lg border-slate-200 px-3 text-xs font-semibold shadow-2xs transition-colors hover:border-primary/40 hover:bg-primary/5 sm:inline-flex dark:border-slate-800 dark:hover:bg-slate-800 cursor-pointer"
                       aria-label="Tạo hội thoại mới"
                       onClick={() => {
                         clearTurnErrors();
@@ -507,6 +545,7 @@ export function AdminAiReportAssistantPage() {
                         setSelectedArtifactMessageId(null);
                         setDraft("");
                         setMobileView("chat");
+                        setIsHistorySidebarOpen(true);
                       }}
                     >
                       <MessageSquarePlus
@@ -537,6 +576,9 @@ export function AdminAiReportAssistantPage() {
                     setSelectedArtifactMessageId(messageId);
                     setIsArtifactPanelOpen(true);
                     setMobileView("artifact");
+                    if (typeof window !== "undefined" && window.innerWidth < 1536) {
+                      setIsHistorySidebarOpen(false);
+                    }
                   }}
                   onConfirm={(messageId) => void runConfirm(messageId)}
                 />
@@ -696,13 +738,13 @@ export function AdminAiReportAssistantPage() {
                 </div>
               </main>
 
-              {/* Artifact Panel: Shown ONLY when hasArtifact is true */}
-              {hasArtifact && (isArtifactPanelOpen || mobileView === "artifact") && (
+              {/* Artifact Panel: Shown ONLY when hasArtifact is true AND isArtifactPanelOpen is true */}
+              {hasArtifact && isArtifactPanelOpen && (
                 <aside
-                  className={`min-h-0 border-l border-slate-200/90 bg-slate-50/50 flex-col overflow-hidden dark:border-slate-800 dark:bg-slate-925 ${
-                    mobileView === "chat"
-                      ? "hidden xl:flex xl:w-[28rem] 2xl:w-[34rem] xl:shrink-0"
-                      : "flex flex-1 xl:w-[28rem] 2xl:w-[34rem] xl:flex-none"
+                  className={`min-h-0 border-l border-slate-200/90 bg-slate-50/60 flex-col overflow-hidden dark:border-slate-800 dark:bg-slate-950 ${
+                    mobileView === "artifact"
+                      ? "flex flex-1 xl:w-1/2 xl:max-w-[620px] 2xl:w-[32rem] xl:flex-none"
+                      : "hidden xl:flex xl:w-1/2 xl:max-w-[620px] 2xl:w-[32rem] xl:shrink"
                   }`}
                   aria-label="Bảng kế hoạch và kết quả báo cáo"
                 >
@@ -755,7 +797,10 @@ export function AdminAiReportAssistantPage() {
                         variant="ghost"
                         size="icon"
                         className="hidden size-8 text-slate-400 hover:text-slate-700 xl:inline-flex dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer"
-                        onClick={() => setIsArtifactPanelOpen(false)}
+                        onClick={() => {
+                          setIsArtifactPanelOpen(false);
+                          setMobileView("chat");
+                        }}
                         title="Thu gọn bảng phân tích"
                         aria-label="Thu gọn bảng phân tích"
                       >

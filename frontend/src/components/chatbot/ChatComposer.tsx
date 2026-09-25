@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUp, CornerDownLeft } from "lucide-react";
+import { ArrowUp, CornerDownLeft, Sparkles, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/loading/Loading";
@@ -13,6 +13,7 @@ interface ChatComposerProps {
   onSend: () => void;
   isPending: boolean;
   textareaRef?: RefObject<HTMLTextAreaElement | null>;
+  onOpenTemplates?: () => void;
 }
 
 export default function ChatComposer({
@@ -21,6 +22,7 @@ export default function ChatComposer({
   onSend,
   isPending,
   textareaRef: forwardedTextareaRef,
+  onOpenTemplates,
 }: ChatComposerProps) {
   const { t } = useTranslation();
   const localTextareaRef = useRef<HTMLTextAreaElement>(null);
@@ -45,6 +47,40 @@ export default function ChatComposer({
   return (
     <footer className="shrink-0 border-t border-border/80 bg-background/95 px-3 py-2.5 backdrop-blur-md sm:px-5 sm:py-3">
       <div className="mx-auto w-full max-w-4xl">
+        {/* Quick tools row: Prompt templates catalog & Clear draft */}
+        <div className="mb-2 flex items-center justify-between px-1">
+          {onOpenTemplates ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={isPending}
+              onClick={onOpenTemplates}
+              className="h-7.5 gap-1.5 rounded-lg border-primary/30 bg-primary/5 px-2.5 text-[11px] font-semibold text-primary hover:bg-primary/10 dark:border-primary/40 dark:bg-primary/15 dark:text-teal-300 cursor-pointer shadow-2xs"
+            >
+              <Sparkles className="size-3" aria-hidden="true" />
+              <span>Mẫu câu hỏi</span>
+            </Button>
+          ) : (
+            <div />
+          )}
+
+          {value.trim().length > 0 && !isPending && (
+            <button
+              type="button"
+              onClick={() => {
+                onChange("");
+                textareaRef.current?.focus();
+              }}
+              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+              aria-label="Xóa nội dung đang nhập"
+            >
+              <X className="size-3" aria-hidden="true" />
+              <span>Xóa nháp</span>
+            </button>
+          )}
+        </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();

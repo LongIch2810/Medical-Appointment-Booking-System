@@ -227,13 +227,13 @@ function MessageItem({
       {/* Plan Anchor Card inside Chat */}
       {!isUser && message.plan && (
         <div
-          className={`mt-3.5 flex flex-col gap-2.5 rounded-xl border p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between ${
+          className={`mt-3.5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors ${
             isActiveArtifact
-              ? "border-emerald-500/60 bg-emerald-50/50 shadow-2xs dark:border-emerald-500/60 dark:bg-emerald-950/35"
-              : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-850/60"
+              ? "border-emerald-500/50 bg-emerald-50/50 shadow-2xs dark:border-emerald-500/40 dark:bg-emerald-950/40"
+              : "border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-950/70 dark:hover:bg-slate-950"
           }`}
         >
-          <div className="min-w-0">
+          <div className="min-w-[180px] flex-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-300">
               <FileCheck
                 className="size-4 shrink-0 text-emerald-600 dark:text-emerald-400"
@@ -242,7 +242,7 @@ function MessageItem({
               <span className="truncate">Đề xuất: {message.plan.title}</span>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 whitespace-nowrap">
                 <CalendarRange
                   className="size-3 text-slate-400"
                   aria-hidden="true"
@@ -250,9 +250,9 @@ function MessageItem({
                 {message.plan.fromDate} – {message.plan.toDate}
               </span>
               <span>·</span>
-              <span>{message.plan.metrics.length} chỉ số</span>
+              <span className="whitespace-nowrap">{message.plan.metrics.length} chỉ số</span>
               {isActiveArtifact && (
-                <span className="rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                <span className="whitespace-nowrap rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
                   Đang xem ở bảng kế hoạch
                 </span>
               )}
@@ -277,13 +277,13 @@ function MessageItem({
       {/* Report Anchor Card inside Chat */}
       {!isUser && message.report && (
         <div
-          className={`mt-3.5 flex flex-col gap-2.5 rounded-xl border p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between ${
+          className={`mt-3.5 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3.5 transition-colors ${
             isActiveArtifact
-              ? "border-primary/60 bg-primary/8 shadow-2xs dark:border-primary/60 dark:bg-primary/15"
-              : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-850/60"
+              ? "border-primary/50 bg-primary/8 shadow-2xs dark:border-primary/50 dark:bg-primary/20"
+              : "border-slate-200/90 bg-slate-50/80 hover:bg-slate-100/80 dark:border-slate-800 dark:bg-slate-950/70 dark:hover:bg-slate-950"
           }`}
         >
-          <div className="min-w-0">
+          <div className="min-w-[180px] flex-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-slate-100">
               <BarChart3
                 className="size-4 shrink-0 text-primary"
@@ -295,11 +295,11 @@ function MessageItem({
               </span>
             </div>
             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-500 dark:text-slate-400">
-              <span>Kỳ: {message.report.rangeLabel}</span>
+              <span className="whitespace-nowrap">Kỳ: {message.report.rangeLabel}</span>
               <span>·</span>
-              <span>{message.report.tableRows.length} dòng dữ liệu</span>
+              <span className="whitespace-nowrap">{message.report.tableRows.length} dòng dữ liệu</span>
               {isActiveArtifact && (
-                <span className="rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary dark:text-teal-300">
+                <span className="whitespace-nowrap rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary dark:text-teal-300">
                   Đang xem ở bảng báo cáo
                 </span>
               )}

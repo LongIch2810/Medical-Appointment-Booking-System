@@ -138,7 +138,7 @@ export function ReportAssistantConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Tìm kiếm hội thoại"
-              className="h-8 pl-8 pr-7 text-xs bg-slate-50/80 border-slate-200 dark:bg-slate-850 dark:border-slate-750"
+              className="h-8 pl-8 pr-7 text-xs bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100 dark:placeholder:text-slate-500"
             />
             {searchQuery && (
               <button

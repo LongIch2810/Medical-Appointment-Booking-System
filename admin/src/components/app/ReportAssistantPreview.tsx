@@ -243,7 +243,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-750 dark:bg-slate-900 cursor-pointer shadow-2xs"
+                      className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-700 dark:bg-slate-900 cursor-pointer shadow-2xs"
                       onClick={handleCopySql}
                     >
                       {isCopied ? (
@@ -416,7 +416,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             {content.analysis.map((item, index) => (
               <section
                 key={index}
-                className="space-y-1 rounded-xl bg-slate-50/70 p-3.5 dark:bg-slate-850/60"
+                className="space-y-1 rounded-xl bg-slate-50/70 p-3.5 dark:bg-slate-950/60"
               >
                 <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
                   {item.section_title}

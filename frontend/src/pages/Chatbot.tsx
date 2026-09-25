@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Bot, MessageSquarePlus, PanelLeft, RefreshCw } from "lucide-react";
+import { ArrowDown, MessageSquarePlus, PanelLeft, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
@@ -13,6 +13,7 @@ import UserMessage from "@/components/chatbot/UserMessage";
 import ChatComposer from "@/components/chatbot/ChatComposer";
 import PatientChatConversationList from "@/components/chatbot/PatientChatConversationList";
 import BookingApprovalCard from "@/components/chatbot/BookingApprovalCard";
+import PatientPromptTemplatesDialog from "@/components/chatbot/PatientPromptTemplatesDialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,6 +60,9 @@ export default function Chatbot() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [input, setInput] = useState("");
   const [isPending, setIsPending] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+  const [isPromptTemplatesOpen, setIsPromptTemplatesOpen] = useState(false);
   const [mobileRailOpen, setMobileRailOpen] = useState(false);
   const [liveTurn, setLiveTurn] = useState<{
     conversationId: number;
@@ -75,6 +79,19 @@ export default function Chatbot() {
   const transcriptWrapperRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const isNearBottomRef = useRef(true);
+
+  // Timer counting elapsed seconds while isPending is true
+  useEffect(() => {
+    if (!isPending) {
+      setElapsedSeconds(0);
+      return;
+    }
+    setElapsedSeconds(0);
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isPending]);
 
   const conversations = conversationPage?.conversations ?? [];
   const detailQuery = usePatientChatConversation(activeConversationId);
@@ -157,17 +174,42 @@ export default function Chatbot() {
     const viewport = viewportRef.current;
     if (!viewport) return;
     const threshold = 120;
-    isNearBottomRef.current =
-      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= threshold;
+    const distanceFromBottom =
+      viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+    const nearBottom = distanceFromBottom <= threshold;
+    isNearBottomRef.current = nearBottom;
+    setShowScrollBottomBtn(!nearBottom && messages.length > 2);
+  };
+
+  const scrollToBottom = (smooth = true) => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const behavior =
+      smooth &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        ? "smooth"
+        : "auto";
+    if (typeof viewport.scrollTo === "function") {
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior });
+    } else {
+      viewport.scrollTop = viewport.scrollHeight;
+    }
+    isNearBottomRef.current = true;
+    setShowScrollBottomBtn(false);
   };
 
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    if (isNearBottomRef.current || activeOptimisticUser !== null) {
-      viewport.scrollTop = viewport.scrollHeight;
+    if (isNearBottomRef.current || activeOptimisticUser !== null || isPending) {
+      scrollToBottom(true);
     }
   }, [latestMessageId, activeConversationId, activeOptimisticUser, isPending]);
+
+  const handleFillPrompt = (prompt: string) => {
+    setInput(prompt);
+    composerRef.current?.focus();
+  };
 
   const openNewConversation = async () => {
     if (isBusy) return;
@@ -365,10 +407,13 @@ export default function Chatbot() {
             </div>
           ) : messages.length === 0 && !activeOptimisticUser ? (
             <div className="h-full min-h-0 overflow-y-auto">
-              <WelcomeState onQuickAction={(prompt) => void handleSend(prompt)} />
+              <WelcomeState
+                onQuickAction={(prompt) => void handleSend(prompt)}
+                onFillPrompt={handleFillPrompt}
+              />
             </div>
           ) : (
-            <div ref={transcriptWrapperRef} className="h-full overflow-hidden">
+            <div ref={transcriptWrapperRef} className="relative h-full overflow-hidden flex flex-col justify-between">
               <ScrollArea className="h-full" onScrollCapture={() => void handleScroll()}>
                 <div className="mx-auto w-full max-w-4xl space-y-4 px-3 py-4 sm:space-y-5 sm:px-6 sm:py-6">
                   {detailQuery.hasNextPage && (
@@ -404,10 +449,15 @@ export default function Chatbot() {
                               ? "Đã bấm nút hủy yêu cầu đặt lịch"
                               : message.content
                         }
+                        createdAt={message.createdAt}
                       />
                     ) : (
                       <div key={message.id} className="space-y-3">
-                        <AssistantMessage content={message.content} />
+                        <AssistantMessage
+                          content={message.content}
+                          createdAt={message.createdAt}
+                          action={message.action}
+                        />
                         {message.action === "BOOKING_APPROVAL" && (
                             <div className="pl-0 sm:pl-7">
                               <BookingApprovalCard
@@ -435,21 +485,36 @@ export default function Chatbot() {
                   {activeOptimisticUser && <UserMessage content={activeOptimisticUser} />}
 
                   {isPending && (
-                    <div
-                      role="status"
-                      aria-live="polite"
-                      className="flex items-center gap-2 pl-2 text-xs font-medium text-muted-foreground"
-                    >
-                      <Bot className="size-4 animate-pulse text-primary" aria-hidden="true" />
-                      <span>Đang xử lý yêu cầu của bạn…</span>
+                    <div className="space-y-3 animate-in fade-in duration-200">
+                      <AssistantMessage
+                        content=""
+                        isTyping={true}
+                        elapsed={elapsedSeconds}
+                      />
                     </div>
                   )}
 
                   <div aria-live="polite" className="sr-only">
-                    {isPending ? "Trợ lý đang xử lý" : ""}
+                    {isPending ? "Trợ lý đang xử lý câu trả lời" : ""}
                   </div>
                 </div>
               </ScrollArea>
+
+              {/* Floating scroll to bottom button */}
+              {showScrollBottomBtn && (
+                <div className="sticky bottom-3 left-0 right-0 z-20 flex justify-center pointer-events-none pb-1 animate-in fade-in zoom-in-95 duration-200">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => scrollToBottom(true)}
+                    className="pointer-events-auto h-8.5 gap-1.5 rounded-full bg-slate-900/90 px-3.5 text-xs font-semibold text-white shadow-md hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white cursor-pointer active:scale-95 transition-all"
+                    aria-label="Cuộn xuống tin nhắn mới nhất"
+                  >
+                    <ArrowDown className="size-3.5" aria-hidden="true" />
+                    <span>Tin mới nhất</span>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -488,11 +553,20 @@ export default function Chatbot() {
           onSend={() => void handleSend()}
           isPending={isBusy}
           textareaRef={composerRef}
+          onOpenTemplates={() => setIsPromptTemplatesOpen(true)}
         />
         <div className="sr-only" aria-live="polite">
           {activeConversation ? `Đang xem ${activeConversation.title}` : "Cuộc trò chuyện mới"}
         </div>
       </div>
+
+      <PatientPromptTemplatesDialog
+        open={isPromptTemplatesOpen}
+        onOpenChange={setIsPromptTemplatesOpen}
+        onSendPrompt={(prompt) => void handleSend(prompt)}
+        onFillPrompt={handleFillPrompt}
+        disabled={isBusy}
+      />
 
       <Sheet open={mobileRailOpen} onOpenChange={setMobileRailOpen}>
         <SheetContent side="left" className="p-0 flex flex-col">
