@@ -63,10 +63,9 @@ export async function getAdminReportFileUrl(id: number, download = false) {
   return res.data.data.url;
 }
 
-export async function revealAdminReportQuery(id: number, password: string) {
-  const res = await axiosInstance.post<ApiResponse<{ executedQuery: string }>>(
-    `/admin-reports/history/${id}/reveal-query`,
-    { password },
-  );
+export async function revealAdminReportQuery(id: number) {
+  const res = await axiosInstance.post<
+    ApiResponse<{ executedQuery: string }>
+  >(`/admin-reports/history/${id}/reveal-query`);
   return res.data.data.executedQuery;
 }

@@ -5,8 +5,6 @@ import AiReportConversation from 'src/entities/aiReportConversation.entity';
 import AiReportMessage from 'src/entities/aiReportMessage.entity';
 import { AdminReportsService } from 'src/modules/admin-reports/admin-reports.service';
 import AiAdminReport from 'src/entities/aiAdminReport.entity';
-import User from 'src/entities/user.entity';
-import * as bcrypt from 'bcryptjs';
 
 jest.mock('axios');
 
@@ -108,7 +106,7 @@ describe('AdminReportsService report assistant', () => {
 
   beforeEach(() => jest.resetAllMocks());
 
-  it('redacts SQL in ordinary responses and only reveals it after password verification', async () => {
+  it('redacts SQL from ordinary responses and exposes it through the dedicated reveal method', async () => {
     const { service, reportRepo } = setup();
     const report = {
       id: 44,
@@ -120,29 +118,14 @@ describe('AdminReportsService report assistant', () => {
       created_at: new Date('2026-09-25T00:00:00Z'),
     } as unknown as AiAdminReport;
     const findReport = jest.fn().mockResolvedValue(report);
-    const findUser = jest.fn().mockResolvedValue({
-      id: 9,
-      password: await bcrypt.hash('correct-password', 4),
-      is_active: true,
-      is_locking: false,
-    });
     reportRepo.findOne.mockImplementation(findReport);
-    reportRepo.manager.getRepository.mockImplementation((entity: unknown) => {
-      expect(entity).toBe(User);
-      return { findOne: findUser };
-    });
 
     const ordinary = await service.detail(44);
     expect(ordinary.hasExecutedQuery).toBe(true);
     expect(ordinary.executedQuery).toBeNull();
     expect(JSON.stringify(ordinary)).not.toContain(report.executed_query);
 
-    await expect(service.revealQuery(9, 44, 'wrong-password')).rejects.toMatchObject({
-      status: 403,
-      response: expect.objectContaining({ code: 'REPORT_QUERY_PASSWORD_INVALID' }),
-    });
-    expect(await service.revealQuery(9, 44, 'correct-password')).toBe(report.executed_query);
-    expect(findUser).toHaveBeenCalledWith({ where: { id: 9 } });
+    expect(await service.revealQuery(44)).toBe(report.executed_query);
   });
 
   it('scopes conversation reads by owner and clamps list pagination', async () => {

@@ -1,6 +1,7 @@
 import {
   AlertCircle,
   BarChart3,
+  Check,
   CheckCircle2,
   ChevronDown,
   Copy,
@@ -12,9 +13,8 @@ import {
   FileDown,
   FileText,
   Lightbulb,
-  LockKeyhole,
+  Loader2,
   ShieldAlert,
-  ShieldCheck,
   Sparkles,
   TrendingUp,
 } from "lucide-react";
@@ -25,47 +25,49 @@ import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
 import { GenericList } from "@/components/app/GenericList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { exportReportCsv } from "@/lib/exportReportCsv";
 import { openAdminReportFile } from "@/utils/open-admin-report-file";
 import type { AdminReport } from "@/types/interface/adminReport.interface";
 
 export function ReportAssistantPreview({ report }: { report: AdminReport }) {
-  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [isCheckingPassword, setIsCheckingPassword] = useState(false);
-  const [verifiedQuery, setVerifiedQuery] = useState<string | null>(null);
+  const [executedQuery, setExecutedQuery] = useState<string | null>(null);
+  const [isLoadingQuery, setIsLoadingQuery] = useState(false);
   const [isQueryVisible, setIsQueryVisible] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
+
   const content = report.report;
   const fileName = report.fileName || `bao-cao-quan-tri-${report.id}.pdf`;
   const hasRows = Boolean(report.tableRows && report.tableRows.length > 0);
   const hasPdf = Boolean(report.pdfUrl);
 
-  const confirmPassword = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!password || isCheckingPassword) return;
-    setIsCheckingPassword(true);
-    setPasswordError("");
-    try {
-      const query = await revealAdminReportQuery(report.id, password);
-      setVerifiedQuery(query);
-      setIsQueryVisible(true);
-      setIsPasswordDialogOpen(false);
-      setPassword("");
-    } catch {
-      setPasswordError("Không thể xác nhận mật khẩu. Vui lòng kiểm tra và thử lại.");
-    } finally {
-      setIsCheckingPassword(false);
+  const handleToggleSql = async () => {
+    if (executedQuery) {
+      setIsQueryVisible((visible) => !visible);
+      return;
     }
+    if (isLoadingQuery) return;
+    setIsLoadingQuery(true);
+    try {
+      const query = await revealAdminReportQuery(report.id);
+      setExecutedQuery(query);
+      setIsQueryVisible(true);
+    } catch {
+      toast.error("Không thể tải câu SQL. Vui lòng thử lại.");
+    } finally {
+      setIsLoadingQuery(false);
+    }
+  };
+
+  const handleCopySql = () => {
+    if (!executedQuery || !isQueryVisible) return;
+    void navigator.clipboard
+      .writeText(executedQuery)
+      .then(() => {
+        setIsCopied(true);
+        setTimeout(() => setIsCopied(false), 2000);
+        toast.success("Đã sao chép câu SQL.");
+      })
+      .catch(() => toast.error("Không thể sao chép câu SQL."));
   };
 
   return (
@@ -75,19 +77,20 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
     >
       {/* 1. Header Bar: Title, Range, Badges, and Export Actions */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3 min-w-0">
             <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
               <FileText className="size-5" aria-hidden="true" />
             </span>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                  <span className="size-1.5 rounded-full bg-emerald-500" />
                   Báo cáo hoàn tất
                 </span>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
                   Kỳ báo cáo:{" "}
-                  <strong className="text-slate-800 dark:text-slate-200">
+                  <strong className="text-slate-800 dark:text-slate-200 font-semibold">
                     {report.rangeLabel}
                   </strong>
                 </span>
@@ -98,18 +101,18 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             </div>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions Toolbar */}
           <div className="flex flex-wrap items-center gap-2">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-8.5 gap-1.5 rounded-lg border-slate-200 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+              className="h-8.5 gap-1.5 rounded-lg border-primary/30 bg-primary/5 px-3 text-xs font-semibold text-primary shadow-2xs hover:bg-primary/10 hover:border-primary/50 dark:border-primary/40 dark:bg-primary/15 dark:text-teal-300 cursor-pointer"
               disabled={!hasRows}
               title={
                 hasRows
                   ? "Tải xuống bảng dữ liệu định dạng CSV (UTF-8)"
-                  : "Không có dữ liệu bảng"
+                  : "Không có dữ liệu bảng để xuất"
               }
               onClick={() =>
                 exportReportCsv(
@@ -119,7 +122,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
                 )
               }
             >
-              <FileDown aria-hidden="true" className="size-3.5 text-primary" />
+              <FileDown aria-hidden="true" className="size-3.5" />
               <span>Xuất CSV</span>
             </Button>
 
@@ -127,7 +130,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8.5 gap-1.5 rounded-lg border-slate-200 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+              className="h-8.5 gap-1.5 rounded-lg border-slate-200 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
               disabled={!hasPdf}
               title={
                 hasPdf
@@ -152,7 +155,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
               type="button"
               variant="outline"
               size="sm"
-              className="h-8.5 gap-1.5 rounded-lg border-slate-200 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer"
+              className="h-8.5 gap-1.5 rounded-lg border-slate-200 px-3 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 cursor-pointer disabled:opacity-50"
               disabled={!hasPdf}
               title={
                 hasPdf
@@ -176,19 +179,20 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         </div>
 
         {!hasPdf && (
-          <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-slate-50 px-2.5 py-1.5 text-[11px] text-slate-500 dark:bg-slate-800/50 dark:text-slate-400">
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/20 dark:border-amber-500/30 dark:text-amber-300">
             <AlertCircle
-              className="size-3.5 text-amber-500 shrink-0"
+              className="size-4 text-amber-600 dark:text-amber-400 shrink-0"
               aria-hidden="true"
             />
             <span>
-              Bản in PDF chưa khả dụng trên máy chủ lưu trữ. Bạn có thể sử dụng
-              nút <strong>Xuất CSV</strong> để lấy bảng số liệu chi tiết.
+              Bản in PDF chưa sẵn sàng trên máy chủ lưu trữ. Bạn có thể sử dụng nút{" "}
+              <strong>Xuất CSV</strong> ở trên để lấy toàn bộ dữ liệu bảng chi tiết.
             </span>
           </div>
         )}
       </div>
 
+      {/* SQL reveal details section */}
       <details className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
         <summary className="flex cursor-pointer list-none items-center gap-3 px-4 py-3.5 text-slate-800 transition-colors hover:bg-slate-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary dark:text-slate-100 dark:hover:bg-slate-800/60 [&::-webkit-details-marker]:hidden">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
@@ -216,72 +220,78 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
           <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-950/40">
             <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-700 sm:px-5">
               <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white text-slate-600 shadow-xs dark:bg-slate-800 dark:text-slate-300">
-                {verifiedQuery ? (
-                  <ShieldCheck className="size-4" aria-hidden="true" />
-                ) : (
-                  <LockKeyhole className="size-4" aria-hidden="true" />
-                )}
+              <Eye className="size-4 text-slate-500" aria-hidden="true" />
               </span>
               <div className="min-w-0 flex-1">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  SQL đã thực thi
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    SQL đã thực thi
+                  </h4>
+                </div>
                 {report.hasExecutedQuery && (
                   <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {verifiedQuery
-                      ? "Đã xác nhận cho báo cáo này"
-                      : "Cần xác nhận mật khẩu để xem"}
+                    {executedQuery && isQueryVisible
+                      ? "Câu SQL của báo cáo này đang hiển thị"
+                      : "Bấm biểu tượng con mắt để xem câu SQL"}
                   </p>
                 )}
               </div>
               {report.hasExecutedQuery && (
                 <div className="flex flex-wrap items-center gap-2">
-                  {verifiedQuery && isQueryVisible && (
+                  {executedQuery && isQueryVisible && (
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-9 gap-1.5 rounded-lg bg-white px-3 text-xs font-medium dark:bg-slate-900"
-                      onClick={() =>
-                        void navigator.clipboard
-                          .writeText(verifiedQuery)
-                          .then(() => toast.success("Đã sao chép câu SQL."))
-                          .catch(() => toast.error("Không thể sao chép câu SQL."))
-                      }
+                      className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-750 dark:bg-slate-900 cursor-pointer shadow-2xs"
+                      onClick={handleCopySql}
                     >
-                      <Copy className="size-3.5" aria-hidden="true" />
-                      Sao chép SQL
+                      {isCopied ? (
+                        <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+                      ) : (
+                        <Copy className="size-3.5" aria-hidden="true" />
+                      )}
+                      <span>Sao chép SQL</span>
                     </Button>
                   )}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-600 dark:bg-slate-900"
-                    onClick={() => {
-                      if (verifiedQuery) {
-                        setIsQueryVisible((visible) => !visible);
-                      } else {
-                        setIsPasswordDialogOpen(true);
-                      }
-                    }}
-                    aria-pressed={Boolean(verifiedQuery && isQueryVisible)}
+                    className="h-9 gap-1.5 rounded-lg border-slate-300 bg-white px-3 text-xs font-semibold dark:border-slate-600 dark:bg-slate-900 cursor-pointer shadow-2xs"
+                    onClick={handleToggleSql}
+                    disabled={isLoadingQuery}
+                    aria-label={executedQuery && isQueryVisible ? "Ẩn SQL" : "Xem SQL"}
+                    aria-pressed={Boolean(executedQuery && isQueryVisible)}
                   >
-                    {verifiedQuery && isQueryVisible ? (
+                    {isLoadingQuery ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    ) : executedQuery && isQueryVisible ? (
                       <EyeOff className="size-4" aria-hidden="true" />
                     ) : (
                       <Eye className="size-4" aria-hidden="true" />
                     )}
-                    {verifiedQuery && isQueryVisible ? "Ẩn SQL" : "Xem SQL"}
+                    <span>{isLoadingQuery ? "Đang tải SQL" : executedQuery && isQueryVisible ? "Ẩn SQL" : "Xem SQL"}</span>
                   </Button>
                 </div>
               )}
             </div>
             {report.hasExecutedQuery ? (
               <div className="bg-slate-950 px-4 py-4 sm:px-5">
+                {executedQuery && isQueryVisible && (
+                  <div className="mb-2.5 flex items-center justify-between border-b border-slate-800/80 pb-2 text-[10px] font-mono text-slate-400">
+                    <span className="flex items-center gap-1.5 text-emerald-400">
+                      <span className="size-1.5 rounded-full bg-emerald-400" />
+                      Truy vấn an toàn (Chỉ SELECT trên các view phân quyền)
+                    </span>
+                    <span>PostgreSQL 17</span>
+                  </div>
+                )}
                 <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-6 text-slate-100 sm:text-[13px]">
                   <code>
-                    {verifiedQuery && isQueryVisible ? verifiedQuery : "********"}
+                    {executedQuery && isQueryVisible
+                      ? executedQuery
+                      : "********"}
                   </code>
                 </pre>
               </div>
@@ -294,103 +304,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         </div>
       </details>
 
-      <Dialog
-        open={isPasswordDialogOpen}
-        onOpenChange={(open) => {
-          setIsPasswordDialogOpen(open);
-          if (!open) {
-            setPassword("");
-            setPasswordError("");
-          }
-        }}
-      >
-        <DialogContent className="max-w-[440px] gap-0 rounded-2xl p-0">
-          <DialogHeader className="gap-0 border-0 px-6 pt-6 pb-0 pr-14 sm:px-7 sm:pt-7 sm:pr-14">
-            <div className="flex items-start gap-3.5">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
-                <LockKeyhole className="size-5" aria-hidden="true" />
-              </span>
-              <div className="min-w-0 pt-0.5">
-                <DialogTitle className="text-lg">Xác nhận mật khẩu</DialogTitle>
-                <DialogDescription className="mt-1.5">
-                  Xem câu SQL đã dùng để tạo báo cáo này.
-                </DialogDescription>
-              </div>
-            </div>
-          </DialogHeader>
-          <form
-            onSubmit={(event) => void confirmPassword(event)}
-            className="px-6 pt-5 pb-6 sm:px-7 sm:pb-7"
-          >
-            <div className="mb-5 border-l-2 border-emerald-500 pl-3">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                Báo cáo đang xem
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-sm font-semibold leading-5 text-slate-800 dark:text-slate-100">
-                {content?.title || report.sourceRequest || "Báo cáo quản trị"}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <label
-                htmlFor={`report-query-password-${report.id}`}
-                className="text-sm font-semibold text-slate-800 dark:text-slate-100"
-              >
-                Mật khẩu quản trị
-              </label>
-              <Input
-                id={`report-query-password-${report.id}`}
-                type="password"
-                autoComplete="current-password"
-                autoFocus
-                placeholder="Nhập mật khẩu của bạn"
-                aria-invalid={Boolean(passwordError)}
-                aria-describedby={
-                  passwordError
-                    ? `report-query-password-error-${report.id}`
-                    : undefined
-                }
-                className="h-11 rounded-lg border-slate-300 dark:border-slate-700"
-                value={password}
-                onChange={(event) => {
-                  setPassword(event.target.value);
-                  setPasswordError("");
-                }}
-              />
-              {passwordError && (
-                <p
-                  id={`report-query-password-error-${report.id}`}
-                  role="alert"
-                  className="text-sm text-red-600 dark:text-red-400"
-                >
-                  {passwordError}
-                </p>
-              )}
-            </div>
-            <p className="mt-3 flex items-center gap-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
-              <ShieldCheck
-                className="size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
-                aria-hidden="true"
-              />
-              Chỉ cần xác nhận một lần cho báo cáo này.
-            </p>
-            <div className="mt-6 flex items-center justify-end gap-2.5 border-t border-slate-100 pt-5 dark:border-slate-800">
-              <DialogClose asChild>
-                <Button type="button" variant="ghost" className="h-10 rounded-lg px-4">
-                  Hủy
-                </Button>
-              </DialogClose>
-              <Button
-                type="submit"
-                disabled={!password || isCheckingPassword}
-                className="h-10 rounded-lg bg-emerald-600 px-5 font-semibold text-white hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-500 disabled:opacity-100 dark:disabled:bg-slate-800 dark:disabled:text-slate-400"
-              >
-                {isCheckingPassword ? "Đang xác nhận..." : "Xác nhận và xem SQL"}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
-
+      {/* 2. Key Insights */}
       {content && content.insights && content.insights.length > 0 && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/40 p-4 dark:border-emerald-500/40 dark:bg-emerald-950/20">
           <div className="flex items-center gap-2">
@@ -419,7 +333,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         </div>
       )}
 
-      {/* 3. Visual Chart (Biểu đồ trực quan) */}
+      {/* 3. Visual Chart */}
       {report.chartConfig && (
         <Card className="rounded-2xl border-slate-200/90 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
           <CardHeader className="border-b border-slate-100 p-4 pb-3 dark:border-slate-800">
@@ -434,7 +348,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         </Card>
       )}
 
-      {/* 4. Direct System Query Rows (Bảng dữ liệu thực tế) */}
+      {/* 4. Direct System Query Rows */}
       {hasRows ? (
         <div className="w-full min-w-0 max-w-full space-y-2 overflow-hidden">
           <div className="flex items-center justify-between gap-2 px-1">
@@ -532,7 +446,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
                       className="flex items-start gap-2 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300"
                     >
                       <span
-                        className="mt-1 size-1.5 rounded-full bg-primary shrink-0"
+                        className="mt-1.5 size-1.5 rounded-full bg-primary shrink-0"
                         aria-hidden="true"
                       />
                       <span>{item}</span>
@@ -545,7 +459,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
         </Card>
       )}
 
-      {/* 6. Governance & Compliance Note (Concise, bottom) */}
+      {/* 6. Governance & Compliance Note */}
       <div className="flex items-start gap-2.5 rounded-xl border border-slate-200/80 bg-slate-50/80 p-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
         <ShieldAlert
           className="mt-0.5 size-4 shrink-0 text-slate-400"

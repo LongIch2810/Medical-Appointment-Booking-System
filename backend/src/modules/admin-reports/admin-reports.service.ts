@@ -9,7 +9,6 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
-import * as bcrypt from 'bcryptjs';
 import {
   endOfDay,
   endOfMonth,
@@ -22,7 +21,6 @@ import {
 } from 'date-fns';
 import { LessThan, Repository } from 'typeorm';
 import AiAdminReport from 'src/entities/aiAdminReport.entity';
-import User from 'src/entities/user.entity';
 import AiReportConversation from 'src/entities/aiReportConversation.entity';
 import AiReportMessage, {
   ReportAssistantAction,
@@ -933,28 +931,11 @@ export class AdminReportsService {
     return this.toResponse(row);
   }
 
-  async revealQuery(userId: number, id: number, password: string) {
+  async revealQuery(id: number) {
     const row = await this.reportRepo.findOne({ where: { id } });
     if (!row?.executed_query) {
       throw new NotFoundException(
         'Không tìm thấy SQL đã thực thi của báo cáo.',
-      );
-    }
-    const user = await this.reportRepo.manager.getRepository(User).findOne({
-      where: { id: userId },
-    });
-    if (
-      !user?.password ||
-      !user.is_active ||
-      user.is_locking ||
-      !(await bcrypt.compare(password, user.password))
-    ) {
-      throw new HttpException(
-        {
-          code: 'REPORT_QUERY_PASSWORD_INVALID',
-          message: 'Mật khẩu không đúng.',
-        },
-        403,
       );
     }
     return row.executed_query;

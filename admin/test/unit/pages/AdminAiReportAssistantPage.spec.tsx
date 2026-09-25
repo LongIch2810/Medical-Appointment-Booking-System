@@ -455,4 +455,39 @@ describe("AdminAiReportAssistantPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Kế hoạch cũ")).toBeInTheDocument();
   });
+
+  it("toggles the left conversation sidebar open and closed on desktop", async () => {
+    const user = userEvent.setup();
+    setDefaultHooks([], true);
+    render(<AdminAiReportAssistantPage />);
+
+    // Initially, the collapse button exists in the conversation list header
+    const collapseBtn = screen.getByRole("button", {
+      name: "Thu gọn danh sách hội thoại",
+    });
+    expect(collapseBtn).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Mở rộng danh sách hội thoại" }),
+    ).not.toBeInTheDocument();
+
+    // Click collapse
+    await user.click(collapseBtn);
+
+    // Sidebar is hidden, reopen button in chat header is visible
+    expect(
+      screen.queryByRole("button", { name: "Thu gọn danh sách hội thoại" }),
+    ).not.toBeInTheDocument();
+    const openBtn = screen.getByRole("button", {
+      name: "Mở rộng danh sách hội thoại",
+    });
+    expect(openBtn).toBeInTheDocument();
+
+    // Click reopen
+    await user.click(openBtn);
+
+    // Sidebar is back
+    expect(
+      screen.getByRole("button", { name: "Thu gọn danh sách hội thoại" }),
+    ).toBeInTheDocument();
+  });
 });

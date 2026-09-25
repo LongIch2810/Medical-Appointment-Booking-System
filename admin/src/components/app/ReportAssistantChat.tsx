@@ -1,15 +1,19 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AlertCircle,
+  ArrowDown,
   ArrowRight,
   ArrowUpRight,
   BarChart3,
   CalendarRange,
+  Clock,
   Database,
   FileCheck,
   FileText,
   HelpCircle,
   Info,
+  Layers,
+  Pencil,
   ShieldCheck,
   Sparkles,
   User,
@@ -20,11 +24,51 @@ import type {
   ReportAssistantMessage,
 } from "@/types/interface/adminReport.interface";
 
-const QUICK_PROMPTS = [
-  "So sánh số lịch hẹn theo chuyên khoa trong tháng này với tháng trước.",
-  "Tỷ lệ hủy lịch có bất thường không? Hãy hỏi thêm nếu cần kỳ so sánh.",
-  "Phân tích khung giờ và ngày trong tuần có lượng đặt khám cao nhất.",
-  "Tôi có thể yêu cầu những loại báo cáo nào từ dữ liệu hiện có?",
+// Categorized domain prompt presets mapped directly to supported DB views
+const PROMPT_CATEGORIES = [
+  {
+    id: "appointments",
+    title: "Lịch hẹn & Tỷ lệ hủy",
+    description: "Dữ liệu lịch hẹn, ca khám hoàn tất, hủy lịch, vắng mặt",
+    icon: CalendarRange,
+    badge: "appointments_view",
+    prompts: [
+      {
+        text: "So sánh số lịch hẹn theo chuyên khoa trong tháng này với tháng trước.",
+        tag: "So sánh kỳ",
+      },
+      {
+        text: "Tỷ lệ hủy lịch có bất thường không? Hãy hỏi thêm nếu cần kỳ so sánh.",
+        tag: "Phân tích rủi ro",
+      },
+    ],
+  },
+  {
+    id: "operations",
+    title: "Khung giờ & Vận hành",
+    description: "Khung giờ cao điểm, lưu lượng bệnh nhân theo ngày",
+    icon: Clock,
+    badge: "doctor_schedules_view",
+    prompts: [
+      {
+        text: "Phân tích khung giờ và ngày trong tuần có lượng đặt khám cao nhất.",
+        tag: "Công suất",
+      },
+    ],
+  },
+  {
+    id: "overview",
+    title: "Phạm vi & Nguồn dữ liệu",
+    description: "Chuyên khoa, bác sĩ, nhân khẩu học người dùng ẩn danh",
+    icon: Layers,
+    badge: "specialties & users",
+    prompts: [
+      {
+        text: "Tôi có thể yêu cầu những loại báo cáo nào từ dữ liệu hiện có?",
+        tag: "Hướng dẫn",
+      },
+    ],
+  },
 ];
 
 function getActionMeta(action: ReportAssistantAction | null) {
@@ -101,7 +145,7 @@ function MessageItem({
       aria-label={
         isUser ? "Tin nhắn của bạn" : actionMeta?.label || "Phản hồi trợ lý"
       }
-      className={`min-w-0 max-w-full overflow-hidden rounded-2xl p-4 sm:p-5 outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-2xl p-4 sm:p-5 outline-none focus-visible:ring-2 focus-visible:ring-primary transition-all duration-150 ${
         isUser
           ? "ml-auto sm:max-w-[85%] border border-slate-200/90 bg-slate-100/95 text-slate-900 shadow-2xs dark:border-slate-700/80 dark:bg-slate-800/95 dark:text-slate-100"
           : "mr-auto sm:max-w-[92%] border border-slate-200/90 bg-white text-slate-900 shadow-2xs dark:border-slate-800/90 dark:bg-slate-900 dark:text-slate-100"
@@ -111,7 +155,7 @@ function MessageItem({
       <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <div
-            className={`flex size-6.5 items-center justify-center rounded-lg text-xs font-semibold ${
+            className={`flex size-7 items-center justify-center rounded-lg text-xs font-semibold ${
               isUser
                 ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
                 : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-teal-300"
@@ -166,6 +210,17 @@ function MessageItem({
             dùng. Dữ liệu ngoài phạm vi (như tài chính chi tiết, kho dược ngoài
             hệ thống) hiện không được cung cấp.
           </p>
+          <div className="mt-2.5 flex flex-wrap gap-1.5 pt-1 border-t border-rose-200/60 dark:border-rose-900/30">
+            <span className="rounded bg-rose-100/80 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+              Lịch hẹn & Lịch trực
+            </span>
+            <span className="rounded bg-rose-100/80 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+              Chuyên khoa & Bác sĩ
+            </span>
+            <span className="rounded bg-rose-100/80 px-1.5 py-0.5 text-[10px] font-medium text-rose-800 dark:bg-rose-900/40 dark:text-rose-300">
+              Nhân khẩu học ẩn danh
+            </span>
+          </div>
         </div>
       )}
 
@@ -174,7 +229,7 @@ function MessageItem({
         <div
           className={`mt-3.5 flex flex-col gap-2.5 rounded-xl border p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between ${
             isActiveArtifact
-              ? "border-emerald-500/50 bg-emerald-50/40 dark:border-emerald-500/50 dark:bg-emerald-950/30"
+              ? "border-emerald-500/60 bg-emerald-50/50 shadow-2xs dark:border-emerald-500/60 dark:bg-emerald-950/35"
               : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-850/60"
           }`}
         >
@@ -197,8 +252,8 @@ function MessageItem({
               <span>·</span>
               <span>{message.plan.metrics.length} chỉ số</span>
               {isActiveArtifact && (
-                <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.2 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                  Đang chọn
+                <span className="rounded-md bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                  Đang xem ở bảng kế hoạch
                 </span>
               )}
             </div>
@@ -209,7 +264,7 @@ function MessageItem({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 shrink-0 gap-1.5 border-emerald-500/30 bg-white text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/40 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-slate-800 cursor-pointer"
+              className="h-8.5 shrink-0 gap-1.5 border-emerald-500/40 bg-white text-xs font-semibold text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/50 dark:bg-slate-900 dark:text-emerald-300 dark:hover:bg-slate-800 cursor-pointer shadow-2xs"
               onClick={() => onViewArtifact(message.id)}
             >
               <span>Xem chi tiết & duyệt</span>
@@ -224,7 +279,7 @@ function MessageItem({
         <div
           className={`mt-3.5 flex flex-col gap-2.5 rounded-xl border p-3.5 transition-colors sm:flex-row sm:items-center sm:justify-between ${
             isActiveArtifact
-              ? "border-primary/50 bg-primary/5 dark:border-primary/50 dark:bg-primary/10"
+              ? "border-primary/60 bg-primary/8 shadow-2xs dark:border-primary/60 dark:bg-primary/15"
               : "border-slate-200/90 bg-slate-50/70 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-850/60"
           }`}
         >
@@ -244,8 +299,8 @@ function MessageItem({
               <span>·</span>
               <span>{message.report.tableRows.length} dòng dữ liệu</span>
               {isActiveArtifact && (
-                <span className="rounded-md bg-primary/15 px-1.5 py-0.2 text-[10px] font-bold text-primary dark:text-teal-300">
-                  Đang chọn
+                <span className="rounded-md bg-primary/20 px-1.5 py-0.5 text-[10px] font-bold text-primary dark:text-teal-300">
+                  Đang xem ở bảng báo cáo
                 </span>
               )}
             </div>
@@ -256,7 +311,7 @@ function MessageItem({
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 shrink-0 gap-1.5 border-primary/30 bg-white text-xs font-semibold text-primary hover:bg-primary/5 dark:border-primary/40 dark:bg-slate-900 dark:text-teal-300 dark:hover:bg-slate-800 cursor-pointer"
+              className="h-8.5 shrink-0 gap-1.5 border-primary/40 bg-white text-xs font-semibold text-primary hover:bg-primary/5 dark:border-primary/50 dark:bg-slate-900 dark:text-teal-300 dark:hover:bg-slate-800 cursor-pointer shadow-2xs"
               onClick={() => onViewArtifact(message.id)}
             >
               <span>Xem báo cáo</span>
@@ -281,6 +336,7 @@ export function ReportAssistantChat({
   onLoadOlder,
   isPending,
   onQuickPrompt,
+  onFillPrompt,
   activeArtifactId,
   onViewArtifact,
 }: {
@@ -295,13 +351,14 @@ export function ReportAssistantChat({
   onLoadOlder: () => void;
   isPending: boolean;
   onQuickPrompt: (prompt: string) => void;
+  onFillPrompt?: (prompt: string) => void;
   activeArtifactId?: number | null;
   onViewArtifact?: (messageId: number) => void;
-  // Kept for backward compatibility with existing tests/parent callers
   onConfirm?: (messageId: number) => void;
 }) {
   const containerRef = useRef<HTMLElement>(null);
   const isNearBottomRef = useRef(true);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
   const scrollOffsetFromBottomRef = useRef<number | null>(null);
   const prevFirstMessageIdRef = useRef<number | null>(messages[0]?.id ?? null);
   const prevLastMessageIdRef = useRef<number | null>(
@@ -317,7 +374,26 @@ export function ReportAssistantChat({
     const threshold = 120;
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
-    isNearBottomRef.current = distanceFromBottom <= threshold;
+    const nearBottom = distanceFromBottom <= threshold;
+    isNearBottomRef.current = nearBottom;
+    setShowScrollBottomBtn(!nearBottom && messages.length > 3);
+  };
+
+  const scrollToBottom = (smooth = true) => {
+    const container = containerRef.current;
+    if (!container) return;
+    const behavior =
+      smooth &&
+      !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+        ? "smooth"
+        : "auto";
+    if (typeof container.scrollTo === "function") {
+      container.scrollTo({ top: container.scrollHeight, behavior });
+    } else {
+      container.scrollTop = container.scrollHeight;
+    }
+    isNearBottomRef.current = true;
+    setShowScrollBottomBtn(false);
   };
 
   // Preserve scroll position when older messages are prepended
@@ -352,6 +428,7 @@ export function ReportAssistantChat({
       isInitialLoadRef.current = false;
       container.scrollTop = container.scrollHeight;
       isNearBottomRef.current = true;
+      setShowScrollBottomBtn(false);
     }
   }, [conversationId, messages.length]);
 
@@ -368,16 +445,7 @@ export function ReportAssistantChat({
 
       // Always auto-scroll if user sent the message, or if user was already at bottom
       if (lastMessage.role === "USER" || isNearBottomRef.current) {
-        const behavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")
-          .matches
-          ? "auto"
-          : "smooth";
-        if (typeof container.scrollTo === "function") {
-          container.scrollTo({ top: container.scrollHeight, behavior });
-        } else {
-          container.scrollTop = container.scrollHeight;
-        }
-        isNearBottomRef.current = true;
+        scrollToBottom(true);
       }
     }
   }, [messages]);
@@ -395,7 +463,7 @@ export function ReportAssistantChat({
     <section
       ref={containerRef}
       onScroll={handleScroll}
-      className="scrollbar-soft min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6"
+      className="scrollbar-soft relative min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6"
       aria-label="Nội dung hội thoại"
       aria-live="polite"
     >
@@ -467,8 +535,8 @@ export function ReportAssistantChat({
       ) : (
         /* State 1: Mới bắt đầu (Executive Analytics Welcome) */
         <div className="mx-auto flex max-w-2xl flex-col items-center py-6 text-center sm:py-8">
-          <div className="flex size-13 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary shadow-xs dark:border-primary/30 dark:bg-primary/20">
-            <Sparkles aria-hidden="true" className="size-6.5 text-primary" />
+          <div className="flex size-14 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary shadow-xs dark:border-primary/30 dark:bg-primary/20">
+            <Sparkles aria-hidden="true" className="size-7 text-primary" />
           </div>
 
           <h3 className="mt-3.5 text-lg font-bold text-slate-900 dark:text-slate-100 sm:text-xl">
@@ -477,7 +545,7 @@ export function ReportAssistantChat({
 
           <p className="mt-1.5 max-w-lg text-xs leading-relaxed text-slate-600 dark:text-slate-400 sm:text-sm">
             Trao đổi trực tiếp để làm rõ yêu cầu, kiểm tra kế hoạch truy vấn và
-            trích xuất báo cáo vận hành y tế từ cơ sở dữ liệu thực tế.
+            trích xuất báo cáo vận hành y tế từ cơ sở dữ liệu thực tế của hệ thống.
           </p>
 
           {/* 3 Core Principles */}
@@ -488,11 +556,10 @@ export function ReportAssistantChat({
                   className="size-3.5 text-primary"
                   aria-hidden="true"
                 />
-                <span>Dữ liệu thực tế</span>
+                <span>1. Dữ liệu thực tế</span>
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                Chỉ truy vấn từ các bảng dữ liệu vận hành đã phân quyền, không
-                bịa số liệu.
+                Chỉ truy vấn từ các view phân quyền an toàn, tuyệt đối không bịa số liệu.
               </p>
             </div>
 
@@ -502,11 +569,10 @@ export function ReportAssistantChat({
                   className="size-3.5 text-emerald-600 dark:text-emerald-400"
                   aria-hidden="true"
                 />
-                <span>Duyệt trước khi tạo</span>
+                <span>2. Duyệt trước khi tạo</span>
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                Luôn lập kế hoạch rõ ràng để bạn kiểm tra các chỉ số trước khi
-                khởi tạo báo cáo.
+                Luôn lập kế hoạch chỉ số rõ ràng để bạn kiểm tra trước khi khởi chạy.
               </p>
             </div>
 
@@ -516,38 +582,99 @@ export function ReportAssistantChat({
                   className="size-3.5 text-sky-600 dark:text-sky-400"
                   aria-hidden="true"
                 />
-                <span>Trực quan & Xuất tệp</span>
+                <span>3. Trực quan & Xuất tệp</span>
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
-                Hiển thị biểu đồ tương tác, bảng dữ liệu và hỗ trợ xuất file
-                PDF, CSV nhanh chóng.
+                Hiển thị biểu đồ tương tác, bảng dữ liệu và xuất CSV, PDF nhanh chóng.
               </p>
             </div>
           </div>
 
-          {/* Quick Prompts */}
-          <div className="mt-6 w-full text-left">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Gợi ý câu hỏi phân tích thực tế
-            </h4>
-            <div className="mt-2.5 grid gap-2.5 sm:grid-cols-2">
-              {QUICK_PROMPTS.map((prompt) => (
-                <button
-                  key={prompt}
-                  type="button"
-                  disabled={isPending}
-                  onClick={() => onQuickPrompt(prompt)}
-                  className="group relative flex min-h-13 flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 text-left text-xs sm:text-sm text-slate-800 shadow-2xs transition-all hover:border-primary/60 hover:bg-slate-50 hover:shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary/50 dark:hover:bg-slate-800/80 cursor-pointer"
-                >
-                  <span className="font-medium leading-snug">{prompt}</span>
-                  <div className="mt-2 flex items-center justify-end text-[11px] font-semibold text-primary opacity-70 group-hover:opacity-100 transition-opacity">
-                    <span>Sử dụng câu hỏi này</span>
-                    <ArrowRight aria-hidden="true" className="ml-1 size-3" />
-                  </div>
-                </button>
-              ))}
+          {/* Categorized Quick Prompts */}
+          <div className="mt-6 w-full text-left space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Gợi ý câu hỏi phân tích theo phạm vi dữ liệu
+              </h4>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">
+                Nhấp để gửi câu hỏi mẫu
+              </span>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              {PROMPT_CATEGORIES.flatMap((category) =>
+                category.prompts.map((prompt) => {
+                  const CategoryIcon = category.icon;
+                  return (
+                    <div
+                      key={prompt.text}
+                      className="group relative flex min-h-14 flex-col justify-between rounded-xl border border-slate-200/90 bg-white p-3.5 text-left text-xs sm:text-sm text-slate-800 shadow-2xs transition-all hover:border-primary/60 hover:bg-primary/2 hover:shadow-xs focus-within:ring-2 focus-within:ring-primary dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-primary/50 dark:hover:bg-slate-800/80"
+                    >
+                      <div>
+                        <div className="mb-1.5 flex items-center justify-between gap-1.5">
+                          <span className="inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                            <CategoryIcon className="size-3 text-primary" aria-hidden="true" />
+                            {category.title}
+                          </span>
+                          <span className="rounded border border-primary/20 bg-primary/5 px-1 py-0.2 text-[9px] font-bold text-primary dark:text-teal-300">
+                            {prompt.tag}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => onQuickPrompt(prompt.text)}
+                          className="w-full text-left font-medium leading-snug text-slate-800 dark:text-slate-200 hover:text-primary transition-colors cursor-pointer outline-none"
+                        >
+                          {prompt.text}
+                        </button>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px] font-semibold dark:border-slate-800/80">
+                        <button
+                          type="button"
+                          disabled={isPending}
+                          onClick={() => onQuickPrompt(prompt.text)}
+                          className="flex items-center gap-1 text-primary hover:underline cursor-pointer"
+                        >
+                          <span>Gửi ngay</span>
+                          <ArrowRight aria-hidden="true" className="size-3" />
+                        </button>
+                        {onFillPrompt && (
+                          <button
+                            type="button"
+                            disabled={isPending}
+                            onClick={() => onFillPrompt(prompt.text)}
+                            className="flex items-center gap-1 rounded-md px-2 py-0.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 cursor-pointer transition-colors"
+                            aria-label="Điền vào khung chat"
+                            title="Điền câu hỏi này vào khung soạn thảo để chỉnh sửa"
+                          >
+                            <Pencil aria-hidden="true" className="size-3" />
+                            <span>Sửa trước khi gửi</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }),
+              )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Floating scroll to bottom button */}
+      {showScrollBottomBtn && (
+        <div className="sticky bottom-2 left-0 right-0 flex justify-center pointer-events-none pb-1">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => scrollToBottom(true)}
+            className="pointer-events-auto h-8 gap-1.5 rounded-full bg-slate-900/90 px-3 text-xs font-semibold text-white shadow-md hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white cursor-pointer"
+            aria-label="Cuộn xuống tin nhắn mới nhất"
+          >
+            <ArrowDown className="size-3.5" aria-hidden="true" />
+            <span>Tin mới nhất</span>
+          </Button>
         </div>
       )}
     </section>

@@ -3,7 +3,10 @@ import {
   AlertCircle,
   MessageSquarePlus,
   MessagesSquare,
+  PanelLeftClose,
   Search,
+  Sparkles,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +16,7 @@ function formatUpdatedAt(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   const now = new Date();
+
   const isToday =
     date.getDate() === now.getDate() &&
     date.getMonth() === now.getMonth() &&
@@ -20,6 +24,20 @@ function formatUpdatedAt(value: string) {
 
   if (isToday) {
     return `Hôm nay, ${new Intl.DateTimeFormat("vi-VN", {
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date)}`;
+  }
+
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
+
+  if (isYesterday) {
+    return `Hôm qua, ${new Intl.DateTimeFormat("vi-VN", {
       hour: "2-digit",
       minute: "2-digit",
     }).format(date)}`;
@@ -41,6 +59,7 @@ export function ReportAssistantConversationList({
   onRetry,
   onSelect,
   onNew,
+  onCollapse,
 }: {
   conversations: ReportAssistantConversation[];
   selectedId: number | null;
@@ -49,6 +68,7 @@ export function ReportAssistantConversationList({
   onRetry: () => void;
   onSelect: (id: number) => void;
   onNew: () => void;
+  onCollapse?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -61,33 +81,48 @@ export function ReportAssistantConversationList({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-white dark:bg-slate-900">
       {/* Header bar */}
-      <div className="shrink-0 border-b border-slate-200/80 p-3 sm:p-3.5 dark:border-slate-800">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <h2 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+      <div className="shrink-0 border-b border-slate-200/80 p-3 pr-12 sm:p-3 sm:pr-12 lg:pr-3 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 shrink-0">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
               Hội thoại
             </h2>
             {conversations.length > 0 && (
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300 shrink-0">
                 {conversations.length}
               </span>
             )}
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 rounded-lg border-slate-200 px-2.5 text-xs font-semibold shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
-            onClick={onNew}
-            aria-label="Tạo hội thoại mới"
-            title="Bắt đầu hội thoại phân tích mới"
-          >
-            <MessageSquarePlus
-              aria-hidden="true"
-              className="size-3.5 text-primary"
-            />
-            <span>Tạo mới</span>
-          </Button>
+          <div className="flex items-center gap-1 shrink-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1 rounded-lg border-slate-200 px-2 text-xs font-semibold shadow-2xs hover:border-primary/40 hover:bg-primary/5 hover:text-primary dark:border-slate-700 dark:hover:bg-slate-800 cursor-pointer"
+              onClick={onNew}
+              aria-label="Tạo hội thoại mới"
+              title="Bắt đầu hội thoại phân tích mới"
+            >
+              <MessageSquarePlus
+                aria-hidden="true"
+                className="size-3.5 text-primary"
+              />
+              <span>Tạo mới</span>
+            </Button>
+            {onCollapse && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="hidden size-8 text-slate-400 hover:text-slate-700 lg:inline-flex dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer"
+                onClick={onCollapse}
+                title="Thu gọn danh sách hội thoại"
+                aria-label="Thu gọn danh sách hội thoại"
+              >
+                <PanelLeftClose className="size-4" aria-hidden="true" />
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Search input when conversations count > 3 */}
@@ -103,8 +138,18 @@ export function ReportAssistantConversationList({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Tìm kiếm hội thoại"
-              className="h-8 pl-8 pr-2.5 text-xs bg-slate-50/80 border-slate-200 dark:bg-slate-850 dark:border-slate-750"
+              className="h-8 pl-8 pr-7 text-xs bg-slate-50/80 border-slate-200 dark:bg-slate-850 dark:border-slate-750"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-0.5 cursor-pointer"
+                aria-label="Xóa nội dung tìm kiếm"
+              >
+                <X className="size-3.5" aria-hidden="true" />
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -198,21 +243,30 @@ export function ReportAssistantConversationList({
           })}
         </nav>
       ) : searchQuery ? (
-        <div className="p-4 text-center text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex flex-1 flex-col items-center justify-center p-4 text-center text-xs text-slate-500 dark:text-slate-400">
           <p>
             Không tìm thấy hội thoại nào phù hợp với &ldquo;{searchQuery}&rdquo;
           </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="mt-2 text-xs text-primary hover:underline cursor-pointer"
+            onClick={() => setSearchQuery("")}
+          >
+            Xóa tìm kiếm
+          </Button>
         </div>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
           <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-            <MessagesSquare className="size-5" aria-hidden="true" />
+            <Sparkles className="size-5" aria-hidden="true" />
           </div>
           <p className="mt-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
             Chưa có hội thoại
           </p>
           <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
-            Bắt đầu bằng một câu hỏi về dữ liệu hệ thống.
+            Bắt đầu bằng một câu hỏi về dữ liệu vận hành hệ thống.
           </p>
         </div>
       )}
