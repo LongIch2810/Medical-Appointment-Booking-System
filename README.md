@@ -55,17 +55,17 @@ The current deployments are available here:
 - [Patient portal](https://patientuilifehealth.vercel.app/)
 - [Admin / Doctor portal](https://adminmanagementuilifehealth.vercel.app/)
 
-### Patient booking journey
+### Patient portal
 
-![LifeHealth appointment booking journey](docs/showcase/booking-flow.png)
+![Current LifeHealth patient portal and sample appointment card](docs/screenshots/live/readme-patient-home.png)
 
-The showcase follows the primary workflow from specialist discovery to date selection and operational follow-up. Personal account details, clinical records, addresses, and doctor contact information are intentionally excluded.
+Current patient-facing interface captured from the local Docker demo. The appointment card is illustrative; booking is simulated and no real patient data is shown.
 
-### Admin and Doctor appointment operations
+### Admin and Doctor portal
 
-![LifeHealth appointment management in light and dark modes](docs/showcase/booking-admin-themes.png)
+![Current LifeHealth Admin and Doctor sign-in portal](docs/screenshots/live/readme-admin-portal.png)
 
-The management view keeps search, status, booking mode, date range, and doctor filters consistent across light and dark themes.
+Current role-based entry screen for the Admin and Doctor workspace, captured from the local Docker demo.
 
 ## UI / UX Design System
 
