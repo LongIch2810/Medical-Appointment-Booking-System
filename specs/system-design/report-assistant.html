@@ -1,0 +1,261 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Patient chat &amp; report assistant — LifeHealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: rgba(45,49,66,0.12);
+      --accent: #eb6c36;
+      --accent-tint: rgba(235,108,54,0.08);
+      --link: #2e5aa8;
+      --sans: 'Geist', system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif', serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      margin: 0;
+      padding: 40px 28px 32px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+    .frame { width: min(100%, 1320px); margin: 0 auto; }
+    header { margin: 0 0 28px; }
+    .eyebrow, .section-kicker {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font: 500 8px/1.4 var(--mono);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    h1, h2 { margin: 0; font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; }
+    h1 { font-size: 32px; line-height: 1.08; }
+    h2 { font-size: 24px; line-height: 1.15; }
+    .subtitle {
+      max-width: 800px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font: 400 13px/1.55 var(--sans);
+    }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    nav a, .back-link {
+      color: var(--link);
+      font: 500 10px/1.4 var(--mono);
+      text-decoration: none;
+    }
+    nav a { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 4px; }
+    nav a:hover, .back-link:hover { text-decoration: underline; }
+    .diagram-section { padding: 24px 0 28px; border-top: 1px solid var(--rule); }
+    .section-head { margin: 0 0 8px; }
+    .diagram-wrap { width: 100%; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 1060px; height: auto; }
+    .step-mask, .terminal-mask { fill: var(--paper); }
+    .step { fill: #ffffff; stroke: var(--ink); stroke-width: 1; }
+    .step-focus { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.4; }
+    .decision { fill: var(--paper-2); stroke: var(--ink); stroke-width: 1; }
+    .terminal { fill: rgba(79,93,117,0.08); stroke: var(--muted); stroke-width: 1; }
+    .tag-box { fill: transparent; stroke: rgba(45,49,66,0.36); stroke-width: 0.8; }
+    .tag-box-focus { stroke: rgba(235,108,54,0.55); }
+    .tag { fill: var(--soft); font: 500 7px var(--mono); letter-spacing: 0.12em; }
+    .tag-focus { fill: var(--accent); }
+    .node-title { fill: var(--ink); font: 600 12px var(--sans); text-anchor: middle; }
+    .node-sub { fill: var(--muted); font: 400 8.5px var(--mono); text-anchor: middle; }
+    .decision-title { fill: var(--ink); font: 600 11px var(--sans); text-anchor: middle; }
+    .terminal-title { fill: var(--ink); font: 600 11px var(--sans); text-anchor: middle; }
+    .edge {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 1.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .patient-chat-diagram .edge { marker-end: url(#patient-chat-arrow); }
+    .report-assistant-diagram .edge { marker-end: url(#report-assistant-arrow); }
+    .patient-chat-diagram .edge-focus { stroke: var(--accent); marker-end: url(#patient-chat-arrow-focus); }
+    .report-assistant-diagram .edge-focus { stroke: var(--accent); marker-end: url(#report-assistant-arrow-focus); }
+    .edge-label-mask { fill: var(--paper); }
+    .edge-label { fill: var(--soft); font: 500 8px var(--mono); letter-spacing: 0.07em; text-anchor: middle; }
+    .edge-label-focus { fill: var(--accent); }
+    .legend-rule { stroke: var(--rule); stroke-width: 0.8; }
+    .legend-title { fill: var(--muted); font: 500 8px var(--mono); letter-spacing: 0.14em; }
+    .legend-text { fill: var(--muted); font: 400 8px var(--mono); }
+    .notes {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .note {
+      padding: 16px 18px;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    .note-kicker { margin: 0 0 8px; color: var(--soft); font: 500 8px/1.4 var(--mono); letter-spacing: 0.14em; }
+    .note h3 { margin: 0 0 6px; font: 600 12px/1.35 var(--sans); }
+    .note p { margin: 0; color: var(--muted); font: 400 11px/1.55 var(--sans); }
+    .note code { color: var(--ink); font: 400 9px var(--mono); }
+    .source { margin-top: 8px !important; font: 400 9px/1.5 var(--mono) !important; }
+    .source a { color: var(--link); text-decoration: none; }
+    .source a:hover { text-decoration: underline; }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+      color: var(--soft);
+      font: 400 8px/1.5 var(--mono);
+    }
+    @media (max-width: 700px) {
+      body { padding: 28px 16px 24px; }
+      h1 { font-size: 28px; }
+      .notes { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+    }
+    @media print {
+      body { padding: 16px; }
+      .diagram-wrap { overflow: visible; }
+      svg { min-width: 0; }
+      nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <header>
+      <p class="eyebrow">LifeHealth ? LangGraph / report-assistant</p>
+      <h1>Report assistant graph</h1>
+      <p class="subtitle">Lu?ng report assistant: ph?n lo?i y?u c?u, admin duy?t k? ho?ch, x?c th?c r?i t?o b?o c?o v? PDF.</p>
+      <nav aria-label="?i t?i s? ??">
+        <a href="./patient-chat.html">01 ? Patient chat</a>
+        <a href="./system-design.html">? System design t?ng quan</a>
+      </nav>
+    </header>
+
+    <section class="diagram-section" id="report-assistant" aria-labelledby="report-assistant-heading">
+      <div class="section-head">
+        <p class="section-kicker">StateGraph · report-assistant:v1</p>
+        <h2 id="report-assistant-heading">Report assistant: duyệt kế hoạch rồi tạo báo cáo</h2>
+        <p class="subtitle">Admin nêu chỉ số và khoảng thời gian. Trợ lý tạo plan để xác nhận; graph chỉ chạy pipeline SQL, biểu đồ và PDF sau khi plan được duyệt và xác thực lại.</p>
+      </div>
+      <div class="diagram-wrap">
+        <svg class="report-assistant-diagram" viewBox="0 0 1240 1140" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="report-assistant-title report-assistant-desc">
+          <title id="report-assistant-title">Report assistant StateGraph</title>
+          <desc id="report-assistant-desc">Luồng trợ lý báo cáo phân loại yêu cầu, đề xuất kế hoạch, chờ admin duyệt, xác thực kế hoạch rồi gọi pipeline tạo báo cáo và PDF.</desc>
+          <defs>
+            <marker id="report-assistant-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+            <marker id="report-assistant-arrow-focus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+          </defs>
+
+          <path class="edge" d="M620 80 V112"/>
+          <path class="edge" d="M620 188 V216"/>
+          <path class="edge" d="M620 288 V336"/>
+          <path class="edge edge-focus" d="M620 448 V530"/>
+          <path class="edge" d="M490 392 H308 Q300 392 300 400 V1004 Q300 1012 308 1012 H552 Q560 1012 560 1020 V1056"/>
+          <path class="edge edge-focus" d="M620 650 V724"/>
+          <path class="edge" d="M480 590 H348 Q340 590 340 582 V260 Q340 252 348 252 H408"/>
+          <path class="edge" d="M620 836 V900"/>
+          <path class="edge" d="M500 780 H368 Q360 780 360 788 V1070 Q360 1078 368 1078 H520"/>
+          <path class="edge" d="M620 1000 V1050"/>
+
+          <rect class="edge-label-mask" x="642" y="474" width="62" height="12" rx="2"/>
+          <text class="edge-label edge-label-focus" x="673" y="483">REPORT</text>
+          <rect class="edge-label-mask" x="344" y="372" width="54" height="12" rx="2"/>
+          <text class="edge-label" x="371" y="381">OTHER</text>
+          <rect class="edge-label-mask" x="646" y="676" width="70" height="12" rx="2"/>
+          <text class="edge-label edge-label-focus" x="681" y="685">APPROVE</text>
+          <rect class="edge-label-mask" x="252" y="520" width="70" height="12" rx="2"/>
+          <text class="edge-label" x="287" y="529">REVISE</text>
+          <rect class="edge-label-mask" x="646" y="852" width="46" height="12" rx="2"/>
+          <text class="edge-label" x="669" y="861">VALID</text>
+          <rect class="edge-label-mask" x="286" y="896" width="54" height="12" rx="2"/>
+          <text class="edge-label" x="313" y="905">STALE</text>
+
+          <ellipse class="terminal-mask" cx="620" cy="58" rx="88" ry="22"/>
+          <ellipse class="terminal" cx="620" cy="58" rx="88" ry="22"/>
+          <text class="terminal-title" x="620" y="62">Admin gửi yêu cầu</text>
+
+          <rect class="step-mask" x="408" y="112" width="424" height="76" rx="6"/>
+          <rect class="step" x="408" y="112" width="424" height="76" rx="6"/>
+          <rect class="tag-box" x="420" y="122" width="40" height="12" rx="2"/>
+          <text class="tag" x="440" y="131" text-anchor="middle">NODE</text>
+          <text class="node-title" x="620" y="153">Chuẩn bị lượt + lịch sử chat</text>
+          <text class="node-sub" x="620" y="173">thread theo user ID + conversation ID</text>
+
+          <rect class="step-mask" x="408" y="216" width="424" height="72" rx="6"/>
+          <rect class="step" x="408" y="216" width="424" height="72" rx="6"/>
+          <rect class="tag-box" x="420" y="226" width="40" height="12" rx="2"/>
+          <text class="tag" x="440" y="235" text-anchor="middle">STORE</text>
+          <text class="node-title" x="620" y="257">Nạp tuỳ chọn báo cáo</text>
+          <text class="node-sub" x="620" y="277">profile dài hạn trong PostgresStore</text>
+
+          <polygon class="decision" points="620,336 750,392 620,448 490,392"/>
+          <text class="decision-title" x="620" y="389">Phân loại yêu cầu</text>
+          <text class="node-sub" x="620" y="405">trả lời · làm rõ · đề xuất plan</text>
+
+          <polygon class="decision" points="620,530 760,590 620,650 480,590"/>
+          <text class="decision-title" x="620" y="587">Chờ admin xác nhận plan</text>
+          <text class="node-sub" x="620" y="603">PROPOSE_PLAN · interrupt</text>
+
+          <polygon class="decision" points="620,724 740,780 620,836 500,780"/>
+          <text class="decision-title" x="620" y="777">Plan còn hợp lệ?</text>
+          <text class="node-sub" x="620" y="793">schema · ngày · nội dung đã duyệt</text>
+
+          <rect class="step-mask" x="408" y="900" width="424" height="100" rx="6"/>
+          <rect class="step step-focus" x="408" y="900" width="424" height="100" rx="6"/>
+          <rect class="tag-box tag-box-focus" x="420" y="910" width="66" height="12" rx="2"/>
+          <text class="tag tag-focus" x="453" y="919" text-anchor="middle">SUBGRAPH</text>
+          <text class="node-title" x="620" y="946">Chạy create_report graph</text>
+          <text class="node-sub" x="620" y="966">SQL read-only → chart + thuyết minh có grounding</text>
+          <text class="node-sub" x="620" y="982">render PDF → Cloudinary → trả dữ liệu + URL</text>
+
+          <ellipse class="terminal-mask" cx="620" cy="1078" rx="100" ry="28"/>
+          <ellipse class="terminal" cx="620" cy="1078" rx="100" ry="28"/>
+          <text class="terminal-title" x="620" y="1082">Hoàn tất phản hồi</text>
+
+          <line class="legend-rule" x1="32" y1="1120" x2="1208" y2="1120"/>
+          <text class="legend-title" x="32" y="1132">LEGEND</text>
+          <line class="edge" x1="92" y1="1129" x2="132" y2="1129"/>
+          <text class="legend-text" x="144" y="1132">luồng graph</text>
+          <polygon points="264,1122 276,1129 264,1136 252,1129" fill="var(--paper-2)" stroke="var(--ink)"/>
+          <text class="legend-text" x="286" y="1132">điều kiện / xác nhận</text>
+          <rect x="430" y="1123" width="12" height="12" rx="2" fill="var(--accent-tint)" stroke="var(--accent)"/>
+          <text class="legend-text" x="452" y="1132">bước tạo báo cáo</text>
+        </svg>
+      </div>
+      <div class="notes">
+        <article class="note">
+          <p class="note-kicker">REPORT SUBGRAPH</p>
+          <h3>Pipeline bên trong node tạo báo cáo</h3>
+          <p><code>analyze_data</code> truy vấn các admin report views bằng role chỉ đọc → <code>generate_chart_config</code> → <code>generate_content</code> kiểm tra số liệu có căn cứ → render chart và tạo PDF trên Cloudinary. Lỗi ở các bước được chuyển sang node tạo câu trả lời lỗi.</p>
+          <p class="source">Implementation: <a href="../../chatbot/src/langgraph/report_assistant.graph.ts">report_assistant.graph.ts</a> · <a href="../../chatbot/src/langgraph/create_report.graph.ts">create_report.graph.ts</a></p>
+        </article>
+        <article class="note">
+          <p class="note-kicker">DATA BOUNDARY</p>
+          <h3>Report assistant chỉ đọc dữ liệu báo cáo</h3>
+          <p>SQL dùng các view <code>chatbot_report_*</code> qua role <code>chatbot_readonly</code>. Checkpoint graph và profile tuỳ chọn tách khỏi các view nghiệp vụ; bảng ứng dụng vẫn là nguồn chuẩn cho transcript và quyền sở hữu hội thoại.</p>
+          <p class="source">Thread: <code>report-assistant:v1:{userId}:{conversationId}</code> · PDF asset: Cloudinary</p>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      <span>LifeHealth ? report-assistant graph</span>
+      <a class="back-link" href="./system-design.html">Quay l?i s? ?? ki?n tr?c t?ng quan ?</a>
+    </footer>
+  </main>
+</body>
+</html>

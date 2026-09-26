@@ -1,0 +1,395 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Kiáº¿n trÃºc há»‡ thá»‘ng LifeHealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: rgba(45,49,66,0.12);
+      --accent: #eb6c36;
+      --accent-tint: rgba(235,108,54,0.08);
+      --link: #2e5aa8;
+      --sans: 'Geist', system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif', serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px 28px 32px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+
+    .frame { width: min(100%, 1320px); margin: 0 auto; }
+    header { margin: 0 0 22px; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font: 500 8px/1.4 var(--mono);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font: 400 28px/1.08 var(--serif);
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      max-width: 780px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font: 400 13px/1.55 var(--sans);
+    }
+
+    .diagram-wrap { width: 100%; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 1120px; height: auto; }
+    .page-paper { fill: var(--paper); }
+    .zone {
+      fill: rgba(45,49,66,0.02);
+      stroke: rgba(45,49,66,0.10);
+      stroke-width: 0.8;
+    }
+    .zone-mask { fill: var(--paper); }
+    .zone-text {
+      fill: rgba(45,49,66,0.48);
+      font: 500 8px var(--mono);
+      letter-spacing: 0.14em;
+    }
+    .node {
+      fill: #ffffff;
+      stroke: var(--ink);
+      stroke-width: 1;
+    }
+    .node-user {
+      fill: rgba(79,93,117,0.08);
+      stroke: var(--soft);
+    }
+    .node-store {
+      fill: rgba(45,49,66,0.05);
+      stroke: var(--muted);
+    }
+    .node-external {
+      fill: rgba(45,49,66,0.03);
+      stroke: rgba(45,49,66,0.42);
+      stroke-dasharray: 4 3;
+    }
+    .node-focus {
+      fill: var(--accent-tint);
+      stroke: var(--accent);
+      stroke-width: 1.3;
+    }
+    .node-tag {
+      fill: var(--soft);
+      font: 500 7px var(--mono);
+      letter-spacing: 0.14em;
+    }
+    .node-title {
+      fill: var(--ink);
+      font: 600 12px var(--sans);
+    }
+    .node-sub {
+      fill: var(--muted);
+      font: 400 9px var(--mono);
+    }
+    .node-sub-small {
+      fill: var(--muted);
+      font: 400 8px var(--mono);
+    }
+    .node-divider {
+      stroke: var(--rule);
+      stroke-width: 0.8;
+    }
+    .edge-link, .edge-data {
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .edge-link {
+      stroke: var(--link);
+      stroke-width: 1.35;
+    }
+    .edge-data {
+      stroke: var(--muted);
+      stroke-width: 1.2;
+    }
+    .edge-label-mask { fill: var(--paper); }
+    .edge-label {
+      fill: var(--muted);
+      font: 400 8px var(--mono);
+      letter-spacing: 0.06em;
+      text-anchor: middle;
+    }
+    .legend-rule { stroke: var(--rule); stroke-width: 0.8; }
+    .legend-label {
+      fill: var(--muted);
+      font: 500 8px var(--mono);
+      letter-spacing: 0.12em;
+    }
+    .legend-text {
+      fill: var(--muted);
+      font: 400 8px var(--mono);
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: 1.12fr 1fr 0.9fr;
+      gap: 16px;
+      margin-top: 22px;
+    }
+    .card {
+      min-height: 150px;
+      padding: 18px 20px;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    .card-kicker {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font: 500 8px/1.4 var(--mono);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+    .card h2 {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 9px;
+      font: 600 13px/1.35 var(--sans);
+    }
+    .dot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--muted); }
+    .dot-accent { background: var(--accent); }
+    .dot-link { background: var(--link); }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font: 400 11px/1.55 var(--sans);
+    }
+    .card p + p { margin-top: 7px; }
+    .card code {
+      color: var(--ink);
+      font: 400 10px var(--mono);
+    }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 20px;
+      padding-top: 11px;
+      border-top: 1px solid var(--rule);
+      color: var(--soft);
+      font: 400 9px/1.5 var(--mono);
+    }
+    footer a { color: var(--muted); text-decoration-color: rgba(79,93,117,0.35); text-underline-offset: 2px; }
+
+    @media (max-width: 800px) {
+      body { padding: 28px 18px; }
+      h1 { font-size: 28px; }
+      .summary { grid-template-columns: 1fr; }
+      .card { min-height: 0; }
+      footer { flex-direction: column; }
+    }
+    @media print {
+      body { padding: 12mm; }
+      .diagram-wrap { overflow: visible; }
+      svg { min-width: 0; }
+      .summary { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <header>
+      <p class="eyebrow">System architecture Â· as-is</p>
+      <h1>Kiáº¿n trÃºc há»‡ thá»‘ng LifeHealth</h1>
+      <p class="subtitle">Hai á»©ng dá»¥ng web dÃ¹ng chung API nghiá»‡p vá»¥; dá»‹ch vá»¥ AI gá»i backend vÃ  dÃ¹ng cÃ¡c vÃ¹ng dá»¯ liá»‡u riÃªng cho truy váº¥n, há»™i thoáº¡i vÃ  bÃ¡o cÃ¡o.</p>
+      <p class="subtitle">Chi tiết: <a href="./patient-chat.html">Patient chat</a> | <a href="./report-assistant.html">Report assistant</a> | <a href="./backend-architecture.html">Backend architecture</a></p>
+    </header>
+
+    <section class="diagram-wrap" aria-label="SÆ¡ Ä‘á»“ kiáº¿n trÃºc LifeHealth">
+      <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="system-design-title system-design-desc">
+        <title id="system-design-title">Kiáº¿n trÃºc há»‡ thá»‘ng LifeHealth</title>
+        <desc id="system-design-desc">SÆ¡ Ä‘á»“ thá»ƒ hiá»‡n ngÆ°á»i dÃ¹ng qua hai á»©ng dá»¥ng web tá»›i API NestJS, dá»‹ch vá»¥ chatbot LangGraph, PostgreSQL, Redis, OpenAI vÃ  Qdrant, cÃ¹ng ranh giá»›i truy cáº­p dá»¯ liá»‡u cá»§a chatbot.</desc>
+        <defs>
+          <marker id="system-design-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
+          </marker>
+          <marker id="system-design-arrow-data" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/>
+          </marker>
+        </defs>
+
+        <rect class="page-paper" x="0" y="0" width="1280" height="720"/>
+
+        <!-- Zones sit behind all connectors and components. -->
+        <g aria-label="CÃ¡c vÃ¹ng kiáº¿n trÃºc">
+          <rect class="zone" x="40" y="128" width="344" height="456" rx="8"/>
+          <rect class="zone" x="408" y="128" width="296" height="456" rx="8"/>
+          <rect class="zone" x="728" y="128" width="512" height="456" rx="8"/>
+
+          <rect class="zone-mask" x="56" y="132" width="116" height="14" rx="2"/>
+          <text class="zone-text" x="64" y="142">CLIENT EXPERIENCE</text>
+          <rect class="zone-mask" x="424" y="132" width="128" height="14" rx="2"/>
+          <text class="zone-text" x="432" y="142">APPLICATION SERVICES</text>
+          <rect class="zone-mask" x="744" y="132" width="148" height="14" rx="2"/>
+          <text class="zone-text" x="752" y="142">DATA &amp; AI SERVICES</text>
+        </g>
+
+        <!-- Connectors are drawn before nodes. -->
+        <g aria-label="Luá»“ng dá»¯ liá»‡u vÃ  yÃªu cáº§u">
+          <path class="edge-link" d="M192,332 H216" marker-end="url(#system-design-arrow-link)"/>
+          <path class="edge-link" d="M360,292 H432" marker-end="url(#system-design-arrow-link)"/>
+
+          <path class="edge-link" d="M572,348 V408" marker-end="url(#system-design-arrow-link)"/>
+          <path class="edge-data" d="M620,408 V348" marker-end="url(#system-design-arrow-data)"/>
+
+          <path class="edge-data" d="M672,292 H760" marker-end="url(#system-design-arrow-data)"/>
+          <path class="edge-data" d="M640,236 V188 Q640,180 648,180 H1084 Q1092,180 1092,188 V204" marker-end="url(#system-design-arrow-data)"/>
+
+          <path class="edge-data" d="M544,520 V532 Q544,540 552,540 H956 Q964,540 964,532 V268 Q964,260 956,260 H940" marker-end="url(#system-design-arrow-data)"/>
+          <path class="edge-link" d="M672,464 H760" marker-end="url(#system-design-arrow-link)"/>
+        </g>
+
+        <!-- Components. -->
+        <g aria-label="NgÆ°á»i dÃ¹ng">
+          <rect class="node node-user" x="64" y="292" width="128" height="80" rx="6"/>
+          <text class="node-tag" x="80" y="310">ACTORS</text>
+          <text class="node-title" x="80" y="330">NgÆ°á»i dÃ¹ng</text>
+          <text class="node-sub-small" x="80" y="348">Visitor Â· Patient</text>
+          <text class="node-sub-small" x="80" y="362">Doctor Â· Admin</text>
+        </g>
+
+        <g aria-label="Hai á»©ng dá»¥ng web">
+          <rect class="node" x="216" y="232" width="144" height="200" rx="6"/>
+          <text class="node-tag" x="232" y="250">CLIENT APPS</text>
+          <text class="node-title" x="232" y="270">Web clients</text>
+          <text class="node-title" x="232" y="300">Patient portal</text>
+          <text class="node-sub-small" x="232" y="316">frontend/ Â· React</text>
+          <line class="node-divider" x1="232" y1="332" x2="344" y2="332"/>
+          <text class="node-title" x="232" y="354">Doctor/admin</text>
+          <text class="node-sub-small" x="232" y="370">admin/ Â· React</text>
+          <text class="node-sub-small" x="232" y="402">i18n: frontend only</text>
+        </g>
+
+        <g aria-label="Backend API">
+          <rect class="node node-focus" x="432" y="236" width="240" height="112" rx="6"/>
+          <text class="node-tag" x="448" y="254">PRIMARY API</text>
+          <text class="node-title" x="448" y="276">Backend API</text>
+          <text class="node-sub" x="448" y="294">NestJS Â· REST Â· RBAC</text>
+          <text class="node-sub" x="448" y="312">Socket.IO Â· BullMQ workers</text>
+          <text class="node-sub-small" x="448" y="332">appointments Â· health Â· messaging</text>
+        </g>
+
+        <g aria-label="Dá»‹ch vá»¥ chatbot">
+          <rect class="node" x="432" y="408" width="240" height="112" rx="6"/>
+          <text class="node-tag" x="448" y="426">AI SERVICE</text>
+          <text class="node-title" x="448" y="448">Chatbot</text>
+          <text class="node-sub" x="448" y="466">Express Â· LangGraph</text>
+          <text class="node-sub" x="448" y="484">chat Â· roadmaps Â· reports</text>
+          <text class="node-sub-small" x="448" y="504">backend tools Â· approval flow</text>
+        </g>
+
+        <g aria-label="PostgreSQL">
+          <rect class="node node-store" x="760" y="204" width="180" height="112" rx="6"/>
+          <text class="node-tag" x="776" y="222">PERSISTENCE</text>
+          <text class="node-title" x="776" y="244">PostgreSQL</text>
+          <text class="node-sub" x="776" y="262">business database</text>
+          <text class="node-sub" x="776" y="280">isolated LangGraph schema</text>
+        </g>
+
+        <g aria-label="Redis">
+          <rect class="node node-store" x="1000" y="204" width="180" height="112" rx="6"/>
+          <text class="node-tag" x="1016" y="222">CACHE / QUEUE</text>
+          <text class="node-title" x="1016" y="244">Redis</text>
+          <text class="node-sub" x="1016" y="262">cache Â· sessions</text>
+          <text class="node-sub" x="1016" y="280">rate limit Â· BullMQ</text>
+          <text class="node-sub-small" x="1016" y="300">same Redis instance</text>
+        </g>
+
+        <g aria-label="OpenAI vÃ  Qdrant">
+          <rect class="node node-external" x="760" y="408" width="180" height="112" rx="6"/>
+          <text class="node-tag" x="776" y="426">AI / RETRIEVAL</text>
+          <text class="node-title" x="776" y="448">OpenAI + Qdrant</text>
+          <text class="node-sub" x="776" y="466">LLM Â· embeddings</text>
+          <text class="node-sub" x="776" y="484">vector retrieval</text>
+        </g>
+
+        <!-- Arrow labels use opaque paper masks with a visible gap to their strokes. -->
+        <g aria-label="NhÃ£n luá»“ng">
+          <rect class="edge-label-mask" x="360" y="268" width="72" height="14" rx="2"/>
+          <text class="edge-label" x="396" y="278">API + SOCKET</text>
+
+          <rect class="edge-label-mask" x="484" y="366" width="80" height="14" rx="2"/>
+          <text class="edge-label" x="524" y="376">AI REQUEST</text>
+          <rect class="edge-label-mask" x="636" y="366" width="64" height="14" rx="2"/>
+          <text class="edge-label" x="668" y="376">TOOL CALLS</text>
+
+          <rect class="edge-label-mask" x="680" y="268" width="72" height="14" rx="2"/>
+          <text class="edge-label" x="716" y="278">BUSINESS DATA</text>
+
+          <rect class="edge-label-mask" x="792" y="156" width="96" height="14" rx="2"/>
+          <text class="edge-label" x="840" y="166">CACHE / QUEUE</text>
+
+          <rect class="edge-label-mask" x="680" y="520" width="80" height="14" rx="2"/>
+          <text class="edge-label" x="720" y="530">VIEWS + STATE</text>
+          <rect class="edge-label-mask" x="680" y="472" width="72" height="14" rx="2"/>
+          <text class="edge-label" x="716" y="482">LLM + RAG</text>
+        </g>
+
+        <!-- Legend remains in its own horizontal footer strip. -->
+        <g aria-label="ChÃº giáº£i">
+          <line class="legend-rule" x1="40" y1="640" x2="1240" y2="640"/>
+          <text class="legend-label" x="40" y="678">LEGEND</text>
+          <line class="edge-link" x1="132" y1="674" x2="172" y2="674" marker-end="url(#system-design-arrow-link)"/>
+          <text class="legend-text" x="184" y="678">API / network</text>
+          <line class="edge-data" x1="328" y1="674" x2="368" y2="674" marker-end="url(#system-design-arrow-data)"/>
+          <text class="legend-text" x="380" y="678">persistence / service call</text>
+          <rect class="node-focus" x="596" y="666" width="20" height="16" rx="3"/>
+          <text class="legend-text" x="628" y="678">primary integration point</text>
+        </g>
+      </svg>
+    </section>
+
+    <section class="summary" aria-label="Ghi chÃº kiáº¿n trÃºc">
+      <article class="card">
+        <p class="card-kicker">Request &amp; identity</p>
+        <h2><span class="dot dot-accent" aria-hidden="true"></span>Backend Ä‘iá»u phá»‘i nghiá»‡p vá»¥</h2>
+        <p>Hai web app gá»i API báº±ng cookie session; backend Ã¡p dá»¥ng JWT vÃ  RBAC. Backend gá»i chatbot báº±ng internal service key vÃ  chuyá»ƒn tiáº¿p access token cá»§a ngÆ°á»i dÃ¹ng. Chatbot gá»i ngÆ°á»£c backend cho history vÃ  cÃ¡c thao tÃ¡c Ä‘Æ°á»£c duyá»‡t.</p>
+      </article>
+      <article class="card">
+        <p class="card-kicker">Data boundaries</p>
+        <h2><span class="dot" aria-hidden="true"></span>Hai lá»›p dá»¯ liá»‡u chatbot</h2>
+        <p>Backend Ä‘á»c/ghi dá»¯ liá»‡u nghiá»‡p vá»¥. Chatbot chá»‰ Ä‘á»c cÃ¡c PostgreSQL view Ä‘Æ°á»£c cáº¥p quyá»n; checkpoint LangGraph náº±m trong schema riÃªng. Redis dÃ¹ng cho cache, session, rate limit vÃ  BullMQ.</p>
+      </article>
+      <article class="card">
+        <p class="card-kicker">Integrations &amp; hosting</p>
+        <h2><span class="dot dot-link" aria-hidden="true"></span>Dá»‹ch vá»¥ ngoÃ i</h2>
+        <p>Cloudinary lÆ°u media vÃ  PDF; backend dÃ¹ng Google OAuth, SMTP; patient web tra cá»©u Ä‘á»‹a chá»‰ qua <code>provinces.open-api.vn</code>.</p>
+        <p>Vercel: hai web app Â· Render: backend Â· Chatbot: host production chÆ°a xÃ¡c minh.</p>
+      </article>
+    </section>
+
+    <footer>
+      <span>LifeHealth Â· runtime view Â· source snapshot in ../as-is</span>
+      <span>
+        Tham chiáº¿u:
+        <a href="../as-is/product-overview.md">product overview</a> Â·
+        <a href="../as-is/integrations.md">integrations</a> Â·
+        <a href="../as-is/permissions.md">permissions</a>
+      </span>
+    </footer>
+  </main>
+</body>
+</html>

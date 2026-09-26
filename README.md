@@ -175,6 +175,15 @@ Exact versions currently installed and running stably in this repository (see ea
 - **Client Applications (React 19):** Strict one-way data architecture: `Page/Component → Custom Hook → TanStack Query → Axios API Client`. Zustand is isolated to client-only UI state, while server cache invalidation handles synchronicity. Validation schemas are formalized with Zod and React Hook Form.
 - **AI Consultation Engine (LangChain/LangGraph):** State graph workflows orchestrating RAG queries over medical corpora, vector search in Qdrant, OCR on user-uploaded laboratory files, and PDF clinical report generation.
 
+### Detailed Architecture Diagrams
+
+The diagrams below are standalone HTML files in [`specs/system-design/`](specs/system-design/):
+
+- [Whole application system design](specs/system-design/system-design.html)
+- [Backend architecture](specs/system-design/backend-architecture.html) — API pipeline, auth/RBAC, domain modules, data stores, workers, realtime, and integrations
+- [Patient chat flow](specs/system-design/patient-chat.html)
+- [Report assistant flow](specs/system-design/report-assistant.html)
+
 ---
 
 ## Repository Layout

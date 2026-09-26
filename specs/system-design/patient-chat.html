@@ -1,0 +1,285 @@
+﻿<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>Patient chat &amp; report assistant — LifeHealth</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      color-scheme: light;
+      --paper: #f5f5f5;
+      --paper-2: #ececec;
+      --ink: #2d3142;
+      --muted: #4f5d75;
+      --soft: #7a8399;
+      --rule: rgba(45,49,66,0.12);
+      --accent: #eb6c36;
+      --accent-tint: rgba(235,108,54,0.08);
+      --link: #2e5aa8;
+      --sans: 'Geist', system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Noto Serif', serif;
+      --mono: 'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      margin: 0;
+      padding: 40px 28px 32px;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--sans);
+    }
+    .frame { width: min(100%, 1320px); margin: 0 auto; }
+    header { margin: 0 0 28px; }
+    .eyebrow, .section-kicker {
+      margin: 0 0 8px;
+      color: var(--muted);
+      font: 500 8px/1.4 var(--mono);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    h1, h2 { margin: 0; font-family: var(--serif); font-weight: 400; letter-spacing: -0.02em; }
+    h1 { font-size: 32px; line-height: 1.08; }
+    h2 { font-size: 24px; line-height: 1.15; }
+    .subtitle {
+      max-width: 800px;
+      margin: 10px 0 0;
+      color: var(--muted);
+      font: 400 13px/1.55 var(--sans);
+    }
+    nav { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+    nav a, .back-link {
+      color: var(--link);
+      font: 500 10px/1.4 var(--mono);
+      text-decoration: none;
+    }
+    nav a { padding: 7px 10px; border: 1px solid var(--rule); border-radius: 4px; }
+    nav a:hover, .back-link:hover { text-decoration: underline; }
+    .diagram-section { padding: 24px 0 28px; border-top: 1px solid var(--rule); }
+    .section-head { margin: 0 0 8px; }
+    .diagram-wrap { width: 100%; overflow-x: auto; }
+    svg { display: block; width: 100%; min-width: 1060px; height: auto; }
+    .step-mask, .terminal-mask { fill: var(--paper); }
+    .step { fill: #ffffff; stroke: var(--ink); stroke-width: 1; }
+    .step-focus { fill: var(--accent-tint); stroke: var(--accent); stroke-width: 1.4; }
+    .decision { fill: var(--paper-2); stroke: var(--ink); stroke-width: 1; }
+    .terminal { fill: rgba(79,93,117,0.08); stroke: var(--muted); stroke-width: 1; }
+    .tag-box { fill: transparent; stroke: rgba(45,49,66,0.36); stroke-width: 0.8; }
+    .tag-box-focus { stroke: rgba(235,108,54,0.55); }
+    .tag { fill: var(--soft); font: 500 7px var(--mono); letter-spacing: 0.12em; }
+    .tag-focus { fill: var(--accent); }
+    .node-title { fill: var(--ink); font: 600 12px var(--sans); text-anchor: middle; }
+    .node-sub { fill: var(--muted); font: 400 8.5px var(--mono); text-anchor: middle; }
+    .decision-title { fill: var(--ink); font: 600 11px var(--sans); text-anchor: middle; }
+    .terminal-title { fill: var(--ink); font: 600 11px var(--sans); text-anchor: middle; }
+    .edge {
+      fill: none;
+      stroke: var(--muted);
+      stroke-width: 1.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .patient-chat-diagram .edge { marker-end: url(#patient-chat-arrow); }
+    .report-assistant-diagram .edge { marker-end: url(#report-assistant-arrow); }
+    .patient-chat-diagram .edge-focus { stroke: var(--accent); marker-end: url(#patient-chat-arrow-focus); }
+    .report-assistant-diagram .edge-focus { stroke: var(--accent); marker-end: url(#report-assistant-arrow-focus); }
+    .edge-label-mask { fill: var(--paper); }
+    .edge-label { fill: var(--soft); font: 500 8px var(--mono); letter-spacing: 0.07em; text-anchor: middle; }
+    .edge-label-focus { fill: var(--accent); }
+    .legend-rule { stroke: var(--rule); stroke-width: 0.8; }
+    .legend-title { fill: var(--muted); font: 500 8px var(--mono); letter-spacing: 0.14em; }
+    .legend-text { fill: var(--muted); font: 400 8px var(--mono); }
+    .notes {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 16px;
+      margin-top: 10px;
+    }
+    .note {
+      padding: 16px 18px;
+      background: #ffffff;
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+    }
+    .note-kicker { margin: 0 0 8px; color: var(--soft); font: 500 8px/1.4 var(--mono); letter-spacing: 0.14em; }
+    .note h3 { margin: 0 0 6px; font: 600 12px/1.35 var(--sans); }
+    .note p { margin: 0; color: var(--muted); font: 400 11px/1.55 var(--sans); }
+    .note code { color: var(--ink); font: 400 9px var(--mono); }
+    .source { margin-top: 8px !important; font: 400 9px/1.5 var(--mono) !important; }
+    .source a { color: var(--link); text-decoration: none; }
+    .source a:hover { text-decoration: underline; }
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 8px;
+      padding-top: 14px;
+      border-top: 1px solid var(--rule);
+      color: var(--soft);
+      font: 400 8px/1.5 var(--mono);
+    }
+    @media (max-width: 700px) {
+      body { padding: 28px 16px 24px; }
+      h1 { font-size: 28px; }
+      .notes { grid-template-columns: 1fr; }
+      footer { flex-direction: column; }
+    }
+    @media print {
+      body { padding: 16px; }
+      .diagram-wrap { overflow: visible; }
+      svg { min-width: 0; }
+      nav { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <header>
+      <p class="eyebrow">LifeHealth ? LangGraph / patient-chat</p>
+      <h1>Patient chat graph</h1>
+      <p class="subtitle">Lu?ng patient chat: s? th?ch, t? v?n qua agent v? b??c b?nh nh?n duy?t tr??c khi t?o l?ch h?n.</p>
+      <nav aria-label="?i t?i s? ??">
+        <a href="./report-assistant.html">02 ? Report assistant</a>
+        <a href="./system-design.html">? System design t?ng quan</a>
+      </nav>
+    </header>
+
+    <section class="diagram-section" id="patient-chat" aria-labelledby="patient-chat-heading">
+      <div class="section-head">
+        <p class="section-kicker">StateGraph · patient-chat:v1</p>
+        <h2 id="patient-chat-heading">Patient chat: tư vấn và đặt lịch có xác nhận</h2>
+        <p class="subtitle">Lệnh ghi nhớ sở thích được xử lý riêng. Yêu cầu thông thường đi qua agent; tool đặt lịch chỉ tạo đề xuất và phải chờ bệnh nhân duyệt trước khi gọi backend tạo appointment.</p>
+      </div>
+      <div class="diagram-wrap">
+        <svg class="patient-chat-diagram" viewBox="0 0 1240 1320" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="patient-chat-title patient-chat-desc">
+          <title id="patient-chat-title">Patient chat StateGraph</title>
+          <desc id="patient-chat-desc">Luồng patient chat nạp sở thích, phân loại lệnh ghi nhớ, gọi agent và chỉ commit lịch hẹn sau khi bệnh nhân duyệt đề xuất.</desc>
+          <defs>
+            <marker id="patient-chat-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+            <marker id="patient-chat-arrow-focus" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+          </defs>
+
+          <!-- Connectors are routed first so opaque nodes and label masks stay clean. -->
+          <path class="edge" d="M620 80 V110"/>
+          <path class="edge" d="M620 186 V204"/>
+          <path class="edge" d="M500 260 H370 Q362 260 362 268 V436 Q362 444 354 444"/>
+          <path class="edge" d="M740 260 H1002 Q1010 260 1010 268 V398"/>
+          <path class="edge" d="M208 490 V1008 Q208 1016 216 1016 H472 Q480 1016 480 1024 V1178 Q480 1186 488 1186 H516"/>
+          <path class="edge" d="M1010 506 V520"/>
+          <path class="edge" d="M1010 624 V692"/>
+          <path class="edge" d="M900 572 H768 Q760 572 760 580 V1060 Q760 1068 752 1068 H628 Q620 1068 620 1076 V1160"/>
+          <path class="edge" d="M890 752 H788 Q780 752 780 744 V448 Q780 440 788 440 H850"/>
+          <path class="edge edge-focus" d="M1010 812 V888"/>
+          <path class="edge" d="M1130 752 H1192 Q1200 752 1200 760 V1232 Q1200 1240 1192 1240 H628 Q620 1240 620 1232 V1212"/>
+          <path class="edge" d="M1010 984 V1092 Q1010 1100 1002 1100 H768 Q760 1100 760 1108 V1178 Q760 1186 768 1186 H724"/>
+
+          <!-- Connector labels: each mask clears its line by 6–10 px. -->
+          <rect class="edge-label-mask" x="404" y="240" width="68" height="12" rx="2"/>
+          <text class="edge-label" x="438" y="249">PREF CMD</text>
+          <rect class="edge-label-mask" x="782" y="240" width="66" height="12" rx="2"/>
+          <text class="edge-label" x="815" y="249">NORMAL</text>
+          <rect class="edge-label-mask" x="796" y="552" width="32" height="12" rx="2"/>
+          <text class="edge-label" x="812" y="561">NO</text>
+          <rect class="edge-label-mask" x="1028" y="646" width="38" height="12" rx="2"/>
+          <text class="edge-label" x="1047" y="655">YES</text>
+          <rect class="edge-label-mask" x="694" y="544" width="72" height="12" rx="2"/>
+          <text class="edge-label" x="730" y="553">REVISE</text>
+          <rect class="edge-label-mask" x="1032" y="840" width="70" height="12" rx="2"/>
+          <text class="edge-label edge-label-focus" x="1067" y="849">APPROVE</text>
+          <rect class="edge-label-mask" x="1120" y="826" width="64" height="12" rx="2"/>
+          <text class="edge-label" x="1152" y="835">CANCEL</text>
+          <rect class="edge-label-mask" x="292" y="996" width="92" height="12" rx="2"/>
+          <text class="edge-label" x="338" y="1005">PREF RESULT</text>
+
+          <!-- Start -->
+          <ellipse class="terminal-mask" cx="620" cy="58" rx="88" ry="22"/>
+          <ellipse class="terminal" cx="620" cy="58" rx="88" ry="22"/>
+          <text class="terminal-title" x="620" y="62">Bệnh nhân gửi tin nhắn</text>
+
+          <!-- Prepare turn + preferences -->
+          <rect class="step-mask" x="420" y="110" width="400" height="76" rx="6"/>
+          <rect class="step" x="420" y="110" width="400" height="76" rx="6"/>
+          <rect class="tag-box" x="432" y="120" width="40" height="12" rx="2"/>
+          <text class="tag" x="452" y="129" text-anchor="middle">NODE</text>
+          <text class="node-title" x="620" y="151">Chuẩn bị lượt chat</text>
+          <text class="node-sub" x="620" y="171">history · turn ID · nạp profile sở thích</text>
+
+          <!-- Preference decision -->
+          <polygon class="decision" points="620,204 740,260 620,316 500,260"/>
+          <text class="decision-title" x="620" y="257">Lệnh sở thích?</text>
+          <text class="node-sub" x="620" y="273">READ · WRITE · FORGET</text>
+
+          <!-- Memory branch -->
+          <rect class="step-mask" x="72" y="398" width="282" height="92" rx="6"/>
+          <rect class="step" x="72" y="398" width="282" height="92" rx="6"/>
+          <rect class="tag-box" x="84" y="408" width="40" height="12" rx="2"/>
+          <text class="tag" x="104" y="417" text-anchor="middle">STORE</text>
+          <text class="node-title" x="213" y="442">Thực hiện lệnh sở thích</text>
+          <text class="node-sub" x="213" y="462">ngôn ngữ · độ chi tiết · lịch ưa thích</text>
+          <text class="node-sub" x="213" y="476">ghi vào patient-chat preferences</text>
+
+          <!-- Patient agent -->
+          <rect class="step-mask" x="850" y="398" width="320" height="108" rx="6"/>
+          <rect class="step" x="850" y="398" width="320" height="108" rx="6"/>
+          <rect class="tag-box" x="862" y="408" width="40" height="12" rx="2"/>
+          <text class="tag" x="882" y="417" text-anchor="middle">AGENT</text>
+          <text class="node-title" x="1010" y="442">Topic guard + patient agent</text>
+          <text class="node-sub" x="1010" y="462">RAG / SQL read-only / booking proposal</text>
+          <text class="node-sub" x="1010" y="478">OpenAI · không chẩn đoán thay bác sĩ</text>
+
+          <!-- Booking proposal decision -->
+          <polygon class="decision" points="1010,520 1120,572 1010,624 900,572"/>
+          <text class="decision-title" x="1010" y="569">Có đề xuất đặt lịch?</text>
+          <text class="node-sub" x="1010" y="585">tool chưa tạo appointment</text>
+
+          <!-- Approval interrupt -->
+          <polygon class="decision" points="1010,692 1130,752 1010,812 890,752"/>
+          <text class="decision-title" x="1010" y="749">Chờ bệnh nhân duyệt</text>
+          <text class="node-sub" x="1010" y="765">LangGraph interrupt</text>
+
+          <!-- Commit gate -->
+          <rect class="step-mask" x="856" y="888" width="308" height="96" rx="6"/>
+          <rect class="step step-focus" x="856" y="888" width="308" height="96" rx="6"/>
+          <rect class="tag-box tag-box-focus" x="868" y="898" width="48" height="12" rx="2"/>
+          <text class="tag tag-focus" x="892" y="907" text-anchor="middle">COMMIT</text>
+          <text class="node-title" x="1010" y="932">Xác thực lại + tạo lịch hẹn</text>
+          <text class="node-sub" x="1010" y="953">operation ID · backend booking API</text>
+          <text class="node-sub" x="1010" y="969">chỉ chạy sau APPROVE</text>
+
+          <!-- Shared terminal -->
+          <ellipse class="terminal-mask" cx="620" cy="1186" rx="104" ry="26"/>
+          <ellipse class="terminal" cx="620" cy="1186" rx="104" ry="26"/>
+          <text class="terminal-title" x="620" y="1190">Hoàn tất phản hồi</text>
+
+          <line class="legend-rule" x1="32" y1="1292" x2="1208" y2="1292"/>
+          <text class="legend-title" x="32" y="1304">LEGEND</text>
+          <line class="edge" x1="92" y1="1301" x2="132" y2="1301"/>
+          <text class="legend-text" x="144" y="1304">luồng graph</text>
+          <rect x="250" y="1295" width="12" height="12" rx="2" fill="var(--accent-tint)" stroke="var(--accent)"/>
+          <text class="legend-text" x="272" y="1304">side effect có kiểm soát</text>
+        </svg>
+      </div>
+      <div class="notes">
+        <article class="note">
+          <p class="note-kicker">CONTROL POINT</p>
+          <h3>Đề xuất không đồng nghĩa với đặt lịch</h3>
+          <p>Agent trả về thẻ xác nhận. Chỉ lựa chọn APPROVE mới resume graph để kiểm tra operation ID rồi gọi backend; REVISE quay lại xử lý yêu cầu mới, CANCEL kết thúc mà không tạo lịch.</p>
+          <p class="source">Implementation: <a href="../../chatbot/src/langgraph/patient_chat.graph.ts">patient_chat.graph.ts</a> · <a href="../../chatbot/src/langgraph/booking.graph.ts">booking.graph.ts</a></p>
+        </article>
+        <article class="note">
+          <p class="note-kicker">STATE &amp; MEMORY</p>
+          <h3>Checkpoint và profile có phạm vi riêng</h3>
+          <p>Checkpoint theo user + conversation giữ trạng thái lượt chat. PostgresStore chỉ lưu allowlist sở thích; transcript nghiệp vụ vẫn do backend quản lý.</p>
+          <p class="source">Thread: <code>patient-chat:v1:{userId}:{conversationId}</code> · Namespace: <code>patient-chat/user/{userId}/preferences</code></p>
+        </article>
+      </div>
+    </section>
+
+    <footer>
+      <span>LifeHealth ? patient-chat graph</span>
+      <a class="back-link" href="./system-design.html">Quay l?i s? ?? ki?n tr?c t?ng quan ?</a>
+    </footer>
+  </main>
+</body>
+</html>
