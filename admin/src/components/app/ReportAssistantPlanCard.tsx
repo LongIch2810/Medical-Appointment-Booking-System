@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  BarChart3,
   CalendarRange,
   CheckCircle2,
   ChevronDown,
@@ -8,7 +9,6 @@ import {
   Layers,
   ListFilter,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { ReportAssistantPlan } from "@/types/interface/adminReport.interface";
@@ -106,7 +106,7 @@ export function ReportAssistantPlanCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:border-emerald-500/40 dark:text-emerald-300">
-              <Sparkles className="size-3" aria-hidden="true" />
+              <FileCheck className="size-3" aria-hidden="true" />
               Kế hoạch báo cáo chờ duyệt
             </span>
             <span className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -202,7 +202,7 @@ export function ReportAssistantPlanCard({
         {/* Row 4: Chart & Detail format */}
         <div className="grid gap-2 py-2.5 sm:grid-cols-3 last:pb-0">
           <span className="flex items-center gap-1.5 font-semibold text-slate-500 dark:text-slate-400">
-            <Sparkles
+            <BarChart3
               className="size-4 text-emerald-600 dark:text-emerald-400 shrink-0"
               aria-hidden="true"
             />

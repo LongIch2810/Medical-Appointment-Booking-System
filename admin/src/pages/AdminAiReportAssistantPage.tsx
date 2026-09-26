@@ -14,7 +14,6 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Send,
-  Sparkles,
 } from "lucide-react";
 
 import { AiReportLoadingOverlay } from "@/components/app/AiReportLoadingOverlay";
@@ -159,6 +158,15 @@ export function AdminAiReportAssistantPage() {
   const lastAutoCollapsedArtifactId = useRef<number | null>(null);
 
   const conversations = useReportAssistantConversations();
+  const conversationsList = useMemo(() => {
+    if (!conversations.data) return [];
+    if ("pages" in (conversations.data as object) && Array.isArray((conversations.data as any).pages)) {
+      return (conversations.data as any).pages.flatMap(
+        (page: any) => page?.data?.conversations ?? [],
+      );
+    }
+    return (conversations.data as any)?.data?.conversations ?? [];
+  }, [conversations.data]);
   const conversation = useReportAssistantConversation(selectedId);
   const createMutation = useCreateReportAssistantConversation();
   const sendMutation = useSendReportAssistantMessage();
@@ -238,12 +246,12 @@ export function AdminAiReportAssistantPage() {
       return;
     }
     if (hasResolvedInitialSelection.current) return;
-    const firstConversationId = conversations.data?.data.conversations[0]?.id;
+    const firstConversationId = conversationsList[0]?.id;
     if (firstConversationId !== undefined) {
       hasResolvedInitialSelection.current = true;
       setSelectedId(firstConversationId);
     }
-  }, [conversations.data, selectedId]);
+  }, [conversationsList, selectedId]);
 
   const olderCursor = olderPages.length
     ? olderPages[olderPages.length - 1].nextBeforeMessageId
@@ -358,10 +366,13 @@ export function AdminAiReportAssistantPage() {
           {isHistorySidebarOpen && (
             <aside className="hidden min-h-0 w-64 shrink-0 border-r border-slate-200/80 lg:flex lg:flex-col overflow-hidden dark:border-slate-800/80">
               <ReportAssistantConversationList
-                conversations={conversations.data?.data.conversations ?? []}
+                conversations={conversationsList}
                 selectedId={selectedId}
                 isLoading={conversations.isLoading}
                 isError={conversations.isError}
+                hasNextPage={conversations.hasNextPage}
+                isFetchingNextPage={conversations.isFetchingNextPage}
+                onLoadMore={() => void conversations.fetchNextPage()}
                 onRetry={() => void conversations.refetch()}
                 onSelect={(id) => {
                   hasResolvedInitialSelection.current = true;
@@ -661,7 +672,7 @@ export function AdminAiReportAssistantPage() {
                         onClick={() => setIsPromptTemplatesOpen(true)}
                         className="h-7.5 gap-1.5 rounded-lg border-primary/30 bg-primary/5 px-2.5 text-[11px] font-semibold text-primary hover:bg-primary/10 dark:border-primary/40 dark:bg-primary/15 dark:text-teal-300 cursor-pointer shadow-2xs"
                       >
-                        <Sparkles className="size-3" aria-hidden="true" />
+                        <FileText className="size-3" aria-hidden="true" />
                         <span>Mẫu prompt</span>
                       </Button>
 
@@ -848,10 +859,13 @@ export function AdminAiReportAssistantPage() {
             </SheetDescription>
           </div>
           <ReportAssistantConversationList
-            conversations={conversations.data?.data.conversations ?? []}
+            conversations={conversationsList}
             selectedId={selectedId}
             isLoading={conversations.isLoading}
             isError={conversations.isError}
+            hasNextPage={conversations.hasNextPage}
+            isFetchingNextPage={conversations.isFetchingNextPage}
+            onLoadMore={() => void conversations.fetchNextPage()}
             onRetry={() => void conversations.refetch()}
             onSelect={(id) => {
               clearTurnErrors();
@@ -881,7 +895,7 @@ export function AdminAiReportAssistantPage() {
           <DialogHeader className="gap-0 border-b border-slate-100 px-6 py-5 pr-14 dark:border-slate-800 sm:px-7">
             <div className="flex items-start gap-3.5">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary dark:bg-primary/20">
-                <Sparkles className="size-5" aria-hidden="true" />
+                <FileText className="size-5" aria-hidden="true" />
               </span>
               <div className="min-w-0 pt-0.5">
                 <div className="flex items-center gap-2">

@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import {
-  Sparkles,
+  Bot,
   HeartPulse,
   Stethoscope,
   CalendarClock,
@@ -69,7 +69,7 @@ export default function WelcomeState({ onQuickAction, onFillPrompt }: WelcomeSta
     <div className="flex h-full w-full flex-col items-center justify-center px-3 py-6 sm:px-6">
       <div className="mx-auto flex w-full max-w-2xl flex-col items-center text-center">
         <span className="flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-xs">
-          <Sparkles className="size-6" aria-hidden="true" />
+          <Bot className="size-6" aria-hidden="true" />
         </span>
         <h2 className="mt-4 font-heading text-lg font-bold text-foreground sm:text-2xl">
           {t("chatbot.welcomeHeading")}

@@ -56,6 +56,9 @@ export default function Chatbot() {
     isLoading: isLoadingConversations,
     isError: isConversationError,
     refetch: refetchConversations,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = usePatientChatConversations(Boolean(userId));
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   const [input, setInput] = useState("");
@@ -93,7 +96,9 @@ export default function Chatbot() {
     return () => clearInterval(interval);
   }, [isPending]);
 
-  const conversations = conversationPage?.conversations ?? [];
+  const conversations = useMemo(() => {
+    return conversationPage?.pages.flatMap((page) => page.conversations) ?? [];
+  }, [conversationPage]);
   const detailQuery = usePatientChatConversation(activeConversationId);
   const createConversation = useCreatePatientChatConversation();
   const sendMessage = useSendPatientChatMessage();
@@ -150,10 +155,10 @@ export default function Chatbot() {
   useEffect(() => {
     if (initializedSelection.current || isLoadingConversations || !conversationPage) return;
     initializedSelection.current = true;
-    if (conversationPage.conversations[0]) {
-      setActiveConversationId(conversationPage.conversations[0].id);
+    if (conversations[0]) {
+      setActiveConversationId(conversations[0].id);
     }
-  }, [conversationPage, isLoadingConversations]);
+  }, [conversations, conversationPage, isLoadingConversations]);
 
   useEffect(() => {
     setLiveTurn(null);
@@ -338,6 +343,9 @@ export default function Chatbot() {
       onNewConversation={() => void openNewConversation()}
       onSelectConversation={handleSelectConversation}
       onDeleteConversation={(id) => void handleDeleteConversation(id)}
+      hasNextPage={hasNextPage}
+      isFetchingNextPage={isFetchingNextPage}
+      onLoadMore={() => void fetchNextPage()}
     />
   );
 

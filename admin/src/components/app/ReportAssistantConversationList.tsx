@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertCircle,
+  FileText,
+  Loader2,
   MessageSquarePlus,
   MessagesSquare,
   PanelLeftClose,
   Search,
-  Sparkles,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,9 @@ export function ReportAssistantConversationList({
   onSelect,
   onNew,
   onCollapse,
+  hasNextPage,
+  isFetchingNextPage,
+  onLoadMore,
 }: {
   conversations: ReportAssistantConversation[];
   selectedId: number | null;
@@ -69,8 +73,31 @@ export function ReportAssistantConversationList({
   onSelect: (id: number) => void;
   onNew: () => void;
   onCollapse?: () => void;
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  onLoadMore?: () => void;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage || !onLoadMore) return;
+
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { root: null, rootMargin: "100px", threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, onLoadMore]);
 
   const filteredConversations = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -241,6 +268,17 @@ export function ReportAssistantConversationList({
               </button>
             );
           })}
+
+          {/* Sentinel element for infinite scroll */}
+          <div ref={sentinelRef} className="h-2 w-full" aria-hidden="true" />
+
+          {/* Loading spinner when fetching next page */}
+          {isFetchingNextPage && (
+            <div className="flex items-center justify-center py-2.5 text-xs text-slate-500">
+              <Loader2 className="size-3.5 animate-spin mr-1.5" />
+              <span>Đang tải thêm...</span>
+            </div>
+          )}
         </nav>
       ) : searchQuery ? (
         <div className="flex flex-1 flex-col items-center justify-center p-4 text-center text-xs text-slate-500 dark:text-slate-400">
@@ -260,7 +298,7 @@ export function ReportAssistantConversationList({
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center p-4 text-center">
           <div className="flex size-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500">
-            <Sparkles className="size-5" aria-hidden="true" />
+            <FileText className="size-5" aria-hidden="true" />
           </div>
           <p className="mt-2.5 text-xs font-semibold text-slate-800 dark:text-slate-200">
             Chưa có hội thoại

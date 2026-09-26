@@ -5,6 +5,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   BarChart3,
+  Bot,
   CalendarRange,
   Clock,
   Database,
@@ -15,7 +16,6 @@ import {
   Layers,
   Pencil,
   ShieldCheck,
-  Sparkles,
   User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -83,7 +83,7 @@ function getActionMeta(action: ReportAssistantAction | null) {
     case "ANSWER":
       return {
         label: "Hướng dẫn & Trả lời",
-        icon: Sparkles,
+        icon: FileText,
         className:
           "bg-sky-500/10 text-sky-700 border-sky-500/30 dark:bg-sky-500/15 dark:text-sky-300 dark:border-sky-500/40",
       };
@@ -164,7 +164,7 @@ function MessageItem({
             {isUser ? (
               <User aria-hidden="true" className="size-3.5" />
             ) : (
-              <Sparkles aria-hidden="true" className="size-3.5" />
+              <Bot aria-hidden="true" className="size-3.5" />
             )}
           </div>
           <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -536,7 +536,7 @@ export function ReportAssistantChat({
         /* State 1: Mới bắt đầu (Executive Analytics Welcome) */
         <div className="mx-auto flex max-w-2xl flex-col items-center py-6 text-center sm:py-8">
           <div className="flex size-14 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary shadow-xs dark:border-primary/30 dark:bg-primary/20">
-            <Sparkles aria-hidden="true" className="size-7 text-primary" />
+            <Bot aria-hidden="true" className="size-7 text-primary" />
           </div>
 
           <h3 className="mt-3.5 text-lg font-bold text-slate-900 dark:text-slate-100 sm:text-xl">

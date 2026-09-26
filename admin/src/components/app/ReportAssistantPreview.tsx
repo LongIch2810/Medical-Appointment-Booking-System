@@ -15,7 +15,6 @@ import {
   Lightbulb,
   Loader2,
   ShieldAlert,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
@@ -308,7 +307,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
       {content && content.insights && content.insights.length > 0 && (
         <div className="rounded-2xl border border-emerald-500/30 bg-emerald-50/40 p-4 dark:border-emerald-500/40 dark:bg-emerald-950/20">
           <div className="flex items-center gap-2">
-            <Sparkles
+            <Lightbulb
               className="size-4.5 text-emerald-700 dark:text-emerald-300"
               aria-hidden="true"
             />

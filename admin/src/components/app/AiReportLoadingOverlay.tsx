@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Database, Lock, Sparkles } from "lucide-react";
+import { Bot, Database, Lock } from "lucide-react";
 
 type AiReportLoadingOverlayProps = {
   isLoading: boolean;
@@ -38,7 +38,7 @@ export function AiReportLoadingOverlay({
                 </>
               ) : null}
               <div className="relative flex size-12 items-center justify-center rounded-2xl border border-primary/30 bg-primary/10 text-primary shadow-xs dark:border-primary/40 dark:bg-primary/20">
-                <Sparkles aria-hidden="true" className="size-6 text-primary" />
+                <Bot aria-hidden="true" className="size-6 text-primary" />
               </div>
             </div>
 

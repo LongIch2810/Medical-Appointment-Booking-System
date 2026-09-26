@@ -5,7 +5,7 @@ import {
   listPatientChatConversations,
   sendPatientChatMessage,
 } from "@/api/conversationApi";
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export const patientChatQueryKeys = {
   conversations: ["patient-chat", "conversations"] as const,
@@ -13,9 +13,12 @@ export const patientChatQueryKeys = {
 };
 
 export function usePatientChatConversations(enabled: boolean) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: patientChatQueryKeys.conversations,
-    queryFn: () => listPatientChatConversations(1, 50),
+    queryFn: ({ pageParam = 1 }) => listPatientChatConversations(pageParam, 20),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
     enabled,
   });
 }

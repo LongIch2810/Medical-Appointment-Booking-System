@@ -1,11 +1,12 @@
 import { useState } from "react";
 import {
   CalendarClock,
+  FileText,
   HeartPulse,
   Pencil,
   Send,
-  Sparkles,
   Stethoscope,
+  type LucideIcon,
 } from "lucide-react";
 import {
   Dialog,
@@ -20,7 +21,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface PromptTemplateGroup {
   id: string;
   category: string;
-  icon: typeof Sparkles;
+  icon: LucideIcon;
   badge: string;
   items: Array<{
     title: string;
@@ -107,7 +108,7 @@ const PATIENT_PROMPT_GROUPS: PromptTemplateGroup[] = [
   {
     id: "wellness",
     category: "Dinh dưỡng & Phòng bệnh",
-    icon: Sparkles,
+    icon: FileText,
     badge: "Chăm sóc sức khỏe",
     items: [
       {
@@ -161,7 +162,7 @@ export default function PatientPromptTemplatesDialog({
         <DialogHeader className="border-b border-border/80 px-5 py-4 text-left">
           <div className="flex items-center gap-2">
             <span className="flex size-8 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Sparkles className="size-4" aria-hidden="true" />
+              <FileText className="size-4" aria-hidden="true" />
             </span>
             <div>
               <DialogTitle className="font-heading text-base font-bold text-foreground">

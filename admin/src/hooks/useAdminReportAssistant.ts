@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmReportAssistantPlan,
   createReportAssistantConversation,
@@ -14,9 +14,14 @@ export const reportAssistantQueryKeys = {
 };
 
 export function useReportAssistantConversations() {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: reportAssistantQueryKeys.conversations(),
-    queryFn: () => getReportAssistantConversations(),
+    queryFn: ({ pageParam = 1 }) => getReportAssistantConversations(pageParam, 20),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) =>
+      lastPage.data.page < lastPage.data.totalPages
+        ? lastPage.data.page + 1
+        : undefined,
   });
 }
 

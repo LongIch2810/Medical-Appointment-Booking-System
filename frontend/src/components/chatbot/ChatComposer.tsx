@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowUp, CornerDownLeft, Sparkles, X } from "lucide-react";
+import { ArrowUp, CornerDownLeft, FileText, X } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import Loading from "@/components/loading/Loading";
@@ -58,7 +58,7 @@ export default function ChatComposer({
               onClick={onOpenTemplates}
               className="h-7.5 gap-1.5 rounded-lg border-primary/30 bg-primary/5 px-2.5 text-[11px] font-semibold text-primary hover:bg-primary/10 dark:border-primary/40 dark:bg-primary/15 dark:text-teal-300 cursor-pointer shadow-2xs"
             >
-              <Sparkles className="size-3" aria-hidden="true" />
+              <FileText className="size-3" aria-hidden="true" />
               <span>Mẫu câu hỏi</span>
             </Button>
           ) : (
