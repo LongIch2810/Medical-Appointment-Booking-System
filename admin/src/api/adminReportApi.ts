@@ -1,6 +1,9 @@
 import axiosInstance from "@/configs/axios";
 import type { ApiResponse } from "@/types/interface/api.interface";
 import type {
+  AdminReport,
+  AdminReportHistoryListResponse,
+  AdminReportHistoryParams,
   AssistantTurnResponse,
   ReportAssistantConversationDetailResponse,
   ReportAssistantConversationListResponse,
@@ -68,4 +71,18 @@ export async function revealAdminReportQuery(id: number) {
     ApiResponse<{ executedQuery: string }>
   >(`/admin-reports/history/${id}/reveal-query`);
   return res.data.data.executedQuery;
+}
+
+export async function getAdminReportHistory(params?: AdminReportHistoryParams) {
+  const res = await axiosInstance.get<
+    ApiResponse<AdminReportHistoryListResponse>
+  >("/admin-reports/history", { params });
+  return res.data;
+}
+
+export async function getAdminReportDetail(id: number) {
+  const res = await axiosInstance.get<
+    ApiResponse<AdminReport>
+  >(`/admin-reports/history/${id}`);
+  return res.data;
 }

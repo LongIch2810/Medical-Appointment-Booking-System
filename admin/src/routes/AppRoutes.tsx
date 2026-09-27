@@ -8,6 +8,7 @@ import { getFirstAccessiblePath, hasPermissions } from "@/lib/navigation";
 import { useAuthStore } from "@/store/useAuthStore";
 
 import { AdminAiReportAssistantPage } from "@/pages/AdminAiReportAssistantPage";
+import { AdminReportHistoryPage } from "@/pages/AdminReportHistoryPage";
 import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { DoctorSettingsPage } from "@/pages/DoctorSettingsPage";
 import { EnterpriseReportsDashboardPage } from "@/pages/EnterpriseReportsDashboardPage";
@@ -126,6 +127,14 @@ export function AppRoutes() {
           element={
             <PermissionRoute requiredPermissions={[permissions.aiCoachReport]}>
               <AdminAiReportAssistantPage />
+            </PermissionRoute>
+          }
+        />
+        <Route
+          path="admin/report-history"
+          element={
+            <PermissionRoute requiredPermissions={[permissions.aiCoachReport]}>
+              <AdminReportHistoryPage />
             </PermissionRoute>
           }
         />

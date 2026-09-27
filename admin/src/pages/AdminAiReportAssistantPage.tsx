@@ -6,6 +6,7 @@ import {
   BarChart3,
   Eraser,
   FileCheck,
+  FileClock,
   FileText,
   Lightbulb,
   MessageSquare,
@@ -45,7 +46,10 @@ import {
   useReportAssistantConversations,
   useSendReportAssistantMessage,
 } from "@/hooks/useAdminReportAssistant";
-import type { ReportAssistantMessage } from "@/types/interface/adminReport.interface";
+import type {
+  ReportAssistantConversationListResponse,
+  ReportAssistantMessage,
+} from "@/types/interface/adminReport.interface";
 
 type RetryAction =
   | { kind: "message"; value: string }
@@ -160,12 +164,18 @@ export function AdminAiReportAssistantPage() {
   const conversations = useReportAssistantConversations();
   const conversationsList = useMemo(() => {
     if (!conversations.data) return [];
-    if ("pages" in (conversations.data as object) && Array.isArray((conversations.data as any).pages)) {
-      return (conversations.data as any).pages.flatMap(
-        (page: any) => page?.data?.conversations ?? [],
+    const dataObj = conversations.data as
+      | { pages: Array<{ data?: ReportAssistantConversationListResponse }> }
+      | { data?: ReportAssistantConversationListResponse };
+    if ("pages" in dataObj && Array.isArray(dataObj.pages)) {
+      return dataObj.pages.flatMap(
+        (page) => page?.data?.conversations ?? [],
       );
     }
-    return (conversations.data as any)?.data?.conversations ?? [];
+    if ("data" in dataObj && dataObj.data) {
+      return dataObj.data.conversations ?? [];
+    }
+    return [];
   }, [conversations.data]);
   const conversation = useReportAssistantConversation(selectedId);
   const createMutation = useCreateReportAssistantConversation();
@@ -542,6 +552,19 @@ export function AdminAiReportAssistantPage() {
                         />
                       </Button>
                     )}
+
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="hidden h-9 shrink-0 gap-1.5 whitespace-nowrap rounded-lg border-slate-200 px-3 text-xs font-semibold shadow-2xs hover:bg-slate-50 md:inline-flex dark:border-slate-800 dark:hover:bg-slate-800"
+                      title="Xem danh sách lịch sử báo cáo đã tạo"
+                    >
+                      <a href="/admin/report-history">
+                        <FileClock className="size-4 text-primary" aria-hidden="true" />
+                        <span>Lịch sử báo cáo</span>
+                      </a>
+                    </Button>
 
                     <Button
                       type="button"

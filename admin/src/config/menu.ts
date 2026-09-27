@@ -5,6 +5,7 @@ import {
   CalendarClock,
   ClipboardList,
   FileBadge2,
+  FileClock,
   FileHeart,
   FolderKanban,
   LayoutDashboard,
@@ -125,6 +126,14 @@ export const menuItems: MenuItem[] = [
     path: "/admin/ai-report-assistant",
     section: "Admin operations",
     icon: MessagesSquare,
+    requiredPermissions: [permissions.aiCoachReport],
+  },
+  {
+    id: "admin-report-history",
+    label: "Lịch sử báo cáo",
+    path: "/admin/report-history",
+    section: "Admin operations",
+    icon: FileClock,
     requiredPermissions: [permissions.aiCoachReport],
   },
   {

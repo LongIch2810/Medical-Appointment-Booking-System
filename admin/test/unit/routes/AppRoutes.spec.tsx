@@ -15,6 +15,9 @@ vi.mock("@/layouts/AdminLayout", async () => {
 vi.mock("@/pages/AdminAiReportAssistantPage", () => ({
   AdminAiReportAssistantPage: () => <div>Assistant report route</div>,
 }));
+vi.mock("@/pages/AdminReportHistoryPage", () => ({
+  AdminReportHistoryPage: () => <div>Report history route</div>,
+}));
 
 function makeUser(overrides: Partial<User> = {}): User {
   return {
@@ -221,9 +224,27 @@ describe("admin report routes", () => {
     expect(screen.getByText("Assistant report route")).toBeInTheDocument();
   });
 
-  it("registers only the assistant menu entry with the report permission", () => {
-    const entries = menuItems.filter((item) => item.path === "/admin/ai-report-assistant");
-    expect(entries.map((item) => item.path)).toEqual(["/admin/ai-report-assistant"]);
-    expect(entries.every((item) => item.requiredPermissions.includes(permissions.aiCoachReport))).toBe(true);
+  it("keeps the report history route behind the existing report permission", () => {
+    const path = "/admin/report-history";
+    useAuthStore.setState({
+      currentUser: makeUser(),
+      permissions: [permissions.aiCoachReport],
+    });
+    render(
+      <MemoryRouter initialEntries={[path]}>
+        <AppRoutes />
+      </MemoryRouter>,
+    );
+    expect(screen.getByText("Report history route")).toBeInTheDocument();
+  });
+
+  it("registers both report menu entries with the report permission", () => {
+    const assistantEntries = menuItems.filter((item) => item.path === "/admin/ai-report-assistant");
+    expect(assistantEntries.map((item) => item.path)).toEqual(["/admin/ai-report-assistant"]);
+    expect(assistantEntries.every((item) => item.requiredPermissions.includes(permissions.aiCoachReport))).toBe(true);
+
+    const historyEntries = menuItems.filter((item) => item.path === "/admin/report-history");
+    expect(historyEntries.map((item) => item.path)).toEqual(["/admin/report-history"]);
+    expect(historyEntries.every((item) => item.requiredPermissions.includes(permissions.aiCoachReport))).toBe(true);
   });
 });

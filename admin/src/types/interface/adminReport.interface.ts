@@ -116,3 +116,17 @@ export type AdminReport = {
   tableColumns: AdminReportTableColumn[];
   tableRows: Record<string, string | number>[];
 };
+
+export type AdminReportHistoryParams = {
+  page?: number;
+  limit?: number;
+  reportType?: AdminReportType | string;
+};
+
+export type AdminReportHistoryListResponse = {
+  reports: AdminReport[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};

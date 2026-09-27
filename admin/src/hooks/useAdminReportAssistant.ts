@@ -6,6 +6,7 @@ import {
   getReportAssistantConversations,
   sendReportAssistantMessage,
 } from "@/api/adminReportApi";
+import { adminReportQueryKeys } from "@/hooks/useAdminReports";
 
 export const reportAssistantQueryKeys = {
   all: ["admin-report-assistant"] as const,
@@ -38,6 +39,7 @@ function useRefreshAssistantQueries() {
   return async (conversationId?: number) => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: reportAssistantQueryKeys.conversations() }),
+      queryClient.invalidateQueries({ queryKey: adminReportQueryKeys.all }),
       ...(conversationId
         ? [queryClient.invalidateQueries({ queryKey: reportAssistantQueryKeys.conversation(conversationId) })]
         : []),
