@@ -11,7 +11,6 @@ import { logSafeError } from '../utils/safeLog.js';
 
 const { Pool } = pg;
 const LANGGRAPH_SCHEMA = 'langgraph';
-const REQUIRED_LANGGRAPH_ROLE = 'chatbot_report_assistant';
 
 type Runtime = {
   graph: ReportAssistantGraph;
@@ -31,7 +30,9 @@ function postgresOptions(): pg.PoolConfig {
   const host = process.env.DB_HOST;
   const port = Number.parseInt(process.env.DB_PORT ?? '5432', 10);
   if (
-    user !== REQUIRED_LANGGRAPH_ROLE ||
+    !user ||
+    user.trim() !== user ||
+    Buffer.byteLength(user, 'utf8') > 63 ||
     !password ||
     password.length < 16 ||
     !database ||

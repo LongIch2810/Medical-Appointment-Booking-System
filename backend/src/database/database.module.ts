@@ -35,9 +35,7 @@ import { GrantDoctorTagTopicCrudPermissions1788500000000 } from './migrations/17
 import { AddDoctorFullnameTrigramSearch1788600000000 } from './migrations/1788600000000-addDoctorFullnameTrigramSearch';
 import { CreateAiReportAssistant1788700000000 } from './migrations/1788700000000-createAiReportAssistant';
 import { SetupLangGraphPersistence1788800000000 } from './migrations/1788800000000-setupLangGraphPersistence';
-import { RenameLangGraphRole1788900000000 } from './migrations/1788900000000-renameLangGraphRole';
 import { CreatePatientChatAssistant1789000000000 } from './migrations/1789000000000-createPatientChatAssistant';
-import { GrantLangGraphDatabaseCreate1789100000000 } from './migrations/1789100000000-grantLangGraphDatabaseCreate';
 
 // Listed explicitly (not a glob) so Vercel's serverless file tracer, which
 // only bundles statically imported files, actually includes these in the
@@ -78,9 +76,7 @@ const migrations = [
   AddDoctorFullnameTrigramSearch1788600000000,
   CreateAiReportAssistant1788700000000,
   SetupLangGraphPersistence1788800000000,
-  RenameLangGraphRole1788900000000,
   CreatePatientChatAssistant1789000000000,
-  GrantLangGraphDatabaseCreate1789100000000,
 ];
 
 @Module({
