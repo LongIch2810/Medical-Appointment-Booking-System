@@ -45,20 +45,33 @@ function postgresOptions(): pg.PoolConfig {
   }
   const user = usesSupabaseSharedPooler ? supabasePoolerUser : roleUser;
   const port = Number.parseInt(process.env.DB_PORT ?? '5432', 10);
+  const configurationProblems: string[] = [];
   if (
     !roleUser ||
     roleUser.trim() !== roleUser ||
-    Buffer.byteLength(roleUser, 'utf8') > 63 ||
+    Buffer.byteLength(roleUser, 'utf8') > 63
+  ) {
+    configurationProblems.push('LANGGRAPH_DB_USER');
+  }
+  if (
     !user ||
     user.trim() !== user ||
-    Buffer.byteLength(user, 'utf8') > 63 ||
-    !password ||
-    password.length < 16 ||
-    !database ||
-    !host ||
-    !Number.isSafeInteger(port)
+    Buffer.byteLength(user, 'utf8') > 63
   ) {
-    throw new Error('LangGraph PostgreSQL configuration is incomplete.');
+    configurationProblems.push(
+      usesSupabaseSharedPooler ? 'LANGGRAPH_DB_POOLER_USER' : 'LANGGRAPH_DB_USER',
+    );
+  }
+  if (!password || password.length < 16) {
+    configurationProblems.push('LANGGRAPH_DB_PASSWORD');
+  }
+  if (!database) configurationProblems.push('DB_NAME');
+  if (!host) configurationProblems.push('DB_HOST');
+  if (!Number.isSafeInteger(port)) configurationProblems.push('DB_PORT');
+  if (configurationProblems.length > 0) {
+    throw new Error(
+      `LangGraph PostgreSQL configuration is incomplete: ${configurationProblems.join(', ')}.`,
+    );
   }
   return {
     host,
