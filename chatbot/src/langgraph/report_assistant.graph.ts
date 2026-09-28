@@ -875,6 +875,13 @@ export async function runReportAssistant(
   try {
     if (input.mode === 'CONFIRM_PLAN') {
       if (
+        saved.turnId === input.turnId &&
+        saved.response?.action === 'GENERATE_REPORT' &&
+        samePlan(saved.response.plan, input.confirmedPlan)
+      ) {
+        return saved.response;
+      }
+      if (
         snapshot.next.includes('generate_report') &&
         saved.pendingPlan &&
         saved.approvedPlan &&
@@ -882,6 +889,11 @@ export async function runReportAssistant(
         samePlan(saved.approvedPlan, input.confirmedPlan) &&
         saved.turnId === input.turnId
       ) {
+        await graph.updateState(
+          config,
+          { input: graphInput } as Partial<AssistantState>,
+          'validate_pending_plan',
+        );
         const result = await graph.invoke(null, config);
         if (!result.response) throw assistantError(502, 'REPORT_ASSISTANT_INVALID_RESPONSE', 'Assistant response is missing.');
         return result.response;

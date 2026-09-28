@@ -206,6 +206,15 @@ test('restarts a graph instance against the same checkpointer and resumes approv
     fileName: 'report.pdf',
   });
   assert.equal(generated.report?.raw?.query, 'SELECT COUNT(*) AS appointment_count FROM chatbot_report_appointments_view');
+  const replayed = await runReportAssistant(restartedGraph, makeInput({
+    mode: 'CONFIRM_PLAN',
+    message: 'Confirm plan',
+    turnId: 2,
+    confirmedPlan: proposed.plan,
+    fileName: 'report.pdf',
+  }));
+  assert.deepEqual(replayed, generated);
+  assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 1);
   await assert.rejects(
     runReportAssistant(restartedGraph, makeInput({
       mode: 'CONFIRM_PLAN', message: 'Duplicate confirmation', turnId: 3, confirmedPlan: plan,
