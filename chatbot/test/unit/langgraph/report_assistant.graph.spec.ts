@@ -227,6 +227,18 @@ test('adds required reporting views before asking approval for appointment group
   ]);
 });
 
+test('gives the intent model validation feedback before retrying an invalid plan', async () => {
+  const received: any[] = [];
+  const router = intentRouter([
+    { action: 'PROPOSE_PLAN', message: 'Invalid view.', plan: { ...plan, sourceViews: ['appointments'] } },
+    { action: 'PROPOSE_PLAN', message: 'Review.', plan },
+  ], received);
+  const { graph } = makeGraph({ routeIntent: router });
+  const proposed = await runReportAssistant(graph, makeInput());
+  assert.equal(proposed.action, 'PROPOSE_PLAN');
+  assert.match(received[1].feedback, /plan\.sourceViews\.0/);
+});
+
 test('retries report generation from a failed checkpoint with the same approved turn', async () => {
   const { graph } = makeGraph({ routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan }]) });
   const proposed = await runReportAssistant(graph, makeInput());

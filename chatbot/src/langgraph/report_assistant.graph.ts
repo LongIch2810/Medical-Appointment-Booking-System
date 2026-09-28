@@ -64,6 +64,7 @@ Current user message:
 {message}
 
 Reference date: {today}
+{feedback}
 Return the structured intent now.`,
   ],
 ]);
@@ -128,6 +129,7 @@ export type ReportAssistantGraphDependencies = {
     history: ReportAssistantHistoryItem[];
     message: string;
     preferences: ReportAssistantPreferences | null;
+    feedback?: string;
   }) => Promise<z.infer<typeof ReportAssistantIntentSchema>>;
   getSchema?: () => Promise<string>;
   runPipeline?: typeof runReportPipeline;
@@ -472,11 +474,12 @@ function applyPreferenceDefaults(
 
 function makeRouter(dependencies: ReportAssistantGraphDependencies) {
   if (dependencies.routeIntent) return dependencies.routeIntent;
-  return async ({ schema, history, message, preferences }: {
+  return async ({ schema, history, message, preferences, feedback }: {
     schema: string;
     history: ReportAssistantHistoryItem[];
     message: string;
     preferences: ReportAssistantPreferences | null;
+    feedback?: string;
   }) => {
     const model = getChatModel({ profile: 'fast', temperature: 0 });
     const structured = model.withStructuredOutput(ReportAssistantIntentSchema, {
@@ -488,6 +491,7 @@ function makeRouter(dependencies: ReportAssistantGraphDependencies) {
       message,
       today: new Date().toISOString().slice(0, 10),
       preferences: JSON.stringify(preferences),
+      feedback: feedback ?? '',
     });
   };
 }
@@ -515,6 +519,7 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
 
     const schema = await getSchema();
     let intent: z.infer<typeof ReportAssistantIntentSchema> | undefined;
+    let feedback = '';
     for (let attempt = 0; attempt < 5 && !intent; attempt += 1) {
       try {
         const routed = await routeIntent({
@@ -522,10 +527,26 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
           history: state.messages.slice(0, -1),
           message: state.currentMessage,
           preferences: state.preferences,
+          feedback,
         });
         const validated = ReportAssistantIntentSchema.safeParse(routed);
         if (validated.success) intent = validated.data;
+        else {
+          const fields = validated.error.issues.map((issue) => issue.path.join('.') || 'intent');
+          feedback = `Previous response was invalid at: ${[...new Set(fields)].join(', ')}. Return a valid structured intent. Use only source views listed in the schema and omit optional fields if unknown.`;
+        }
       } catch (error) {
+        const fields = error instanceof z.ZodError
+          ? error.issues.map((issue) => issue.path.join('.') || 'intent')
+          : [];
+        console.error('[report_assistant] intent routing attempt failed', {
+          attempt: attempt + 1,
+          name: error instanceof Error ? error.name : typeof error,
+          fields,
+        });
+        feedback = fields.length
+          ? `Previous response was invalid at: ${[...new Set(fields)].join(', ')}. Return a valid structured intent. Use only source views listed in the schema and omit optional fields if unknown.`
+          : 'The previous response could not be parsed. Return one valid structured intent using the required schema and available source views.';
         if (attempt === 4) throw error;
       }
     }
