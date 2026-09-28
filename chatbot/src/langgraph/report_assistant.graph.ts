@@ -736,6 +736,11 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
       } as Parameters<typeof runReportPipeline>[0]);
       const errors = [result?.errorAnalyzeData, result?.errorChartConfig, result?.errorReport, result?.errorPdf].filter(Boolean);
       if (result?.final_result?.success === false || errors.length) {
+        console.error('[report_assistant] pipeline stages failed', errors.map((failure: { node?: string; code?: string; status?: number }) => ({
+          node: failure.node,
+          code: failure.code,
+          status: failure.status,
+        })));
         const failure = result?.final_result ?? errors[0] ?? {};
         throw assistantError(
           failure.status ?? 500,
