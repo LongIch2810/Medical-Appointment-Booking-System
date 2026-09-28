@@ -40,6 +40,7 @@ const CreateReportState = Annotation.Root({
     status: number;
     message: string;
     node: string;
+    code?: string;
   } | null>(),
   nextNodeAnalyzeData: Annotation<string>(),
 
@@ -214,6 +215,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       return {
         errorAnalyzeData: {
           status: 400,
+          code: 'ANALYSIS_INPUT_INVALID',
           message: "Câu hỏi không hợp lệ. Vui lòng nhập câu hỏi có ý nghĩa.",
           node: "analyze_data_node",
         },
@@ -235,6 +237,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       return {
         errorAnalyzeData: {
           status: 500,
+          code: !res ? 'ANALYSIS_TOOL_EMPTY' : 'ANALYSIS_TOOL_ERROR',
           message:
             typeof res === "string" ? res : "Không thể truy vấn dữ liệu.",
           node: "analyze_data_node",
@@ -254,6 +257,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       return {
         errorAnalyzeData: {
           status: 502,
+          code: 'ANALYSIS_EXECUTION_INVALID',
           message: "SQL query metadata or report rows are missing.",
           node: "analyze_data_node",
         },
@@ -273,6 +277,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
     return {
       errorAnalyzeData: {
         status: 500,
+        code: 'ANALYSIS_EXCEPTION',
         message: error.message,
         node: "analyze_data_node",
       },
