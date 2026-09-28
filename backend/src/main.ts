@@ -49,6 +49,7 @@ async function bootstrap() {
       'http://127.0.0.1:4183',
       'https://patientuilifehealth.vercel.app',
       'https://medical-appointment-booking-system-u75m.onrender.com',
+      'https://medical-appointment-booking-system-ya7e.onrender.com',
       'https://adminmanagementuilifehealth.vercel.app',
     ],
     credentials: true,
