@@ -1,3 +1,11 @@
+function numericValue(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && /^-?\d+(?:\.\d+)?$/.test(value.trim())) {
+    return Number(value);
+  }
+  return undefined;
+}
+
 function collectSqlNumbers(value: unknown, values = new Set<string>()): Set<string> {
   if (typeof value === 'number' && Number.isFinite(value)) {
     values.add(String(value));
@@ -9,6 +17,31 @@ function collectSqlNumbers(value: unknown, values = new Set<string>()): Set<stri
     Object.values(value).forEach((item) => collectSqlNumbers(item, values));
   }
   return values;
+}
+
+function collectDerivedPercentages(rows: unknown): number[] {
+  if (!Array.isArray(rows) || rows.length < 2) return [];
+
+  const columns = new Map<string, number[]>();
+  for (const row of rows) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) continue;
+    for (const [key, rawValue] of Object.entries(row)) {
+      const value = numericValue(rawValue);
+      if (value === undefined || value < 0) continue;
+      const values = columns.get(key) ?? [];
+      values.push(value);
+      columns.set(key, values);
+    }
+  }
+
+  const percentages: number[] = [];
+  for (const values of columns.values()) {
+    if (values.length < 2) continue;
+    const total = values.reduce((sum, value) => sum + value, 0);
+    if (total <= 0) continue;
+    values.forEach((value) => percentages.push((value / total) * 100));
+  }
+  return percentages;
 }
 
 function normalizeNumberToken(token: string): string[] {
@@ -29,12 +62,30 @@ function normalizeNumberToken(token: string): string[] {
   if (/^-?\d+,\d+$/.test(plain)) {
     possibilities.add(String(Number(plain.replace(',', '.'))));
   }
+  if (/^-?\d+(?:[.,]\d+)+$/.test(plain)) {
+    possibilities.add(String(Number(plain.replace(',', '.'))));
+  }
   if (isPercent) {
     for (const possibility of [...possibilities]) {
       possibilities.add(String(Number(possibility) / 100));
     }
   }
   return [...possibilities];
+}
+
+function decimalPlaces(token: string): number {
+  const plain = token.replace(/\s|%/g, '');
+  const separatorIndex = Math.max(plain.lastIndexOf('.'), plain.lastIndexOf(','));
+  return separatorIndex < 0 ? 0 : plain.length - separatorIndex - 1;
+}
+
+function matchesRoundedValue(token: string, values: number[]): boolean {
+  const precision = decimalPlaces(token);
+  const tolerance = 0.5 * 10 ** -precision + Number.EPSILON;
+  return normalizeNumberToken(token).some((candidate) => {
+    const numericCandidate = Number(candidate);
+    return values.some((value) => Math.abs(numericCandidate - value) <= tolerance);
+  });
 }
 
 const REPORT_TEXT_FIELDS = [
@@ -73,6 +124,7 @@ export function findUngroundedNumbers(
     }
   }
   const known = collectSqlNumbers(rows);
+  const derivedPercentages = collectDerivedPercentages(rows);
   const text: string[] = [];
   collectText(report, text);
   const reportText = text
@@ -102,12 +154,12 @@ export function findUngroundedNumbers(
       ' ',
     )
     .replace(/\b(?:năm|year)\s+\d{4}\b/gi, ' ');
-  const tokens = reportText.match(
-    /-?(?:\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)(?:\s*%)?/g,
-  ) ?? [];
+  const tokens = reportText.match(/-?\d+(?:[.,]\d+)*(?:\s*%)?/g) ?? [];
   return tokens.filter((token) => {
     const normalized = normalizeNumberToken(token);
-    return normalized.length > 0 && !normalized.some((number) => known.has(number));
+    return normalized.length > 0
+      && !normalized.some((number) => known.has(number))
+      && !matchesRoundedValue(token, derivedPercentages);
   });
 }
 

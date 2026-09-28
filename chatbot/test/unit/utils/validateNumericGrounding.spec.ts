@@ -107,3 +107,34 @@ test('does not treat week and quarter ordinals as report metrics', () => {
     [],
   );
 });
+
+test('accepts percentages derived from the sum of a grouped SQL metric', () => {
+  const report = {
+    analysis: [
+      {
+        content: 'Nội tổng quát chiếm 14,95%, Tim mạch chiếm 12.149532710280374% và Da liễu chiếm khoảng 10%.',
+      },
+    ],
+  };
+  const rows = [
+    { specialty: 'Nội tổng quát', appointment_count: 16 },
+    { specialty: 'Tim mạch', appointment_count: 13 },
+    { specialty: 'Da liễu', appointment_count: 11 },
+    { specialty: 'Khác', appointment_count: 67 },
+  ];
+
+  assert.deepEqual(findUngroundedNumbers(report, rows), []);
+});
+
+test('still rejects a percentage that cannot be derived from grouped SQL metrics', () => {
+  const rows = [
+    { specialty: 'Nội tổng quát', appointment_count: 16 },
+    { specialty: 'Tim mạch', appointment_count: 13 },
+    { specialty: 'Khác', appointment_count: 78 },
+  ];
+
+  assert.deepEqual(
+    findUngroundedNumbers({ analysis: [{ content: 'Tỷ trọng là 17%.' }] }, rows),
+    ['17%'],
+  );
+});
