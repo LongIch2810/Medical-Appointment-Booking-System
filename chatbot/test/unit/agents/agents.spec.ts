@@ -192,6 +192,16 @@ test("topic guard: sends LifeHealth contact requests to the grounded support flo
   assert.equal(result.messages.at(-1)?.content, "final answer");
 });
 
+test("topic guard: accepts a sleep-health question even if the classifier would reject it", async () => {
+  globals.__AGENT_STUB__.guardMode = "out_of_scope";
+  const result = await agent.invoke({
+    messages: [new HumanMessage("Hãy giải thích 5 cách cải thiện giấc ngủ cho người trưởng thành")],
+  });
+  assert.equal(globals.__AGENT_STUB__.guardCalls.length, 0);
+  assert.equal(globals.__AGENT_STUB__.llmCalls.length, 1);
+  assert.equal(result.messages.at(-1)?.content, "final answer");
+});
+
 test("topic guard: an in-scope message proceeds to the main agent as before", async () => {
   globals.__AGENT_STUB__.guardMode = "in_scope";
 

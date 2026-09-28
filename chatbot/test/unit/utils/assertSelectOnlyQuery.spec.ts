@@ -137,6 +137,24 @@ test("accepts a derived subquery in FROM/JOIN without flagging the keyword as a 
   assert.equal(assertSelectOnlyQuery(query), query);
 });
 
+test("does not mistake FROM inside EXTRACT for a table", () => {
+  const query = "SELECT EXTRACT(WEEK FROM appointment_date) AS week FROM chatbot_report_appointments_view";
+  assert.equal(
+    assertSelectOnlyQuery(query, { allowedTables: ["chatbot_report_appointments_view"] }),
+    query,
+  );
+});
+
+test("still checks tables inside an EXTRACT subquery", () => {
+  assert.throws(
+    () => assertSelectOnlyQuery(
+      "SELECT EXTRACT(YEAR FROM (SELECT created_at FROM users)) FROM chatbot_report_appointments_view",
+      { allowedTables: ["chatbot_report_appointments_view"] },
+    ),
+    UnsafeSqlQueryError,
+  );
+});
+
 test("still rejects an actual disallowed function call even when it looks like a keyword prefix", () => {
   assert.throws(
     () => assertSelectOnlyQuery("SELECT formatted_output() FROM doctors_view"),

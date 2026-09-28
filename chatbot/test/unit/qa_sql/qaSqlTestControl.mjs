@@ -8,6 +8,7 @@ export const state = {
   llmInvokeResult: { content: "default answer" },
   llmInvokeCalls: [],
   toolInvokeResult: { tool_calls: [{ args: { query: "SELECT 1 FROM doctors_view" } }] },
+  toolInvokeResults: [],
   toolInvokeCalls: [],
   bindToolsCalls: [],
   tableInfo: "FAKE_TABLE_INFO",
@@ -25,6 +26,7 @@ export function resetState() {
     tool_calls: [{ args: { query: "SELECT 1 FROM doctors_view" } }],
   };
   state.toolInvokeCalls.length = 0;
+  state.toolInvokeResults.length = 0;
   state.bindToolsCalls.length = 0;
   state.tableInfo = "FAKE_TABLE_INFO";
   state.fromDataSourceParamsCalls.length = 0;

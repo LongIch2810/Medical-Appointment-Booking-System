@@ -32,6 +32,7 @@ const METRIC_LABELS: Record<string, string> = {
   fill_rate: "Tỷ lệ lấp đầy lịch bác sĩ",
   new_users: "Người dùng đăng ký mới",
   active_users: "Người dùng hoạt động",
+  "cancelled appointments": "Số lịch hẹn đã hủy",
 };
 
 const GROUP_BY_LABELS: Record<string, string> = {
@@ -42,6 +43,7 @@ const GROUP_BY_LABELS: Record<string, string> = {
   day: "Theo từng ngày",
   week: "Theo tuần",
   month: "Theo tháng",
+  "doctor id": "Mã bác sĩ",
 };
 
 const CHART_TYPE_LABELS: Record<string, string> = {

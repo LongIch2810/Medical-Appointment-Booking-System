@@ -549,7 +549,16 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
           route: 'finalize' as const,
         };
       }
-      const plan = applyPreferenceDefaults(state.currentMessage, intent.plan, state.preferences);
+      const preferredPlan = applyPreferenceDefaults(state.currentMessage, intent.plan, state.preferences);
+      const sourceViews = new Set(preferredPlan.sourceViews);
+      if (
+        sourceViews.has('chatbot_report_appointments_view') &&
+        preferredPlan.groupBy.some((group) => /doctor|bác sĩ|specialty|chuyên khoa/i.test(group))
+      ) {
+        sourceViews.add('chatbot_report_doctor_schedules_view');
+        sourceViews.add('chatbot_report_doctors_view');
+      }
+      const plan = ReportPlanSchema.parse({ ...preferredPlan, sourceViews: [...sourceViews] });
       if (!validateDateRange(plan)) {
         return {
           response: {
@@ -839,6 +848,18 @@ export async function runReportAssistant(
 
   try {
     if (input.mode === 'CONFIRM_PLAN') {
+      if (
+        snapshot.next.includes('generate_report') &&
+        saved.pendingPlan &&
+        saved.approvedPlan &&
+        samePlan(saved.pendingPlan, input.confirmedPlan) &&
+        samePlan(saved.approvedPlan, input.confirmedPlan) &&
+        saved.turnId === input.turnId
+      ) {
+        const result = await graph.invoke(null, config);
+        if (!result.response) throw assistantError(502, 'REPORT_ASSISTANT_INVALID_RESPONSE', 'Assistant response is missing.');
+        return result.response;
+      }
       if (!isInterrupted(snapshot) || !saved.pendingPlan || !samePlan(saved.pendingPlan, input.confirmedPlan)) {
         throw assistantError(409, 'REPORT_PLAN_STALE', 'The pending report plan is no longer valid.');
       }

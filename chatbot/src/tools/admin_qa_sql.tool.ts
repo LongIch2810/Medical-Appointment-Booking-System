@@ -4,6 +4,7 @@ import adminQaSqlGraph from "../qa_sql/admin_qa_sql.js";
 import { logSafeError } from "../utils/safeLog.js";
 import { ReportPlanSchema } from "../types/ReportAssistant.js";
 import type { ReportExecutionContext } from "../types/ReportAssistant.js";
+import { UnsafeSqlQueryError } from "../utils/assertSelectOnlyQuery.js";
 
 export const AdminQaSqlTool = tool(
   async ({
@@ -24,6 +25,9 @@ export const AdminQaSqlTool = tool(
       });
     } catch (error: any) {
       logSafeError("AdminQaSqlTool failed", error);
+      if (error instanceof UnsafeSqlQueryError) {
+        console.error("AdminQaSqlTool SQL validation reason", error.reason);
+      }
       return "Lỗi hệ thống khi phân tích báo cáo.";
     }
   },

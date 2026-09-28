@@ -204,7 +204,7 @@ export default function Chatbot() {
     const viewport = viewportRef.current;
     if (!viewport) return;
     if (isNearBottomRef.current || activeOptimisticUser !== null || isPending) {
-      scrollToBottom(true);
+      scrollToBottom(false);
     }
   }, [latestMessageId, activeConversationId, activeOptimisticUser, isPending]);
 
@@ -254,6 +254,7 @@ export default function Chatbot() {
           turn.assistantMessage,
         ];
         setLiveTurn({ conversationId, messages: newMessages });
+        setOptimisticUser(null);
         await Promise.all([
           queryClient.invalidateQueries({
             queryKey: patientChatQueryKeys.conversation(conversationId),
@@ -261,7 +262,6 @@ export default function Chatbot() {
           queryClient.invalidateQueries({ queryKey: patientChatQueryKeys.conversations }),
         ]);
         setLiveTurn(null);
-        setOptimisticUser(null);
       } catch {
         setOptimisticUser(null);
         setFailedRequest({

@@ -35,7 +35,7 @@ registerEsmMocks(subjectDirUrl, {
           return {
             invoke: async (promptValue) => {
               state.toolInvokeCalls.push(promptValue);
-              return state.toolInvokeResult;
+              return state.toolInvokeResults.shift() ?? state.toolInvokeResult;
             },
           };
         },
@@ -194,6 +194,30 @@ test("restricts a confirmed report to the source views in its plan", async () =>
     (error: unknown) => error instanceof UnsafeSqlQueryError,
   );
   assert.equal(state.queryCalls.length, 0);
+});
+
+test("regenerates a rejected report SQL once and executes only the corrected SELECT", async () => {
+  resetState();
+  state.toolInvokeResults.push(
+    { tool_calls: [{ args: { query: "SELECT id FROM users" } }] },
+    { tool_calls: [{ args: { query: "SELECT COUNT(*) FROM chatbot_report_appointments_view" } }] },
+  );
+  const result = await adminQaSqlGraph.invoke({
+    question: "Count appointments",
+    reportContext: {
+      sourceRequest: "Count appointments",
+      objective: "Count appointments",
+      query: "Count appointments",
+      fromDate: "2026-08-01",
+      toDate: "2026-08-31",
+      metrics: ["appointment_count"],
+      groupBy: [],
+      sourceViews: ["chatbot_report_appointments_view"],
+    },
+  });
+  assert.equal(state.toolInvokeCalls.length, 2);
+  assert.deepEqual(state.queryCalls, ["SELECT COUNT(*) FROM chatbot_report_appointments_view LIMIT 1000"]);
+  assert.match(result.query, /chatbot_report_appointments_view/);
 });
 
 test("rejects malformed LLM output before touching the admin datasource", async () => {

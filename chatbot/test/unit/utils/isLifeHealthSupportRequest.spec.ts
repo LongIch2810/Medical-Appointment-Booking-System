@@ -10,4 +10,5 @@ test('recognizes explicit requests for LifeHealth support contacts', () => {
 test('does not route general email definitions or non-contact product questions to the support fallback', () => {
   assert.equal(isLifeHealthSupportRequest('Email là gì?'), false);
   assert.equal(isLifeHealthSupportRequest('LifeHealth có những chuyên khoa nào?'), false);
+  assert.equal(isLifeHealthSupportRequest('LifeHealth hỗ trợ những dịch vụ nào và tôi xem lịch hẹn ở đâu?', 'Số hotline LifeHealth'), false);
 });

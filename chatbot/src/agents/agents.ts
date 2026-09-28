@@ -64,6 +64,7 @@ Nhiệm vụ: xem xét đoạn hội thoại (đặc biệt là tin nhắn CUỐ
 
 Thuộc phạm vi (in_scope = true) nếu tin nhắn liên quan đến:
 - Sức khỏe, triệu chứng, bệnh lý, thuốc men, tư vấn y tế.
+- Thói quen và cách cải thiện sức khỏe, kể cả giấc ngủ, dinh dưỡng, vận động và phòng bệnh, dù người dùng không viết từ “sức khỏe”.
 - Sử dụng nền tảng LifeHealth: đặt lịch khám, bác sĩ, chuyên khoa, cơ sở y tế, hồ sơ sức khỏe của bản thân/người thân.
 - Cách sử dụng và liên hệ/hỗ trợ chính thức của LifeHealth (hotline, email, địa chỉ, giờ làm việc, phí, chính sách).
 - Số liệu/thống kê về nền tảng LifeHealth, ví dụ: hệ thống có bao nhiêu bác sĩ, có những chuyên khoa nào, danh sách bác sĩ/bài viết y tế — đây LUÔN thuộc phạm vi dù không nhắc "sức khỏe" hay "đặt lịch" trực tiếp.
@@ -99,6 +100,9 @@ async function classifyTopic(state: typeof MessagesAnnotation.State) {
     .reverse()
     .find((message) => message._getType() === "human");
   const latestUserText = String(latestUserMessage?.content ?? "");
+  if (/(giấc ngủ|mất ngủ|ngủ ngon|sleep|insomnia)/i.test(latestUserText)) {
+    return { messages: [] };
+  }
   const priorContext = recent
     .filter((message) => message !== latestUserMessage)
     .map((message) => String(message.content ?? ""))

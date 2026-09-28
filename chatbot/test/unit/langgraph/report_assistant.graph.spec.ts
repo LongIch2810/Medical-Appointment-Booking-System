@@ -147,7 +147,10 @@ test('uses the fast structured router and proposes an interrupt without running 
   const response = await runReportAssistant(graph, makeInput());
 
   assert.equal(response.action, 'PROPOSE_PLAN');
-  assert.deepEqual(response.plan, plan);
+  assert.deepEqual(response.plan, {
+    ...plan,
+    sourceViews: ['chatbot_report_appointments_view', 'chatbot_report_doctor_schedules_view', 'chatbot_report_doctors_view'],
+  });
   assert.deepEqual(globals.__REPORT_ASSISTANT_GRAPH_STUB__.modelProfiles[0], {
     profile: 'fast',
     temperature: 0,
@@ -180,7 +183,7 @@ test('restarts a graph instance against the same checkpointer and resumes approv
     mode: 'CONFIRM_PLAN',
     message: 'Confirm plan',
     turnId: 2,
-    confirmedPlan: plan,
+    confirmedPlan: proposed.plan,
     fileName: 'report.pdf',
   }));
 
@@ -198,7 +201,7 @@ test('restarts a graph instance against the same checkpointer and resumes approv
       comparisonToDate: null,
       metrics: plan.metrics,
       groupBy: plan.groupBy,
-      sourceViews: plan.sourceViews,
+      sourceViews: proposed.plan?.sourceViews,
     },
     fileName: 'report.pdf',
   });
@@ -212,6 +215,38 @@ test('restarts a graph instance against the same checkpointer and resumes approv
   assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 1);
   // Ensure the original graph object can still inspect the same persisted thread.
   assert.ok(firstGraph);
+});
+
+test('adds required reporting views before asking approval for appointment groups', async () => {
+  const { graph } = makeGraph({ routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan }]) });
+  const proposed = await runReportAssistant(graph, makeInput());
+  assert.deepEqual(proposed.plan?.sourceViews, [
+    'chatbot_report_appointments_view',
+    'chatbot_report_doctor_schedules_view',
+    'chatbot_report_doctors_view',
+  ]);
+});
+
+test('retries report generation from a failed checkpoint with the same approved turn', async () => {
+  const { graph } = makeGraph({ routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan }]) });
+  const proposed = await runReportAssistant(graph, makeInput());
+  globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineResult = {
+    errorAnalyzeData: { status: 500, code: 'REPORT_ASSISTANT_FAILED', message: 'SQL failed' },
+    final_result: { success: false },
+  };
+  const confirmation = makeInput({ mode: 'CONFIRM_PLAN', message: 'Confirm', turnId: 2, confirmedPlan: proposed.plan });
+  await assert.rejects(runReportAssistant(graph, confirmation));
+  globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineResult = {
+    pdf_asset: { publicId: 'reports/report.pdf', format: 'pdf' },
+    executedQuery: 'SELECT COUNT(*) FROM chatbot_report_appointments_view',
+    result: '[{"count":12}]',
+    report: {},
+    chartConfig: {},
+    final_result: { success: true },
+  };
+  const retried = await runReportAssistant(graph, confirmation);
+  assert.equal(retried.action, 'GENERATE_REPORT');
+  assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 2);
 });
 
 test('a new message resumes a pending approval as REVISE and invalidates the old plan', async () => {
@@ -345,7 +380,7 @@ test('current chart/detail instructions take priority over remembered defaults',
       comparisonToDate: null,
       metrics: plan.metrics,
       groupBy: plan.groupBy,
-      sourceViews: plan.sourceViews,
+      sourceViews: proposed.plan?.sourceViews,
     },
     preferredChartType: 'LINE',
     detailLevel: 'BRIEF',

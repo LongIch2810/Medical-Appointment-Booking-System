@@ -9,7 +9,7 @@ import {
   AdminReportDatasource,
   initializeWithRetry,
 } from "../database/data-source.js";
-import { assertSelectOnlyQuery } from "../utils/assertSelectOnlyQuery.js";
+import { assertSelectOnlyQuery, UnsafeSqlQueryError } from "../utils/assertSelectOnlyQuery.js";
 import { withRetry } from "../utils/retry.js";
 import type { ReportExecutionContext } from "../types/ReportAssistant.js";
 
@@ -70,6 +70,8 @@ Yêu cầu:
 - Chỉ tạo câu SQL SELECT (không UPDATE, DELETE, INSERT, không thao tác làm hỏng DATABASE)
 với các trường cần thiết với cấu trúc cơ sở dữ liệu.
 - Chỉ truy vấn các view chatbot_report_* được cung cấp trong schema.
+- Với kế hoạch đã xác nhận, chỉ dùng các view trong sourceViews. Nếu cần phân nhóm theo bác sĩ/chuyên khoa từ lịch hẹn, nối appointments.doctor_schedule_id -> doctor_schedules.id -> doctors.id; không dùng bảng gốc.
+- Các hàm SQL được phép: AGE, ARRAY_AGG, AVG, BTRIM, CAST, COALESCE, COUNT, DATE_PART, DATE_TRUNC, EXTRACT, JSON_AGG, JSON_BUILD_OBJECT, JSONB_AGG, JSONB_BUILD_OBJECT, LOWER, MAX, MIN, NULLIF, ROUND, STRING_AGG, SUM, TO_CHAR, TRIM, UPPER. Không dùng hàm khác.
 - Luôn giới hạn kết quả ở mức tối đa 1000 dòng.
 - Nếu dùng hàm aggregate như SUM, COUNT hoặc AVG, mọi cột/biểu thức không aggregate trong SELECT bắt buộc phải nằm trong GROUP BY; không dùng SELECT * cùng aggregate.
 - Khi tính tổng từ cột đếm có hậu tố _count bằng SUM, bọc bằng COALESCE(SUM(column), 0) để kỳ không có bản ghi trả về 0 thay vì NULL. Không thay thế AVG bằng 0 và không tự tạo nhóm cho kết quả đã GROUP BY.
@@ -117,10 +119,25 @@ const writeQuery = async (state: typeof InputStateAnnotation.State) => {
 };
 
 const executeQuery = async (state: typeof StateAnnotation.State) => {
-  const safeQuery = assertSelectOnlyQuery(state.query, {
+  const options = {
     allowedTables: state.reportContext?.sourceViews ?? ADMIN_REPORT_TABLES,
     maxRows: 1_000,
-  });
+  };
+  let query = state.query;
+  let safeQuery: string;
+  try {
+    safeQuery = assertSelectOnlyQuery(query, options);
+  } catch (error) {
+    if (!(error instanceof UnsafeSqlQueryError) || !state.reportContext) throw error;
+    const promptValue = await queryPromptTemplate.invoke({
+      dialect: db.appDataSourceOptions.type,
+      table_info: await db.getTableInfo(),
+      input: `${state.question}\n\nConfirmed report plan: ${JSON.stringify(state.reportContext)}\n\nPrevious SQL was rejected: ${error.reason}. Generate a corrected SELECT using only these views: ${state.reportContext.sourceViews.join(', ')}. Do not repeat the rejected SQL.`,
+    });
+    const response = await llmWithQueryTool.invoke(promptValue);
+    query = response.tool_calls?.[0]?.args?.query;
+    safeQuery = assertSelectOnlyQuery(query, options);
+  }
   const rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
     operation: "admin_qa_sql_select",
   });

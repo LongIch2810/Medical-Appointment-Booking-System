@@ -3,6 +3,7 @@ export interface SqlTestState {
   llmInvokeResult: { content: unknown };
   llmInvokeCalls: unknown[];
   toolInvokeResult: { tool_calls: Array<{ args: { query: string } }> };
+  toolInvokeResults: Array<{ tool_calls: Array<{ args: { query: string } }> }>;
   toolInvokeCalls: unknown[];
   bindToolsCalls: unknown[];
   tableInfo: string;

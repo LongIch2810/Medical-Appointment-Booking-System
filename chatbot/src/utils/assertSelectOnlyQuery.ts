@@ -82,7 +82,7 @@ export type SelectQueryOptions = {
 };
 
 export class UnsafeSqlQueryError extends Error {
-  constructor(_query: string, reason: string) {
+  constructor(_query: string, readonly reason: string) {
     super(`Câu SQL không hợp lệ: ${reason}`);
     this.name = "UnsafeSqlQueryError";
   }
@@ -213,7 +213,13 @@ function assertAllowedTables(
     ),
   );
 
-  for (const match of query.matchAll(
+  // EXTRACT(part FROM value) uses this one FROM as an operator. Keep the
+  // expression intact so nested SELECTs still pass the table allowlist check.
+  const tableReferences = query.replace(
+    /\bEXTRACT\s*\(\s*(?:CENTURY|DAY|DECADE|DOW|DOY|EPOCH|HOUR|ISODOW|ISOYEAR|MICROSECONDS|MILLENNIUM|MILLISECONDS|MINUTE|MONTH|QUARTER|SECOND|WEEK|YEAR)\s+FROM\b/gi,
+    (match) => match.replace(/\bFROM\b/i, ' '),
+  );
+  for (const match of tableReferences.matchAll(
     /\b(?:FROM|JOIN)\s+(?:"?([a-z_][a-z0-9_$]*)"?\.)?"?([a-z_][a-z0-9_$]*)"?/gi,
   )) {
     const schema = match[1]?.toLowerCase();
