@@ -155,6 +155,14 @@ test("still checks tables inside an EXTRACT subquery", () => {
   );
 });
 
+test("allows CASE branches with parenthesized expressions", () => {
+  const query = "SELECT CASE WHEN COUNT(*) > 0 THEN (SUM(appointment_count)) ELSE (0) END AS total FROM chatbot_report_appointments_view";
+  assert.equal(
+    assertSelectOnlyQuery(query, { allowedTables: ["chatbot_report_appointments_view"] }),
+    query,
+  );
+});
+
 test("still rejects an actual disallowed function call even when it looks like a keyword prefix", () => {
   assert.throws(
     () => assertSelectOnlyQuery("SELECT formatted_output() FROM doctors_view"),

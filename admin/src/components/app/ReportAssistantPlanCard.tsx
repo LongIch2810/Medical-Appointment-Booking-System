@@ -32,7 +32,7 @@ const METRIC_LABELS: Record<string, string> = {
   fill_rate: "Tỷ lệ lấp đầy lịch bác sĩ",
   new_users: "Người dùng đăng ký mới",
   active_users: "Người dùng hoạt động",
-  "cancelled appointments": "Số lịch hẹn đã hủy",
+  cancelled_appointments: "Số lịch hẹn đã hủy",
 };
 
 const GROUP_BY_LABELS: Record<string, string> = {
@@ -43,7 +43,8 @@ const GROUP_BY_LABELS: Record<string, string> = {
   day: "Theo từng ngày",
   week: "Theo tuần",
   month: "Theo tháng",
-  "doctor id": "Mã bác sĩ",
+  doctor_id: "Mã bác sĩ",
+  appointment_date: "Ngày đặt khám",
 };
 
 const CHART_TYPE_LABELS: Record<string, string> = {
@@ -61,11 +62,11 @@ const DETAIL_LEVEL_LABELS: Record<string, string> = {
 };
 
 function formatMetricLabel(metric: string): string {
-  return METRIC_LABELS[metric] || metric.replace(/_/g, " ");
+  return METRIC_LABELS[metric.trim().toLowerCase().replace(/\s+/g, "_")] || metric.replace(/_/g, " ");
 }
 
 function formatGroupLabel(group: string): string {
-  return GROUP_BY_LABELS[group] || group.replace(/_/g, " ");
+  return GROUP_BY_LABELS[group.trim().toLowerCase().replace(/\s+/g, "_")] || group.replace(/_/g, " ");
 }
 
 export function ReportAssistantPlanCard({
