@@ -367,10 +367,6 @@ async function generateContentNode(state: typeof CreateReportState.State) {
       } catch {
         groundingError = true;
         groundingFeedback = findUngroundedNumbers(res, state.result);
-        console.warn('[generate_content_node] numeric grounding rejected', {
-          attempt: attempt + 1,
-          unsupported: groundingFeedback,
-        });
         res = undefined;
       }
     }
