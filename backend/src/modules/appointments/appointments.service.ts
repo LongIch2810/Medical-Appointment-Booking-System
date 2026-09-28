@@ -84,6 +84,8 @@ export class AppointmentsService {
         appointmentDateOnly,
         start_time: body.start_time,
         end_time: body.end_time,
+        doctor_name: body.doctor_name,
+        location: body.location,
       },
       false,
     );
@@ -326,6 +328,8 @@ export class AppointmentsService {
           specialty_id,
           start_time,
           end_time,
+          doctor_name,
+          location,
         } = body;
 
         if (
@@ -396,6 +400,8 @@ export class AppointmentsService {
             appointmentDateOnly,
             start_time: start_time!,
             end_time,
+            doctor_name,
+            location,
           });
         }
 
@@ -572,6 +578,8 @@ export class AppointmentsService {
       appointmentDateOnly: string;
       start_time: string;
       end_time?: string;
+      doctor_name?: string;
+      location?: string;
     },
     lock = true,
   ): Promise<DoctorSchedule> {
@@ -590,6 +598,20 @@ export class AppointmentsService {
       .andWhere('specialty.id = :specialty_id', {
         specialty_id: params.specialty_id,
       });
+
+    if (params.doctor_name) {
+      query.andWhere(
+        'POSITION(unaccent(lower(:doctor_name)) IN unaccent(lower(doctor_user.fullname))) > 0',
+        { doctor_name: params.doctor_name.trim() },
+      );
+    }
+
+    if (params.location) {
+      query.andWhere(
+        'POSITION(unaccent(lower(:location)) IN unaccent(lower(doctor_user.address))) > 0',
+        { location: params.location.trim() },
+      );
+    }
 
     if (lock)
       query.setLock('pessimistic_write', undefined, ['doctor_schedule']);

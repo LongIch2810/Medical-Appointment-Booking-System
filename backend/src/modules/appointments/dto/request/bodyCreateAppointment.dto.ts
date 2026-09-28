@@ -8,6 +8,10 @@ import {
   IsUUID,
   IsInt,
   Min,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
   Validate,
   ValidateNested,
   ValidationArguments,
@@ -82,6 +86,20 @@ export class BodyCreateAppointmentDto {
   @IsOptional()
   @IsMilitaryTime()
   end_time?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/)
+  @MinLength(2)
+  @MaxLength(120)
+  doctor_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/)
+  @MinLength(2)
+  @MaxLength(160)
+  location?: string;
 
   @IsOptional()
   @IsNumber()

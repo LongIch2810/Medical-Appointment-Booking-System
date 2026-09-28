@@ -97,6 +97,14 @@ export interface ResolvedRelativeAnalysis {
   gender: boolean | null;
 }
 
+function normalizeIsoDate(value: string | null | undefined): string | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value
+    ? null
+    : value;
+}
+
 /**
  * Quyết định relationship_code/name/dob/gender cuối cùng từ quan hệ nhận
  * diện tường minh trong câu (regex, đáng tin cậy tuyệt đối) kết hợp với kết
@@ -121,7 +129,7 @@ export function resolveRelativeAnalysis(
     // giữ nguyên giá trị explicit đã gán ở trên (explicit luôn thắng) — LLM
     // không được ghi đè, nhưng name/dob/gender trích được vẫn giữ lại.
     name = parsed.name ?? null;
-    dob = parsed.dob ?? null;
+    dob = normalizeIsoDate(parsed.dob);
     gender = parsed.gender ?? null;
   }
 

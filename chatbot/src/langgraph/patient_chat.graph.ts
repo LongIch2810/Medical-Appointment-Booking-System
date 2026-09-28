@@ -63,6 +63,8 @@ type BookingSummary = {
   createsRelative: boolean;
   specialtyName: string;
   doctorName?: string;
+  patientDob?: string;
+  preferredLocation?: string;
   appointmentDate: string;
   startTime: string;
   endTime: string | null;
@@ -172,6 +174,8 @@ function parseProposal(content: unknown): PendingBooking | null {
         createsRelative: summary.createsRelative,
         specialtyName: summary.specialtyName,
         ...(typeof summary.doctorName === 'string' ? { doctorName: summary.doctorName } : {}),
+        ...(typeof summary.patientDob === 'string' ? { patientDob: summary.patientDob } : {}),
+        ...(typeof summary.preferredLocation === 'string' ? { preferredLocation: summary.preferredLocation } : {}),
         appointmentDate: summary.appointmentDate,
         startTime: summary.startTime,
         endTime: typeof summary.endTime === 'string' ? summary.endTime : null,
@@ -190,6 +194,8 @@ function sameSummary(left: unknown, right: unknown): boolean {
     a.createsRelative === b.createsRelative &&
     a.specialtyName === b.specialtyName &&
     (a.doctorName ?? null) === (b.doctorName ?? null) &&
+    (a.patientDob ?? null) === (b.patientDob ?? null) &&
+    (a.preferredLocation ?? null) === (b.preferredLocation ?? null) &&
     a.appointmentDate === b.appointmentDate &&
     a.startTime === b.startTime &&
     (a.endTime ?? null) === (b.endTime ?? null);

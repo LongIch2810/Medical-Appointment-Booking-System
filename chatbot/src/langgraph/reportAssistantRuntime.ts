@@ -24,12 +24,31 @@ let initialization: Promise<Runtime> | null = null;
 let initializationFailed = false;
 
 function postgresOptions(): pg.PoolConfig {
-  const user = process.env.LANGGRAPH_DB_USER;
+  const roleUser = process.env.LANGGRAPH_DB_USER;
   const password = process.env.LANGGRAPH_DB_PASSWORD;
   const database = process.env.DB_NAME;
   const host = process.env.DB_HOST;
+  const configuredPoolerUser = process.env.LANGGRAPH_DB_POOLER_USER;
+  const databaseUser = process.env.DB_USER;
+  const usesSupabaseSharedPooler =
+    host?.toLowerCase().endsWith('.pooler.supabase.com') ?? false;
+  const projectRef = databaseUser?.includes('.')
+    ? databaseUser.slice(databaseUser.lastIndexOf('.') + 1)
+    : null;
+  const supabasePoolerUser =
+    configuredPoolerUser ??
+    (roleUser && projectRef ? `${roleUser}.${projectRef}` : undefined);
+  if (usesSupabaseSharedPooler && !supabasePoolerUser) {
+    throw new Error(
+      'Set LANGGRAPH_DB_POOLER_USER to chatbot_report_assistant.<PROJECT_REF>, or qualify DB_USER with .<PROJECT_REF>, when using the Supabase shared pooler.',
+    );
+  }
+  const user = usesSupabaseSharedPooler ? supabasePoolerUser : roleUser;
   const port = Number.parseInt(process.env.DB_PORT ?? '5432', 10);
   if (
+    !roleUser ||
+    roleUser.trim() !== roleUser ||
+    Buffer.byteLength(roleUser, 'utf8') > 63 ||
     !user ||
     user.trim() !== user ||
     Buffer.byteLength(user, 'utf8') > 63 ||

@@ -14,6 +14,8 @@ interface BookingSummary {
   createsRelative: boolean;
   specialtyName: string;
   doctorName: string | null;
+  patientDob?: string | null;
+  preferredLocation?: string | null;
   appointmentDate: string;
   startTime: string;
   endTime: string | null;
@@ -49,6 +51,12 @@ function readSummary(
     specialtyName: summary.specialtyName,
     doctorName:
       typeof summary.doctorName === "string" ? summary.doctorName : null,
+    patientDob:
+      typeof summary.patientDob === "string" ? summary.patientDob : null,
+    preferredLocation:
+      typeof summary.preferredLocation === "string"
+        ? summary.preferredLocation
+        : null,
     appointmentDate: summary.appointmentDate,
     startTime: summary.startTime,
     endTime: typeof summary.endTime === "string" ? summary.endTime : null,
@@ -180,6 +188,26 @@ export default function BookingApprovalCard({
                 </dd>
               </div>
             </div>
+            {summary.patientDob && (
+              <div className="min-w-0">
+                <dt className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Ngày sinh người khám
+                </dt>
+                <dd className="text-sm font-bold text-foreground">
+                  {displayDate(summary.patientDob)}
+                </dd>
+              </div>
+            )}
+            {summary.preferredLocation && (
+              <div className="min-w-0">
+                <dt className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Khu vực ưu tiên
+                </dt>
+                <dd className="truncate text-sm font-bold text-foreground">
+                  {summary.preferredLocation}
+                </dd>
+              </div>
+            )}
           </dl>
         </div>
       ) : (

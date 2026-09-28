@@ -28,6 +28,8 @@ const BookingState = Annotation.Root({
   // thật (chọn từ danh sách chuyên khoa thật lấy từ backend — xem
   // AnalyzeSpecialtyTool), xếp theo mức độ phù hợp giảm dần.
   specialty_candidates: Annotation<{ id: number; name: string }[]>(),
+  requested_doctor_name: Annotation<string | null>({ reducer: (_o, n) => n }),
+  preferred_location: Annotation<string | null>({ reducer: (_o, n) => n }),
 
   time: Annotation<{
     appointment_date: string;
@@ -224,13 +226,20 @@ async function analyzeSpecialtyNode(state: typeof BookingState.State) {
     AnalyzeSpecialtyTool as DynamicStructuredTool,
     { text_input: state.text_input },
     // resolve_error: true — cùng lý do như analyze_relative_node ở trên.
-    { candidate_specialties: [], resolve_error: true },
+    {
+      candidate_specialties: [],
+      preferred_doctor: null,
+      preferred_location: null,
+      resolve_error: true,
+    },
     "analyze_specialty_node",
   );
   const specialty_candidates = res?.candidate_specialties || [];
 
   return {
     specialty_candidates,
+    requested_doctor_name: res?.preferred_doctor || null,
+    preferred_location: res?.preferred_location || null,
     specialty_resolve_error: Boolean(res?.resolve_error),
   };
 }
@@ -312,12 +321,9 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
           fullname: state.new_relative_candidate!.fullname,
           relationship_code: state.new_relative_candidate!.relationship_code,
           gender: state.new_relative_candidate!.gender,
-          // dob có thể null (không bắt buộc, xem checker_node) — vẫn gửi
-          // thẳng, không cần lược bỏ: class-validator's @IsOptional() bỏ qua
-          // validate cho cả null lẫn undefined (đã xác nhận qua
-          // node_modules/class-validator/.../IsOptional.js), không riêng gì
-          // trường hợp field vắng mặt hẳn.
-          dob: state.new_relative_candidate!.dob,
+          ...(state.new_relative_candidate!.dob
+            ? { dob: state.new_relative_candidate!.dob }
+            : {}),
         },
       };
 
@@ -331,6 +337,10 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
     // "" không phải undefined/null nên @IsOptional() ở backend không bỏ qua
     // được, khiến @IsMilitaryTime() chạy và báo lỗi trên chuỗi rỗng.
     ...(state.time?.end_time ? { end_time: state.time.end_time } : {}),
+    ...(state.requested_doctor_name
+      ? { doctor_name: state.requested_doctor_name }
+      : {}),
+    ...(state.preferred_location ? { location: state.preferred_location } : {}),
     booking_mode: "ai_select",
   };
 
@@ -352,6 +362,12 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
           appointment_date: state.time?.appointment_date,
           start_time: state.time?.start_time,
           ...(state.time?.end_time ? { end_time: state.time.end_time } : {}),
+          ...(state.requested_doctor_name
+            ? { doctor_name: state.requested_doctor_name }
+            : {}),
+          ...(state.preferred_location
+            ? { location: state.preferred_location }
+            : {}),
         },
         { headers: { Authorization: `Bearer ${state.token}` }, timeout: 20_000 },
       );
@@ -369,6 +385,12 @@ async function bookingAppointmentNode(state: typeof BookingState.State) {
           display: {
             patientName,
             createsRelative: !hasSelectedRelative,
+            ...(state.new_relative_candidate?.dob
+              ? { patientDob: state.new_relative_candidate.dob }
+              : {}),
+            ...(state.preferred_location
+              ? { preferredLocation: state.preferred_location }
+              : {}),
             specialtyName,
             doctorName: preview.doctorName,
             appointmentDate: state.time?.appointment_date,

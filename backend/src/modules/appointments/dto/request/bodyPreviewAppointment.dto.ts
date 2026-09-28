@@ -2,6 +2,10 @@ import {
   IsDateString,
   IsInt,
   IsMilitaryTime,
+  IsString,
+  MinLength,
+  MaxLength,
+  Matches,
   IsOptional,
   Min,
 } from 'class-validator';
@@ -20,4 +24,18 @@ export class BodyPreviewAppointmentDto {
   @IsOptional()
   @IsMilitaryTime()
   end_time?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/)
+  @MinLength(2)
+  @MaxLength(120)
+  doctor_name?: string;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/)
+  @MinLength(2)
+  @MaxLength(160)
+  location?: string;
 }

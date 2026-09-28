@@ -9,6 +9,16 @@ import { logSafeError } from "../utils/safeLog.js";
 dotenv.config();
 
 const specialtySchema = z.object({
+  preferred_doctor: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("Doctor name explicitly requested by the user, excluding titles; otherwise null."),
+  preferred_location: z
+    .string()
+    .nullable()
+    .optional()
+    .describe("City or district explicitly requested by the user; otherwise null."),
   candidates: z
     .array(z.string())
     .describe(
@@ -96,15 +106,22 @@ export const AnalyzeSpecialtyTool = tool(
     }
 
     const systemPrompt = buildSystemPrompt(specialties.map((s) => s.name));
+    const extractionPrompt = `${systemPrompt}\n\nExtract booking preferences separately from symptoms:\n- preferred_doctor: only a named doctor the user explicitly asks for; remove titles such as 'doctor' or 'bác sĩ'; otherwise null.\n- preferred_location: only a city or district in the doctor's registered address that the user explicitly asks for; otherwise null.\nNever infer either preference from symptoms or invent details.`;
 
     // Model/gateway phía sau OPENAI_BASE_URL đôi khi không thực sự gọi function
     // (dù đã ép method: "functionCalling"), khiến invoke() trả về undefined
     // thay vì object/throw — kiểm tra rõ ràng thay vì destructure trực tiếp
     // để tránh crash (xem lỗi tương tự đã gặp ở relative_analyzer.tool.ts).
-    let extractedData: { candidates: string[] } | undefined;
+    let extractedData:
+      | {
+          candidates: string[];
+          preferred_doctor?: string | null;
+          preferred_location?: string | null;
+        }
+      | undefined;
     try {
       extractedData = await structuredModel.invoke([
-        ["system", systemPrompt],
+        ["system", extractionPrompt],
         [
           "human",
           `Phân tích triệu chứng/chuyên khoa từ câu sau: ${text_input}`,
@@ -131,7 +148,16 @@ export const AnalyzeSpecialtyTool = tool(
       .map((name) => byNormalizedName.get(normalize(name)))
       .filter((s): s is SpecialtyRow => Boolean(s));
 
-    return { candidate_specialties };
+    const cleanPreference = (value: string | null | undefined, maxLength: number) => {
+      const cleaned = value?.trim().replace(/\s+/g, " ");
+      return cleaned && cleaned.length <= maxLength ? cleaned : null;
+    };
+
+    return {
+      candidate_specialties,
+      preferred_doctor: cleanPreference(extractedData.preferred_doctor, 120),
+      preferred_location: cleanPreference(extractedData.preferred_location, 160),
+    };
   },
   {
     name: "analyze_specialty_tool",
