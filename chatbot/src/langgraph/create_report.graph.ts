@@ -210,6 +210,7 @@ function normalizeNumericStrings(jsonString: string): string {
 }
 
 async function analyzeDataNode(state: typeof CreateReportState.State) {
+  console.info('[analyze_data_node] started', { hasQuestion: Boolean(state.question), hasPlan: Boolean(state.reportContext) });
   try {
     if (!state.question || state.question.trim().length < 5) {
       return {
@@ -227,6 +228,7 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
       question: state.question,
       ...(state.reportContext ? { reportContext: state.reportContext } : {}),
     });
+    console.info('[analyze_data_node] tool completed', { resultType: typeof res, hasResult: Boolean(res) });
 
     if (!res || (typeof res === "string" && res.startsWith("Lỗi"))) {
       console.error('[analyze_data_node] SQL tool returned no usable result', {
