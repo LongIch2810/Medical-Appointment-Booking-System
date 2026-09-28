@@ -44,7 +44,21 @@ interface SpecialtyRow {
 // LLM trả về tên gần-đúng-ký-tự (vd sai dấu) dù đã được yêu cầu chọn nguyên
 // văn từ danh sách cung cấp.
 function normalize(str: string): string {
-  return str.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+  return str.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
+function normalizePhrase(str: string): string {
+  return normalize(str).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+
+function extractExplicitDoctorName(text: string): string | null {
+  const cue = /(?:^|[^\p{L}])(?:bác\s*sĩ|bs\.?)\s+/iu.exec(text);
+  if (!cue) return null;
+  const remainder = text.slice(cue.index + cue[0].length);
+  const match = remainder.match(
+    /^((?:\p{Lu}[\p{L}'’.-]*\s+){1,3}\p{Lu}[\p{L}'’.-]*)(?=\s+(?:ở|tại|chuyên khoa|ngày|lúc|vào|cho|giúp|được|có|khi|với|khám|muốn|đặt|lịch|đến|và|không|ơi|ạ|nhé)\b|[,.;!?]|$)/u,
+  );
+  return match?.[1]?.trim() ?? null;
 }
 
 async function fetchSpecialties(): Promise<SpecialtyRow[]> {
@@ -152,11 +166,36 @@ export const AnalyzeSpecialtyTool = tool(
       const cleaned = value?.trim().replace(/\s+/g, " ");
       return cleaned && cleaned.length <= maxLength ? cleaned : null;
     };
+    const explicitDoctorCue =
+      /(?:^|[^\p{L}])(?:bác\s*sĩ|bs\.?)(?=$|[^\p{L}])/iu.test(text_input);
+    const extractedDoctor = cleanPreference(
+      extractedData.preferred_doctor,
+      120,
+    );
+    const explicitDoctorName = extractExplicitDoctorName(text_input);
+    const doctorAppearsInRequest =
+      extractedDoctor &&
+      normalizePhrase(text_input).includes(normalizePhrase(extractedDoctor));
+    const preferred_doctor = explicitDoctorCue
+      ? explicitDoctorName
+      : doctorAppearsInRequest
+        ? extractedDoctor
+        : null;
+    const extractedLocation = cleanPreference(
+      extractedData.preferred_location,
+      160,
+    );
+    const preferred_location =
+      extractedLocation &&
+      normalizePhrase(text_input).includes(normalizePhrase(extractedLocation))
+        ? extractedLocation
+        : null;
 
     return {
       candidate_specialties,
-      preferred_doctor: cleanPreference(extractedData.preferred_doctor, 120),
-      preferred_location: cleanPreference(extractedData.preferred_location, 160),
+      preferred_doctor,
+      preferred_location,
+      doctor_preference_unresolved: explicitDoctorCue && !preferred_doctor,
     };
   },
   {

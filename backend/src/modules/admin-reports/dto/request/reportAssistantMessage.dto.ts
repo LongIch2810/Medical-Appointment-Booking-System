@@ -1,4 +1,4 @@
-import { Allow } from 'class-validator';
+import { Allow, IsOptional, IsUUID } from 'class-validator';
 
 export class ReportAssistantMessageDto {
   @Allow()
@@ -6,9 +6,17 @@ export class ReportAssistantMessageDto {
 
   @Allow()
   confirmPlanMessageId?: number;
+
+  @IsOptional()
+  @IsUUID()
+  turnId?: string;
 }
 
 export class CreateReportAssistantConversationDto {
   @Allow()
   message!: string;
+
+  @IsOptional()
+  @IsUUID()
+  turnId?: string;
 }

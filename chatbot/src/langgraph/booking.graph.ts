@@ -29,6 +29,9 @@ const BookingState = Annotation.Root({
   // AnalyzeSpecialtyTool), xếp theo mức độ phù hợp giảm dần.
   specialty_candidates: Annotation<{ id: number; name: string }[]>(),
   requested_doctor_name: Annotation<string | null>({ reducer: (_o, n) => n }),
+  doctor_preference_unresolved: Annotation<boolean>({
+    reducer: (_o, n) => n,
+  }),
   preferred_location: Annotation<string | null>({ reducer: (_o, n) => n }),
 
   time: Annotation<{
@@ -230,6 +233,7 @@ async function analyzeSpecialtyNode(state: typeof BookingState.State) {
       candidate_specialties: [],
       preferred_doctor: null,
       preferred_location: null,
+      doctor_preference_unresolved: false,
       resolve_error: true,
     },
     "analyze_specialty_node",
@@ -239,6 +243,7 @@ async function analyzeSpecialtyNode(state: typeof BookingState.State) {
   return {
     specialty_candidates,
     requested_doctor_name: res?.preferred_doctor || null,
+    doctor_preference_unresolved: Boolean(res?.doctor_preference_unresolved),
     preferred_location: res?.preferred_location || null,
     specialty_resolve_error: Boolean(res?.resolve_error),
   };
@@ -288,6 +293,9 @@ function checkerNode(state: typeof BookingState.State) {
   // riêng: id đã biết ngay tại đây, chọn chuyên khoa phù hợp nhất (đầu mảng).
   if (!state.specialty_candidates || state.specialty_candidates.length === 0) {
     missing.push("selected_specialty_name");
+  }
+  if (state.doctor_preference_unresolved) {
+    missing.push("requested_doctor_name");
   }
 
   if (!state.time?.appointment_date) missing.push("appointment_date");

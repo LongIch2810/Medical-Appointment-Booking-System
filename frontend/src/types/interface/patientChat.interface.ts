@@ -47,3 +47,10 @@ export interface PatientChatTurnResponse {
   appointment: Record<string, unknown> | null;
 }
 
+export type PatientChatRequest =
+  | { message: string; turnId?: string }
+  | {
+      approvalMessageId: number;
+      decision: "APPROVE" | "CANCEL";
+      turnId?: string;
+    };

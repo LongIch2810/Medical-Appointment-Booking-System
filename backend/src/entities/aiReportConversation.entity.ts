@@ -30,6 +30,9 @@ export default class AiReportConversation {
   @Column({ type: 'varchar', length: 160 })
   title!: string;
 
+  @Column({ type: 'uuid', nullable: true, name: 'client_request_id' })
+  client_request_id!: string | null;
+
   @OneToMany(() => AiReportMessage, (message) => message.conversation)
   messages!: Relation<AiReportMessage[]>;
 

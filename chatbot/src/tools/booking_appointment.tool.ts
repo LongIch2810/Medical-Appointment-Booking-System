@@ -55,6 +55,7 @@ export function formatBookingResult(result: any): string {
       appointment_date: "ngày khám",
       start_time: "giờ bắt đầu khám",
       selected_specialty_name: "Chuyên khoa đặt khám",
+      requested_doctor_name: "Tên bác sĩ bạn muốn khám",
       new_relative_fullname: "Họ tên người thân",
       new_relative_dob: "Ngày sinh người thân",
       new_relative_gender: "Giới tính người thân",

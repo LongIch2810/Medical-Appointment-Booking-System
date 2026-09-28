@@ -37,6 +37,7 @@ import { CreateAiReportAssistant1788700000000 } from './migrations/1788700000000
 import { SetupLangGraphPersistence1788800000000 } from './migrations/1788800000000-setupLangGraphPersistence';
 import { CreatePatientChatAssistant1789000000000 } from './migrations/1789000000000-createPatientChatAssistant';
 import { AddExecutedQueryToAiAdminReports1789200000000 } from './migrations/1789200000000-addExecutedQueryToAiAdminReports';
+import { AddChatTurnIdempotency1789300000000 } from './migrations/1789300000000-addChatTurnIdempotency';
 
 // Listed explicitly (not a glob) so Vercel's serverless file tracer, which
 // only bundles statically imported files, actually includes these in the
@@ -79,6 +80,7 @@ const migrations = [
   SetupLangGraphPersistence1788800000000,
   CreatePatientChatAssistant1789000000000,
   AddExecutedQueryToAiAdminReports1789200000000,
+  AddChatTurnIdempotency1789300000000,
 ];
 
 @Module({

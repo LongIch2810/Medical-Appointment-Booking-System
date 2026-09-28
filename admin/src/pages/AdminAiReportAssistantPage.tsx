@@ -52,8 +52,8 @@ import type {
 } from "@/types/interface/adminReport.interface";
 
 type RetryAction =
-  | { kind: "message"; value: string }
-  | { kind: "confirm"; value: number }
+  | { kind: "message"; value: string; turnId: string }
+  | { kind: "confirm"; value: number; turnId: string }
   | null;
 
 function getApiErrorCode(error: unknown): string | undefined {
@@ -287,17 +287,24 @@ export function AdminAiReportAssistantPage() {
     }));
   };
 
-  const runMessage = async (message: string) => {
+  const runMessage = async (message: string, turnId = crypto.randomUUID()) => {
     const value = message.trim();
     if (!value || isPending) return;
     clearTurnErrors();
-    setRetryAction({ kind: "message", value });
+    setRetryAction({ kind: "message", value, turnId });
     try {
       if (selectedId === null) {
-        const result = await createMutation.mutateAsync(value);
+        const result = await createMutation.mutateAsync({
+          message: value,
+          turnId,
+        });
         setSelectedId(result.data.conversation.id);
       } else {
-        await sendMutation.mutateAsync({ id: selectedId, message: value });
+        await sendMutation.mutateAsync({
+          id: selectedId,
+          message: value,
+          turnId,
+        });
       }
       setDraft("");
       setRetryAction(null);
@@ -310,12 +317,15 @@ export function AdminAiReportAssistantPage() {
     }
   };
 
-  const runConfirm = async (messageId: number) => {
+  const runConfirm = async (
+    messageId: number,
+    turnId = crypto.randomUUID(),
+  ) => {
     if (selectedId === null || isPending) return;
     clearTurnErrors();
-    setRetryAction({ kind: "confirm", value: messageId });
+    setRetryAction({ kind: "confirm", value: messageId, turnId });
     try {
-      await confirmMutation.mutateAsync({ id: selectedId, messageId });
+      await confirmMutation.mutateAsync({ id: selectedId, messageId, turnId });
       setRetryAction(null);
       setIsArtifactPanelOpen(true);
     } catch {
@@ -644,8 +654,14 @@ export function AdminAiReportAssistantPage() {
                           disabled={isPending}
                           onClick={() =>
                             retryAction.kind === "message"
-                              ? void runMessage(retryAction.value)
-                              : void runConfirm(retryAction.value)
+                              ? void runMessage(
+                                  retryAction.value,
+                                  retryAction.turnId,
+                                )
+                              : void runConfirm(
+                                  retryAction.value,
+                                  retryAction.turnId,
+                                )
                           }
                         >
                           Thử lại

@@ -64,6 +64,9 @@ export default class AiReportMessage {
   @Column({ type: 'text' })
   content!: string;
 
+  @Column({ type: 'uuid', nullable: true, name: 'turn_id' })
+  turn_id!: string | null;
+
   @Column({ type: 'jsonb', nullable: true })
   plan!: ReportPlan | null;
 

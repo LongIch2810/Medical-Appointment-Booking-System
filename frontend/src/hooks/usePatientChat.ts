@@ -6,6 +6,7 @@ import {
   sendPatientChatMessage,
 } from "@/api/conversationApi";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { PatientChatRequest } from "@/types/interface/patientChat.interface";
 
 export const patientChatQueryKeys = {
   conversations: ["patient-chat", "conversations"] as const,
@@ -52,7 +53,7 @@ export function useSendPatientChatMessage() {
       body,
     }: {
       conversationId: number;
-      body: { message: string } | { approvalMessageId: number; decision: "APPROVE" | "CANCEL" };
+      body: PatientChatRequest;
     }) => sendPatientChatMessage(conversationId, body),
     onSuccess: (_turn, variables) => {
       queryClient.invalidateQueries({
@@ -80,4 +81,3 @@ export function useDeletePatientChatConversation() {
     },
   });
 }
-

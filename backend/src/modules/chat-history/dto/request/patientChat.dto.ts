@@ -1,7 +1,9 @@
 import {
   IsIn,
   IsInt,
+  IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   Min,
   MinLength,
@@ -30,4 +32,8 @@ export class SendPatientChatMessageDto {
   @IsIn(['APPROVE', 'CANCEL'])
   @ValidateIf((object) => object.approvalMessageId !== undefined)
   decision?: 'APPROVE' | 'CANCEL';
+
+  @IsOptional()
+  @IsUUID()
+  turnId?: string;
 }

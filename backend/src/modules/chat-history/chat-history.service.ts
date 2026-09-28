@@ -69,7 +69,7 @@ export class ChatHistoryService {
     if (!user) throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
     const conversation = await this.patientChatConversationRepo.save({
       user,
-      title: 'Cuá»™c trÃ² chuyá»‡n má»›i',
+      title: 'Cuộc trò chuyện mới',
     });
     return this.mapPatientChatConversation(conversation);
   }
@@ -154,6 +154,7 @@ export class ChatHistoryService {
       message?: string;
       approvalMessageId?: number;
       decision?: 'APPROVE' | 'CANCEL';
+      turnId?: string;
     },
   ) {
     const conversation = await this.getOwnedPatientConversation(userId, id);
@@ -173,8 +174,9 @@ export class ChatHistoryService {
       where: { conversation: { id } },
       order: { id: 'DESC' },
     });
-    let turnId: string = randomUUID();
+    let turnId: string = input.turnId ?? randomUUID();
     let userMessage: PatientChatMessage | null = null;
+    let retryingPersistedTurn = false;
     let mode: 'MESSAGE' | 'RESUME_BOOKING' = 'MESSAGE';
     let decision: 'APPROVE' | 'REVISE' | 'CANCEL' | undefined;
     let approvalMessageId: number | undefined;
@@ -184,7 +186,42 @@ export class ChatHistoryService {
 
     if (hasApproval) {
       let approvalMessage: PatientChatMessage | null = null;
+      if (input.turnId) {
+        const retryMessage = await this.patientChatMessageRepo.findOne({
+          where: {
+            conversation: { id },
+            turn_id: input.turnId,
+            role: 'USER',
+          },
+        });
+        if (retryMessage) {
+          if (
+            retryMessage.payload?.approvalMessageId !==
+              input.approvalMessageId ||
+            retryMessage.payload?.decision !== input.decision
+          ) {
+            throw new HttpException(
+              {
+                code: 'PATIENT_CHAT_TURN_CONFLICT',
+                message: 'Mã lượt gửi đã được dùng cho một yêu cầu khác.',
+              },
+              HttpStatus.CONFLICT,
+            );
+          }
+          userMessage = retryMessage;
+          retryingPersistedTurn = true;
+          approvalMessage = await this.patientChatMessageRepo.findOne({
+            where: {
+              id: input.approvalMessageId,
+              conversation: { id },
+              role: 'ASSISTANT',
+              action: 'BOOKING_APPROVAL',
+            },
+          });
+        }
+      }
       if (
+        !approvalMessage &&
         latest &&
         latest.id === input.approvalMessageId &&
         latest.role === 'ASSISTANT' &&
@@ -192,6 +229,7 @@ export class ChatHistoryService {
       ) {
         approvalMessage = latest;
       } else if (
+        !approvalMessage &&
         latest?.role === 'USER' &&
         latest.payload?.approvalMessageId === input.approvalMessageId &&
         latest.payload?.decision === input.decision
@@ -209,7 +247,8 @@ export class ChatHistoryService {
         });
         if (approvalMessage) {
           userMessage = latest;
-          turnId = latest.turn_id ?? turnId;
+          retryingPersistedTurn = true;
+          turnId = latest.turn_id ?? input.turnId ?? turnId;
         }
       }
       if (!approvalMessage) {
@@ -294,23 +333,78 @@ export class ChatHistoryService {
           >;
         }
       }
+      if (input.turnId) {
+        const retryMessage = await this.patientChatMessageRepo.findOne({
+          where: {
+            conversation: { id },
+            turn_id: input.turnId,
+            role: 'USER',
+          },
+        });
+        if (retryMessage && retryMessage.content !== message) {
+          throw new HttpException(
+            {
+              code: 'PATIENT_CHAT_TURN_CONFLICT',
+              message: 'Mã lượt gửi đã được dùng cho một yêu cầu khác.',
+            },
+            HttpStatus.CONFLICT,
+          );
+        }
+        if (retryMessage) {
+          userMessage = retryMessage;
+          retryingPersistedTurn = true;
+        }
+      }
       const firstUserMessage =
+        !userMessage &&
         (await this.patientChatMessageRepo.count({
           where: { conversation: { id }, role: 'USER' },
         })) === 0;
-      userMessage = await this.patientChatMessageRepo.save({
-        conversation,
-        role: 'USER',
-        action: null,
-        content: message,
-        payload: null,
-        appointment_id: null,
-        turn_id: turnId,
-      });
+      if (!userMessage) {
+        userMessage = await this.patientChatMessageRepo.save({
+          conversation,
+          role: 'USER',
+          action: null,
+          content: message,
+          payload: null,
+          appointment_id: null,
+          turn_id: turnId,
+        });
+      }
       if (firstUserMessage) {
         conversation.title =
           message.replace(/\s+/g, ' ').trim().slice(0, 160) ||
-          'Cuá»™c trÃ² chuyá»‡n má»›i';
+          'Cuộc trò chuyện mới';
+      }
+    }
+
+    if (retryingPersistedTurn) {
+      const existingAssistantMessage =
+        await this.patientChatMessageRepo.findOne({
+          where: {
+            conversation: { id },
+            turn_id: turnId,
+            role: 'ASSISTANT',
+          },
+        });
+      if (existingAssistantMessage) {
+        return {
+          conversation: this.mapPatientChatConversation(conversation),
+          userMessage: this.mapPatientChatMessage(userMessage!),
+          assistantMessage: this.mapPatientChatMessage(existingAssistantMessage),
+          appointment: existingAssistantMessage.appointment_id
+            ? { id: existingAssistantMessage.appointment_id }
+            : null,
+        };
+      }
+      if (latest?.id !== userMessage!.id) {
+        throw new HttpException(
+          {
+            code: 'PATIENT_CHAT_TURN_STALE',
+            message: 'Lượt chat cũ không thể chạy lại sau một tin nhắn mới.',
+          },
+          HttpStatus.CONFLICT,
+        );
       }
     }
 
@@ -322,7 +416,7 @@ export class ChatHistoryService {
         ? {
             title:
               userMessage.content.replace(/\s+/g, ' ').trim().slice(0, 160) ||
-              'Cuá»™c trÃ² chuyá»‡n má»›i',
+              'Cuộc trò chuyện mới',
           }
         : {}),
       updated_at: new Date(),
@@ -607,7 +701,7 @@ export class ChatHistoryService {
       })) ??
       (await this.patientChatConversationRepo.save({
         user: { id: userId },
-        title: 'Cuá»™c trÃ² chuyá»‡n má»›i',
+        title: 'Cuộc trò chuyện mới',
       }));
     const result = await this.sendPatientChatMessage(
       userId,

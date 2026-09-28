@@ -268,6 +268,30 @@ export class AdminReportsService {
     };
   }
 
+  private async getSavedAssistantTurn(
+    conversation: AiReportConversation,
+    userMessage: AiReportMessage,
+    turnId: string,
+  ) {
+    const assistantMessage = await this.messageRepo.findOne({
+      where: {
+        conversation: { id: conversation.id },
+        role: 'ASSISTANT',
+        turn_id: turnId,
+      },
+      relations: { report: true },
+    });
+    if (!assistantMessage) return null;
+    return {
+      conversation: this.toConversationResponse(conversation),
+      userMessage: this.toMessageResponse(userMessage),
+      assistantMessage: this.toMessageResponse(assistantMessage),
+      report: assistantMessage.report
+        ? this.toResponse(assistantMessage.report)
+        : null,
+    };
+  }
+
   private validateAssistantResponse(
     value: unknown,
   ): ReportAssistantUpstreamResponse {
@@ -533,6 +557,7 @@ export class AdminReportsService {
           await manager.getRepository(AiReportMessage).save({
             conversation: { id: args.conversation.id },
             role: 'ASSISTANT',
+            turn_id: args.userMessage.turn_id,
             action: args.assistant.action,
             content: args.assistant.message,
             plan:
@@ -571,11 +596,20 @@ export class AdminReportsService {
       );
     }
     args.conversation.updated_at = turnUpdatedAt;
-    const assistantMessage = await this.messageRepo.findOne({
-      where: { conversation: { id: args.conversation.id }, role: 'ASSISTANT' },
-      order: { id: 'DESC' },
-      relations: { report: true },
-    });
+    const assistantMessage = args.userMessage.turn_id
+      ? await this.messageRepo.findOne({
+          where: {
+            conversation: { id: args.conversation.id },
+            role: 'ASSISTANT',
+            turn_id: args.userMessage.turn_id,
+          },
+          relations: { report: true },
+        })
+      : await this.messageRepo.findOne({
+          where: { conversation: { id: args.conversation.id }, role: 'ASSISTANT' },
+          order: { id: 'DESC' },
+          relations: { report: true },
+        });
     return {
       conversation: this.toConversationResponse(args.conversation),
       userMessage: this.toMessageResponse(args.userMessage),
@@ -597,17 +631,57 @@ export class AdminReportsService {
         message: 'Tin nháº¯n khÃ´ng há»£p lá»‡.',
       });
     }
-    const conversation = await this.conversationRepo.save({
-      createdBy: { id: userId },
-      title: message.slice(0, 160),
-    });
-    const userMessage = await this.messageRepo.save({
-      conversation: { id: conversation.id },
-      role: 'USER',
-      action: null,
-      content: message,
-      plan: null,
-    });
+    const requestId = dto.turnId;
+    let conversation = requestId
+      ? await this.conversationRepo.findOne({
+          where: {
+            createdBy: { id: userId },
+            client_request_id: requestId,
+          },
+        })
+      : null;
+    let userMessage: AiReportMessage | null = null;
+    if (conversation && requestId) {
+      userMessage = await this.messageRepo.findOne({
+        where: {
+          conversation: { id: conversation.id },
+          role: 'USER',
+          turn_id: requestId,
+        },
+      });
+      if (!userMessage || userMessage.content !== message) {
+        throw new HttpException(
+          {
+            code: 'REPORT_ASSISTANT_TURN_CONFLICT',
+            message: 'Mã lượt gửi đã được dùng cho một yêu cầu khác.',
+          },
+          409,
+        );
+      }
+      const savedTurn = await this.getSavedAssistantTurn(
+        conversation,
+        userMessage,
+        requestId,
+      );
+      if (savedTurn) return savedTurn;
+    }
+    if (!conversation) {
+      conversation = await this.conversationRepo.save({
+        createdBy: { id: userId },
+        title: message.slice(0, 160),
+        client_request_id: requestId ?? null,
+      });
+    }
+    if (!userMessage) {
+      userMessage = await this.messageRepo.save({
+        conversation: { id: conversation.id },
+        role: 'USER',
+        action: null,
+        content: message,
+        plan: null,
+        turn_id: requestId ?? null,
+      });
+    }
     const assistant = await this.callReportAssistant({
       userId,
       conversationId: conversation.id,
@@ -754,7 +828,33 @@ export class AdminReportsService {
         order: { id: 'DESC' },
       });
       promptMessage = `Xác nhận tạo báo cáo theo kế hoạch #${planMessage.id}.`;
-      if (latestMessage?.id !== planMessage.id) {
+      const priorConfirmation = dto.turnId
+        ? await this.messageRepo.findOne({
+            where: {
+              conversation: { id },
+              role: 'USER',
+              turn_id: dto.turnId,
+            },
+          })
+        : null;
+      if (priorConfirmation) {
+        if (priorConfirmation.content !== promptMessage) {
+          throw new HttpException(
+            {
+              code: 'REPORT_ASSISTANT_TURN_CONFLICT',
+              message: 'Mã lượt gửi đã được dùng cho một yêu cầu khác.',
+            },
+            409,
+          );
+        }
+        const savedTurn = await this.getSavedAssistantTurn(
+          conversation,
+          priorConfirmation,
+          dto.turnId!,
+        );
+        if (savedTurn) return savedTurn;
+        retryConfirmationMessage = priorConfirmation;
+      } else if (latestMessage?.id !== planMessage.id) {
         if (
           latestMessage?.role === 'USER' &&
           latestMessage.content === promptMessage
@@ -796,15 +896,63 @@ export class AdminReportsService {
       sourceRequest = promptMessage;
     }
 
-    const userMessage =
-      retryConfirmationMessage ??
-      (await this.messageRepo.save({
+    let userMessage: AiReportMessage | null = null;
+    if (dto.turnId) {
+      userMessage = await this.messageRepo.findOne({
+        where: {
+          conversation: { id },
+          role: 'USER',
+          turn_id: dto.turnId,
+        },
+      });
+      if (userMessage && userMessage.content !== promptMessage) {
+        throw new HttpException(
+          {
+            code: 'REPORT_ASSISTANT_TURN_CONFLICT',
+            message: 'Mã lượt gửi đã được dùng cho một yêu cầu khác.',
+          },
+          409,
+        );
+      }
+      if (userMessage) {
+        const savedTurn = await this.getSavedAssistantTurn(
+          conversation,
+          userMessage,
+          dto.turnId,
+        );
+        if (savedTurn) return savedTurn;
+      } else if (retryConfirmationMessage) {
+        retryConfirmationMessage.turn_id = dto.turnId;
+        userMessage = await this.messageRepo.save(retryConfirmationMessage);
+      }
+      if (userMessage) {
+        const latestMessage = await this.messageRepo.findOne({
+          where: { conversation: { id } },
+          order: { id: 'DESC' },
+        });
+        if (latestMessage?.id !== userMessage.id) {
+          throw new HttpException(
+            {
+              code: 'REPORT_ASSISTANT_TURN_STALE',
+              message: 'Không thể chạy lại lượt cũ sau một yêu cầu mới hơn.',
+            },
+            409,
+          );
+        }
+      }
+    } else {
+      userMessage = retryConfirmationMessage;
+    }
+    if (!userMessage) {
+      userMessage = await this.messageRepo.save({
         conversation: { id },
         role: 'USER',
         action: null,
         content: promptMessage,
         plan: null,
-      }));
+        turn_id: dto.turnId ?? null,
+      });
+    }
     const userTurnAt = new Date();
     await this.conversationRepo.update(
       { id: conversation.id },

@@ -9,10 +9,13 @@ import type {
   ReportAssistantConversationListResponse,
 } from "@/types/interface/adminReport.interface";
 
-export async function createReportAssistantConversation(message: string) {
+export async function createReportAssistantConversation(
+  message: string,
+  turnId?: string,
+) {
   const res = await axiosInstance.post<ApiResponse<AssistantTurnResponse>>(
     "/admin-reports/assistant/conversations",
-    { message },
+    { message, ...(turnId ? { turnId } : {}) },
   );
   return res.data;
 }
@@ -40,10 +43,11 @@ export async function getReportAssistantConversation(
 export async function sendReportAssistantMessage(
   id: number,
   message: string,
+  turnId?: string,
 ) {
   const res = await axiosInstance.post<ApiResponse<AssistantTurnResponse>>(
     `/admin-reports/assistant/conversations/${id}/messages`,
-    { message },
+    { message, ...(turnId ? { turnId } : {}) },
   );
   return res.data;
 }
@@ -51,10 +55,11 @@ export async function sendReportAssistantMessage(
 export async function confirmReportAssistantPlan(
   id: number,
   confirmPlanMessageId: number,
+  turnId?: string,
 ) {
   const res = await axiosInstance.post<ApiResponse<AssistantTurnResponse>>(
     `/admin-reports/assistant/conversations/${id}/messages`,
-    { confirmPlanMessageId },
+    { confirmPlanMessageId, ...(turnId ? { turnId } : {}) },
   );
   return res.data;
 }

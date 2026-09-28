@@ -3,6 +3,7 @@ import type {
   PatientChatConversation,
   PatientChatConversationDetail,
   PatientChatConversationPage,
+  PatientChatRequest,
   PatientChatTurnResponse,
 } from "@/types/interface/patientChat.interface";
 
@@ -49,7 +50,7 @@ export const deletePatientChatConversation = async (conversationId: number) => {
 
 export const sendPatientChatMessage = async (
   conversationId: number,
-  body: { message: string } | { approvalMessageId: number; decision: "APPROVE" | "CANCEL" },
+  body: PatientChatRequest,
 ) => {
   const res = await axiosInstance.post(
     `/chat-history/conversations/${conversationId}/messages`,

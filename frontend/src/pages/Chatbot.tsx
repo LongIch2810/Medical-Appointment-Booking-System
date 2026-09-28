@@ -34,11 +34,8 @@ import {
 import type {
   PatientChatConversation,
   PatientChatMessage,
+  PatientChatRequest,
 } from "@/types/interface/patientChat.interface";
-
-type PatientChatRequest =
-  | { message: string }
-  | { approvalMessageId: number; decision: "APPROVE" | "CANCEL" };
 
 type FailedRequest = {
   conversationId: number;
@@ -239,13 +236,19 @@ export default function Chatbot() {
       optimisticContent: string,
       showOptimisticUser = true,
     ) => {
+      const requestBody = body.turnId
+        ? body
+        : { ...body, turnId: crypto.randomUUID() };
       setIsPending(true);
       setErrorMessage(null);
       setFailedRequest(null);
       setOptimisticUser(showOptimisticUser ? { conversationId, content: optimisticContent } : null);
       isNearBottomRef.current = true;
       try {
-        const turn = await sendMessage.mutateAsync({ conversationId, body });
+        const turn = await sendMessage.mutateAsync({
+          conversationId,
+          body: requestBody,
+        });
         const newMessages = [
           ...(turn.userMessage ? [turn.userMessage] : []),
           turn.assistantMessage,
@@ -261,7 +264,11 @@ export default function Chatbot() {
         setOptimisticUser(null);
       } catch {
         setOptimisticUser(null);
-        setFailedRequest({ conversationId, body, optimisticContent });
+        setFailedRequest({
+          conversationId,
+          body: requestBody,
+          optimisticContent,
+        });
         setErrorMessage(
           "Không nhận được phản hồi từ trợ lý. Nếu yêu cầu đã tới backend thì tin nhắn vẫn được giữ; bạn có thể thử lại.",
         );
