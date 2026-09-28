@@ -91,3 +91,19 @@ test('does not treat compact date ranges as report metrics', () => {
     [],
   );
 });
+
+test('does not treat week and quarter ordinals as report metrics', () => {
+  const report = {
+    title: 'Báo cáo tỷ lệ hủy theo tuần tháng 9/2026',
+    analysis: [
+      { section_title: 'Tuần 1', content: 'Tỷ lệ hủy là 12.5%.' },
+      { section_title: 'Tuần thứ 2', content: 'Có 8 lịch hẹn.' },
+      { section_title: 'Quarter 3 / Q3', content: 'Có 4 lịch đã hủy.' },
+    ],
+  };
+
+  assert.deepEqual(
+    findUngroundedNumbers(report, [{ cancellation_rate: 12.5, appointment_count: 8, cancelled_count: 4 }]),
+    [],
+  );
+});

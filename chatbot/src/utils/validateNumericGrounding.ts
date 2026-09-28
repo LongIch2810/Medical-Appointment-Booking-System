@@ -92,6 +92,10 @@ export function findUngroundedNumbers(
     .replace(/\b\d{4}-\d{2}-\d{2}\b/g, ' ')
     .replace(/\b\d{1,2}[/.]\d{1,2}[/.]\d{2,4}\b/g, ' ')
     .replace(/\b(?:tháng|month)\s+\d{1,2}(?:\s*(?:[/.|-]\s*|\b(?:năm|year)\s*)\d{4})?/gi, ' ')
+    // Week/quarter ordinals label time buckets. They are not measured values,
+    // and SQL commonly represents the same buckets with start dates instead.
+    .replace(/\b(?:tuần|week|quý|quarter)\s*(?:thứ\s*)?\d{1,2}\b/gi, ' ')
+    .replace(/\bq[1-4]\b/gi, ' ')
     // Durations describe the requested reporting window, not a derived KPI.
     .replace(
       /\b\d+(?:[.,]\d+)?\s*(?:[-–]\s*)?(?:ngày|days?|tuần|weeks?|tháng|months?|năm|years?|giờ|hours?|phút|minutes?|giây|seconds?)(?![A-Za-z0-9_])/gi,
