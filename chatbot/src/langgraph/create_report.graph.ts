@@ -227,6 +227,11 @@ async function analyzeDataNode(state: typeof CreateReportState.State) {
     });
 
     if (!res || (typeof res === "string" && res.startsWith("Lỗi"))) {
+      console.error('[analyze_data_node] SQL tool returned no usable result', {
+        resultType: typeof res,
+        empty: !res,
+        toolError: typeof res === 'string' && res.startsWith('Lỗi'),
+      });
       return {
         errorAnalyzeData: {
           status: 500,
