@@ -287,7 +287,7 @@ export function AdminAiReportAssistantPage() {
     }));
   };
 
-  const runMessage = async (message: string, turnId = crypto.randomUUID()) => {
+  const runMessage = async (message: string, turnId: string = crypto.randomUUID()) => {
     const value = message.trim();
     if (!value || isPending) return;
     clearTurnErrors();
@@ -319,7 +319,7 @@ export function AdminAiReportAssistantPage() {
 
   const runConfirm = async (
     messageId: number,
-    turnId = crypto.randomUUID(),
+    turnId: string = crypto.randomUUID(),
   ) => {
     if (selectedId === null || isPending) return;
     clearTurnErrors();

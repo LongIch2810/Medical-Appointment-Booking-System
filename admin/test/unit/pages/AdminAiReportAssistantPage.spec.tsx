@@ -133,7 +133,10 @@ describe("AdminAiReportAssistantPage", () => {
 
     await waitFor(() =>
       expect(create).toHaveBeenCalledWith(
-        "So sánh số lịch hẹn theo chuyên khoa trong tháng này với tháng trước.",
+        {
+          message: "So sánh số lịch hẹn theo chuyên khoa trong tháng này với tháng trước.",
+          turnId: expect.any(String),
+        },
       ),
     );
   });
@@ -168,6 +171,7 @@ describe("AdminAiReportAssistantPage", () => {
       expect(send).toHaveBeenCalledWith({
         id: 5,
         message: "So sánh với tháng trước",
+        turnId: expect.any(String),
       }),
     );
   });
@@ -205,7 +209,7 @@ describe("AdminAiReportAssistantPage", () => {
     await user.click(
       screen.getByRole("button", { name: "Xác nhận và tạo báo cáo" }),
     );
-    expect(confirm).toHaveBeenCalledWith({ id: 5, messageId: 19 });
+    expect(confirm).toHaveBeenCalledWith({ id: 5, messageId: 19, turnId: expect.any(String) });
   });
 
   it("explains report rate limits and does not offer an immediate retry", async () => {

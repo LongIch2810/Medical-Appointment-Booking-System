@@ -308,7 +308,12 @@ export default function Chatbot() {
   ) => {
     if (activeConversationId === null || isBusy) return;
     const label = decision === "APPROVE" ? "Xác nhận đặt lịch" : "Hủy yêu cầu đặt lịch";
-    await runTurn(activeConversationId, { approvalMessageId, decision }, label);
+    const turnId =
+      retryDecision?.approvalMessageId === approvalMessageId &&
+      retryDecision.decision === decision
+        ? latestMessage?.turnId ?? undefined
+        : undefined;
+    await runTurn(activeConversationId, { approvalMessageId, decision, turnId }, label);
   };
 
   const handleSelectConversation = (id: number) => {

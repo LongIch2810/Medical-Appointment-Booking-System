@@ -129,7 +129,7 @@ describe("Patient multi-thread chatbot", () => {
     await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith("/chat-history/conversations"));
     await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith(
       "/chat-history/conversations/31/messages",
-      { message: "Đặt lịch khám" },
+      { message: "Đặt lịch khám", turnId: expect.any(String) },
     ));
 
     expect(await screen.findByRole("region", { name: "Xác nhận thông tin đặt lịch" })).toBeInTheDocument();
@@ -140,7 +140,7 @@ describe("Patient multi-thread chatbot", () => {
     await user.click(screen.getByRole("button", { name: "Xác nhận đặt lịch" }));
     await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith(
       "/chat-history/conversations/31/messages",
-      { approvalMessageId: 2, decision: "APPROVE" },
+      { approvalMessageId: 2, decision: "APPROVE", turnId: expect.any(String) },
     ));
     expect(await screen.findByText("Đặt lịch khám thành công")).toBeInTheDocument();
     expect(screen.getByText("Đã bấm nút xác nhận đặt lịch")).toBeInTheDocument();
@@ -171,7 +171,7 @@ describe("Patient multi-thread chatbot", () => {
     await user.click(await screen.findByRole("button", { name: "Thử lại xác nhận" }));
     await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith(
       "/chat-history/conversations/31/messages",
-      { approvalMessageId: 1, decision: "APPROVE" },
+      { approvalMessageId: 1, decision: "APPROVE", turnId: "test-turn-2" },
     ));
   });
 });
