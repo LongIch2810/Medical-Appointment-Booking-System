@@ -51,11 +51,10 @@ function postgresOptions(): pg.PoolConfig {
   ) {
     configurationProblems.push('LANGGRAPH_DB_USER');
   }
-  if (
-    !user ||
-    user.trim() !== user ||
-    Buffer.byteLength(user, 'utf8') > 63
-  ) {
+  // The 63-byte PostgreSQL identifier limit applies to LANGGRAPH_DB_USER,
+  // checked above. Supabase's shared-pooler login appends the project ref to
+  // that role name, so the full pooler username can legitimately exceed 63.
+  if (!user || user.trim() !== user) {
     configurationProblems.push(
       usesSupabaseSharedPooler ? 'DB_USER project ref' : 'LANGGRAPH_DB_USER',
     );
