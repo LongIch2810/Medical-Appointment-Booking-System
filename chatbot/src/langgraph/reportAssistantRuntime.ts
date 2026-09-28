@@ -24,57 +24,14 @@ let initialization: Promise<Runtime> | null = null;
 let initializationFailed = false;
 
 function postgresOptions(): pg.PoolConfig {
-  const roleUser = process.env.LANGGRAPH_DB_USER;
+  const user = process.env.LANGGRAPH_DB_USER;
   const password = process.env.LANGGRAPH_DB_PASSWORD;
   const database = process.env.DB_NAME;
   const host = process.env.DB_HOST;
-  const databaseUser = process.env.DB_USER?.trim();
-  const usesSupabaseSharedPooler =
-    host?.toLowerCase().endsWith('.pooler.supabase.com') ?? false;
-  const projectRef = databaseUser?.includes('.')
-    ? databaseUser.slice(databaseUser.lastIndexOf('.') + 1).trim()
-    : null;
-  const projectSuffix = projectRef ? `.${projectRef}` : null;
-  const roleIsPoolerQualified = Boolean(
-    usesSupabaseSharedPooler &&
-      roleUser &&
-      projectSuffix &&
-      roleUser.endsWith(projectSuffix),
-  );
-  const databaseRole =
-    roleIsPoolerQualified && projectSuffix
-      ? roleUser?.slice(0, -projectSuffix.length)
-      : roleUser;
-  // A deployment may already supply ROLE.PROJECT_REF in LANGGRAPH_DB_USER.
-  // Appending the ref again makes Supavisor look for a different database role.
-  const supabasePoolerUser =
-    roleUser && projectRef
-      ? roleIsPoolerQualified
-        ? roleUser
-        : `${roleUser}.${projectRef}`
-      : undefined;
-  if (usesSupabaseSharedPooler && !supabasePoolerUser) {
-    throw new Error(
-      'DB_USER must include .<PROJECT_REF> when using the Supabase shared pooler.',
-    );
-  }
-  const user = usesSupabaseSharedPooler ? supabasePoolerUser : roleUser;
   const port = Number.parseInt(process.env.DB_PORT ?? '5432', 10);
   const configurationProblems: string[] = [];
-  if (
-    !databaseRole ||
-    databaseRole.trim() !== databaseRole ||
-    Buffer.byteLength(databaseRole, 'utf8') > 63
-  ) {
-    configurationProblems.push('LANGGRAPH_DB_USER');
-  }
-  // The 63-byte PostgreSQL identifier limit applies to LANGGRAPH_DB_USER,
-  // checked above. Supabase's shared-pooler login appends the project ref to
-  // that role name, so the full pooler username can legitimately exceed 63.
   if (!user || user.trim() !== user) {
-    configurationProblems.push(
-      usesSupabaseSharedPooler ? 'DB_USER project ref' : 'LANGGRAPH_DB_USER',
-    );
+    configurationProblems.push('LANGGRAPH_DB_USER');
   }
   if (!password || password.length < 16) {
     configurationProblems.push('LANGGRAPH_DB_PASSWORD');
