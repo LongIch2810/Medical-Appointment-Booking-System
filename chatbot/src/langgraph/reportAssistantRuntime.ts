@@ -34,8 +34,25 @@ function postgresOptions(): pg.PoolConfig {
   const projectRef = databaseUser?.includes('.')
     ? databaseUser.slice(databaseUser.lastIndexOf('.') + 1).trim()
     : null;
+  const projectSuffix = projectRef ? `.${projectRef}` : null;
+  const roleIsPoolerQualified = Boolean(
+    usesSupabaseSharedPooler &&
+      roleUser &&
+      projectSuffix &&
+      roleUser.endsWith(projectSuffix),
+  );
+  const databaseRole =
+    roleIsPoolerQualified && projectSuffix
+      ? roleUser?.slice(0, -projectSuffix.length)
+      : roleUser;
+  // A deployment may already supply ROLE.PROJECT_REF in LANGGRAPH_DB_USER.
+  // Appending the ref again makes Supavisor look for a different database role.
   const supabasePoolerUser =
-    roleUser && projectRef ? `${roleUser}.${projectRef}` : undefined;
+    roleUser && projectRef
+      ? roleIsPoolerQualified
+        ? roleUser
+        : `${roleUser}.${projectRef}`
+      : undefined;
   if (usesSupabaseSharedPooler && !supabasePoolerUser) {
     throw new Error(
       'DB_USER must include .<PROJECT_REF> when using the Supabase shared pooler.',
@@ -45,9 +62,9 @@ function postgresOptions(): pg.PoolConfig {
   const port = Number.parseInt(process.env.DB_PORT ?? '5432', 10);
   const configurationProblems: string[] = [];
   if (
-    !roleUser ||
-    roleUser.trim() !== roleUser ||
-    Buffer.byteLength(roleUser, 'utf8') > 63
+    !databaseRole ||
+    databaseRole.trim() !== databaseRole ||
+    Buffer.byteLength(databaseRole, 'utf8') > 63
   ) {
     configurationProblems.push('LANGGRAPH_DB_USER');
   }
