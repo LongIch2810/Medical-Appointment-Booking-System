@@ -28,19 +28,17 @@ function postgresOptions(): pg.PoolConfig {
   const password = process.env.LANGGRAPH_DB_PASSWORD;
   const database = process.env.DB_NAME;
   const host = process.env.DB_HOST;
-  const configuredPoolerUser = process.env.LANGGRAPH_DB_POOLER_USER;
-  const databaseUser = process.env.DB_USER;
+  const databaseUser = process.env.DB_USER?.trim();
   const usesSupabaseSharedPooler =
     host?.toLowerCase().endsWith('.pooler.supabase.com') ?? false;
   const projectRef = databaseUser?.includes('.')
-    ? databaseUser.slice(databaseUser.lastIndexOf('.') + 1)
+    ? databaseUser.slice(databaseUser.lastIndexOf('.') + 1).trim()
     : null;
   const supabasePoolerUser =
-    configuredPoolerUser ??
-    (roleUser && projectRef ? `${roleUser}.${projectRef}` : undefined);
+    roleUser && projectRef ? `${roleUser}.${projectRef}` : undefined;
   if (usesSupabaseSharedPooler && !supabasePoolerUser) {
     throw new Error(
-      'Set LANGGRAPH_DB_POOLER_USER to chatbot_report_assistant.<PROJECT_REF>, or qualify DB_USER with .<PROJECT_REF>, when using the Supabase shared pooler.',
+      'DB_USER must include .<PROJECT_REF> when using the Supabase shared pooler.',
     );
   }
   const user = usesSupabaseSharedPooler ? supabasePoolerUser : roleUser;
@@ -59,7 +57,7 @@ function postgresOptions(): pg.PoolConfig {
     Buffer.byteLength(user, 'utf8') > 63
   ) {
     configurationProblems.push(
-      usesSupabaseSharedPooler ? 'LANGGRAPH_DB_POOLER_USER' : 'LANGGRAPH_DB_USER',
+      usesSupabaseSharedPooler ? 'DB_USER project ref' : 'LANGGRAPH_DB_USER',
     );
   }
   if (!password || password.length < 16) {
