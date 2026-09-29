@@ -204,7 +204,11 @@ const Appointments: React.FC = () => {
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-[#94A3B8]">
             <Filter className="h-4 w-4 text-primary" />
-            <span>{t("appointments.totalAppointments", { count: appointments.length, defaultValue: `Tổng cộng: ${appointments.length} cuộc hẹn` })}</span>
+            <span>
+              {isLoading
+                ? t("common.loading", { defaultValue: "Đang tải..." })
+                : t("appointments.totalAppointments", { count: appointments.length, defaultValue: `Tổng cộng: ${appointments.length} cuộc hẹn` })}
+            </span>
           </div>
         </CardHeader>
         <CardContent className="space-y-5 px-6 py-5">
@@ -231,7 +235,7 @@ const Appointments: React.FC = () => {
                       : "bg-slate-100 text-slate-600 dark:bg-[#293548] dark:text-[#CBD5E1]",
                   )}
                 >
-                  {counts[tab.key]}
+                  {isLoading ? "…" : counts[tab.key]}
                 </span>
               </button>
             ))}
