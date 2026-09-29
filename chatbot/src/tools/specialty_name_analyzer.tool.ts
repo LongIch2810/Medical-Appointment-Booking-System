@@ -51,6 +51,23 @@ function normalizePhrase(str: string): string {
   return normalize(str).replace(/[^\p{L}\p{N}]+/gu, " ").trim();
 }
 
+const GENERIC_DOCTOR_REFERENCES = new Set([
+  "ai",
+  "nao",
+  "bat ky",
+  "phu hop",
+  "con lich",
+  "gan nhat",
+  "gioi",
+  "tot",
+]);
+
+export function isGenericDoctorReference(value: string | null | undefined): boolean {
+  if (!value) return true;
+  const normalized = normalizePhrase(value);
+  return !normalized || GENERIC_DOCTOR_REFERENCES.has(normalized);
+}
+
 function extractExplicitDoctorName(text: string): string | null {
   const cue = /(?:^|[^\p{L}])(?:bác\s*sĩ|bs\.?)\s+/iu.exec(text);
   if (!cue) return null;
@@ -166,8 +183,6 @@ export const AnalyzeSpecialtyTool = tool(
       const cleaned = value?.trim().replace(/\s+/g, " ");
       return cleaned && cleaned.length <= maxLength ? cleaned : null;
     };
-    const explicitDoctorCue =
-      /(?:^|[^\p{L}])(?:bác\s*sĩ|bs\.?)(?=$|[^\p{L}])/iu.test(text_input);
     const extractedDoctor = cleanPreference(
       extractedData.preferred_doctor,
       120,
@@ -176,11 +191,10 @@ export const AnalyzeSpecialtyTool = tool(
     const doctorAppearsInRequest =
       extractedDoctor &&
       normalizePhrase(text_input).includes(normalizePhrase(extractedDoctor));
-    const preferred_doctor = explicitDoctorCue
-      ? explicitDoctorName
-      : doctorAppearsInRequest
+    const preferred_doctor = explicitDoctorName ||
+      (doctorAppearsInRequest && !isGenericDoctorReference(extractedDoctor)
         ? extractedDoctor
-        : null;
+        : null);
     const extractedLocation = cleanPreference(
       extractedData.preferred_location,
       160,
@@ -195,7 +209,15 @@ export const AnalyzeSpecialtyTool = tool(
       candidate_specialties,
       preferred_doctor,
       preferred_location,
-      doctor_preference_unresolved: explicitDoctorCue && !preferred_doctor,
+      // A doctor name is optional. Generic requests such as "bác sĩ nào còn
+      // lịch" or "bác sĩ phù hợp" must continue with automatic selection.
+      // Ask for clarification only when the user appears to have supplied an
+      // incomplete proper name after the doctor title.
+      doctor_preference_unresolved:
+        !preferred_doctor &&
+        /(?:^|[^\p{L}])(?:bác\s*sĩ|bs\.?)\s+\p{Lu}[\p{L}'’.-]*(?:\s|[,.;!?]|$)/u.test(
+          text_input,
+        ),
     };
   },
   {

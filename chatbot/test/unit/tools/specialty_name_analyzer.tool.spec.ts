@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { AnalyzeSpecialtyTool } from "../../../src/tools/specialty_name_analyzer.tool.js";
+import {
+  AnalyzeSpecialtyTool,
+  isGenericDoctorReference,
+} from "../../../src/tools/specialty_name_analyzer.tool.js";
 
 // AnalyzeSpecialtyTool's func is LLM-prompt wiring around two network calls
 // (fetchSpecialties() -> axios.post to the backend, and the structured LLM
@@ -29,4 +32,11 @@ test("analyze_specialty_tool's input schema requires a string `text_input`", () 
     AnalyzeSpecialtyTool.schema.safeParse({ text_input: 42 }).success,
     false,
   );
+});
+
+test("generic doctor wording does not become a required doctor name", () => {
+  assert.equal(isGenericDoctorReference("nào"), true);
+  assert.equal(isGenericDoctorReference("bác sĩ phù hợp".replace("bác sĩ ", "")), true);
+  assert.equal(isGenericDoctorReference("còn lịch"), true);
+  assert.equal(isGenericDoctorReference("Lê Trung Hiếu"), false);
 });
