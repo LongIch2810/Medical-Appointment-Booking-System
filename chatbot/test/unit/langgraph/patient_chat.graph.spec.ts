@@ -135,6 +135,22 @@ test('patient chat checkpoints each thread and does not persist the bearer token
   assert.deepEqual(other.values, {});
 });
 
+test('removes internal query terminology from patient-facing answers', async () => {
+  resetStub();
+  globals.__PATIENT_CHAT_GRAPH_STUB__.nextAgentMessage = new AIMessage(
+    'Kết quả truy vấn SQL trả về rỗng, nghĩa là không tìm thấy bác sĩ phù hợp.',
+  );
+  const graph = makeGraph();
+
+  const response = await runPatientChat(graph, makeInput({
+    message: 'Chỉ tìm bác sĩ phù hợp, chưa đặt lịch.',
+  }));
+
+  assert.equal(response.action, 'ANSWER');
+  assert.match(response.message, /Theo thông tin hiện có/);
+  assert.doesNotMatch(response.message, /truy vấn|SQL/i);
+});
+
 test('booking proposal pauses in interrupt and only a matching approval commits once', async () => {
   resetStub();
   const operationId = '4d7f8c38-b3a4-47a0-9cb3-2d7a48ed98e8';

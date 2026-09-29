@@ -205,6 +205,18 @@ function appendAssistant(messages: BaseMessage[], response: PatientChatResponse)
   return trimMessages([...messages, new AIMessage(response.message)]);
 }
 
+function sanitizePatientFacingText(text: string) {
+  return text
+    .replace(
+      /kết quả truy vấn(?:\s+sql)?(?:\s+trả về rỗng,?\s*(?:nghĩa là)?)?/gi,
+      'Theo thông tin hiện có,',
+    )
+    .replace(/\b(?:sql|tên bảng|database view|công cụ nội bộ)\b/gi, 'hệ thống')
+    .replace(/,\s*,/g, ',')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function prepareTurnNode(state: PatientChatState) {
   const input = state.input;
   if (!input || input.mode !== 'MESSAGE' || !input.message) {
@@ -409,7 +421,7 @@ async function callAgentNode(state: PatientChatState, config: RunnableConfig) {
   const isRefusal = last instanceof AIMessage && last.additional_kwargs?.topic_guard_refusal === true;
   const response: PatientChatResponse = {
     action: isRefusal ? 'REFUSE' : bookingToolMessage ? 'CLARIFY' : 'ANSWER',
-    message: text,
+    message: sanitizePatientFacingText(text),
   };
   return {
     chatMessages: trimMessages(messages),
