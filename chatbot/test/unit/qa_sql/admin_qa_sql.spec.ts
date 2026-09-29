@@ -220,6 +220,48 @@ test("regenerates a rejected report SQL once and executes only the corrected SEL
   assert.match(result.query, /chatbot_report_appointments_view/);
 });
 
+test("repairs an aggregate SQL rejected by PostgreSQL and executes the corrected query once", async () => {
+  resetState();
+  const invalidQuery = "SELECT day_of_week, start_time, SUM(appointment_count) FROM chatbot_report_appointments_view a JOIN chatbot_report_doctor_schedules_view s ON a.doctor_schedule_id = s.id GROUP BY day_of_week";
+  const correctedQuery = "SELECT s.day_of_week, s.start_time, SUM(a.appointment_count) AS appointment_count FROM chatbot_report_appointments_view a JOIN chatbot_report_doctor_schedules_view s ON a.doctor_schedule_id = s.id GROUP BY s.day_of_week, s.start_time";
+  state.toolInvokeResults.push(
+    { tool_calls: [{ args: { query: invalidQuery } }] },
+    { tool_calls: [{ args: { query: correctedQuery } }] },
+  );
+  let attempts = 0;
+  state.queryImpl = async () => {
+    attempts += 1;
+    if (attempts === 1) {
+      const error = new Error("column must appear in the GROUP BY clause") as Error & { code: string };
+      error.code = "42803";
+      throw error;
+    }
+    return [{ day_of_week: 2, start_time: "08:00", appointment_count: 3 }];
+  };
+
+  const result = await adminQaSqlGraph.invoke({
+    question: "Appointments by weekday and start time",
+    reportContext: {
+      sourceRequest: "Appointments by weekday and start time",
+      objective: "Find busy appointment slots",
+      query: "Appointments by weekday and start time",
+      fromDate: "2026-09-01",
+      toDate: "2026-09-29",
+      metrics: ["appointment_count"],
+      groupBy: ["day_of_week", "start_time"],
+      sourceViews: [
+        "chatbot_report_appointments_view",
+        "chatbot_report_doctor_schedules_view",
+      ],
+    },
+  });
+
+  assert.equal(state.toolInvokeCalls.length, 2);
+  assert.equal(state.queryCalls.length, 2);
+  assert.match(String(state.toolInvokeCalls[1]), /SQLSTATE 42803/);
+  assert.equal(result.query, `${correctedQuery} LIMIT 1000`);
+});
+
 test("rejects malformed LLM output before touching the admin datasource", async () => {
   resetState();
   state.toolInvokeResult = { tool_calls: [] };

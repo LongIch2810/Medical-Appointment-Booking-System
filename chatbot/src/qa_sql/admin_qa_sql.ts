@@ -121,6 +121,29 @@ const writeQuery = async (state: typeof InputStateAnnotation.State) => {
   return { query };
 };
 
+const REPAIRABLE_SQL_CODES = new Set(['42601', '42702', '42703', '42803', '42P01']);
+
+function sqlErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const candidate = error as { code?: unknown; cause?: unknown };
+  if (typeof candidate.code === 'string') return candidate.code;
+  return candidate.cause ? sqlErrorCode(candidate.cause) : undefined;
+}
+
+async function regenerateReportQuery(
+  state: typeof StateAnnotation.State,
+  rejectedQuery: string,
+  reason: string,
+) {
+  const promptValue = await queryPromptTemplate.invoke({
+    dialect: db.appDataSourceOptions.type,
+    table_info: await db.getTableInfo(),
+    input: `${state.question}\n\nConfirmed report plan: ${JSON.stringify(state.reportContext)}\n\nPrevious SQL was rejected: ${reason}. Previous SQL: ${rejectedQuery}. Generate a corrected SELECT using only these views: ${state.reportContext?.sourceViews.join(', ')}. Do not repeat the rejected SQL.`,
+  });
+  const response = await llmWithQueryTool.invoke(promptValue);
+  return response.tool_calls?.[0]?.args?.query;
+}
+
 const executeQuery = async (state: typeof StateAnnotation.State) => {
   const options = {
     allowedTables: state.reportContext?.sourceViews ?? ADMIN_REPORT_TABLES,
@@ -132,18 +155,27 @@ const executeQuery = async (state: typeof StateAnnotation.State) => {
     safeQuery = assertSelectOnlyQuery(query, options);
   } catch (error) {
     if (!(error instanceof UnsafeSqlQueryError) || !state.reportContext) throw error;
-    const promptValue = await queryPromptTemplate.invoke({
-      dialect: db.appDataSourceOptions.type,
-      table_info: await db.getTableInfo(),
-      input: `${state.question}\n\nConfirmed report plan: ${JSON.stringify(state.reportContext)}\n\nPrevious SQL was rejected: ${error.reason}. Generate a corrected SELECT using only these views: ${state.reportContext.sourceViews.join(', ')}. Do not repeat the rejected SQL.`,
-    });
-    const response = await llmWithQueryTool.invoke(promptValue);
-    query = response.tool_calls?.[0]?.args?.query;
+    query = await regenerateReportQuery(state, String(query ?? ''), error.reason);
     safeQuery = assertSelectOnlyQuery(query, options);
   }
-  const rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
-    operation: "admin_qa_sql_select",
-  });
+  let rows: unknown;
+  try {
+    rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
+      operation: "admin_qa_sql_select",
+    });
+  } catch (error) {
+    const code = sqlErrorCode(error);
+    if (!state.reportContext || !code || !REPAIRABLE_SQL_CODES.has(code)) throw error;
+    query = await regenerateReportQuery(
+      state,
+      safeQuery,
+      `PostgreSQL rejected it with SQLSTATE ${code}. Rebuild the aggregate, aliases, joins, selected expressions and GROUP BY so the query is valid`,
+    );
+    safeQuery = assertSelectOnlyQuery(query, options);
+    rows = await withRetry(() => AdminReportDatasource.query(safeQuery), {
+      operation: "admin_qa_sql_select_repaired",
+    });
+  }
   return {
     query: safeQuery,
     result: JSON.stringify(rows),
