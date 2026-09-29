@@ -108,7 +108,12 @@ function makeInput(overrides: Partial<ReportAssistantInput> = {}): ReportAssista
   };
 }
 
-function makeGraph(options: { routeIntent?: (args: any) => Promise<any>; saver?: MemorySaver; store?: InMemoryStore } = {}) {
+function makeGraph(options: {
+  routeIntent?: (args: any) => Promise<any>;
+  runPipeline?: (input: any) => Promise<any>;
+  saver?: MemorySaver;
+  store?: InMemoryStore;
+} = {}) {
   const checkpointer = options.saver ?? new MemorySaver();
   const store = options.store ?? new InMemoryStore();
   return {
@@ -117,10 +122,10 @@ function makeGraph(options: { routeIntent?: (args: any) => Promise<any>; saver?:
     graph: createReportAssistantGraph({
       ...(options.routeIntent ? { routeIntent: options.routeIntent } : {}),
       getSchema: async () => 'allowlisted schema',
-      runPipeline: async (input: any): Promise<any> => {
+      runPipeline: options.runPipeline ?? (async (input: any): Promise<any> => {
         globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.push(input);
         return globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineResult;
-      },
+      }),
     }).compile({ checkpointer, store }),
   };
 }
@@ -236,6 +241,60 @@ test('adds required reporting views before asking approval for appointment group
   ]);
 });
 
+test('normalizes rolling-day ranges using an inclusive current-day window', async () => {
+  const incorrectRangePlan = { ...plan, fromDate: '2026-09-29', toDate: '2026-09-29' };
+  const { graph } = makeGraph({
+    routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan: incorrectRangePlan }]),
+  });
+  const before = new Date().toISOString().slice(0, 10);
+  const proposed = await runReportAssistant(graph, makeInput({
+    message: 'Tạo báo cáo lịch hẹn trong 30 ngày gần nhất',
+  }));
+  const after = new Date().toISOString().slice(0, 10);
+  assert.ok(proposed.plan);
+  assert.ok([before, after].includes(proposed.plan.toDate));
+  const from = Date.parse(`${proposed.plan.fromDate}T00:00:00.000Z`);
+  const to = Date.parse(`${proposed.plan.toDate}T00:00:00.000Z`);
+  assert.equal((to - from) / 86_400_000, 29);
+});
+
+test('normalizes explicit monthly user grouping instead of grouping by each date', async () => {
+  const userPlan: ReportPlan = {
+    ...plan,
+    title: 'New users by month and role',
+    metrics: ['user count'],
+    groupBy: ['registration date', 'roles'],
+    sourceViews: ['chatbot_report_users_view'],
+  };
+  const { graph } = makeGraph({
+    routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan: userPlan }]),
+  });
+  const proposed = await runReportAssistant(graph, makeInput({
+    message: 'Báo cáo người dùng đăng ký mới theo từng tháng và vai trò',
+  }));
+  assert.deepEqual(proposed.plan?.metrics, ['user_count']);
+  assert.deepEqual(proposed.plan?.groupBy, ['registration_month', 'roles']);
+});
+
+test('adds the schedule view for appointment reports grouped by weekday and start time', async () => {
+  const schedulePlan: ReportPlan = {
+    ...plan,
+    groupBy: ['day of week', 'start time'],
+    sourceViews: ['chatbot_report_appointments_view'],
+  };
+  const { graph } = makeGraph({
+    routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan: schedulePlan }]),
+  });
+  const proposed = await runReportAssistant(graph, makeInput({
+    message: 'Báo cáo lịch hẹn theo ngày trong tuần và khung giờ bắt đầu',
+  }));
+  assert.deepEqual(proposed.plan?.groupBy, ['day_of_week', 'start_time']);
+  assert.deepEqual(proposed.plan?.sourceViews, [
+    'chatbot_report_appointments_view',
+    'chatbot_report_doctor_schedules_view',
+  ]);
+});
+
 test('gives the intent model validation feedback before retrying an invalid plan', async () => {
   const received: any[] = [];
   const router = intentRouter([
@@ -267,7 +326,34 @@ test('retries report generation from a failed checkpoint with the same approved 
   };
   const retried = await runReportAssistant(graph, confirmation);
   assert.equal(retried.action, 'GENERATE_REPORT');
-  assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 2);
+  assert.equal(globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.length, 3);
+});
+
+test('automatically retries one transient pipeline failure before returning an error', async () => {
+  let attempts = 0;
+  const { graph } = makeGraph({
+    routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan }]),
+    runPipeline: async (input: any) => {
+      globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineInputs.push(input);
+      attempts += 1;
+      if (attempts === 1) {
+        return {
+          errorAnalyzeData: { status: 503, code: 'UPSTREAM_UNAVAILABLE', message: 'Temporary failure' },
+          final_result: { success: false },
+        };
+      }
+      return globals.__REPORT_ASSISTANT_GRAPH_STUB__.pipelineResult;
+    },
+  });
+  const proposed = await runReportAssistant(graph, makeInput());
+  const generated = await runReportAssistant(graph, makeInput({
+    mode: 'CONFIRM_PLAN',
+    message: 'Confirm',
+    turnId: 2,
+    confirmedPlan: proposed.plan,
+  }));
+  assert.equal(generated.action, 'GENERATE_REPORT');
+  assert.equal(attempts, 2);
 });
 
 test('a new message resumes a pending approval as REVISE and invalidates the old plan', async () => {

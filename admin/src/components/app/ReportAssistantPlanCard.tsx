@@ -28,9 +28,12 @@ const METRIC_LABELS: Record<string, string> = {
   cancellation_count: "Số ca hủy lịch",
   cancellation_rate: "Tỷ lệ hủy lịch",
   completed_count: "Số ca khám hoàn thành",
+  completed_appointments: "Số ca khám hoàn thành",
   noshow_count: "Số ca vắng mặt (no-show)",
   fill_rate: "Tỷ lệ lấp đầy lịch bác sĩ",
   new_users: "Người dùng đăng ký mới",
+  new_user_count: "Người dùng đăng ký mới",
+  user_count: "Số người dùng",
   active_users: "Người dùng hoạt động",
   cancelled_appointments: "Số lịch hẹn đã hủy",
 };
@@ -45,6 +48,15 @@ const GROUP_BY_LABELS: Record<string, string> = {
   month: "Theo tháng",
   doctor_id: "Mã bác sĩ",
   appointment_date: "Ngày đặt khám",
+  registration_date: "Ngày đăng ký",
+  registration_month: "Tháng đăng ký",
+  appointment_month: "Tháng đặt khám",
+  profile_month: "Tháng tạo hồ sơ",
+  roadmap_month: "Tháng tạo lộ trình",
+  activity_month: "Tháng hoạt động",
+  roles: "Vai trò người dùng",
+  day_of_week: "Ngày trong tuần",
+  start_time: "Giờ bắt đầu",
 };
 
 const CHART_TYPE_LABELS: Record<string, string> = {

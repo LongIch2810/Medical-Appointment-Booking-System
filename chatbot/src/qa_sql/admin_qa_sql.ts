@@ -76,6 +76,9 @@ với các trường cần thiết với cấu trúc cơ sở dữ liệu.
 - Nếu dùng hàm aggregate như SUM, COUNT hoặc AVG, mọi cột/biểu thức không aggregate trong SELECT bắt buộc phải nằm trong GROUP BY; không dùng SELECT * cùng aggregate.
 - Khi tính tổng từ cột đếm có hậu tố _count bằng SUM, bọc bằng COALESCE(SUM(column), 0) để kỳ không có bản ghi trả về 0 thay vì NULL. Không thay thế AVG bằng 0 và không tự tạo nhóm cho kết quả đã GROUP BY.
 - Với tỷ lệ hoặc chỉ số dẫn xuất, dùng CTE/subquery để tính các tổng phụ trước rồi tính tỷ lệ ở query ngoài; bảo đảm mỗi query aggregate đều hợp lệ với PostgreSQL.
+- Các chiều nhóm chuẩn trong kế hoạch phải được diễn giải chính xác: registration_month = DATE_TRUNC('month', registration_date), appointment_month = DATE_TRUNC('month', appointment_date), profile_month = DATE_TRUNC('month', profile_date), roadmap_month = DATE_TRUNC('month', roadmap_date), activity_month = DATE_TRUNC('month', activity_date). Với các view đã tổng hợp theo ngày, dùng SUM(cột _count) khi nhóm lên tháng.
+- day_of_week và start_time thuộc chatbot_report_doctor_schedules_view. Khi báo cáo lịch hẹn dùng các chiều này, nối appointments.doctor_schedule_id = doctor_schedules.id rồi nhóm theo đúng cột được yêu cầu và SUM(appointment_count).
+- completed_appointments/completed_count nghĩa là SUM(appointment_count) với status hoàn thành; cancelled_appointments/cancellation_count nghĩa là SUM(appointment_count) với status đã hủy. Không dùng COUNT(*) trên view tổng hợp để thay cho số lịch hẹn.
 - Trả về câu SQL hợp lệ duy nhất, không thêm lời giải thích.
     `;
 

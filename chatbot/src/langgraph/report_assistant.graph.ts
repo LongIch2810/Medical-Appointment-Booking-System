@@ -23,7 +23,7 @@ import {
   ReportPlan,
   ReportPlanSchema,
 } from '../types/ReportAssistant.js';
-import { ChatbotOperationError } from '../utils/retry.js';
+import { ChatbotOperationError, isRetryableChatbotError } from '../utils/retry.js';
 import { logSafeError } from '../utils/safeLog.js';
 
 const PREFERENCES_NAMESPACE = (userId: number) => [
@@ -178,6 +178,105 @@ function normalizeSearchText(value: string) {
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/đ/g, 'd')
     .toLocaleLowerCase('vi');
+}
+
+const DAY_MS = 86_400_000;
+
+function utcDateString(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function rollingDayCount(message: string) {
+  const normalized = normalizeSearchText(message);
+  const match = normalized.match(
+    /\btrong\s+(\d{1,4})\s*ngay(?:\s*(?:gan nhat|gan day|vua qua|qua|truoc))?\b|\b(\d{1,4})\s*ngay\s*(?:gan nhat|gan day|vua qua|qua|truoc)\b|\blast\s+(\d{1,4})\s+days?\b/,
+  );
+  if (!match) return null;
+  const days = Number(match[1] ?? match[2] ?? match[3]);
+  return Number.isSafeInteger(days) && days >= 1 && days <= 3_660 ? days : null;
+}
+
+function monthlyGroupForPlan(plan: ReportPlan) {
+  if (plan.sourceViews.includes('chatbot_report_users_view')) return 'registration_month';
+  if (plan.sourceViews.includes('chatbot_report_appointments_view')) return 'appointment_month';
+  if (plan.sourceViews.includes('chatbot_report_health_profiles_view')) return 'profile_month';
+  if (plan.sourceViews.includes('chatbot_report_health_roadmaps_view')) return 'roadmap_month';
+  if (plan.sourceViews.includes('chatbot_report_audit_view')) return 'activity_month';
+  return 'month';
+}
+
+const CANONICAL_GROUPS = new Set([
+  'activity_date',
+  'appointment_date',
+  'appointment_month',
+  'day_of_week',
+  'doctor_id',
+  'doctor_name',
+  'profile_date',
+  'profile_month',
+  'registration_date',
+  'registration_month',
+  'roadmap_date',
+  'roadmap_month',
+  'specialty_name',
+  'start_time',
+]);
+const CANONICAL_METRICS = new Set([
+  'appointment_count',
+  'cancellation_count',
+  'cancellation_rate',
+  'cancelled_appointments',
+  'completed_appointments',
+  'completed_count',
+  'new_user_count',
+  'new_users',
+  'user_count',
+]);
+
+function canonicalPlanTerm(value: string, knownTerms: Set<string>) {
+  const key = normalizeSearchText(value).trim().replace(/[\s-]+/g, '_');
+  return knownTerms.has(key) ? key : value;
+}
+
+function normalizeExplicitPlan(message: string, plan: ReportPlan, today = new Date()): ReportPlan {
+  const normalized = normalizeSearchText(message);
+  const next: ReportPlan = {
+    ...plan,
+    metrics: plan.metrics.map((metric) => canonicalPlanTerm(metric, CANONICAL_METRICS)),
+    groupBy: plan.groupBy.map((group) => canonicalPlanTerm(group, CANONICAL_GROUPS)),
+  };
+  const days = rollingDayCount(message);
+  if (days) {
+    const to = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const from = new Date(to.getTime() - (days - 1) * DAY_MS);
+    next.fromDate = utcDateString(from);
+    next.toDate = utcDateString(to);
+  }
+
+  if (/\btheo\s+(?:tung\s+)?thang\b|\bmonthly breakdown\b|\bgroup(?:ed)? by month\b/.test(normalized)) {
+    const monthlyGroup = monthlyGroupForPlan(next);
+    const dateGroups = new Set([
+      'day',
+      'month',
+      'registration_date',
+      'appointment_date',
+      'profile_date',
+      'roadmap_date',
+      'activity_date',
+    ]);
+    next.groupBy = next.groupBy.filter((group) => !dateGroups.has(normalizeSearchText(group).replace(/\s+/g, '_')));
+    next.groupBy.unshift(monthlyGroup);
+  }
+
+  if (/\b(ngay trong tuan|thu trong tuan|day of week)\b/.test(normalized)) {
+    next.groupBy = next.groupBy.filter((group) => !['day', 'appointment_date'].includes(normalizeSearchText(group).replace(/\s+/g, '_')));
+    next.groupBy.push('day_of_week');
+  }
+  if (/\b(khung gio bat dau|gio bat dau|start time)\b/.test(normalized)) {
+    next.groupBy.push('start_time');
+  }
+  next.groupBy = [...new Set(next.groupBy)].slice(0, 20);
+  return ReportPlanSchema.parse(next);
 }
 
 function defaultPreferences(): ReportAssistantPreferences {
@@ -571,15 +670,22 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
         };
       }
       const preferredPlan = applyPreferenceDefaults(state.currentMessage, intent.plan, state.preferences);
-      const sourceViews = new Set(preferredPlan.sourceViews);
+      const normalizedPlan = normalizeExplicitPlan(state.currentMessage, preferredPlan);
+      const sourceViews = new Set(normalizedPlan.sourceViews);
       if (
         sourceViews.has('chatbot_report_appointments_view') &&
-        preferredPlan.groupBy.some((group) => /doctor|bác sĩ|specialty|chuyên khoa/i.test(group))
+        normalizedPlan.groupBy.some((group) => /doctor|bác sĩ|specialty|chuyên khoa/i.test(group))
       ) {
         sourceViews.add('chatbot_report_doctor_schedules_view');
         sourceViews.add('chatbot_report_doctors_view');
       }
-      const plan = ReportPlanSchema.parse({ ...preferredPlan, sourceViews: [...sourceViews] });
+      if (
+        sourceViews.has('chatbot_report_appointments_view') &&
+        normalizedPlan.groupBy.some((group) => /start[_\s]?time|day[_\s]?of[_\s]?week|timeslot|khung giờ|thứ/i.test(group))
+      ) {
+        sourceViews.add('chatbot_report_doctor_schedules_view');
+      }
+      const plan = ReportPlanSchema.parse({ ...normalizedPlan, sourceViews: [...sourceViews] });
       if (!validateDateRange(plan)) {
         return {
           response: {
@@ -712,7 +818,7 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
     try {
       const chartType = plan.chartType;
       const detailLevel = plan.detailLevel;
-      const result: any = await runPipeline({
+      const pipelineInput = {
         question: plan.query,
         reportContext: {
           sourceRequest: state.input.sourceRequest ?? plan.query,
@@ -733,20 +839,31 @@ export function createReportAssistantGraph(dependencies: ReportAssistantGraphDep
         ...(state.input.fileName ? { fileName: state.input.fileName } : {}),
         ...(chartType && chartType !== 'AUTO' && chartType !== 'TABLE' ? { preferredChartType: chartType } : {}),
         ...(detailLevel ? { detailLevel } : {}),
-      } as Parameters<typeof runReportPipeline>[0]);
-      const errors = [result?.errorAnalyzeData, result?.errorChartConfig, result?.errorReport, result?.errorPdf].filter(Boolean);
-      if (result?.final_result?.success === false || errors.length) {
-        console.error('[report_assistant] pipeline stages failed', errors.map((failure: { node?: string; code?: string; status?: number }) => ({
-          node: failure.node,
-          code: failure.code,
-          status: failure.status,
-        })));
-        const failure = result?.final_result ?? errors[0] ?? {};
-        throw assistantError(
-          failure.status ?? 500,
-          failure.code ?? 'REPORT_ASSISTANT_FAILED',
-          failure.message ?? 'Report generation failed.',
-        );
+      } as Parameters<typeof runReportPipeline>[0];
+      let result: any;
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        try {
+          result = await runPipeline(pipelineInput);
+          const errors = [result?.errorAnalyzeData, result?.errorChartConfig, result?.errorReport, result?.errorPdf].filter(Boolean);
+          if (result?.final_result?.success === false || errors.length) {
+            console.error('[report_assistant] pipeline stages failed', errors.map((failure: { node?: string; code?: string; status?: number }) => ({
+              node: failure.node,
+              code: failure.code,
+              status: failure.status,
+            })));
+            const failure = errors[0] ?? result?.final_result ?? {};
+            throw assistantError(
+              failure.status ?? 500,
+              failure.code ?? 'REPORT_ASSISTANT_FAILED',
+              failure.message ?? 'Report generation failed.',
+            );
+          }
+          break;
+        } catch (error) {
+          const canRetry = attempt === 0 && !result?.pdf_asset && isRetryableChatbotError(error);
+          if (!canRetry) throw error;
+          console.warn('[report_assistant] retrying report pipeline after retryable failure');
+        }
       }
       if (
         typeof result?.executedQuery !== 'string' ||
