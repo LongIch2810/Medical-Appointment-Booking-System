@@ -65,11 +65,10 @@ export function usePatientDashboard() {
   });
 }
 
-export function usePatientAppointments(filters: PersonalAppointmentsPayload, enabled = true) {
+export function usePatientAppointments(filters: PersonalAppointmentsPayload) {
   return useQuery({
     queryKey: patientQueryKeys.appointments(filters),
     queryFn: () => fetchPatientAppointments(filters),
-    enabled,
   });
 }
 

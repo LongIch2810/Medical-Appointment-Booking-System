@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, MessageSquarePlus, PanelLeft, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
 import { useQueryClient } from "@tanstack/react-query";
 import { useUserStore } from "@/store/useUserStore";
 import ErrorState from "@/components/notification/ErrorState";
@@ -18,16 +17,6 @@ import PatientPromptTemplatesDialog from "@/components/chatbot/PatientPromptTemp
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -42,10 +31,6 @@ import {
   usePatientChatConversations,
   useSendPatientChatMessage,
 } from "@/hooks/usePatientChat";
-import {
-  useCancelPatientAppointment,
-  usePatientAppointments,
-} from "@/hooks/usePatientPortalApi";
 import type {
   PatientChatConversation,
   PatientChatMessage,
@@ -89,7 +74,6 @@ export default function Chatbot() {
   } | null>(null);
   const [failedRequest, setFailedRequest] = useState<FailedRequest | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [cancelAppointmentId, setCancelAppointmentId] = useState<number | null>(null);
   const initializedSelection = useRef(false);
   const composerRef = useRef<HTMLTextAreaElement>(null);
   const transcriptWrapperRef = useRef<HTMLDivElement>(null);
@@ -115,9 +99,6 @@ export default function Chatbot() {
   const detailQuery = usePatientChatConversation(activeConversationId);
   const createConversation = useCreatePatientChatConversation();
   const sendMessage = useSendPatientChatMessage();
-  const cancelAppointment = useCancelPatientAppointment();
-  const { data: appointmentsResponse } = usePatientAppointments({ page: 1, limit: 50 }, Boolean(userId));
-  const appointments = appointmentsResponse?.data.appointments ?? [];
   const deleteConversation = useDeletePatientChatConversation();
   const pages = detailQuery.data?.pages;
   const persistedMessages = useMemo(() => {
@@ -131,7 +112,7 @@ export default function Chatbot() {
   );
   const messages = useMemo(() => {
     const all = [...persistedMessages];
-    if (liveTurn && liveTurn.conversationId === activeConversationId) all.push(...liveTurn.messages);
+    if (liveTurn?.conversationId === activeConversationId) all.push(...liveTurn.messages);
     return Array.from(new Map(all.map((message) => [message.id, message])).values()).sort(
       (left, right) => left.id - right.id,
     );
@@ -351,22 +332,6 @@ export default function Chatbot() {
     }
   };
 
-  const appointmentCanBeCancelled = (appointmentId: number) =>
-    appointments.some(
-      (appointment) => appointment.id === appointmentId && appointment.status === "PENDING",
-    );
-
-  const handleCancelConfirmedAppointment = () => {
-    if (cancelAppointmentId === null) return;
-    cancelAppointment.mutate(cancelAppointmentId, {
-      onSuccess: () => {
-        setCancelAppointmentId(null);
-        toast.success("Đã hủy lịch khám");
-      },
-      onError: () => toast.error("Không thể hủy lịch khám. Vui lòng thử lại."),
-    });
-  };
-
   const handleScroll = async () => {
     const viewport = viewportRef.current;
     if (!viewport) return;
@@ -513,26 +478,6 @@ export default function Chatbot() {
                           createdAt={message.createdAt}
                           action={message.action}
                         />
-                        {message.action === "BOOKING_CONFIRMED" &&
-                          message.appointmentId !== null &&
-                          appointmentCanBeCancelled(message.appointmentId) && (
-                            <div className="pl-0 sm:pl-7">
-                              <div className="max-w-xl rounded-xl border border-rose-200/80 bg-rose-50/70 p-3 dark:border-rose-900/50 dark:bg-rose-950/30">
-                                <p className="text-xs leading-relaxed text-rose-900 dark:text-rose-200">
-                                  Bạn có thể hủy lịch này nếu chưa muốn tiếp tục.
-                                </p>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="mt-2 min-h-9 border-rose-300 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/60"
-                                  onClick={() => setCancelAppointmentId(message.appointmentId)}
-                                >
-                                  Hủy lịch khám
-                                </Button>
-                              </div>
-                            </div>
-                          )}
                         {message.action === "BOOKING_APPROVAL" && (
                             <div className="pl-0 sm:pl-7">
                               <BookingApprovalCard
@@ -634,35 +579,6 @@ export default function Chatbot() {
           {activeConversation ? `Đang xem ${activeConversation.title}` : "Cuộc trò chuyện mới"}
         </div>
       </div>
-
-      <AlertDialog
-        open={cancelAppointmentId !== null}
-        onOpenChange={(open) => {
-          if (!open && !cancelAppointment.isPending) setCancelAppointmentId(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận hủy lịch khám</AlertDialogTitle>
-            <AlertDialogDescription>
-              Lịch khám sẽ chuyển sang trạng thái đã hủy và không thể khôi phục từ chatbot.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelAppointment.isPending}>Quay lại</AlertDialogCancel>
-            <AlertDialogAction
-              disabled={cancelAppointment.isPending}
-              onClick={(event) => {
-                event.preventDefault();
-                handleCancelConfirmedAppointment();
-              }}
-              className="bg-destructive text-white hover:bg-destructive/90"
-            >
-              {cancelAppointment.isPending ? "Đang xử lý..." : "Xác nhận hủy lịch"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <PatientPromptTemplatesDialog
         open={isPromptTemplatesOpen}
