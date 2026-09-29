@@ -40,6 +40,7 @@ describe("Patient multi-thread chatbot", () => {
     vi.clearAllMocks();
     conversations = [];
     messages = [];
+    axiosMock.delete.mockResolvedValue({ data: { data: null } });
     useUserStore.setState({ userInfo: { id: 7 } as never });
     axiosMock.get.mockImplementation(async (url: string) => {
       if (url === "/chat-history/conversations") {
@@ -58,6 +59,9 @@ describe("Patient multi-thread chatbot", () => {
       };
     });
     axiosMock.post.mockImplementation(async (url: string, body?: Record<string, unknown>) => {
+      if (url === "/appointments/personal-appointments") {
+        return { data: { data: { appointments: [{ id: 88, status: "PENDING" }], total: 1, page: 1, limit: 50, totalPages: 1 } } };
+      }
       if (url === "/chat-history/conversations") {
         const conversation = { id: 31, title: "Cuộc trò chuyện mới", createdAt: "20/09/2026", updatedAt: "20/09/2026" };
         conversations = [conversation];
@@ -146,6 +150,10 @@ describe("Patient multi-thread chatbot", () => {
     expect(screen.getByText("Đã bấm nút xác nhận đặt lịch")).toBeInTheDocument();
     expect(screen.getByText("Bác sĩ Minh")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Xác nhận đặt lịch" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /hủy lịch khám/i }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: /xác nhận hủy lịch/i }));
+    await waitFor(() => expect(axiosMock.delete).toHaveBeenCalledWith("/appointments/cancel/88"));
   });
 
   it("restores the retry button after an approval response is lost", async () => {
