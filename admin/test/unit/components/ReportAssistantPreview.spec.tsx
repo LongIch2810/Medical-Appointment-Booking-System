@@ -51,4 +51,27 @@ describe("ReportAssistantPreview SQL reveal", () => {
     expect(screen.getByText(sql)).toBeInTheDocument();
     expect(reveal).toHaveBeenCalledTimes(1);
   }, 15_000);
+
+  it("renders localized report headers and weekday values", () => {
+    render(
+      <ReportAssistantPreview
+        report={{
+          ...report,
+          tableColumns: [
+            { key: "day_of_week", label: "Day Of Week" },
+            { key: "start_time", label: "Start Time" },
+            { key: "total_appointments", label: "Total Appointments" },
+          ],
+          tableRows: [
+            { day_of_week: 2, start_time: "08:00", total_appointments: 3 },
+          ],
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Ngày trong tuần")).toBeInTheDocument();
+    expect(screen.getByText("Giờ bắt đầu")).toBeInTheDocument();
+    expect(screen.getByText("Tổng số lịch khám")).toBeInTheDocument();
+    expect(screen.getByText("Thứ ba")).toBeInTheDocument();
+  });
 });

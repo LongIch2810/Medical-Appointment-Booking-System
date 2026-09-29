@@ -17,7 +17,7 @@ import {
   ShieldAlert,
   TrendingUp,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { revealAdminReportQuery } from "@/api/adminReportApi";
 import { ChartConfigRenderer } from "@/components/app/ChartConfigRenderer";
@@ -25,6 +25,7 @@ import { GenericList } from "@/components/app/GenericList";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { exportReportCsv } from "@/lib/exportReportCsv";
+import { localizeAdminReportTable } from "@/lib/formatAdminReportTable";
 import { openAdminReportFile } from "@/utils/open-admin-report-file";
 import type { AdminReport } from "@/types/interface/adminReport.interface";
 
@@ -38,6 +39,10 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
   const fileName = report.fileName || `bao-cao-quan-tri-${report.id}.pdf`;
   const hasRows = Boolean(report.tableRows && report.tableRows.length > 0);
   const hasPdf = Boolean(report.pdfUrl);
+  const localizedTable = useMemo(
+    () => localizeAdminReportTable(report.tableColumns, report.tableRows),
+    [report.tableColumns, report.tableRows],
+  );
 
   const handleToggleSql = async () => {
     if (executedQuery) {
@@ -116,8 +121,8 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
               onClick={() =>
                 exportReportCsv(
                   fileName.replace(/\.pdf$/i, ".csv"),
-                  report.tableColumns,
-                  report.tableRows,
+                  localizedTable.columns,
+                  localizedTable.rows,
                 )
               }
             >
@@ -365,7 +370,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             <GenericList
               title=""
               description=""
-              columns={report.tableColumns.map((column) => ({
+              columns={localizedTable.columns.map((column) => ({
                 key: column.key,
                 label: column.label,
                 render: (row: Record<string, string | number>) => (
@@ -374,10 +379,10 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
                   </span>
                 ),
               }))}
-              rows={report.tableRows}
-              total={report.tableRows.length}
+              rows={localizedTable.rows}
+              total={localizedTable.rows.length}
               page={1}
-              limit={report.tableRows.length}
+              limit={localizedTable.rows.length}
               onPageChange={() => undefined}
               isLoading={false}
               isError={false}
