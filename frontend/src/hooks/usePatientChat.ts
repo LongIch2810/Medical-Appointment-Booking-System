@@ -7,6 +7,7 @@ import {
 } from "@/api/conversationApi";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { PatientChatRequest } from "@/types/interface/patientChat.interface";
+import { patientQueryKeys } from "@/hooks/usePatientPortalApi";
 
 export const patientChatQueryKeys = {
   conversations: ["patient-chat", "conversations"] as const,
@@ -55,11 +56,15 @@ export function useSendPatientChatMessage() {
       conversationId: number;
       body: PatientChatRequest;
     }) => sendPatientChatMessage(conversationId, body),
-    onSuccess: (_turn, variables) => {
+    onSuccess: (turn, variables) => {
       queryClient.invalidateQueries({
         queryKey: patientChatQueryKeys.conversation(variables.conversationId),
       });
       queryClient.invalidateQueries({ queryKey: patientChatQueryKeys.conversations });
+      if (turn.assistantMessage.action === "BOOKING_CONFIRMED") {
+        queryClient.invalidateQueries({ queryKey: ["patient-appointments"] });
+        queryClient.invalidateQueries({ queryKey: patientQueryKeys.dashboard });
+      }
     },
     onError: (_error, variables) => {
       queryClient.invalidateQueries({

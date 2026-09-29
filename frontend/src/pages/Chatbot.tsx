@@ -504,7 +504,7 @@ export default function Chatbot() {
 
                   {activeOptimisticUser && <UserMessage content={activeOptimisticUser} />}
 
-                  {isPending && (
+                  {isPending && liveTurn === null && (
                     <div className="space-y-3 animate-in fade-in duration-200">
                       <AssistantMessage
                         content=""

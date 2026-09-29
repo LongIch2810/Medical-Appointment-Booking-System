@@ -18,6 +18,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Dialog,
   DialogBody,
   DialogContent,
@@ -86,6 +96,9 @@ const Appointments: React.FC = () => {
   const [ratingTarget, setRatingTarget] = useState<PatientAppointment | null>(
     null,
   );
+  const [cancelTarget, setCancelTarget] = useState<PatientAppointment | null>(
+    null,
+  );
   const [ratingScore, setRatingScore] = useState(5);
   const [ratingFeedback, setRatingFeedback] = useState("");
   const [examResultTarget, setExamResultTarget] =
@@ -132,7 +145,10 @@ const Appointments: React.FC = () => {
 
   const handleCancel = (appointmentId: number) => {
     cancelMutation.mutate(appointmentId, {
-      onSuccess: () => toast.success(t("appointments.cancelSuccess", { defaultValue: "Đã hủy lịch khám." })),
+      onSuccess: () => {
+        setCancelTarget(null);
+        toast.success(t("appointments.cancelSuccess", { defaultValue: "Đã hủy lịch khám." }));
+      },
       onError: () => toast.error(t("appointments.cancelError", { defaultValue: "Không thể hủy lịch khám này." })),
     });
   };
@@ -342,7 +358,7 @@ const Appointments: React.FC = () => {
                             variant="ghost"
                             className="h-8.5 justify-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 text-xs font-bold text-rose-600 transition-colors hover:bg-rose-100 hover:text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-900/50"
                             disabled={cancelMutation.isPending}
-                            onClick={() => handleCancel(appointment.id)}
+                            onClick={() => setCancelTarget(appointment)}
                             title={t("appointments.cancel", { defaultValue: "Hủy lịch" })}
                           >
                             <X className="h-3.5 w-3.5" />
@@ -358,6 +374,45 @@ const Appointments: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={cancelTarget !== null}
+        onOpenChange={(open) => {
+          if (!open && !cancelMutation.isPending) setCancelTarget(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t("appointments.cancelConfirmTitle", { defaultValue: "Xác nhận hủy lịch khám" })}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("appointments.cancelConfirmDescription", {
+                doctor: cancelTarget?.doctor.user.fullname ?? "",
+                date: cancelTarget?.appointment_date ?? "",
+                defaultValue: `Bạn có chắc muốn hủy lịch với BS. ${cancelTarget?.doctor.user.fullname ?? ""} vào ngày ${cancelTarget?.appointment_date ?? ""}?`,
+              })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelMutation.isPending}>
+              {t("common.back", { defaultValue: "Quay lại" })}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={cancelMutation.isPending || cancelTarget === null}
+              onClick={(event) => {
+                event.preventDefault();
+                if (cancelTarget) handleCancel(cancelTarget.id);
+              }}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {cancelMutation.isPending
+                ? t("common.processing", { defaultValue: "Đang xử lý..." })
+                : t("appointments.confirmCancel", { defaultValue: "Xác nhận hủy lịch" })}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modal Đánh giá sự hài lòng */}
       <Dialog
