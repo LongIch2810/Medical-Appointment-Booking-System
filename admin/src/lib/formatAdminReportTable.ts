@@ -38,6 +38,12 @@ const WEEKDAY_LABELS: Record<number, string> = {
   6: "Thứ bảy",
 };
 
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN: "Quản trị viên",
+  DOCTOR: "Bác sĩ",
+  PATIENT: "Bệnh nhân",
+};
+
 function normalizeColumnKey(key: string) {
   return key.trim().toLowerCase();
 }
@@ -46,7 +52,22 @@ export function formatAdminReportCell(
   columnKey: string,
   value: string | number,
 ): string | number {
-  if (normalizeColumnKey(columnKey) !== "day_of_week") return value;
+  const key = normalizeColumnKey(columnKey);
+
+  if (["role", "roles", "role_name"].includes(key) && typeof value === "string") {
+    return ROLE_LABELS[value.toUpperCase()] ?? value;
+  }
+
+  if ((key === "month" || key.endsWith("_month")) && typeof value === "string") {
+    const month = value.match(/^(\d{4})-(\d{2})(?:-|$)/);
+    if (month) return `${month[2]}/${month[1]}`;
+  }
+
+  if ((key === "start_time" || key === "end_time") && typeof value === "string") {
+    return value.replace(/^(\d{2}:\d{2}):00$/, "$1");
+  }
+
+  if (key !== "day_of_week") return value;
 
   const weekday = typeof value === "number" ? value : Number(value);
   return Number.isInteger(weekday) && WEEKDAY_LABELS[weekday]

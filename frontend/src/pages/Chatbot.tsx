@@ -490,7 +490,6 @@ export default function Chatbot() {
                                 }
                                 isBusy={isBusy}
                                 onApprove={(id) => void handleBookingDecision(id, "APPROVE")}
-                                onCancel={(id) => void handleBookingDecision(id, "CANCEL")}
                                 onEdit={() => {
                                   setErrorMessage(null);
                                   composerRef.current?.focus();

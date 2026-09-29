@@ -276,6 +276,33 @@ test('normalizes explicit monthly user grouping instead of grouping by each date
   assert.deepEqual(proposed.plan?.groupBy, ['registration_month', 'roles']);
 });
 
+test('uses exactly the requested number of calendar buckets for rolling monthly reports', async () => {
+  const userPlan: ReportPlan = {
+    ...plan,
+    fromDate: '2026-03-29',
+    toDate: '2026-09-29',
+    metrics: ['user_count'],
+    groupBy: ['registration_month', 'roles'],
+    sourceViews: ['chatbot_report_users_view'],
+  };
+  const { graph } = makeGraph({
+    routeIntent: intentRouter([{ action: 'PROPOSE_PLAN', message: 'Review.', plan: userPlan }]),
+  });
+  const proposed = await runReportAssistant(graph, makeInput({
+    message: 'Báo cáo người dùng đăng ký mới theo từng tháng trong 6 tháng gần nhất',
+  }));
+
+  assert.ok(proposed.plan);
+  assert.match(proposed.plan.fromDate, /^\d{4}-\d{2}-01$/);
+  const from = new Date(`${proposed.plan.fromDate}T00:00:00.000Z`);
+  const to = new Date(`${proposed.plan.toDate}T00:00:00.000Z`);
+  const monthDistance =
+    (to.getUTCFullYear() - from.getUTCFullYear()) * 12 +
+    to.getUTCMonth() -
+    from.getUTCMonth();
+  assert.equal(monthDistance, 5);
+});
+
 test('adds the schedule view for appointment reports grouped by weekday and start time', async () => {
   const schedulePlan: ReportPlan = {
     ...plan,

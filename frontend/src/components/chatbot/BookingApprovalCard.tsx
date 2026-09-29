@@ -28,7 +28,6 @@ interface BookingApprovalCardProps {
   isBusy: boolean;
   onApprove: (approvalMessageId: number) => void;
   onEdit: () => void;
-  onCancel: (approvalMessageId: number) => void;
 }
 
 function readSummary(
@@ -77,7 +76,6 @@ export default function BookingApprovalCard({
   isBusy,
   onApprove,
   onEdit,
-  onCancel,
 }: BookingApprovalCardProps) {
   const summary = readSummary(message.payload);
 
@@ -240,14 +238,14 @@ export default function BookingApprovalCard({
               onClick={() =>
                 retryDecision === "APPROVE"
                   ? onApprove(message.id)
-                  : onCancel(message.id)
+                  : onEdit()
               }
             >
               {isBusy
                 ? "Đang xử lý…"
                 : retryDecision === "APPROVE"
                   ? "Thử lại xác nhận"
-                  : "Thử lại hủy yêu cầu"}
+                  : "Chỉnh sửa yêu cầu"}
             </Button>
           ) : (
             <>
@@ -268,15 +266,6 @@ export default function BookingApprovalCard({
                 onClick={onEdit}
               >
                 Chỉnh sửa
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="min-h-11 flex-1 text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer"
-                disabled={isBusy}
-                onClick={() => onCancel(message.id)}
-              >
-                Hủy yêu cầu
               </Button>
             </>
           )}

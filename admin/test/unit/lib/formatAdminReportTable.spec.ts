@@ -38,4 +38,29 @@ describe("localizeAdminReportTable", () => {
       rows: [{ custom_metric: 12 }],
     });
   });
+
+  it("formats report months, times, and roles for Vietnamese readers", () => {
+    const result = localizeAdminReportTable(
+      [
+        { key: "registration_month", label: "Registration Month" },
+        { key: "role", label: "Role" },
+        { key: "start_time", label: "Start Time" },
+      ],
+      [
+        {
+          registration_month: "2026-09-01T00:00:00.000Z",
+          role: "DOCTOR",
+          start_time: "08:00:00",
+        },
+      ],
+    );
+
+    expect(result.rows).toEqual([
+      {
+        registration_month: "09/2026",
+        role: "Bác sĩ",
+        start_time: "08:00",
+      },
+    ]);
+  });
 });

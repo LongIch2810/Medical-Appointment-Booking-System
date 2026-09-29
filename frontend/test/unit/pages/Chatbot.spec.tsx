@@ -136,6 +136,7 @@ describe("Patient multi-thread chatbot", () => {
     expect(screen.getByText("Bác sĩ Minh")).toBeInTheDocument();
     expect(screen.getByText("Nguyễn An")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Xác nhận đặt lịch" })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Hủy yêu cầu" })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Xác nhận đặt lịch" }));
     await waitFor(() => expect(axiosMock.post).toHaveBeenCalledWith(

@@ -196,6 +196,18 @@ function rollingDayCount(message: string) {
   return Number.isSafeInteger(days) && days >= 1 && days <= 3_660 ? days : null;
 }
 
+function rollingMonthCount(message: string) {
+  const normalized = normalizeSearchText(message);
+  const match = normalized.match(
+    /\btrong\s+(\d{1,3})\s*thang(?:\s*(?:gan nhat|gan day|vua qua|qua|truoc))?\b|\b(\d{1,3})\s*thang\s*(?:gan nhat|gan day|vua qua|qua|truoc)\b|\blast\s+(\d{1,3})\s+months?\b/,
+  );
+  if (!match) return null;
+  const months = Number(match[1] ?? match[2] ?? match[3]);
+  return Number.isSafeInteger(months) && months >= 1 && months <= 120
+    ? months
+    : null;
+}
+
 function monthlyGroupForPlan(plan: ReportPlan) {
   if (plan.sourceViews.includes('chatbot_report_users_view')) return 'registration_month';
   if (plan.sourceViews.includes('chatbot_report_appointments_view')) return 'appointment_month';
@@ -240,6 +252,10 @@ function canonicalPlanTerm(value: string, knownTerms: Set<string>) {
 
 function normalizeExplicitPlan(message: string, plan: ReportPlan, today = new Date()): ReportPlan {
   const normalized = normalizeSearchText(message);
+  const hasMonthlyBreakdown =
+    /\btheo\s+(?:tung\s+)?thang\b|\bmonthly breakdown\b|\bgroup(?:ed)? by month\b/.test(
+      normalized,
+    );
   const next: ReportPlan = {
     ...plan,
     metrics: plan.metrics.map((metric) => canonicalPlanTerm(metric, CANONICAL_METRICS)),
@@ -253,7 +269,19 @@ function normalizeExplicitPlan(message: string, plan: ReportPlan, today = new Da
     next.toDate = utcDateString(to);
   }
 
-  if (/\btheo\s+(?:tung\s+)?thang\b|\bmonthly breakdown\b|\bgroup(?:ed)? by month\b/.test(normalized)) {
+  const months = rollingMonthCount(message);
+  if (months && hasMonthlyBreakdown) {
+    const to = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+    );
+    const from = new Date(
+      Date.UTC(to.getUTCFullYear(), to.getUTCMonth() - months + 1, 1),
+    );
+    next.fromDate = utcDateString(from);
+    next.toDate = utcDateString(to);
+  }
+
+  if (hasMonthlyBreakdown) {
     const monthlyGroup = monthlyGroupForPlan(next);
     const dateGroups = new Set([
       'day',
