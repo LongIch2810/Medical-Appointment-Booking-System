@@ -41,5 +41,5 @@ Mỗi nhóm chức năng có mục **Implementation Evidence**. Các path trong 
 - Admin có route động theo `admin/src/config/menu.ts` và `GenericModulePage`.
 - **Patient portal thực chất nối API thật gần như toàn bộ** — `PatientPortalContext.tsx`/`patientMockData.ts` vẫn tồn tại trong source nhưng đã xác nhận là `[DEAD CODE]` (không được mount/gọi ở đâu); chi tiết ở `functional-spec.md`/`known-ambiguities.md`.
 - `admin/`: chỉ **1 trang** (`EnterpriseReportsDashboardPage`) dùng mock data thật sự; `mockApi.ts` phần lớn là dead code.
-- `chatbot/`: chỉ **4 endpoint HTTP thật** đang hoạt động; luồng "diagnosis" implement đầy đủ nhưng không route nào expose nó (`[DEAD CODE]`, xác nhận bởi chính test tích hợp của service).
-- Không có application code nào được thay đổi để tạo/cập nhật bộ tài liệu này (chỉ đọc, không sửa; bộ tài liệu đã qua 1 vòng xác minh lại bổ sung so với bản khởi tạo).
+- `chatbot/`: có **4 operation HTTP production**: `POST /chat`, `POST /patient-chat`, `DELETE /patient-chat/conversations/:conversationId`, `POST /report-assistant`. Luồng diagnosis có implementation nhưng không route nào expose (`[DEAD CODE]`).
+- Tài liệu được đồng bộ lại ngày 29/09/2026 sau khi kiểm thử production hai trợ lý AI, đối chiếu source/tests, và xác minh deployment chatbot qua Render API.

@@ -9,10 +9,12 @@ import * as openAdminReportUtils from "@/utils/open-admin-report-file";
 
 const hookMock = vi.hoisted(() => ({
   useAdminReportHistory: vi.fn(),
+  useDeleteAdminReport: vi.fn(),
 }));
 
 vi.mock("@/hooks/useAdminReports", () => ({
   useAdminReportHistory: hookMock.useAdminReportHistory,
+  useDeleteAdminReport: hookMock.useDeleteAdminReport,
 }));
 
 vi.mock("@/utils/open-admin-report-file", () => ({
@@ -66,11 +68,17 @@ const sampleReports: AdminReport[] = [
 ];
 
 describe("AdminReportHistoryPage", () => {
+  const mockMutateAsync = vi.fn().mockResolvedValue({ success: true });
+
   beforeEach(() => {
     vi.clearAllMocks();
+    hookMock.useDeleteAdminReport.mockReturnValue({
+      mutateAsync: mockMutateAsync,
+      isPending: false,
+    });
   });
 
-  it("renders page header and navigation link to assistant", () => {
+  it("renders page header and navigation link to assistant with Plus icon", () => {
     hookMock.useAdminReportHistory.mockReturnValue({
       data: { data: { reports: [], total: 0, page: 1, limit: 10, totalPages: 0 } },
       isLoading: false,
@@ -86,8 +94,12 @@ describe("AdminReportHistoryPage", () => {
     );
 
     expect(screen.getByText("Lịch sử báo cáo")).toBeInTheDocument();
-    expect(screen.getByText("Tạo báo cáo với AI")).toBeInTheDocument();
+    const createBtn = screen.getByRole("link", { name: "Tạo báo cáo với AI" });
+    expect(createBtn).toBeInTheDocument();
+    expect(createBtn).toHaveAttribute("href", "/admin/ai-report-assistant");
+    expect(createBtn.querySelector("svg")).not.toBeNull();
   });
+
 
   it("shows loading state when data is being fetched", () => {
     hookMock.useAdminReportHistory.mockReturnValue({
@@ -185,6 +197,10 @@ describe("AdminReportHistoryPage", () => {
     expect(screen.getByText("#102")).toBeInTheDocument();
     expect(screen.getByText("APPOINTMENTS_BY_SPECIALTY")).toBeInTheDocument();
 
+    // Check status badges
+    expect(screen.getByText("Sẵn sàng PDF")).toBeInTheDocument();
+    expect(screen.getByText("Chưa có PDF")).toBeInTheDocument();
+
     // Click "Mở PDF" on report 101
     const openPdfButtons = screen.getAllByRole("button", { name: /Mở PDF/i });
     await user.click(openPdfButtons[0]);
@@ -239,6 +255,41 @@ describe("AdminReportHistoryPage", () => {
       expect(screen.getByText("Chi tiết báo cáo #101")).toBeInTheDocument();
       expect(screen.getByTestId("mock-report-preview")).toBeInTheDocument();
     });
+  });
+
+  it("supports delete action with confirmation dialog", async () => {
+    const user = userEvent.setup();
+
+    hookMock.useAdminReportHistory.mockReturnValue({
+      data: {
+        data: {
+          reports: sampleReports,
+          total: 2,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        },
+      },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+      isFetching: false,
+    });
+
+    render(
+      <MemoryRouter>
+        <AdminReportHistoryPage />
+      </MemoryRouter>,
+    );
+
+    const deleteBtn = screen.getByRole("button", { name: "Xóa báo cáo #101" });
+    await user.click(deleteBtn);
+
+    expect(screen.getByText("Xóa báo cáo #101?")).toBeInTheDocument();
+    const confirmBtn = screen.getByRole("button", { name: "Xóa báo cáo" });
+    await user.click(confirmBtn);
+
+    expect(mockMutateAsync).toHaveBeenCalledWith(101);
   });
 
   it("resets filter back to CONVERSATIONAL on reset button click", async () => {

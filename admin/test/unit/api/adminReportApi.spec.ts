@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  deleteAdminReport,
   getAdminReportDetail,
   getAdminReportHistory,
 } from "@/api/adminReportApi";
@@ -10,6 +11,7 @@ vi.mock("@/configs/axios", () => ({
   default: {
     get: vi.fn(),
     post: vi.fn(),
+    delete: vi.fn(),
   },
 }));
 
@@ -79,6 +81,25 @@ describe("adminReportApi - history endpoints", () => {
     const result = await getAdminReportDetail(5);
 
     expect(axiosInstance.get).toHaveBeenCalledWith("/admin-reports/history/5");
+    expect(result).toEqual(mockResponse.data);
+  });
+
+  it("deleteAdminReport calls DELETE /admin-reports/history/:id", async () => {
+    const mockResponse = {
+      data: {
+        statusCode: 200,
+        success: true,
+        data: { success: true },
+      },
+    };
+
+    vi.mocked(axiosInstance.delete).mockResolvedValueOnce(mockResponse);
+
+    const result = await deleteAdminReport(10);
+
+    expect(axiosInstance.delete).toHaveBeenCalledWith(
+      "/admin-reports/history/10",
+    );
     expect(result).toEqual(mockResponse.data);
   });
 });

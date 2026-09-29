@@ -194,6 +194,15 @@ Rounded white form panel set against dark green or warm stone sections. Inputs a
 
 Dark footer subscription block with coral "AI moves fast" label, white headline, muted legal microcopy, a single-line email field, and arrow submit marker. Footer columns use white section labels and muted links.
 
+## AI Report Assistant and History
+
+- The report assistant must show a readable plan before generation and require a separate **Xác nhận và tạo báo cáo** action. A normal message while approval is pending edits the plan.
+- Report history prioritizes report name/request, date range, report type, PDF readiness, creator, creation time, and actions. Keep loading, error, empty, filtered-empty, and refresh states explicit.
+- The primary history CTA uses the label **Tạo báo cáo với AI**. Do not use the sparkle icon shown in the previous design; a neutral create affordance such as `Plus`, or text alone, is acceptable.
+- Opening, downloading, and deleting a report are separate actions. Destructive deletion always uses the shared confirmation dialog and disables duplicate submissions while pending.
+- Localize machine-facing values before display or export, including role names, ISO month buckets, timestamps, and table column labels. Internal SQL may appear only in the authorized admin detail view.
+- Use minimum 44px interactive targets, visible keyboard focus, concise `aria-label` text, and stable table widths to reduce layout movement.
+
 ## Do's and Don'ts
 
 ### Do

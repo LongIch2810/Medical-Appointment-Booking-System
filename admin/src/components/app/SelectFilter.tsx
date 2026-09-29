@@ -39,10 +39,11 @@ export function SelectFilter({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
-  // All options including the empty/placeholder option
+  // All options including the empty/placeholder option (deduplicating if options has value: "")
+  const nonPlaceholderOptions = options.filter((opt) => opt.value !== "");
   const allOptions: SelectFilterOption[] = [
     { value: "", label: placeholder },
-    ...options,
+    ...nonPlaceholderOptions,
   ];
 
   // Currently selected option
@@ -189,7 +190,7 @@ export function SelectFilter({
           id={listboxId}
           role="listbox"
           aria-label={label || placeholder}
-          className="absolute left-0 top-full z-50 mt-1 max-h-60 w-full min-w-[180px] overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-lg outline-none animate-in fade-in-0 zoom-in-95 dark:border-slate-800 dark:bg-slate-900"
+          className="scrollbar-soft absolute left-0 top-full z-50 mt-1.5 max-h-64 w-full min-w-[240px] overflow-y-auto overscroll-contain rounded-2xl border border-slate-200/90 bg-white/95 p-1.5 shadow-xl backdrop-blur-xs outline-none animate-in fade-in-0 zoom-in-95 dark:border-slate-800/90 dark:bg-slate-900/95"
         >
           {allOptions.map((opt, index) => {
             const isSelected = opt.value === value;

@@ -6,7 +6,7 @@ Backend dùng PostgreSQL qua TypeORM (`migrationsRun:true`, `synchronize:false`)
 
 ## Native LangGraph persistence for the admin report assistant
 
-The chatbot uses `@langchain/langgraph-checkpoint-postgres` with a dedicated PostgreSQL role (`chatbot_report_assistant` by default) and schema (`langgraph`). The single TypeORM migration `1788800000000-setupLangGraphPersistence.ts` reads `LANGGRAPH_DB_USER` and `LANGGRAPH_DB_PASSWORD`, creates the login if it does not exist, and never alters or renames an existing role. Creating a missing role requires `CREATEROLE`; if the managed database account does not have that privilege, provision the role through the database provider. The backend migration connection must also be able to create a schema and grant database/schema privileges. The migration grants the LangGraph role only the access required by LangGraph; it does not change `chatbot_readonly` or grant access to business tables. Configure the same `LANGGRAPH_DB_USER` and `LANGGRAPH_DB_PASSWORD` in backend and chatbot environments. If the role already exists, its password must already match the configured password. Both services reuse `DB_HOST`, `DB_PORT`, and `DB_NAME`.
+The chatbot uses `@langchain/langgraph-checkpoint-postgres` with a dedicated PostgreSQL role (`chatbot_report_assistant` by default) and schema (`langgraph`). Backend migrations read `LANGGRAPH_DB_USER` and `LANGGRAPH_DB_PASSWORD`, ensure the role/schema/grants needed by LangGraph, and do not alter an existing role's password. Creating a missing role requires `CREATEROLE`; if the managed database account lacks that privilege, provision the role through the database provider. Configure matching credentials in backend and chatbot environments. The backend uses the unqualified database role name for migration/grants. The chatbot uses its `LANGGRAPH_DB_USER` value exactly; for a Supabase shared pooler, production configuration must include `.<PROJECT_REF>` explicitly. Runtime code does not derive or append a project reference. Both services reuse `DB_HOST`, `DB_PORT`, and `DB_NAME`.
 
 At chatbot warm-up, the singleton `PostgresSaver` and `PostgresStore` each run their LangGraph-managed `setup()` once; both the report assistant and patient-chat graphs compile against them. Failure leaves these features unavailable (HTTP 503), with no stateless fallback. Report checkpoints use `report-assistant:v1:{userId}:{conversationId}`; patient checkpoints use `patient-chat:v1:{userId}:{conversationId}`. Application tables remain authoritative for transcript, ownership, report history, appointment audit and deletion state. The report namespace stores only an admin reporting preference profile. The patient namespace `patient-chat/user/{userId}/preferences` stores only language, detail level, preferred weekdays and preferred time of day. Neither namespace stores JWTs, SQL output, health data or arbitrary chat text. The SQL-reporting connection continues to use the read-only `chatbot_readonly` role.
 
@@ -18,7 +18,7 @@ Một instance Redis dùng cho 2 mục đích tách biệt logic (khác DB index
 
 - **Cache** (`backend/src/redis-cache/`, DB mặc định/0): session version, refresh-token session list, blacklist token, permission resolved theo user (TTL 3600s), cache danh sách/chi tiết bác sĩ/lịch/lịch hẹn/bài viết/chuyên khoa/hồ sơ sức khỏe/coach-profile (đa số TTL 3600s), cache system settings (TTL 60s), cache danh sách admin active (TTL 30s dùng cho fan-out thông báo).
 - **BullMQ** (`bullmq.module.ts`, DB index 1 — cấu hình riêng, tách biệt hoàn toàn khỏi cache ở trên dù cùng Redis instance).
-- **Chatbot rate-limit** (`chatbot/src/configs/redis.ts`, dùng Redis DB `0` theo `REDIS_DB`) — dùng chung Redis với backend; các workload được tách bằng key prefix vì Upstash chỉ hỗ trợ DB `0`.
+- **Chatbot rate-limit** (`chatbot/src/configs/redis.ts`, dùng `REDIS_RATE_LIMIT_DB`, mặc định `0`) — dùng chung Redis với backend; các workload được tách bằng key prefix vì managed Redis có thể chỉ hỗ trợ DB `0`.
 
 Docker cung cấp thêm RedisInsight để kiểm tra thủ công lúc dev.
 
@@ -38,10 +38,10 @@ Cấu hình client ID/secret/callback (`GOOGLE_CALL_BACK`) + strategy Passport. 
 
 Gateway backend dùng chung danh sách CORS allow-list với HTTP app. Xác thực bằng cookie `accessToken`, xác minh lại **mỗi event** (không chỉ lúc connect) qua `WsCookieAuthGuard` — cùng cơ chế `session_version`/blacklist với HTTP. Phòng theo `user:<id>` (thông báo/lịch hẹn cá nhân) và `room:<channelId>` (tin nhắn theo kênh, yêu cầu là thành viên). Rate-limit WebSocket độc lập với rate-limit HTTP.
 
-## AI providers and retrieval — `[CONFLICT]` đã xác minh, sửa lại tuyên bố cũ
+## AI providers and retrieval
 
 - **Xác nhận bằng code**: `chatbot/src/configs/llm.ts`/`embeddings.ts` chỉ implement `ChatOpenAI`/`OpenAIEmbeddings` (`@langchain/openai`), đọc từ `OPENAI_MODEL`/`OPENAI_FAST_MODEL`/`OPENAI_VISION_MODEL`/`OPENAI_EMBEDDING_MODEL` (khóa cứng phải bằng `text-embedding-3-small`/1536 chiều, throw nếu lệch). `baseURL` có thể trỏ qua một proxy LLM nội bộ (nhiều comment code ghi nhận proxy này không đáng tin cậy với `response_format: json_schema`, buộc nhiều tool dùng `method:"functionCalling"` thay thế).
-- **Không xác nhận được**: README liệt kê nhà cung cấp là "Gemini/OpenAI/Ollama" — không tìm thấy cấu hình/kết nối Gemini hay Ollama nào trong `chatbot/src/`. Chuỗi "Gemini" chỉ xuất hiện trong **một** mô tả tool tĩnh (`tools/ocr.tool.ts:275`, văn bản mô tả gửi cho LLM, không phải code gọi Gemini thật) trong khi chính tool đó dùng `getVisionModel()` (OpenAI). Kết luận: `[DOCUMENTATION ONLY]` cho phần "Gemini/Ollama" của README — chưa xác minh được bằng runtime code, không nên coi là tích hợp đang hoạt động.
+- **Provider hiện tại**: OpenAI-compatible chat, vision and embeddings only. `@langchain/google-genai` is installed but unused; no Gemini or Ollama runtime configuration is wired into `chatbot/src`.
 - Qdrant: tên collection khóa cứng (`BOOKING_DOCTOR_SYSTEM_OPENAI_TE3_SMALL_V1`), throw nếu env `QDRANT_COLLECTION_NAME` không khớp chính xác. Production boot chỉ attach vào collection có sẵn (không rebuild); môi trường khác tự build/reconcile lại từ 2 file PDF nguồn (`service.pdf`, `rules.pdf`) mỗi lần khởi động.
 - `langchain/hub`: pull prompt template qua mạng lúc load module (RAG + SQL-QA hướng bệnh nhân) — phụ thuộc mạng ngoài lúc khởi động, có bọc `withRetry`.
 
@@ -59,5 +59,9 @@ Frontend patient dùng `VITE_PROVINCES_API_URL` (provinces.open-api.vn) — dị
 - `backend/src/redis-cache/redis-cache.service.ts`, `backend/src/bullmq/bullmq.module.ts`
 - `backend/src/mail/`, `backend/src/uploads/`, `backend/src/websockets/websocket.gateway.ts`
 - `chatbot/src/configs/{llm,embeddings,vectordb,redis,cloudinary}.ts`
-- `chatbot/src/tools/ocr.tool.ts` (mô tả tool nhắc "Gemini" — không khớp implementation)
+- `chatbot/src/routes/chatbot.route.ts`, `chatbot/package.json`
 - `.env.example` của cả 4 service, `docker-compose.dev.yml`
+
+## Production deployment verified at runtime
+
+On 2026-09-29, Render API inspection confirmed the chatbot service `Medical-Appointment-Booking-System-Chatbot-Live` at `https://medical-appointment-booking-system-ya7e.onrender.com`, tracking branch `master` with commit-triggered auto deploy. Dashboard configuration uses `cd chatbot && npm install` to build and `cd chatbot && npm run start:prod` to start. No production Render manifest is committed, so these dashboard settings remain external runtime configuration.

@@ -112,24 +112,50 @@ Browser -> Socket.IO handshake bằng cookie accessToken
 
 `frontend/` có **2 implementation độc lập** cùng gọi chung endpoint backend: trang đầy đủ `Messages.tsx` (`/patient/messages`) và widget nổi `ChatBox.tsx`/`ChatBoxList.tsx` (ẩn trên `/patient/*` và `/chatbot`, hiện ở mọi route khác) — nguồn populate `useChannelStore` của widget nổi chưa xác định được nơi khởi tạo trong lượt nghiên cứu này. `admin/` có cài đặt riêng thứ ba (`MessagesPage.tsx`) kết hợp optimistic-update qua hook và lắng socket thô trực tiếp trong component cùng lúc.
 
-## 7. AI flow
+## 7. AI flows
+
+### Patient multi-thread chatbot
 
 ```text
-Frontend/admin -> POST /api/v1/chat-history/chat (hoặc build-health-roadmap)
-               -> backend forward kèm x-chatbot-internal-key + access token của user
-               -> chatbot /chatbot/chat|build-health-roadmap
-               -> LangGraph agent chọn tool (RAG/SQL-QA/tư vấn y tế/đặt lịch)
-               -> trả lời -> backend lưu vào Conversation -> trả về client
+Patient -> /chatbot -> tạo/chọn conversation riêng của chính user
+        -> POST /api/v1/chat-history/conversations/:id/messages
+        -> backend lưu user message và forward internal key + Bearer JWT
+        -> POST /chatbot/patient-chat
+        -> LangGraph dùng RAG, SQL-QA chỉ đọc, tư vấn an toàn hoặc booking proposal
+        -> backend lưu assistant message -> frontend cập nhật transcript
 ```
 
-Đặt lịch qua hội thoại tự nhiên đi qua công cụ `booking_appointment_tool` bên trong CÙNG agent chat (`POST /chat`), không phải endpoint riêng — LLM tự quyết định gọi tool khi phát hiện ý định đặt lịch trong tin nhắn tự do. Route "chẩn đoán" (`diagnosis`) được implement đầy đủ ở tầng graph nhưng **không endpoint HTTP nào expose nó** — không có luồng người dùng nào chạm tới được (xem `known-ambiguities.md`). Báo cáo/lộ trình sức khỏe dùng rate-limit bucket riêng khỏi chat thường (12/phút so với 120/phút).
+Yêu cầu tìm/gợi ý bác sĩ, xem lịch trống hoặc nói rõ “chưa đặt lịch” chỉ chạy tra cứu. Chatbot chỉ mở luồng booking khi người dùng yêu cầu đặt/tạo lịch rõ ràng. Nội dung trả cho patient được làm sạch để không lộ SQL, tên bảng/view, “kết quả truy vấn” hoặc tên công cụ nội bộ.
+
+Booking là quy trình hai pha: tool chỉ tạo đề xuất; UI hiển thị người khám, bác sĩ, chuyên khoa và ngày/giờ, đồng thời nêu rõ chưa có lịch nào được tạo. Card hiện chỉ có **Xác nhận đặt lịch** và **Chỉnh sửa**, không có nút hủy. Chỉ nút xác nhận mới resume checkpoint bằng `APPROVE` và gọi API tạo lịch; chỉnh sửa gửi một lượt chat mới theo nhánh `REVISE`. Backend/chatbot vẫn hiểu quyết định `CANCEL` để tương thích với dữ liệu hoặc client cũ, nhưng patient UI hiện tại không phát quyết định này.
+
+### Admin report assistant
+
+```text
+Admin -> /admin/ai-report-assistant -> tạo/chọn conversation
+      -> gửi yêu cầu báo cáo
+      -> assistant đề xuất plan và dừng tại LangGraph interrupt
+      -> admin xem phạm vi/chỉ số/phân nhóm
+      -> “Xác nhận và tạo báo cáo”
+      -> SQL chỉ đọc -> bảng -> biểu đồ -> phân tích grounded -> PDF
+      -> backend lưu report phiên bản mới và liên kết conversation
+```
+
+Tin nhắn thường khi đang chờ duyệt được hiểu là yêu cầu sửa kế hoạch. Báo cáo chỉ chạy sau thao tác xác nhận riêng. Với yêu cầu “N tháng gần nhất” có phân nhóm theo tháng, phạm vi bắt đầu từ ngày đầu của tháng cách hiện tại `N-1` tháng để tạo đúng N bucket lịch; ví dụ ngày 29/09/2026 và 6 tháng gần nhất tạo phạm vi 01/04/2026–29/09/2026. Bảng admin bản địa hóa nhãn cột, vai trò `ADMIN/DOCTOR/PATIENT`, tháng ISO và giờ trước khi hiển thị/xuất CSV.
+
+Trang `/admin/reports/history` cho phép lọc theo loại, làm mới, xem chi tiết, mở hoặc tải PDF khi sẵn sàng, và xóa báo cáo sau hộp thoại xác nhận. CTA tạo mới dùng nhãn **Tạo báo cáo với AI** và không còn dùng icon lấp lánh cũ. Trạng thái PDF được hiển thị riêng để tránh người dùng bấm vào tệp chưa tồn tại.
+
+Cả hai flow dùng transcript nghiệp vụ làm nguồn lịch sử chính và dùng chung `PostgresSaver`/`PostgresStore` trong schema `langgraph` cho checkpoint cùng preference memory có allowlist. Nếu persistence không sẵn sàng, request fail closed bằng lỗi 503 ổn định; không chạy graph stateless.
+
+Route diagnosis vẫn là dead code vì không được đăng ký trong router production. Router chatbot hiện chỉ expose `POST /chat`, `POST /patient-chat`, `DELETE /patient-chat/conversations/:conversationId` và `POST /report-assistant`.
 
 **Implementation Evidence**
 
-- `chatbot/src/routes/chatbot.route.ts`, `chatbot/src/agents/agents.ts`
-- `chatbot/src/langgraph/booking.graph.ts`, `diagnosis.graph.ts`
-- `backend/src/modules/chat-history/chat-history.service.ts`
-
+- `frontend/src/pages/Chatbot.tsx`, `frontend/src/components/chatbot/BookingApprovalCard.tsx`
+- `admin/src/pages/AdminAiReportAssistantPage.tsx`, `admin/src/components/app/ReportAssistantPreview.tsx`
+- `backend/src/modules/chat-history/`, `backend/src/modules/admin-reports/`
+- `chatbot/src/routes/chatbot.route.ts`
+- `chatbot/src/langgraph/patient_chat.graph.ts`, `report_assistant.graph.ts`, `booking.graph.ts`
 ## 8. Logout
 
 `POST /auth/logout` blacklist/xóa phiên refresh hiện tại, xóa cookie. `POST /auth/logout-all` tăng `session_version` (vô hiệu mọi access/refresh token đang có ngay lập tức) và xóa toàn bộ `refresh_tokens`. Đổi permission của **role** cũng kích hoạt hiệu ứng tương tự logout-all cho mọi user giữ role đó; đổi **role của một user cụ thể** thì không (xem `[CONFLICT]` trong `known-ambiguities.md`).

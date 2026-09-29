@@ -81,7 +81,7 @@
 
 - Rate limit toàn cục 100/phút (mặc định throttler); các bucket riêng: login 5/phút, refresh 10/phút, đổi tài khoản (đăng ký/quên mật khẩu/đặt lại) 3/10 phút, xác minh OTP 5/5 phút — tất cả có `blockDuration` 5 phút sau khi vượt ngưỡng.
 - WebSocket: connection 20/phút, event mặc định 60/phút, `send:message` 30/phút riêng.
-- Chatbot: `chat` 120/phút, `report`/`health-roadmap` đều 12/phút — theo user (nếu có token hợp lệ) hoặc theo IP (nếu không, ví dụ `create-report`).
+- Chatbot production router: `chat` 120/phút; `patient-chat` 120/phút; report-assistant chat 30 lượt/5 phút và xác nhận tạo report 10 lượt/giờ. Patient-chat/report-assistant dùng verified actor identity; các bucket được lưu trên Redis và tách bằng prefix.
 - `ValidationPipe` transform + whitelist (loại field lạ âm thầm, không từ chối); lỗi validation → `code: VALIDATION_FAILED`.
 
 **Implementation Evidence**

@@ -84,8 +84,8 @@ The redesign of LifeHealth adheres to intentional healthcare design principles:
 | :--- | :--- |
 | **Patient Application** (`frontend/`) | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query v5, Zustand v5, Radix UI Primitives, React Hook Form, Zod, Lucide Icons, Socket.IO Client, Playwright |
 | **Admin & Doctor Portal** (`admin/`) | React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Query v5, Zustand v5, Chart.js, React Chartjs 2, Radix UI Primitives, Lucide Icons |
-| **Backend REST API** (`backend/`) | NestJS 11, TypeORM, PostgreSQL 16, Redis 7, BullMQ, Passport JWT / Google OAuth, Socket.IO Gateway, Swagger / OpenAPI, Jest |
-| **AI Chatbot Service** (`chatbot/`) | Express 5, TypeScript, LangChain, LangGraph, Qdrant Vector DB, OpenAI / Google Gemini / Ollama, Sharp, PDFKit, ChartJS Canvas |
+| **Backend REST API** (`backend/`) | NestJS 11, TypeORM, PostgreSQL 17, Redis 7, BullMQ, Passport JWT / Google OAuth, Socket.IO Gateway, Swagger / OpenAPI, Jest |
+| **AI Chatbot Service** (`chatbot/`) | Express 5, TypeScript, LangChain, LangGraph, Qdrant Vector DB, OpenAI, Sharp, PDFKit, ChartJS Canvas |
 
 ### Verified Dependency Versions
 
@@ -166,14 +166,14 @@ Exact versions currently installed and running stably in this repository (see ea
              ┌────────────────┴─────┐        │ Internal HTTP
              ▼                      ▼        ▼
 ┌─────────────────────────┐ ┌─────────────┐ ┌───────────────────────────┐
-│ PostgreSQL 16 (Primary) │ │ Redis 7 DB  │ │  Chatbot Service (chatbot/)│
+│ PostgreSQL 17 (Primary) │ │ Redis 7 DB  │ │  Chatbot Service (chatbot/)│
 │   TypeORM Entities      │ │ Cache/Queues│ │  LangGraph + Qdrant (:5000)│
 └─────────────────────────┘ └─────────────┘ └───────────────────────────┘
 ```
 
-- **Backend (NestJS):** Domain modules under `src/modules/<feature>/`, centralized TypeORM entities in `src/entities/`, and versioned migrations in `src/database/migrations/`. Every endpoint is protected with cookie-based JWT authentication, granular RBAC decorators (`@Permissions`), and a standard response envelope `{ statusCode, success, data, error }`. Background mail and notifications run asynchronously via BullMQ.
+- **Backend (NestJS):** Domain modules under `src/modules/<feature>/`, centralized TypeORM entities in `src/entities/`, and versioned migrations in `src/database/migrations/`. Protected routes use cookie-based JWT authentication and granular RBAC decorators (`@Permissions`); intentionally public routes are declared separately. Responses use the standard envelope `{ statusCode, success, data, error }`. Background mail and notifications run asynchronously via BullMQ.
 - **Client Applications (React 19):** Strict one-way data architecture: `Page/Component → Custom Hook → TanStack Query → Axios API Client`. Zustand is isolated to client-only UI state, while server cache invalidation handles synchronicity. Validation schemas are formalized with Zod and React Hook Form.
-- **AI Consultation Engine (LangChain/LangGraph):** State graph workflows orchestrating RAG queries over medical corpora, vector search in Qdrant, OCR on user-uploaded laboratory files, and PDF clinical report generation.
+- **AI Consultation Engine (LangChain/LangGraph):** Stateful patient conversations combine RAG, read-only doctor/schedule lookup, medical safety guidance, and two-phase appointment booking. The admin report assistant proposes a plan, waits for explicit confirmation, then generates grounded tables, charts, CSV/PDF output, and versioned report history.
 
 ### Detailed Architecture Diagrams
 
@@ -224,7 +224,7 @@ The diagrams below are standalone HTML files in [`specs/system-design/`](specs/s
 - **Node.js:** `v20.x` or newer
 - **Package Manager:** `npm` (v10+)
 - **Container Runtime:** Docker Desktop with Docker Compose (recommended)
-- **Database & Cache:** PostgreSQL 16 and Redis 7 (when running without Docker)
+- **Database & Cache:** PostgreSQL 17 and Redis 7 (when running without Docker)
 
 ---
 
@@ -245,11 +245,12 @@ cp chatbot/.env.example chatbot/.env
 | :--- | :--- | :--- |
 | `frontend/.env` | `VITE_BACKEND_URL` | Backend API base URL (e.g. `http://localhost:3000` or `http://localhost:3010`) |
 | `admin/.env` | `VITE_BACKEND_URL` | Backend API base URL for administrator portal |
-| `backend/.env` | `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_DATABASE` | PostgreSQL connection parameters |
+| `backend/.env` | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` | PostgreSQL connection parameters |
 | `backend/.env`, `chatbot/.env` | `REDIS_URL` | Redis cache, queue, and rate-limit connection; use Render's Internal Redis URL |
-| `backend/.env` | `JWT_SECRET`, `JWT_EXPIRES_IN` | Session token signing secret and duration |
+| `backend/.env` | `ACCESS_TOKEN_SECRET`, `ACCESS_TOKEN_EXPIRE`, `REFRESH_TOKEN_SECRET`, `REFRESH_TOKEN_EXPIRE` | Access/refresh token signing and lifetime |
 | `backend/.env` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALL_BACK` | Google OAuth credentials (optional for dev) |
-| `chatbot/.env` | `OPENAI_API_KEY` / `GEMINI_API_KEY` | LLM provider API credentials |
+| `chatbot/.env` | `OPENAI_API_KEY`, `OPENAI_MODEL`, `OPENAI_FAST_MODEL`, `OPENAI_VISION_MODEL` | OpenAI-compatible LLM configuration |
+| `backend/.env`, `chatbot/.env` | `LANGGRAPH_DB_USER`, `LANGGRAPH_DB_PASSWORD` | Dedicated PostgreSQL login for LangGraph checkpoints and preference storage; the chatbot uses the configured login exactly and does not append a project reference |
 | `chatbot/.env` | `QDRANT_URL`, `QDRANT_API_KEY` | Vector database configuration |
 
 > [!CAUTION]
@@ -335,6 +336,9 @@ npm --prefix admin run build
 
 # Build Backend API
 npm --prefix backend run build
+
+# Build Chatbot service
+npm --prefix chatbot run build
 ```
 
 ### Code Formatting & Linting
@@ -345,6 +349,10 @@ npm --prefix admin run lint
 
 # Lint backend TypeScript source
 npm --prefix backend run lint
+
+# chatbot currently has no lint script; use its TypeScript checks
+npm --prefix chatbot run typecheck
+npm --prefix chatbot run typecheck:test
 ```
 
 ### Automated Testing
@@ -352,6 +360,11 @@ npm --prefix backend run lint
 # Run backend unit tests and coverage report
 npm --prefix backend run test
 npm --prefix backend run test:cov
+
+# Run frontend/admin unit tests and chatbot tests
+npm --prefix frontend run test
+npm --prefix admin run test
+npm --prefix chatbot run test
 
 # Run Patient app Playwright end-to-end test suite
 npm --prefix frontend run test:e2e

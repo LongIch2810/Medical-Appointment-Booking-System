@@ -91,3 +91,10 @@ export async function getAdminReportDetail(id: number) {
   >(`/admin-reports/history/${id}`);
   return res.data;
 }
+
+export async function deleteAdminReport(id: number) {
+  const res = await axiosInstance.delete<
+    ApiResponse<{ success: boolean }>
+  >(`/admin-reports/history/${id}`);
+  return res.data;
+}

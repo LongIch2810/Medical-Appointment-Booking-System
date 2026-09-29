@@ -35,7 +35,7 @@ Separately from the discovery-tool rule above: before creating a new component, 
 
 ## 4. Documentation Discipline
 
-Do not treat a comment, README line, or older doc as automatically true. `AGENTS.md §24 Source of Truth` gives the trust order — code and tests outrank prose docs, and the root `README.md` is confirmed to contain at least one inaccuracy (chatbot AI providers, see `AGENTS.md §5`/§15's evidence). If a task touches an area where docs and code disagree, verify against source/tests/config and say so explicitly rather than silently picking one.
+Do not treat a comment, README line, or older doc as automatically true. `AGENTS.md §24 Source of Truth` gives the trust order: code and tests outrank prose docs, while the root `README.md` is intentionally less detailed than `specs/as-is/`. If a task touches an area where docs and code disagree, verify against source/tests/config and say so explicitly rather than silently picking one.
 
 ## 5. Scope Discipline
 

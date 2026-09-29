@@ -78,9 +78,9 @@ Frontend/Backend ──(internal key + forwarded user JWT)──> Chatbot (:5000
 | Build | Backend: `nest build --builder swc`. Frontend/Admin: `tsc -b && vite build`. Chatbot: `tsc`. |
 | Deployment (verified) | `frontend/` and `admin/` ship a committed `vercel.json` (SPA rewrite) → deployed as static Vercel apps. |
 | Deployment (backend, confirmed at runtime) | `backend/` runs on **Render** — confirmed by a real deploy failure whose path was `/opt/render/project/src/backend/dist/main`. No committed Render config exists in this repo (no `render.yaml`); the build/start commands are presumably configured directly in the Render dashboard, not committed. |
-| Deployment (chatbot, unverified) | No committed deployment config exists for `chatbot/` beyond a dev-only `Dockerfile.dev`. `chatbot/.env.example` mentions "Vercel" for `START_STANDALONE_SERVER` (an env var the code never actually reads, see §10) and inline code comments in `chatbot/src/server.ts` reference Render-style "must see an open port" health-check behavior. **Needs verification** — do not assume a specific host for `chatbot/` without checking with the user. |
+| Deployment (chatbot, confirmed at runtime) | `chatbot/` runs on Render as `Medical-Appointment-Booking-System-Chatbot-Live` (`https://medical-appointment-booking-system-ya7e.onrender.com`), branch `master`, auto-deploy on commit. This was verified through the Render API on 2026-09-29. The dashboard-only build/start configuration is not committed in this repository. |
 
-**AI provider — verified, contradicts README**: the README's tech table lists chatbot AI providers as "OpenAI / Google Gemini / Ollama", and `chatbot/package.json` lists `@langchain/google-genai` as a dependency. Grepping `chatbot/src` for `google-genai`, `ChatGoogleGenerativeAI`, `GoogleGenerativeAI`, `GEMINI`, `Ollama`, and `standalone` found **zero usages** — `chatbot/src/configs/llm.ts` and `embeddings.ts` only implement `ChatOpenAI`/`OpenAIEmbeddings`, driven entirely by `OPENAI_*` env vars, and `chatbot/.env.example` has no `GEMINI_API_KEY` despite the root README listing one. Treat the chatbot as **OpenAI-only**; `@langchain/google-genai` is an installed-but-unused dependency. See `specs/as-is/integrations.md` for the full evidence trail.
+**AI provider — verified**: `chatbot/src/configs/llm.ts` and `embeddings.ts` only implement `ChatOpenAI`/`OpenAIEmbeddings`, driven by `OPENAI_*` variables. `@langchain/google-genai` remains an installed-but-unused dependency. Treat the chatbot as **OpenAI-only** unless runtime code is added for another provider. See `specs/as-is/integrations.md` for the evidence trail.
 
 ## 6. Application Entry Points
 
@@ -151,9 +151,9 @@ There is no single "build everything" command — build each service independent
 | `admin/` | Vitest (unit only) | `npm run test` / `test:watch` / `test:cov --prefix admin` — specs under `admin/test/unit/`. **No e2e runner configured for `admin/`.** |
 | `chatbot/` | Node's built-in test runner (not Jest) | `npm run test` / `test:cov --prefix chatbot` — specs under `chatbot/test/unit/` (mirrors `src/`) plus `chatbot/test/integration/`. `test/noExternalNetwork.ts` blocks real outbound network calls, so tests must mock `httpClient`/LLM/Qdrant. Run a single file by swapping the glob in the script for the file path. |
 
-Lint: `npm run lint --prefix <service>` exists for all four services (backend also runs `--fix`). Typecheck: `frontend`/`admin` typecheck via their `build` script (`tsc -b`); `chatbot` has a dedicated `npm run typecheck` / `typecheck:test`; `backend` typechecks as part of `nest build`.
+Lint: `npm run lint --prefix frontend|admin|backend` exists (backend also runs `--fix`). `chatbot/` currently has no lint script; use `npm run typecheck --prefix chatbot` and `npm run typecheck:test --prefix chatbot`. `frontend`/`admin` also typecheck through their build scripts (`tsc -b`), while backend typechecks as part of `nest build`.
 
-Correction to earlier guidance: `admin/` and `frontend/` **do** have a configured unit-test runner (Vitest, with real spec files present — 11 files in `admin/test/unit/`, 13 in `frontend/test/unit/`); a previous version of this document said `admin/` had none. If a task changes test tooling, verify with `find <service>/test -iname "*.spec.*"` rather than trusting older docs.
+Correction to earlier guidance: `admin/` and `frontend/` **do** have configured Vitest unit-test runners with real specs under their `test/unit/` directories; a previous version of this document said `admin/` had none. If a task changes test tooling, recount or list the current specs instead of trusting an old file total.
 
 ## 10. Environment Variables
 
@@ -177,6 +177,7 @@ Never commit a populated `.env`. Copy each service's `.env.example` and fill in 
 | `CHATBOT_URL` | yes | Internal base URL to call chatbot |
 | `CHATBOT_INTERNAL_KEY` | yes — **secret, server-only** | Must match `chatbot/.env`; authenticates backend→chatbot calls |
 | `CHATBOT_DB_PASSWORD` | yes — **secret** | Password for the `chatbot_readonly` Postgres role |
+| `LANGGRAPH_DB_USER`, `LANGGRAPH_DB_PASSWORD` | yes for patient chat/report assistant | Restricted PostgreSQL role and password used by backend migrations to provision the isolated `langgraph` schema. Keep the backend role name unqualified. |
 | `MAIL_USER`, `MAIL_PASS` | required for email features | SMTP credentials |
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | required for uploads | Cloudinary credentials — **`API_SECRET` must never reach a client** |
 
@@ -196,6 +197,7 @@ Never commit a populated `.env`. Copy each service's `.env.example` and fill in 
 | `LLM_HEALTH_ROADMAP_MAX_RETRIES` | default `2` | Retry budget for the health-roadmap flow |
 | `OPENAI_EMBEDDING_MODEL` (`text-embedding-3-small`), `OPENAI_EMBEDDING_DIMENSIONS` (`1536`) | yes, **hard-coded check** | Code throws if these don't match the existing Qdrant collection |
 | `CHATBOT_DB_PASSWORD`, `DB_USER` (`chatbot_readonly`), `DB_NAME`, `DB_HOST`, `DB_PORT` | yes | Read-only Postgres connection |
+| `LANGGRAPH_DB_USER`, `LANGGRAPH_DB_PASSWORD` | yes for patient chat/report assistant | Dedicated login for the `langgraph` schema. The chatbot uses `LANGGRAPH_DB_USER` exactly; for a Supabase shared pooler include `.<PROJECT_REF>` in the production value yourself. No runtime code appends it. |
 | `QDRANT_API_KEY` | required if Qdrant needs auth | — |
 | `QDRANT_URL` | yes | Qdrant server/cluster URL |
 | `QDRANT_COLLECTION_NAME` | yes — **hard-coded expected value** `BOOKING_DOCTOR_SYSTEM_OPENAI_TE3_SMALL_V1` | Code throws if it doesn't match exactly |
@@ -203,7 +205,7 @@ Never commit a populated `.env`. Copy each service's `.env.example` and fill in 
 | `CHAT_HISTORY_CONTEXT_LIMIT` | default `10` | Max recent messages sent to the agent |
 | `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_CLOUD_NAME` | required for PDF report upload | — |
 
-Note: the root `README.md` mentions a `GEMINI_API_KEY` variable — **this does not exist in `chatbot/.env.example`** and is not read anywhere in `chatbot/src` (see §5's AI-provider note). Do not add code that depends on a `GEMINI_API_KEY` without first confirming with the user whether Gemini support is actually wanted.
+Note: `GEMINI_API_KEY` is not declared in `chatbot/.env.example` and is not read anywhere in `chatbot/src`. Do not add code that depends on it without first confirming that Gemini support is wanted.
 
 ### `frontend/.env.example` and `admin/.env.example`
 
@@ -220,7 +222,7 @@ All `VITE_*` variables are **bundled into the browser bundle — never put a sec
 - **Type**: PostgreSQL 17 (Docker image `postgres:17`).
 - **ORM**: TypeORM 0.3, `synchronize: false` — schema changes only via migrations (`backend/src/database/database.module.ts`, `migrationsRun: true` on boot).
 - **Entities**: centralized at `backend/src/entities/*.entity.ts` (not per-module).
-- **Migrations**: `backend/src/database/migrations/` — 33 migration files as of this writing.
+- **Migrations**: `backend/src/database/migrations/` — 38 migration files as of 2026-09-29.
 - **Migration commands** (from `backend/`, verified in `package.json`): `npm run migration:run`, `migration:revert`, `migration:generate`, `migration:create` — all run against `src/database/data-source.ts`.
 - **Seed data**: delivered as migrations (e.g. `1779638786395-seedData.ts`, several `seed*Permission*.ts` files) — there is no separate `seed` npm script.
 - **No documented reset command** for the dev database beyond dropping/recreating the Docker volume yourself — **Needs verification** if a scripted reset exists.
@@ -274,7 +276,7 @@ component/page → hook (src/hooks/, TanStack Query) → api module (src/api/<re
 | Cloudinary | `backend/` (avatars, attachments, article/specialty images), `chatbot/` (AI-generated PDF reports) | `backend/src/uploads/`, `chatbot/src/configs/cloudinary.ts` | `CLOUDINARY_*` |
 | Google OAuth2 | `backend/` (login) | `backend/src/modules/auth/google.strategy.ts` | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_CALL_BACK` |
 | SMTP mail | `backend/` (welcome/OTP/appointment emails via BullMQ) | `backend/src/mail/` | `MAIL_USER`, `MAIL_PASS` |
-| OpenAI | `chatbot/` only (chat, vision/OCR, embeddings) — **not** Gemini/Ollama despite README, see §5 | `chatbot/src/configs/llm.ts`, `embeddings.ts` | `OPENAI_*` |
+| OpenAI | `chatbot/` only (chat, vision/OCR, embeddings) | `chatbot/src/configs/llm.ts`, `embeddings.ts` | `OPENAI_*` |
 | Qdrant | `chatbot/` only (RAG vector store) | `chatbot/src/configs/vectordb.ts` | `QDRANT_*` |
 | provinces.open-api.vn | `frontend/` only (address lookup) | frontend consumer not fully traced in this pass — `Needs verification` which component calls it | `VITE_PROVINCES_API_URL` |
 
@@ -284,7 +286,7 @@ component/page → hook (src/hooks/, TanStack Query) → api module (src/api/<re
 
 **`backend/` — confirmed live**: `backend/` runs on **Render** — confirmed by an observed production deploy failure whose path was `/opt/render/project/src/backend/dist/main` (Render checks out the repo under `/opt/render/project/src/`, then runs the service's own `start:prod`, i.e. `node dist/main`). There is no committed `render.yaml` — Render's build/start commands for this service are configured outside the repo (Render dashboard), not in version control. A local, git-ignored `backend/.vercel/project.json` also exists on some checkouts (links to a Vercel project named `api_life_health`), but that's leftover local state from `vercel link`, not evidence of where backend actually runs — trust the Render evidence above over it.
 
-**`chatbot/` — not verifiable from the committed repository**: only a dev-only `Dockerfile.dev` exists (used by `docker-compose.dev.yml`); no committed production Dockerfile, `render.yaml`, `fly.toml`, Procfile, or CI/CD workflow of any kind (`.github/workflows/` does not exist in this repo). `chatbot/.env.example` mentions "Vercel" for `START_STANDALONE_SERVER` (an env var the code never actually reads — see §10), while `chatbot/src/server.ts` has an inline comment about Render needing to see an open port. **Do not assert a specific hosting target for `chatbot/` without confirming with the user** — this one case still is `Deployment target not verifiable from repository.`
+**`chatbot/` — confirmed live on Render**: runtime inspection on 2026-09-29 confirmed service `Medical-Appointment-Booking-System-Chatbot-Live`, URL `https://medical-appointment-booking-system-ya7e.onrender.com`, branch `master`, with commit-triggered auto deploy. Render is configured outside the repository with build command `cd chatbot && npm install` and start command `cd chatbot && npm run start:prod`. The repository still has no committed production deployment manifest, so dashboard settings remain the runtime source of truth.
 
 ## 17. Coding Conventions
 
@@ -292,7 +294,7 @@ component/page → hook (src/hooks/, TanStack Query) → api module (src/api/<re
 - NestJS files use `.controller.ts`, `.service.ts`, `.dto.ts`, `.entity.ts` suffixes.
 - Two-space indentation, TypeScript everywhere. Backend Prettier config requires single quotes and trailing commas.
 - Reuse existing UI primitives and abstractions (see §13) instead of duplicating validation or state markup per page.
-- ESLint is configured per service (`npm run lint --prefix <service>`); backend's lint script auto-fixes (`--fix`).
+- ESLint scripts exist for `frontend/`, `admin/`, and `backend/`; backend's script auto-fixes (`--fix`). `chatbot/` has TypeScript checks but no lint script.
 
 ## 18. Agent Working Rules
 
@@ -351,7 +353,7 @@ Do not hand-edit: `dist/`, `build/`, `coverage/`, anything under `node_modules/`
 - **Vercel SPA rewrite must exclude `/assets/`** (`"/((?!assets/).*)"`, not a bare `"/(.*)"`, in both `frontend/vercel.json` and `admin/vercel.json`). Vite fingerprints `React.lazy()` chunk filenames per build; a tab left open across a redeploy can request a chunk that no longer exists, and a bare catch-all rewrite would serve `index.html` for it instead of a real 404 (which the browser then rejects as a bad JS MIME type). `frontend/src/main.tsx` also listens for Vite's `vite:preloadError` to force one reload as a second line of defense — keep both.
 - **Chatbot's `START_STANDALONE_SERVER` env var has no effect on runtime behavior** (see §10) — don't rely on it, and flag it rather than assuming it works.
 - **Notification toast can precede its triggering response**: `frontend/`'s `NotificationRealtimeProvider` fires the instant the backend emits a `notification:new` socket event, which is often faster than an HTTP response that still needs an LLM turn (e.g. a chatbot reply). This is expected given the architecture, not a race-condition bug to "fix" by delaying the toast.
-- **Diagnosis flow is implemented but not routed**: `chatbot/src/langgraph/diagnosis.graph.ts` and its controller/service exist but `chatbot/src/routes/chatbot.route.ts` never registers a route for them — confirmed unreachable by `chatbot/test/integration/chatbot.route.integration.spec.ts`, which mocks the service to throw if called. Only `/chat`, `/create-report`, and `/build-health-roadmap` are live chatbot HTTP endpoints.
+- **Diagnosis flow is implemented but not routed**: `chatbot/src/langgraph/diagnosis.graph.ts` and its controller/service exist but `chatbot/src/routes/chatbot.route.ts` never registers a route for them. The production router currently exposes `POST /chat`, `POST /patient-chat`, `DELETE /patient-chat/conversations/:conversationId`, and `POST /report-assistant` only.
 - See `specs/as-is/known-ambiguities.md` for a longer, actively-maintained list of confirmed doc/code conflicts and dead code — check it before assuming any single piece of documentation (including this file) is exhaustive.
 
 ## 23. Documentation Map
@@ -367,7 +369,7 @@ specs/as-is/            # Evidence-cited "as-is" spec of the whole system — RE
 ├── api-spec.md             # HTTP/WebSocket/chatbot API inventory
 ├── permissions.md          # Auth, roles, permissions, route guards
 ├── error-handling.md       # Response envelope, validation, rate limiting, UI error states
-├── integrations.md         # Postgres/Redis/mail/Cloudinary/OAuth/AI/Docker — includes the Gemini/OpenAI conflict writeup
+├── integrations.md         # Postgres/Redis/mail/Cloudinary/OAuth/AI/Docker and verified runtime deployment notes
 └── known-ambiguities.md    # Conflicts, dead code, coverage gaps — actively maintained, check before relying on any claim
 
 frontend/AGENTS.md, frontend/DESIGN.md         # Patient UI conventions + design system — read before non-trivial frontend/ work
@@ -388,7 +390,7 @@ When documentation and code disagree, trust in this order:
 4. **`specs/as-is/*.md`** — already evidence-cited against source, but can lag a fresh commit.
 5. **Service-level `AGENTS.md`/`DESIGN.md`/`docs/*.md`**.
 6. **This file (`AGENTS.md`) and any tool-specific file (`CLAUDE.md`)**.
-7. **Root `README.md`** — marketing-oriented; confirmed to contain at least one inaccuracy (the Gemini/Ollama AI-provider claim, see §5) — treat it as the least reliable source and verify anything it says against code before repeating it.
+7. **Root `README.md`** — marketing-oriented and less detailed than the as-is specification; verify behavioral claims against code before repeating them.
 8. **Code comments** — can go stale silently.
 
 Always verify before relying on a documentation claim if the task is non-trivial or security/data-affecting.

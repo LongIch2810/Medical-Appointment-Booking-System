@@ -119,7 +119,16 @@
 - Do not bypass existing auth or permission checks.
 - Handle not-found and unauthorized cases correctly.
 
-## 10. Final Response Rules
+## 10. AI Report UI Rules
+
+- A report plan must be reviewed and explicitly confirmed before generation starts.
+- Keep report history actions distinct: view details, open PDF, download PDF, and delete.
+- Use the shared destructive confirmation dialog before deleting a report.
+- Do not use the sparkle icon for the **Tạo báo cáo với AI** CTA. Use a neutral create affordance or text only.
+- Localize role names, month labels, timestamps, and table headings before displaying or exporting report data.
+- Do not expose SQL or implementation details outside the authorized admin report detail surface.
+
+## 11. Final Response Rules
 
 - The final response must clearly report what was changed.
 - Mention files changed or created.

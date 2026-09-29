@@ -58,7 +58,7 @@ Bản trước đánh giá patient portal là `PARTIAL`/mock vì `PatientPortalC
 | Complaints | `POST /complaints/create`, `POST /complaints/my` | Có 2 entry point UI trùng chức năng: `Complaints.tsx` (đầy đủ) và `Feedback.tsx` (`/feedback`, rút gọn, cùng mutation). |
 | Messages | `patientApi` (channels/messages) + Socket.IO | Xem §Messaging bên dưới — có 2 cài đặt chat song song trong toàn app. |
 | Settings | `GET/PATCH /user-settings/me` | Xem điểm cụt bên dưới. |
-| AI Coach Health | `GET/POST/PATCH /coach-profile*`, `POST /chat-history/build-health-roadmap` | Tạo lộ trình sức khỏe PDF qua chatbot service (backend proxy). |
+| AI Coach Health | `GET/POST/PATCH /coach-profile*`, legacy `POST /chat-history/build-health-roadmap` | CRUD coach profile vẫn tồn tại; backend roadmap entry point không hoạt động end-to-end vì chatbot router hiện không expose `/build-health-roadmap`. |
 
 ### `[NOT IMPLEMENTED]` Các điểm cụt đã xác nhận trong patient portal
 
@@ -108,49 +108,39 @@ Dashboard, quản lý user/doctor/patient (patient module chỉ đọc — khôn
 
 ## 4. Chatbot and AI
 
-### Chat / RAG / SQL-QA / đặt lịch qua hội thoại — `CONFIRMED`
+### Production HTTP surface — `CONFIRMED`
 
-Chatbot Express mount `/chatbot`, hiện có chat, patient-chat (POST/DELETE), report, admin report-assistant và health-roadmap routes. Các route yêu cầu internal-service-key; patient-chat và report-assistant yêu cầu Bearer JWT có subject khớp `userId`. Patient-chat rate-limit theo actor. `/create-report` cũ không xác thực theo user, chỉ theo internal key (rate-limit theo IP). Backend (`chat-history` module) là lớp trung gian duy nhất mà `frontend`/`admin` gọi tới — không client nào gọi thẳng `chatbot/`.
+The Express router mounted at `/chatbot` currently registers exactly four operations: `POST /chat`, `POST /patient-chat`, `DELETE /patient-chat/conversations/:conversationId`, and `POST /report-assistant`. Every route requires the internal service key. Patient-chat and report-assistant additionally require a forwarded Bearer JWT whose verified subject matches `userId`. Browser clients call the NestJS backend only; they do not call the chatbot service directly.
 
-Agent hội thoại chính có 4 tool: RAG (Qdrant), SQL-QA (3 view đọc-only), tư vấn y tế (red-flag khẩn cấp bằng regex) và booking. Trong luồng patient-chat mới, booking tool chỉ lập đề xuất; native `interrupt()` đợi người dùng xác nhận, rồi mới resume bằng `Command({ resume })` để gọi `POST /api/v1/appointments/booking`. Tin nhắn thông thường khi chờ xác nhận được hiểu là chỉnh sửa, không phải đồng ý.
-
-### `[SỬA LẠI]` Chẩn đoán (Diagnosis) — `[DEAD CODE]`, không phải tính năng đang hoạt động
-
-CLAUDE.md liệt kê "diagnosis" là một trong các LangGraph flow của `chatbot/`. Xác minh: `diagnosis.graph.ts` + `handleDiagnosisController`/`handleDiagnosisService` được implement đầy đủ (bao gồm phân tích triệu chứng, chẩn đoán xác suất theo bệnh, gợi ý lâm sàng) nhưng **không route HTTP nào đăng ký gọi tới** — xác nhận bởi chính test tích hợp của service (`chatbot/test/integration/chatbot.route.integration.spec.ts`, mock hàm này để throw lỗi "not exposed by the production router"). Tính năng này hiện không thể truy cập qua bất kỳ client nào trong hệ thống.
-
-### Reports and roadmap — `CONFIRMED`
-
-`admin-reports` (backend) legacy generator forward câu hỏi ngôn ngữ tự nhiên tới `chatbot` `create-report` (SQL-QA trên 8 view báo cáo, sinh biểu đồ + báo cáo văn bản + PDF, PDF **không** stream về mà upload Cloudinary và chỉ trả URL). Admin còn có hội thoại báo cáo nhiều lượt tại `/admin/ai-report-assistant`: trợ lý làm rõ/yêu cầu xác nhận kế hoạch trước khi dùng chung pipeline SQL → biểu đồ → grounded report → PDF. "Health roadmap" tương tự cho patient (`AICoachHealth.tsx` → `build-health-roadmap`), có 2 bước tạo nội dung (`GenerateHealthPlanNode`, `WriteHealthRoadmapReportNode`) thực chất là **code xác định (deterministic), không gọi LLM** dù nằm trong một graph tên gợi ý AI.
-
-### Medical-record upload/summary — `[REMOVED]`
-
-Đã tồn tại (nhận `images`/`pdf`, OCR bằng vision model, tóm tắt Markdown, entry point `admin/`'s `MedicalRecordSummaryPage` tại `/doctor/patient-records`), nhưng đã bị gỡ bỏ hoàn toàn (route `/chatbot/upload/summary-medical-record`, `ocr_tool`, `summary_medical_record_tool`/graph, `AiMedicalRecordSummary` entity + bảng DB, toàn bộ UI `admin/`) sau khi liên tục gặp lỗi độ tin cậy khi trích xuất (nhầm field, tự suy diễn/tính toán giá trị, lẫn nội dung chẩn đoán vào tóm tắt xét nghiệm) không ổn định trên `gpt-4o-mini` dù đã nhiều vòng chỉnh prompt. Không còn entry point nào cho tính năng này.
-
-**Implementation Evidence**
-
-- `chatbot/src/routes/chatbot.route.ts`, `chatbot/src/controllers/chatbot.controller.ts`, `chatbot/src/services/chatbot.service.ts`
-- `chatbot/src/langgraph/{booking,diagnosis,create_report,build_health_roadmap}.graph.ts`
-- `chatbot/test/integration/chatbot.route.integration.spec.ts`
-- `backend/src/modules/chat-history/`, `backend/src/modules/admin-reports/`
-- `admin/src/pages/AdminAiReportGeneratorPage.tsx`
-- `frontend/src/pages/Chatbot.tsx`, `AICoachHealth.tsx`
-
-### Admin multi-turn report assistant (2026-09)
-
-The separate `/admin/ai-report-assistant` screen creates owner-private conversations, supports clarification and follow-up turns, and presents a proposed plan that requires an explicit confirmation button before the shared SQL → chart → grounded content → PDF pipeline runs. Confirmed reports are versioned as new `ai_admin_reports` rows and linked to the conversation; prior reports are not overwritten. The chatbot router now also exposes `/chatbot/report-assistant` with verified-user quotas. Revenue/financial requests are refused because no such reporting view exists, and unsupported numeric claims are rejected before PDF generation. The older `/admin/ai-coach-reports` generator remains available in parallel. No finance data, patient chat history reuse, or new permission was introduced.
-
-Native LangGraph persistence is enabled for this assistant: one stable `thread_id` per owner-scoped application conversation uses `PostgresSaver` checkpoints for short-term state, and `PostgresStore` keeps only explicitly requested report preferences per admin across threads. A plan creates a native `interrupt()` pause; backend confirmation resumes that checkpoint with `Command({ resume })`. A follow-up message resumes the pending interruption as a revision, discarding the previous plan. Approval is not inferred from ordinary chat. Checkpointer and Store tables live in the isolated `langgraph` PostgreSQL schema under a dedicated role; application conversation/message/report tables remain the source of record.
-
-Preference memory supports explicit remember, show, forget-one-field and forget-all commands. It is restricted to enumerated period/comparison/metrics/grouping/chart/detail defaults, is visibly noted on an applicable proposed plan, and never contains report results, patient data, SQL, arbitrary user instructions, permissions or source-view overrides. Current-turn instructions take priority. If persistence is unavailable, assistant requests fail closed with stable 503 errors rather than silently running without memory or checkpoints.
+Diagnosis code still exists but has no production route and remains `[DEAD CODE]`. Older create-report, health-roadmap and medical-record-summary implementations/files may remain in source history, but the current router does not expose those HTTP endpoints; documents must not describe them as live chatbot routes.
 
 ### Patient multi-thread chatbot (2026-09)
 
-The `/chatbot` page now supports multiple owner-private conversations with cursor-paged transcripts, create/switch/soft-delete, a mobile conversation sheet and the existing medical disclaimer. The backend keeps new chat rows in `patient_chat_conversations` and `patient_chat_messages`; legacy `conversations` history is retained without backfill and remains available only through the legacy read endpoints. Every thread has an application-owned ID and derived LangGraph `thread_id=patient-chat:v1:{userId}:{conversationId}`. Transcript DB rows are the full history/audit source; `PostgresSaver` keeps bounded short-term execution state (configured message limit, 12,000 characters), and the same `PostgresStore` used by admin reports keeps only patient presentation/scheduling preferences (language, detail level, preferred weekdays, time of day) across threads.
+The `/chatbot` page supports owner-private conversations with paged transcripts, create/switch/soft-delete, a mobile conversation sheet and the medical disclaimer. Application tables remain the transcript/audit source; a derived `patient-chat:v1:{userId}:{conversationId}` LangGraph thread stores bounded execution state. Cross-thread memory is limited to explicit language/detail/scheduling preferences and excludes health data, chat text, JWTs and SQL.
 
-Long-term patient memory is per verified user and only changes on explicit remember/show/forget commands; it never includes symptoms, diagnoses, medicine, allergies, relatives, chat text, JWTs, or SQL. Current instructions always win. Booking approval cards show the proposed patient, specialty, date/time and any new-relative warning. Approval creates an appointment with a unique operation UUID so resume/retry returns the same appointment and does not repeat notifications. Cancel skips the appointment API; revise routes back through the safety/topic/tool workflow. If the checkpoint is absent or stale, the backend requests a new plan and never bootstraps approval directly into commit. Conversation deletion removes its thread checkpoint but preserves long-term preferences and appointment audit relation.
+The agent can use RAG, read-only SQL-QA, medical safety guidance and booking. Doctor search, recommendations, availability lookup and messages containing “chưa đặt lịch” stay in lookup mode; booking is invoked only for an explicit request to create an appointment. Patient-facing output is sanitized so internal query/tool terminology is not returned.
 
-Saved preferred weekdays and time-of-day are soft booking defaults only when the current request leaves them unspecified; the approval card shows the actual proposed date/time for explicit patient confirmation.
+Booking uses a two-phase protocol. The tool creates a proposal only, then native `interrupt()` waits for an explicit approval. The current approval card shows **Xác nhận đặt lịch** and **Chỉnh sửa** only; it has no cancel button. Approval calls `POST /api/v1/appointments/booking` with a unique operation UUID, so retries return the same appointment without duplicate notification side effects. Editing resumes as `REVISE`. The backend and graph retain `CANCEL` compatibility for stored messages or older clients, but the current patient UI does not send it.
 
+### Admin multi-turn report assistant (2026-09)
+
+The `/admin/ai-report-assistant` screen creates owner-private conversations, supports clarification/follow-up turns, and presents a proposed plan that requires a dedicated confirmation button before SQL → chart → grounded content → PDF runs. A normal message while approval is pending revises and replaces the plan. Confirmed reports create new `ai_admin_reports` rows linked to the conversation; prior versions are not overwritten.
+
+Explicit monthly requests are normalized to supported source views and calendar buckets. For “N tháng gần nhất” grouped by month, the start is the first day of the month `N-1` months before the current month and the end is today. This yields exactly N calendar buckets. The admin preview localizes known column labels, weekdays, roles, ISO month values and start/end times for table display and CSV export.
+
+The report history screen filters by report type and exposes refresh, detail preview, PDF open/download, and owner-scoped deletion. PDF readiness is shown explicitly. Deletion requires a confirmation dialog; the backend removes the stored output asset and soft-deletes the report after owner/admin authorization. The create CTA no longer uses the previous sparkle icon.
+
+Revenue/financial requests are refused because no approved finance reporting view exists. Generated SQL is validated and repaired within a bounded retry path; unsupported numeric claims fail grounding before PDF generation. The chatbot endpoint applies 30 assistant turns per 5 minutes and 10 confirmed report generations per hour per verified user.
+
+Native LangGraph persistence uses one stable owner-scoped thread per application conversation with `PostgresSaver`; `PostgresStore` keeps only explicit allowlisted report preferences. The dedicated login comes from `LANGGRAPH_DB_USER`/`LANGGRAPH_DB_PASSWORD`. The chatbot uses the configured login exactly and does not append a Supabase project reference.
+
+**Implementation Evidence**
+
+- `chatbot/src/routes/chatbot.route.ts`, `chatbot/src/controllers/chatbot.controller.ts`
+- `chatbot/src/langgraph/patient_chat.graph.ts`, `report_assistant.graph.ts`, `booking.graph.ts`
+- `backend/src/modules/chat-history/`, `backend/src/modules/admin-reports/`
+- `frontend/src/pages/Chatbot.tsx`, `frontend/src/components/chatbot/BookingApprovalCard.tsx`
+- `admin/src/pages/AdminAiReportAssistantPage.tsx`, `admin/src/components/app/ReportAssistantPreview.tsx`
 ## 5. Cross-cutting behavior
 
 - Validation: `ValidationPipe({transform:true, whitelist:true})` toàn cục (field lạ bị loại âm thầm, không từ chối).

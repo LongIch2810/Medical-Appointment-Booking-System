@@ -69,7 +69,9 @@ Mọi path dưới đây cần thêm tiền tố `/api/v1`. Cột "Guard" ghi `J
 `GET /coach-profile/me`, `POST /coach-profile`, `PATCH /coach-profile` → tất cả `coach-profile:manage`.
 
 ### admin-reports
-`POST /admin-reports/generate` (`ai-coach-report:read`) — không query DB trực tiếp, forward câu hỏi ngôn ngữ tự nhiên tới chatbot `POST /chatbot/create-report` kèm header `x-chatbot-internal-key`, timeout 240s.
+`POST /admin-reports/generate` (`ai-coach-report:read`) — legacy backend entry point vẫn forward tới `/chatbot/create-report`, nhưng current chatbot router không đăng ký route này. Luồng tạo báo cáo đang hoạt động là conversational assistant dưới `/admin-reports/assistant/*`.
+
+Các route lịch sử dùng `ai-coach-report:read`: `GET /admin-reports/history`, `GET /admin-reports/history/:id`, `GET /admin-reports/history/:id/file-url`, `GET /admin-reports/history/:id/file`, và `DELETE /admin-reports/history/:id`. Khi xóa, service áp owner/role scoping trước khi xóa asset đầu ra và soft-delete bản ghi.
 
 ### articles (không class-level guard)
 `POST /articles/create-article` (`article:create`), `PATCH /articles/:articleId` (`:update`), `DELETE /articles/:articleId` (`:delete`), `GET /articles/:articleId` (public), `PUT /articles/:articleId` (approve, `article:approve`), `POST /articles` (list, public — `[CONFLICT]` chấp nhận filter `is_approve=false` không xác thực).
@@ -118,7 +120,7 @@ Mọi path dưới đây cần thêm tiền tố `/api/v1`. Cột "Guard" ghi `J
 | `GET /chat-history/context/:userId` | yêu cầu `userId === req.user.userId` |
 | `POST /chat-history` | lưu 1 message |
 | `POST /chat-history/chat` | tương thích ngược; chuyển câu hỏi qua conversation patient mới và safe patient-chat flow, không còn đường đặt lịch bỏ qua xác nhận |
-| `POST /chat-history/build-health-roadmap` | forward tới `POST /chatbot/build-health-roadmap`, timeout 30s |
+| `POST /chat-history/build-health-roadmap` | Legacy backend entry point remains, but the current chatbot router has no `/build-health-roadmap` route; treat this flow as unavailable until both services are reconnected. |
 | `GET /chat-history/:userId` | yêu cầu `userId === req.user.userId` |
 
 Các route multi-thread mới cũng dùng `chatbot:chat`; mọi đọc/ghi đều giới hạn theo user đã xác thực:
@@ -138,20 +140,16 @@ Turn response gồm conversation, tin user (nếu có), tin assistant và appoin
 
 ## Chatbot HTTP API (`chatbot/`, mount tại `/chatbot`)
 
-| Method | Path | Rate limit (bucket, max/60s) | Auth theo user? |
+| Method | Path | Rate limit | User authentication |
 |---|---|---|---|
-| POST | `/chatbot/chat` | `chat`, 120 | Có (nếu `token` gửi kèm) |
-| POST | `/chatbot/patient-chat` | `patient-chat`, 120 | Có — Bearer JWT bắt buộc, subject phải khớp `userId` |
-| DELETE | `/chatbot/patient-chat/conversations/:conversationId` | `patient-chat`, 120 | Có — chỉ xóa checkpoint cho actor/conversation đã xác minh |
-| POST | `/chatbot/create-report` | `report`, 12 | **Không** — chỉ internal-service-key, rate-limit theo IP |
-| POST | `/chatbot/build-health-roadmap` | `health-roadmap`, 12 | Có |
+| POST | `/chatbot/chat` | `chat`: 120/60s | Optional verified actor when a token is forwarded |
+| POST | `/chatbot/patient-chat` | `patient-chat`: 120/60s | Bearer JWT required; subject must match `userId` |
+| DELETE | `/chatbot/patient-chat/conversations/:conversationId` | `patient-chat`: 120/60s | Bearer JWT required; deletes only the verified actor/conversation checkpoint |
+| POST | `/chatbot/report-assistant` | `report-assistant-chat`: 30/5m; confirmed generation: 10/hour | Bearer JWT required; subject must match `userId` |
 
-Mọi route đều bắt buộc header `x-chatbot-internal-key` khớp `CHATBOT_INTERNAL_KEY` (so sánh hằng thời gian, SHA-256 + `timingSafeEqual`), nếu không → 401/503.
+All four operations require `x-chatbot-internal-key` matching `CHATBOT_INTERNAL_KEY`. The current production router does **not** register `/create-report`, `/build-health-roadmap`, `/diagnosis`, or `/upload/summary-medical-record`. Code or backend entry points related to those paths must not be interpreted as a live chatbot HTTP contract.
 
-**`POST /chatbot/diagnosis` KHÔNG tồn tại** dù `handleDiagnosisController`/`handleDiagnosisService`/`diagnosisGraph` được implement đầy đủ ở code — route không bao giờ được đăng ký. Xác nhận `[DEAD CODE]` bởi test tích hợp mock hàm này để throw “Diagnosis is not exposed by the production router”.
-
-`[REMOVED]` `POST /chatbot/upload/summary-medical-record` (multipart `images`/`pdf`, XOR bắt buộc qua `middlewares/xorValidate.ts`) từng tồn tại nhưng đã bị gỡ bỏ cùng toàn bộ tính năng tóm tắt bệnh án AI — xem `functional-spec.md` mục 4.
-
+Patient-chat booking proposals do not write an appointment. Only a valid `APPROVE` resume reaches the commit node. The public backend DTO/action union still accepts `CANCEL` for compatibility, but the current patient UI exposes only confirm and edit actions.
 ## Cross-service HTTP calls do `chatbot/` chủ động gọi ngược `backend/`
 
 Không dùng client HTTP dùng chung — mỗi tool/graph tự gọi `axios` trực tiếp tới `process.env.BACKEND_URL`:
@@ -194,7 +192,7 @@ All routes below are protected by `JwtAuthGuard`, `PermissionsGuard`, and the ex
 | `GET /admin-reports/assistant/conversations/:id?beforeMessageId=&limit=50` | Loads an owned conversation and an ascending message page; `limit` is capped at 100. |
 | `POST /admin-reports/assistant/conversations/:id/messages` | Exactly one of `{ message }` or `{ confirmPlanMessageId }`. A confirmation must name the newest `PROPOSE_PLAN` message. |
 
-Turn responses include the conversation, newly saved user/assistant messages, and an optional saved report. The chatbot endpoint `POST /chatbot/report-assistant` additionally requires the internal service key and a forwarded Bearer access token whose verified subject matches `userId`. Its internal request includes backend-derived `conversationId`, persisted user `turnId`, fixed `threadId`, and `mode: MESSAGE | CONFIRM_PLAN`; a bounded `historySeed` is used only to bootstrap a thread without checkpoint state. The client cannot choose the thread ID. New report plans suspend at a LangGraph `interrupt`; only the backend's validated plan confirmation resumes the same thread with `Command({ resume })`. A regular message while approval is pending resumes it as `REVISE`. Requests remain limited to 12 recent messages/12,000 characters, 30 turns per 5 minutes and 3 confirmed report generations per hour per verified user. The legacy generator and `POST /chatbot/create-report` retain their prior contract.
+Turn responses include the conversation, newly saved user/assistant messages, and an optional saved report. The chatbot endpoint `POST /chatbot/report-assistant` additionally requires the internal service key and a forwarded Bearer access token whose verified subject matches `userId`. Its internal request includes backend-derived `conversationId`, persisted user `turnId`, fixed `threadId`, and `mode: MESSAGE | CONFIRM_PLAN`; a bounded `historySeed` is used only to bootstrap a thread without checkpoint state. The client cannot choose the thread ID. New report plans suspend at a LangGraph `interrupt`; only the backend's validated plan confirmation resumes the same thread with `Command({ resume })`. A regular message while approval is pending resumes it as `REVISE`. Requests remain limited to 12 recent messages/12,000 characters, 30 turns per 5 minutes and 10 confirmed report generations per hour per verified user. The current chatbot router does not expose the legacy `POST /chatbot/create-report` endpoint.
 
 The graph uses PostgreSQL `PostgresSaver` for short-term per-thread checkpoints and `PostgresStore` for per-admin report-preference memory. Public admin routes remain unchanged. Explicit “remember/show/forget” requests operate on the preference profile and return public action `ANSWER`; ordinary chat does not write memory. `REPORT_ASSISTANT_STATE_UNAVAILABLE` and `REPORT_ASSISTANT_MEMORY_FAILED` are stable 503 codes when native persistence is unavailable.
 
@@ -202,4 +200,4 @@ The graph uses PostgreSQL `PostgresSaver` for short-term per-thread checkpoints 
 
 Patient routes above share the same singleton `PostgresSaver`/`PostgresStore`, but use thread IDs `patient-chat:v1:{userId}:{conversationId}` and store namespace `patient-chat/user/{userId}/preferences`. Backend derives the thread identity and forwards the verified access JWT only as a Bearer header. Transcript and ownership stay in `patient_chat_conversations`/`patient_chat_messages`; history seed is capped at 12 messages/12,000 characters and is only bootstrap input if no checkpoint exists.
 
-Booking tools create proposals only. The graph pauses with native `interrupt()`; only a latest, owner-scoped approval message can resume it. A normal message while that interrupt is pending is a revision, and approval/cancel/revision mismatches return `PATIENT_CHAT_ACTION_STALE` (409). Deleting a conversation removes its checkpoint before soft-delete. Explicit patient preference memory is limited to language, detail level, preferred weekdays and time of day; it never stores health data or chat text. Patient state/store outages fail closed with `PATIENT_CHAT_STATE_UNAVAILABLE` / `PATIENT_CHAT_MEMORY_UNAVAILABLE` (503).
+Booking tools create proposals only. The graph pauses with native `interrupt()`; only a latest, owner-scoped approval message can resume it. A normal message while that interrupt is pending is a revision. The patient UI exposes confirm and edit only; protocol-level cancel remains for compatibility. Approval/cancel/revision mismatches return `PATIENT_CHAT_ACTION_STALE` (409). Deleting a conversation removes its checkpoint before soft-delete. Explicit patient preference memory is limited to language, detail level, preferred weekdays and time of day; it never stores health data or chat text. Patient state/store outages fail closed with `PATIENT_CHAT_STATE_UNAVAILABLE` / `PATIENT_CHAT_MEMORY_UNAVAILABLE` (503).

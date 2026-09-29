@@ -402,6 +402,14 @@ Bất kỳ màn hình hay section nào hiển thị thông tin do AI sinh ra ph�
 - Nêu rõ: Dự án học tập & nghiên cứu phi thương mại; hình ảnh bác sĩ/cơ sở y tế mang tính chất minh họa giao diện; thông tin AI không dùng cho tình huống cấp cứu khẩn cấp.
 - Cho phép người dùng ghi nhận "Không hiển thị lại trong 7 ngày" qua `localStorage`.
 
+#### C. Xác Nhận Đặt Lịch Trong Chatbot
+
+- Yêu cầu tìm bác sĩ, gợi ý chuyên khoa hoặc xem lịch trống phải tiếp tục ở trạng thái tra cứu; không hiển thị thẻ xác nhận đặt lịch khi người dùng chưa yêu cầu đặt lịch rõ ràng.
+- Thẻ đề xuất phải nói rõ lịch khám **chưa được tạo**, đồng thời hiển thị người khám, bác sĩ, chuyên khoa và ngày/giờ để người dùng kiểm tra.
+- Chỉ hiển thị hai hành động: **Xác nhận đặt lịch** và **Chỉnh sửa**. Việc hủy một lịch đã tạo thuộc trang quản lý lịch khám, không đặt nút hủy trong chatbot.
+- Không hiển thị SQL, tên bảng/view, tên tool, câu truy vấn hoặc thuật ngữ triển khai nội bộ trong phản hồi dành cho bệnh nhân.
+- Khi assistant đang stream nội dung, giữ vùng hiển thị ổn định và cập nhật trong cùng một message bubble để hạn chế giật bố cục.
+
 ---
 
 ## 5. Content Voice & Tone (Giọng Điệu & Ngôn Ngữ)

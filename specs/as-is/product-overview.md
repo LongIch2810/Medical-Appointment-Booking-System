@@ -19,7 +19,7 @@ LifeHealth là hệ thống đặt lịch khám và hỗ trợ chăm sóc sức 
 | Patient web | Trang public, đăng nhập/đăng ký, tìm bác sĩ, đặt lịch và patient portal. |
 | Admin/doctor web | Console có permission route, dashboard, CRUD module, clinical communication và report. |
 | Backend API | Auth, users, doctors, schedules, appointments, health data, content, messaging, notifications, audit và settings. |
-| Chatbot service | Chat, health roadmap, report và tóm tắt hồ sơ từ ảnh/PDF; được bảo vệ bằng internal service key và actor identity. |
+| Chatbot service | Patient chat, doctor/schedule lookup, two-phase booking và conversational admin reports; được bảo vệ bằng internal service key và verified actor identity. Router production hiện có 4 operation HTTP. |
 
 ## 3. Actors được xác nhận
 
@@ -44,7 +44,7 @@ Browser admin   :4173/4183 ├─> Backend :3000 (/api/v1) ─> PostgreSQL
 
 Port mapping trên là cấu hình Docker hiện có; host dev ports có thể khác nếu chạy Vite trực tiếp.
 
-`[CONFLICT]` Root `README.md` liệt kê nhà cung cấp model của chatbot là "Gemini/OpenAI/Ollama", nhưng toàn bộ code cấu hình LLM/embedding đã đọc (`chatbot/src/configs/llm.ts`, `embeddings.ts`, `.env.example`) chỉ dùng `ChatOpenAI`/`OpenAIEmbeddings` (`@langchain/openai`) qua `OPENAI_*` env; không tìm thấy cấu hình Gemini hay Ollama nào được kết nối thật. Chuỗi "Gemini" chỉ xuất hiện trong một mô tả tool tĩnh (`chatbot/src/tools/ocr.tool.ts:275`: "...bằng Gemini") dù chính tool đó gọi `getVisionModel()` (OpenAI vision model) — mô tả này là văn bản mô tả cho LLM, không phải bằng chứng runtime dùng Gemini. Kết luận: nhà cung cấp AI được xác nhận bằng code là **OpenAI only**; "Gemini/Ollama" ở README là `[DOCUMENTATION ONLY]`, chưa xác minh được trong runtime.
+Nhà cung cấp AI được xác nhận bằng code là **OpenAI-compatible only**: `chatbot/src/configs/llm.ts`, `embeddings.ts` và `.env.example` dùng `ChatOpenAI`/`OpenAIEmbeddings` qua `OPENAI_*`. `@langchain/google-genai` vẫn là dependency chưa được sử dụng; không có kết nối Gemini hoặc Ollama trong runtime hiện tại.
 
 ## 5. Trạng thái triển khai
 

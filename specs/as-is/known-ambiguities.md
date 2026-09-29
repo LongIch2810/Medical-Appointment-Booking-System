@@ -34,7 +34,7 @@ Bản trước gắn nhãn patient portal là `PARTIAL` vì `PatientPortalContex
 - `backend/src/utils/constants.ts` (`PERMISSIONS`): các permission `role:create/update/delete/manage` không có route CRUD permission tương ứng (chỉ có `POST /permissions` list và `GET /permissions/:id` — không create/update/delete permission qua API, permission hoàn toàn quản lý qua migration).
 - `chatbot/src/tools/doctor_name_analyzer.tool.ts` (`AnalyzeDoctorTool`) — không được import ở bất kỳ graph/agent nào.
 - `chatbot/src/tools/test.tool.ts` — file rỗng (0 byte), placeholder.
-- `chatbot/src/langgraph/diagnosis.graph.ts` + `handleDiagnosisController`/`handleDiagnosisService` — implement đầy đủ nhưng **không route nào** đăng ký gọi tới (`chatbot/src/routes/chatbot.route.ts` chỉ đăng ký 3 route: `/chat`, `/create-report`, `/build-health-roadmap`). Xác nhận bởi chính test tích hợp: `chatbot/test/integration/chatbot.route.integration.spec.ts:66-68` mock `handleDiagnosisService` để **throw** "Diagnosis is not exposed by the production router".
+- `chatbot/src/langgraph/diagnosis.graph.ts` + `handleDiagnosisController`/`handleDiagnosisService` — implement đầy đủ nhưng **không route nào** đăng ký gọi tới. Current router chỉ đăng ký `POST /chat`, `POST /patient-chat`, `DELETE /patient-chat/conversations/:conversationId`, và `POST /report-assistant`.
 
 ## `[CONFLICT]` Maximum devices implementation
 
@@ -86,11 +86,6 @@ Bản trước đánh dấu ma trận chuyển trạng thái là `[UNCERTAIN]`. 
 
 Spec Playwright `booking-chatbot.spec.ts` dùng `page.getByPlaceholder("Aa")` trên route `/chatbot`, nhưng `Chatbot.tsx` (trang chat AI thật) có placeholder khác hẳn; chuỗi `"Aa"` chỉ tồn tại ở widget chat nổi (`ChatBox.tsx`, chat bác sĩ-bệnh nhân), và widget đó bị `MainLayout.tsx` ẩn hoàn toàn trên route `/chatbot`. Test này, như viết hiện tại, không khớp với implementation thật ở cả 2 khả năng — có thể là test lỗi thời hoặc chưa cập nhật theo UI.
 
-## `[DOCUMENTATION ONLY]` CLAUDE.md ghi sai đường dẫn e2e và trạng thái `jest-e2e.json`
-
-- CLAUDE.md: "`frontend/` có Playwright end-to-end specs dưới `frontend/e2e/`" — thực tế `testDir` cấu hình trong `frontend/playwright.config.ts` là `./test/e2e`, tức `frontend/test/e2e/`, không phải `frontend/e2e/`.
-- CLAUDE.md: "`backend/test/jest-e2e.json` không tồn tại trong repo" — xác minh lại: file này **có tồn tại** trong checkout hiện tại (`ls`/`find` xác nhận). Ghi nhận mâu thuẫn, không tự sửa hành vi nào dựa trên đó.
-
 ## `[UNCERTAIN]` Các permission được seed nhưng không route nào gate tới
 
 `enterprise-report:read` (dùng bởi `admin/` `EnterpriseReportsDashboardPage`, nhưng trang đó là mock — permission thật chỉ gate route/menu, không gate một backend call nào), `notification:send`, `audit-log:manage`, `patient-record:read`/`patient-record:manage` (route `/doctor/patient-records` ở `admin/` chỉ gate bằng `patient-record:manage` nhưng không backend controller nào trong `backend/src/modules` dùng permission string này — khả năng dành cho chatbot service, ngoài phạm vi backend research), full CRUD `permission:create/update/delete/manage`. Các permission này tồn tại trong catalogue/migration seed nhưng không có bằng chứng route nào đang gate bằng chúng trong backend — không kết luận là bug, có thể dành cho tính năng chưa build hoặc dùng ở service khác.
@@ -109,14 +104,14 @@ Không có bằng chứng source đủ để khẳng định production backup/r
 
 ## Coverage / test notes
 
-- Backend: `backend/test/unit/` có ~90+ file Jest spec, bao phủ hầu hết controller/service/guard/interceptor/decorator; spot-check `appointments.service.spec.ts` không thấy assertion mâu thuẫn với code production đã đọc trực tiếp — nhưng không phải mọi spec file đã được đối chiếu từng dòng.
-- Frontend: 2 spec Playwright thật (`test/e2e/booking-manual.spec.ts`, `booking-chatbot.spec.ts` — spec thứ hai có vấn đề nêu trên), cộng 8 file unit test (axios/schemas/store/formatters/theme/normalization/socket/hook) không được đọc sâu trong pass này.
-- Admin: không có test runner nào được cấu hình (theo CLAUDE.md, xác nhận không phát hiện thêm bằng chứng ngược lại).
-- Chatbot: có test tích hợp thật (`test/integration/chatbot.route.integration.spec.ts`) — bằng chứng trực tiếp cho route diagnosis chưa được expose và cho việc lỗi 500 không rò rỉ message nội bộ.
-
+- Backend uses Jest with unit and integration suites under `backend/test/`.
+- Frontend uses Vitest unit tests and Playwright E2E tests. The chatbot page now also has unit coverage for the booking approval card, including the absence of a cancel button.
+- Admin uses Vitest unit tests; report table localization has targeted coverage.
+- Chatbot uses Node's built-in test runner with outbound network blocked by `test/noExternalNetwork.ts`. On 29/09/2026 the complete suite reported 328 passed, 2 skipped and 0 failed before the final patient-output sanitizer change; its focused patient graph suite then reported 7/7 passed. The service has `typecheck` and `typecheck:test` scripts but no lint script.
+- Production smoke tests on 29/09/2026 covered patient symptom guidance, doctor lookup, availability lookup, booking proposal/confirmation UI, admin plan confirmation, monthly grouped reporting, table localization and PDF/CSV availability. These are dated observations, not a substitute for automated regression coverage.
 ## Suggested verification order
 
-1. Chạy build/lint/test của từng service theo `package.json` hiện tại.
+1. Chạy build/test/typecheck theo script hiện có; chỉ frontend/admin/backend có lint script, chatbot không có.
 2. Khởi động Docker dev stack với dữ liệu demo/non-production only.
-3. Kiểm thử thủ công: auth refresh/logout, tính duy nhất khi đặt lịch, phân quyền, các điểm cụt patient portal (forgot-password, contact form, privacy toggles), messaging qua websocket, upload XOR của chatbot, route diagnosis (xác nhận thật sự không thể gọi được qua HTTP).
+3. Kiểm thử thủ công: auth refresh/logout, tính duy nhất khi đặt lịch, phân quyền, contact form và privacy toggles còn là điểm cụt, messaging qua websocket, patient chatbot lookup/booking confirmation, admin report plan confirmation, và route diagnosis (xác nhận thật sự không thể gọi được qua HTTP).
 4. Đối chiếu response quan sát được với `api-spec.md` và cập nhật bộ tài liệu AS-IS này kèm bằng chứng commit/ngày tháng.

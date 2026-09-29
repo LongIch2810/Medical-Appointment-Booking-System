@@ -103,7 +103,7 @@ Permission **có seed nhưng không route backend nào gate tới** (không kế
 
 - Không có permission/role check nào bên trong `chatbot/` (không tương đương `@Permissions`/`PermissionsGuard`).
 - Mọi route `/chatbot/*` đi qua 2 middleware bắt buộc: `requireInternalServiceKey` (so khớp header `x-chatbot-internal-key` với `CHATBOT_INTERNAL_KEY` bằng SHA-256 + `timingSafeEqual`, xác thực **service gọi tới** — thường là backend — không phải người dùng cuối) và `attachVerifiedActor` (nếu có `token`/Bearer, verify JWT bằng cùng `ACCESS_TOKEN_SECRET` của backend để lấy `actorUserId` dùng cho rate-limit theo user; nếu **không** có token, middleware này bỏ qua mà không chặn request).
-- Hệ quả quan trọng: `POST /chatbot/create-report` không gửi kèm `token` nào → **không xác thực theo người dùng**, chỉ được bảo vệ bởi internal-service-key; rate-limit rơi về theo IP. Việc ai được phép trigger báo cáo admin phải được backend kiểm soát trước khi forward — không xác minh được từ phía `chatbot/`.
+- Legacy backend code vẫn tham chiếu `POST /chatbot/create-report`, nhưng route này không còn được đăng ký trong current chatbot router. Report assistant đang hoạt động dùng internal-service-key **và** Bearer JWT đã xác minh subject, sau khi backend áp `ai-coach-report:read` và owner scoping.
 
 **Implementation Evidence**
 
