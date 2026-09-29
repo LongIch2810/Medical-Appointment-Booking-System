@@ -73,7 +73,7 @@ export function GenericList<T>({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 overflow-x-auto">
+      <CardContent className="p-0 overflow-x-auto scrollbar-soft">
         {isLoading ? (
           <div className="p-8">
             <LoadingState />

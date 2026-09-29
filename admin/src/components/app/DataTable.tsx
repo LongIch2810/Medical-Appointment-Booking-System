@@ -111,7 +111,7 @@ export function DataTable({ module }: { module: ModuleConfig }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="overflow-x-auto p-0">
+      <CardContent className="overflow-x-auto p-0 scrollbar-soft">
         {!rows.length ? (
           <div className="p-6">
             <EmptyState

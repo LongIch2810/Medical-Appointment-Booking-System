@@ -404,7 +404,7 @@ export function AdminReportHistoryPage() {
           if (!open) setPreviewReport(null);
         }}
       >
-        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto rounded-3xl p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-950">
+        <DialogContent className="max-h-[90vh] max-w-4xl overflow-y-auto scrollbar-soft rounded-3xl p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-950">
           <DialogHeader className="border-b border-slate-100 pb-4 dark:border-slate-800">
             <DialogTitle className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-slate-100">
               <FileClock className="size-5 text-primary" aria-hidden="true" />

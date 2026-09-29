@@ -952,7 +952,7 @@ export function AdminAiReportAssistantPage() {
             </div>
           </DialogHeader>
 
-          <div className="flex-1 overflow-y-auto p-6 sm:p-7 space-y-6">
+          <div className="flex-1 overflow-y-auto scrollbar-soft p-6 sm:p-7 space-y-6">
             {PROMPT_TEMPLATE_GROUPS.map((group) => (
               <div key={group.category} className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-2">

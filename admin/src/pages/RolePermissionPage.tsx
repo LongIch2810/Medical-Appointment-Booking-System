@@ -544,7 +544,7 @@ export function RolePermissionPage() {
               thống.
             </p>
           </CardHeader>
-          <CardContent className="p-0 overflow-x-auto">
+          <CardContent className="p-0 overflow-x-auto scrollbar-soft">
             <div className="max-h-[600px] overflow-y-auto scrollbar-soft">
               <table className="min-w-full divide-y divide-slate-100 dark:divide-slate-800 text-left">
                 <thead className="sticky top-0 z-10 bg-slate-50/90 backdrop-blur-xs dark:bg-slate-950/90">

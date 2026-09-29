@@ -109,6 +109,56 @@
     scroll-behavior: smooth;
   }
 
+  /* Global Sleek Scrollbar (W3C standard for Firefox and all modern engines) */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+  }
+
+  .dark,
+  .dark * {
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  }
+
+  /* Global WebKit / Blink Scrollbar (Chrome, Edge, Opera, Safari, Electron) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent !important;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.35);
+    border-radius: 9999px;
+    background-clip: padding-box;
+    transition: background-color 0.15s ease-in-out;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.6);
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.25);
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.45);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent !important;
+  }
+
+  ::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-family: "Plus Jakarta Sans", "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
@@ -169,10 +219,14 @@
 
   .scrollbar-soft {
     scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.4) transparent;
+    scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
     scroll-behavior: smooth;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .dark .scrollbar-soft {
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
   }
 
   .scrollbar-soft::-webkit-scrollbar {
@@ -181,22 +235,34 @@
   }
 
   .scrollbar-soft::-webkit-scrollbar-button {
-    display: none;
-    width: 0;
-    height: 0;
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
   }
 
   .scrollbar-soft::-webkit-scrollbar-track {
-    background: transparent;
+    background: transparent !important;
   }
 
   .scrollbar-soft::-webkit-scrollbar-thumb {
-    background: rgba(148, 163, 184, 0.4);
+    background-color: rgba(148, 163, 184, 0.35);
     border-radius: 9999px;
   }
 
   .scrollbar-soft::-webkit-scrollbar-thumb:hover {
-    background: rgba(100, 116, 139, 0.6);
+    background-color: rgba(100, 116, 139, 0.6);
+  }
+
+  .dark .scrollbar-soft::-webkit-scrollbar-thumb {
+    background-color: rgba(148, 163, 184, 0.25);
+  }
+
+  .dark .scrollbar-soft::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.45);
+  }
+
+  .scrollbar-soft::-webkit-scrollbar-corner {
+    background: transparent !important;
   }
 
   input[type="time"]::-webkit-calendar-picker-indicator,

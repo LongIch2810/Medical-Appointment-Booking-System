@@ -261,7 +261,7 @@ export function SearchableSelect({
               id={listboxId}
               role="listbox"
               aria-label={placeholder}
-              className="max-h-60 overflow-y-auto p-1"
+              className="max-h-60 overflow-y-auto p-1 scrollbar-soft"
             >
               {/* Reset/All option */}
               <button

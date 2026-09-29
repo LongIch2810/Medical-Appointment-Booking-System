@@ -291,7 +291,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
                     <span>PostgreSQL 17</span>
                   </div>
                 )}
-                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-6 text-slate-100 sm:text-[13px]">
+                <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-words font-mono text-xs leading-6 text-slate-100 sm:text-[13px] scrollbar-soft">
                   <code>
                     {executedQuery && isQueryVisible
                       ? executedQuery
@@ -366,7 +366,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
               Cuộn ngang để xem tất cả cột
             </span>
           </div>
-          <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900">
+          <div className="w-full min-w-0 max-w-full overflow-x-auto rounded-2xl border border-slate-200/90 bg-white shadow-none dark:border-slate-800 dark:bg-slate-900 scrollbar-soft">
             <GenericList
               title=""
               description=""

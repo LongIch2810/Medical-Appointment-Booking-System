@@ -2310,7 +2310,7 @@ function AuditLogsModule({
                             <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Old data
                             </div>
-                            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
+                            <pre className="mt-2 max-h-48 overflow-auto scrollbar-soft whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
                               {JSON.stringify(row.old_data, null, 2)}
                             </pre>
                           </div>
@@ -2320,7 +2320,7 @@ function AuditLogsModule({
                             <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               New data
                             </div>
-                            <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
+                            <pre className="mt-2 max-h-48 overflow-auto scrollbar-soft whitespace-pre-wrap text-xs text-slate-900 dark:text-slate-100">
                               {JSON.stringify(row.new_data, null, 2)}
                             </pre>
                           </div>
@@ -2979,7 +2979,7 @@ function NotificationCreateDialog({ trigger }: { trigger: ReactNode }) {
             onChange={(event) => setUserSearch(event.target.value)}
           />
           <div
-            className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
+            className="max-h-44 space-y-1 overflow-y-auto scrollbar-soft rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
             onScroll={(event) => {
               const { scrollTop, scrollHeight, clientHeight } =
                 event.currentTarget;
@@ -3083,7 +3083,7 @@ function NotificationCreateDialog({ trigger }: { trigger: ReactNode }) {
             onChange={(event) => setUserSearch(event.target.value)}
           />
           <div
-            className="max-h-44 space-y-1 overflow-y-auto rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
+            className="max-h-44 space-y-1 overflow-y-auto scrollbar-soft rounded-xl border border-slate-200 p-1.5 dark:border-slate-800"
             onScroll={(event) => {
               const { scrollTop, scrollHeight, clientHeight } =
                 event.currentTarget;
@@ -6251,7 +6251,7 @@ function ArticleFormDialog({
       <FormField label="Tags" htmlFor="article-tags">
         <div
           id="article-tags"
-          className="flex max-h-40 flex-wrap gap-2 overflow-y-auto rounded-xl border border-slate-200 p-3 dark:border-slate-800"
+          className="flex max-h-40 flex-wrap gap-2 overflow-y-auto scrollbar-soft rounded-xl border border-slate-200 p-3 dark:border-slate-800"
         >
           {tags.length === 0 ? (
             <span className="text-xs text-slate-400 dark:text-slate-500">
@@ -6580,7 +6580,7 @@ function ArticlesModule({
                             <div className="mono-label text-[10px] text-slate-500 dark:text-slate-400">
                               Nội dung
                             </div>
-                            <p className="mt-2 max-h-72 overflow-auto whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
+                            <p className="mt-2 max-h-72 overflow-auto scrollbar-soft whitespace-pre-line text-sm text-slate-900 dark:text-slate-100">
                               {row.content}
                             </p>
                           </div>
@@ -6904,7 +6904,7 @@ function DoctorSchedulesModule() {
           />
         </FilterBar>
       </CardHeader>
-      <CardContent className="space-y-4 overflow-x-auto pb-6">
+      <CardContent className="space-y-4 overflow-x-auto pb-6 scrollbar-soft">
         {rows.length === 0 ? (
           <EmptyState
             title="Chưa có ca khám"
