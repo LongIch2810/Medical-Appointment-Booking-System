@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { prefetchPatientRoute } from "@/utils/routePrefetch";
 
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppointmentStatusBadge } from "@/components/badge/AppointmentStatusBadge";
@@ -92,9 +93,16 @@ const UpcomingAppointmentsCard: React.FC = () => {
                 className="group flex flex-col gap-3 rounded-2xl border border-slate-200/80 bg-white p-4 transition-all hover:border-primary/40 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900/90 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="flex items-start gap-3.5 min-w-0">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Stethoscope className="h-5 w-5" />
-                  </div>
+                  <Avatar className="h-11 w-11 shrink-0 rounded-xl">
+                    <AvatarImage
+                      src={appointment.doctor.user.picture ?? undefined}
+                      alt={appointment.doctor.user.fullname ?? "Bác sĩ"}
+                      className="object-cover"
+                    />
+                    <AvatarFallback className="rounded-xl bg-primary/10 text-sm font-bold text-primary">
+                      {appointment.doctor.user.fullname?.trim().slice(0, 1).toUpperCase() ?? <Stethoscope className="h-5 w-5" />}
+                    </AvatarFallback>
+                  </Avatar>
                   <div className="min-w-0 space-y-1">
                     <p className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">
                       {t("common.dr", { defaultValue: "BS." })} {appointment.doctor.user.fullname ?? t("common.notUpdated", { defaultValue: "Chưa cập nhật" })}

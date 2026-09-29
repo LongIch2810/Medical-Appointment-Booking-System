@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
@@ -285,9 +286,16 @@ const Appointments: React.FC = () => {
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div className="flex flex-1 gap-4 min-w-0">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary shadow-2xs">
-                          <Stethoscope className="h-6 w-6" />
-                        </div>
+                        <Avatar className="h-12 w-12 shrink-0 rounded-2xl shadow-2xs">
+                          <AvatarImage
+                            src={appointment.doctor.user.picture ?? undefined}
+                            alt={appointment.doctor.user.fullname ?? "Bác sĩ"}
+                            className="object-cover"
+                          />
+                          <AvatarFallback className="rounded-2xl bg-primary/10 text-base font-bold text-primary">
+                            {appointment.doctor.user.fullname?.trim().slice(0, 1).toUpperCase() ?? <Stethoscope className="h-6 w-6" />}
+                          </AvatarFallback>
+                        </Avatar>
                         <div className="min-w-0 space-y-1.5 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F1F5F9] truncate">
