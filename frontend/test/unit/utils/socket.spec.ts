@@ -57,6 +57,7 @@ describe('patient websocket pending-event behavior', () => {
     expect(connectSocket()).toBe(mocks.socket);
     expect(connectSocket()).toBe(mocks.socket);
     expect(mocks.io).toHaveBeenCalledWith('http://backend.test', {
+      auth: { appContext: 'patient' },
       transports: ['websocket'],
       withCredentials: true,
     });
