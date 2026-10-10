@@ -5,7 +5,10 @@ import { BodyCreateAppointmentDto } from 'src/modules/appointments/dto/request/b
 import { BodyCreateScheduleDto } from 'src/modules/doctor-schedules/dto/request/bodyCreateSchedule.dto';
 import { BodyFilterSatisfactionRatingsDto } from 'src/modules/satisfaction-rating/dto/request/bodyFilterSatisfactionRatings.dto';
 import { BodyGenerateAdminReportDto } from 'src/modules/admin-reports/dto/request/bodyGenerateAdminReport.dto';
-import { DateRangePreset, ReportType } from 'src/modules/admin-reports/dto/request/bodyGenerateAdminReport.dto';
+import {
+  DateRangePreset,
+  ReportType,
+} from 'src/modules/admin-reports/dto/request/bodyGenerateAdminReport.dto';
 import { BookingMode } from 'src/shared/enums/bookingMode';
 import { DayOfWeek } from 'src/shared/enums/dayOfWeek';
 

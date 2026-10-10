@@ -35,7 +35,9 @@ describe('OtpsService', () => {
 
   describe('deleteExpireOtps', () => {
     it('deletes expired OTPs and expired reset tokens', async () => {
-      const log = jest.spyOn(console, 'log').mockImplementation(() => undefined);
+      const log = jest
+        .spyOn(console, 'log')
+        .mockImplementation(() => undefined);
       await service.deleteExpireOtps();
       expect(otpRepository.delete).toHaveBeenCalledWith(
         expect.objectContaining({ expiresAt: expect.anything() }),

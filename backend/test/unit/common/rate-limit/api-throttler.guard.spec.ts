@@ -9,7 +9,6 @@ import {
   RATE_LIMIT_ERROR_MESSAGE,
 } from 'src/common/rate-limit/rate-limit.constants';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const request = require('supertest');
 
 @Controller('rate-limit-test')

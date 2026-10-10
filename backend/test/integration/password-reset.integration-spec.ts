@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import { EmailProducer } from 'src/bullmq/queues/email/email.producer';
@@ -29,7 +29,7 @@ describe('Password reset via OTP + reset token (integration)', () => {
     app = testApp.app;
     dataSource = testApp.dataSource;
     await assertConnectedToTestDatabase(dataSource);
-    emailProducer = app.get(EmailProducer) as unknown as { sendOtp: jest.Mock };
+    emailProducer = app.get(EmailProducer);
   });
 
   afterEach(async () => {

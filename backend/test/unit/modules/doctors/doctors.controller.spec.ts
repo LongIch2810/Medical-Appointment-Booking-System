@@ -98,12 +98,13 @@ describe('DoctorsController authorization metadata', () => {
     ).toEqual([permission]);
   });
 
-  it.each(['getFilterDoctors', 'getOutstandingDoctors', 'getDoctorSuggestions'] as const)(
-    'is public (no permission metadata) for %s',
-    (method) => {
-      expect(
-        Reflect.getMetadata(PERMISSIONS_KEY, DoctorsController.prototype[method]),
-      ).toBeUndefined();
-    },
-  );
+  it.each([
+    'getFilterDoctors',
+    'getOutstandingDoctors',
+    'getDoctorSuggestions',
+  ] as const)('is public (no permission metadata) for %s', (method) => {
+    expect(
+      Reflect.getMetadata(PERMISSIONS_KEY, DoctorsController.prototype[method]),
+    ).toBeUndefined();
+  });
 });

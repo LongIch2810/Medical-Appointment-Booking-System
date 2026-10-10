@@ -23,9 +23,7 @@ describe('ComplaintsController', () => {
 
     const result = controller.filterAndPagination(filters);
 
-    expect(complaintsService.filterAndPagination).toHaveBeenCalledWith(
-      filters,
-    );
+    expect(complaintsService.filterAndPagination).toHaveBeenCalledWith(filters);
     expect(result).toBe(expected);
   });
 
@@ -33,10 +31,10 @@ describe('ComplaintsController', () => {
     const expected = { items: [] };
     complaintsService.filterAndPagination.mockReturnValue(expected);
 
-    const result = controller.myComplaints(
-      { user: { userId: 7 } } as never,
-      { page: 1, userId: 999 } as never,
-    );
+    const result = controller.myComplaints({ user: { userId: 7 } }, {
+      page: 1,
+      userId: 999,
+    } as never);
 
     expect(complaintsService.filterAndPagination).toHaveBeenCalledWith({
       page: 1,
@@ -49,7 +47,7 @@ describe('ComplaintsController', () => {
     const expected = { id: 1 };
     complaintsService.create.mockReturnValue(expected);
 
-    const result = controller.create({ user: { userId: 7 } } as never, {
+    const result = controller.create({ user: { userId: 7 } }, {
       content: 'issue',
     } as never);
 
@@ -59,11 +57,11 @@ describe('ComplaintsController', () => {
     expect(result).toBe(expected);
   });
 
-  it("ignores any userId provided in the create body, always using the authenticated caller (IDOR)", () => {
+  it('ignores any userId provided in the create body, always using the authenticated caller (IDOR)', () => {
     const expected = { id: 1 };
     complaintsService.create.mockReturnValue(expected);
 
-    const result = controller.create({ user: { userId: 7 } } as never, {
+    const result = controller.create({ user: { userId: 7 } }, {
       content: 'issue',
       userId: 42,
     } as never);
@@ -80,15 +78,13 @@ describe('ComplaintsController', () => {
     complaintsService.findByIdForRequester.mockReturnValue(expected);
 
     const result = controller.findById(
-      { user: { userId: 7, roles: ['PATIENT'] } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } },
       3,
     );
 
-    expect(complaintsService.findByIdForRequester).toHaveBeenCalledWith(
-      3,
-      7,
-      ['PATIENT'],
-    );
+    expect(complaintsService.findByIdForRequester).toHaveBeenCalledWith(3, 7, [
+      'PATIENT',
+    ]);
     expect(result).toBe(expected);
   });
 

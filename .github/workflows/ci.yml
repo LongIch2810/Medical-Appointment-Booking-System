@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: ${{ matrix.service }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [backend, frontend, admin, chatbot]
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+      - run: npm ci
+      - run: npm run test
+      - if: matrix.service == 'backend'
+        run: npm exec -- eslint "{src,apps,libs,test}/**/*.ts"
+      - if: matrix.service == 'frontend' || matrix.service == 'admin'
+        run: npm run lint
+      - if: matrix.service == 'chatbot'
+        run: npm run typecheck:test
+      - run: npm run build

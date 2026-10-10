@@ -74,9 +74,10 @@ describe('RolesController', () => {
 
       const result = await controller.updateRolePermissions(1, body);
 
-      expect(rolesService.updateRolePermissions).toHaveBeenCalledWith(1, [
-        1, 2, 3,
-      ]);
+      expect(rolesService.updateRolePermissions).toHaveBeenCalledWith(
+        1,
+        [1, 2, 3],
+      );
       expect(result).toBe(expected);
     });
   });
@@ -89,9 +90,10 @@ describe('RolesController', () => {
 
       const result = await controller.deleteRolePermissions(1, body);
 
-      expect(rolesService.deleteRolePermissions).toHaveBeenCalledWith(1, [
-        1, 2,
-      ]);
+      expect(rolesService.deleteRolePermissions).toHaveBeenCalledWith(
+        1,
+        [1, 2],
+      );
       expect(result).toBe(expected);
     });
   });

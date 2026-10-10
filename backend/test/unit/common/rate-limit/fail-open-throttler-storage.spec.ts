@@ -28,9 +28,7 @@ describe('FailOpenThrottlerStorage', () => {
       timeToBlockExpire: 0,
     };
     delegate.increment.mockResolvedValue(expected);
-    const storage = new FailOpenThrottlerStorage(
-      delegate as unknown as ThrottlerStorage,
-    );
+    const storage = new FailOpenThrottlerStorage(delegate);
 
     await expect(
       storage.increment('key', 60_000, 100, 60_000, 'default'),
@@ -47,9 +45,7 @@ describe('FailOpenThrottlerStorage', () => {
 
   it('allows requests when Redis fails', async () => {
     delegate.increment.mockRejectedValue(new Error('Redis unavailable'));
-    const storage = new FailOpenThrottlerStorage(
-      delegate as unknown as ThrottlerStorage,
-    );
+    const storage = new FailOpenThrottlerStorage(delegate);
 
     await expect(
       storage.increment('key', 60_000, 100, 60_000, 'default'),
@@ -65,11 +61,7 @@ describe('FailOpenThrottlerStorage', () => {
   it('allows requests when Redis does not answer before the timeout', async () => {
     jest.useFakeTimers();
     delegate.increment.mockReturnValue(new Promise(() => undefined));
-    const storage = new FailOpenThrottlerStorage(
-      delegate as unknown as ThrottlerStorage,
-      Date.now,
-      500,
-    );
+    const storage = new FailOpenThrottlerStorage(delegate, Date.now, 500);
 
     const result = storage.increment('key', 60_000, 100, 60_000, 'default');
     await jest.advanceTimersByTimeAsync(500);
@@ -86,10 +78,7 @@ describe('FailOpenThrottlerStorage', () => {
   it('logs repeated Redis failures at most once per minute', async () => {
     let currentTime = 0;
     delegate.increment.mockRejectedValue(new Error('Redis unavailable'));
-    const storage = new FailOpenThrottlerStorage(
-      delegate as unknown as ThrottlerStorage,
-      () => currentTime,
-    );
+    const storage = new FailOpenThrottlerStorage(delegate, () => currentTime);
 
     await storage.increment('key', 60_000, 100, 60_000, 'default');
     currentTime = 59_999;

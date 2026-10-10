@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import { CloudinaryService } from 'src/uploads/cloudinary.service';
@@ -47,9 +47,7 @@ describe('Upload ownership (integration)', () => {
         public_id: 'uploads/stub',
       },
     ] as never);
-    jest
-      .spyOn(cloudinaryService, 'deleteFile')
-      .mockResolvedValue(undefined as never);
+    jest.spyOn(cloudinaryService, 'deleteFile').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

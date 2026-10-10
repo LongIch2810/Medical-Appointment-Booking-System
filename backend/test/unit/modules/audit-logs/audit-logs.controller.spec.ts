@@ -18,9 +18,7 @@ describe('AuditLogsController', () => {
 
     const result = controller.filterAndPagination(filters);
 
-    expect(auditLogsService.filterAndPagination).toHaveBeenCalledWith(
-      filters,
-    );
+    expect(auditLogsService.filterAndPagination).toHaveBeenCalledWith(filters);
     expect(result).toBe(expected);
   });
 });

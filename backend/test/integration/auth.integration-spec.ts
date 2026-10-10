@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 // require(): xem giải thích trong test-app.factory.ts (esModuleInterop khác
 // nhau giữa ts-jest và SWC khiến default-import ra undefined).
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import {

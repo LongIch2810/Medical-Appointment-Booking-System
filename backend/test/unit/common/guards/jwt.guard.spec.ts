@@ -64,7 +64,7 @@ describe('JwtAuthGuard', () => {
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({
         user: { userId: 1, roles: ['PATIENT'], appContext: 'patient' },
-      })) as any,
+      })),
     );
     const guard = new JwtAuthGuard();
     const req: any = {
@@ -83,7 +83,7 @@ describe('JwtAuthGuard', () => {
   it('throws UnauthorizedException when the jwt strategy reports no user (missing/invalid token)', async () => {
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })),
     );
     const guard = new JwtAuthGuard();
     const req: any = { cookies: {}, headers: {} };
@@ -97,7 +97,7 @@ describe('JwtAuthGuard', () => {
     const revokedError = new UnauthorizedException('Token đã bị thu hồi !');
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })),
     );
     const guard = new JwtAuthGuard();
     const req: any = {

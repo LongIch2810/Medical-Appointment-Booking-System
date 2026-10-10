@@ -33,7 +33,7 @@ describe('ChannelsController', () => {
       page: 1,
       limit: 10,
       arrange: 'desc',
-    } as BodyFilterChannelsDto;
+    };
     const expected = { channels: [] };
     channelsService.findChannelsByUserId.mockReturnValue(expected);
 
@@ -72,7 +72,10 @@ describe('ChannelsController', () => {
     'requires channel:read for %s',
     (method) => {
       expect(
-        Reflect.getMetadata(PERMISSIONS_KEY, ChannelsController.prototype[method]),
+        Reflect.getMetadata(
+          PERMISSIONS_KEY,
+          ChannelsController.prototype[method],
+        ),
       ).toEqual([PERMISSIONS.CHANNEL_READ]);
     },
   );

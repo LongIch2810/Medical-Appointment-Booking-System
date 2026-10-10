@@ -15,9 +15,7 @@ describe('NotificationsController', () => {
     update: jest.fn(),
     remove: jest.fn(),
   };
-  const controller = new NotificationsController(
-    notificationsService as never,
-  );
+  const controller = new NotificationsController(notificationsService as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -28,10 +26,7 @@ describe('NotificationsController', () => {
     const expected = { items: [] };
     notificationsService.findMine.mockReturnValue(expected);
 
-    const result = controller.findMine(
-      { user: { userId: 7 } } as never,
-      filters,
-    );
+    const result = controller.findMine({ user: { userId: 7 } }, filters);
 
     expect(notificationsService.findMine).toHaveBeenCalledWith(7, filters);
     expect(result).toBe(expected);
@@ -43,7 +38,7 @@ describe('NotificationsController', () => {
 
     const result = controller.unreadCount({
       user: { userId: 7 },
-    } as never);
+    });
 
     expect(notificationsService.unreadCount).toHaveBeenCalledWith(7);
     expect(result).toBe(expected);
@@ -53,10 +48,7 @@ describe('NotificationsController', () => {
     const expected = { id: 3 };
     notificationsService.markMineAsRead.mockReturnValue(expected);
 
-    const result = controller.markMineAsRead(
-      { user: { userId: 7 } } as never,
-      3,
-    );
+    const result = controller.markMineAsRead({ user: { userId: 7 } }, 3);
 
     expect(notificationsService.markMineAsRead).toHaveBeenCalledWith(7, 3);
     expect(result).toBe(expected);
@@ -68,7 +60,7 @@ describe('NotificationsController', () => {
 
     const result = controller.markAllMineAsRead({
       user: { userId: 7 },
-    } as never);
+    });
 
     expect(notificationsService.markAllMineAsRead).toHaveBeenCalledWith(7);
     expect(result).toBe(expected);

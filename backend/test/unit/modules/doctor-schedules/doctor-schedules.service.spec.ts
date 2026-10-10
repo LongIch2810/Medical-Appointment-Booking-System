@@ -79,11 +79,10 @@ describe('DoctorSchedulesService', () => {
 
       await service.remove(1, 7);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delData).toHaveBeenCalledWith(
         'doctorSchedule:7',
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(redisCacheService.delData).toHaveBeenCalledWith(
         'doctorSchedules:doctor:4',
       );

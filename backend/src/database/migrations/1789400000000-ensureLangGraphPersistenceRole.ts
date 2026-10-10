@@ -2,9 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 const LANGGRAPH_SCHEMA = 'langgraph';
 
-export class EnsureLangGraphPersistenceRole1789400000000
-  implements MigrationInterface
-{
+export class EnsureLangGraphPersistenceRole1789400000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     const user = process.env.LANGGRAPH_DB_USER;
     const password = process.env.LANGGRAPH_DB_PASSWORD;

@@ -4,7 +4,7 @@ import { Test } from '@nestjs/testing';
 // default-import và chạy đúng qua SWC (build production), nhưng ts-jest biên
 // dịch bằng tsc thường (esModuleInterop=false trong tsconfig.json) khiến
 // default-import ra `undefined` với module CommonJS thuần như cookie-parser.
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const cookieParser = require('cookie-parser');
 import { AppModule } from 'src/app.module';
 import { RemoveFieldPasswordInterceptor } from 'src/common/interceptors/removeFieldPassword.interceptor';

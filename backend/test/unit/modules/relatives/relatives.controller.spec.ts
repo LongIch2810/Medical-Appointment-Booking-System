@@ -21,10 +21,7 @@ describe('RelativesController', () => {
       const expected = { relativeId: 1 };
       relativesService.create.mockReturnValue(expected);
 
-      const result = controller.createRelative(
-        { user: { userId: 7 } } as never,
-        body,
-      );
+      const result = controller.createRelative({ user: { userId: 7 } }, body);
 
       expect(relativesService.create).toHaveBeenCalledWith(7, body);
       expect(result).toBe(expected);
@@ -37,7 +34,7 @@ describe('RelativesController', () => {
       relativesService.findRelativesByUserId.mockReturnValue(expected);
 
       const result = controller.findRelatives(
-        { user: { userId: 7 } } as never,
+        { user: { userId: 7 } },
         {
           page: '2',
           limit: '5',
@@ -57,13 +54,13 @@ describe('RelativesController', () => {
       expect(result).toBe(expected);
     });
 
-    it('falls back to defaults when query params are missing', () => {
+    it('falls back to defaults when query params are missing', async () => {
       relativesService.findRelativesByUserId.mockReturnValue({
         data: [],
         total: 0,
       });
 
-      controller.findRelatives({ user: { userId: 7 } } as never, {});
+      await controller.findRelatives({ user: { userId: 7 } }, {});
 
       expect(relativesService.findRelativesByUserId).toHaveBeenCalledWith(7, {
         page: 1,
@@ -74,17 +71,20 @@ describe('RelativesController', () => {
       });
     });
 
-    it('falls back to the legacy name/relationship_code query keys', () => {
+    it('falls back to the legacy name/relationship_code query keys', async () => {
       relativesService.findRelativesByUserId.mockReturnValue({
         data: [],
         total: 0,
       });
 
-      controller.findRelatives({ user: { userId: 7 } } as never, {
-        name: 'Legacy Name',
-        relationship_code: 'CHILD',
-        arrange: 'invalid',
-      });
+      await controller.findRelatives(
+        { user: { userId: 7 } },
+        {
+          name: 'Legacy Name',
+          relationship_code: 'CHILD',
+          arrange: 'invalid',
+        },
+      );
 
       expect(relativesService.findRelativesByUserId).toHaveBeenCalledWith(7, {
         page: 1,
@@ -102,15 +102,13 @@ describe('RelativesController', () => {
       relativesService.getRelativeDetail.mockResolvedValue(expected);
 
       const result = await controller.getRelativeDetail(
-        { user: { userId: 7, roles: ['PATIENT'] } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } },
         1,
       );
 
-      expect(relativesService.getRelativeDetail).toHaveBeenCalledWith(
-        7,
-        1,
-        ['PATIENT'],
-      );
+      expect(relativesService.getRelativeDetail).toHaveBeenCalledWith(7, 1, [
+        'PATIENT',
+      ]);
       expect(result).toBe(expected);
     });
   });
@@ -122,17 +120,14 @@ describe('RelativesController', () => {
       relativesService.update.mockResolvedValue(expected);
 
       const result = await controller.updateRelative(
-        { user: { userId: 7, roles: ['PATIENT'] } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } },
         1,
         body,
       );
 
-      expect(relativesService.update).toHaveBeenCalledWith(
-        7,
-        1,
-        body,
-        ['PATIENT'],
-      );
+      expect(relativesService.update).toHaveBeenCalledWith(7, 1, body, [
+        'PATIENT',
+      ]);
       expect(result).toBe(expected);
     });
   });
@@ -143,7 +138,7 @@ describe('RelativesController', () => {
       relativesService.remove.mockResolvedValue(expected);
 
       const result = await controller.deleteRelative(
-        { user: { userId: 7, roles: ['PATIENT'] } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } },
         1,
       );
 
@@ -160,9 +155,7 @@ describe('RelativesController', () => {
 
       const result = controller.findAdminRelatives(body);
 
-      expect(relativesService.filterAndPagination).toHaveBeenCalledWith(
-        body,
-      );
+      expect(relativesService.filterAndPagination).toHaveBeenCalledWith(body);
       expect(result).toBe(expected);
     });
   });

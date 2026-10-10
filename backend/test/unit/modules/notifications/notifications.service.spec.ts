@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { NotFoundException } from '@nestjs/common';
 import Notification from 'src/entities/notification.entity';
 import User from 'src/entities/user.entity';
@@ -292,7 +291,7 @@ describe('NotificationsService', () => {
       audience: NotificationAudience.ALL,
       title: 'Thông báo chung',
       content: 'Nội dung',
-    } as never);
+    });
 
     expect(result).toEqual({ targetedCount: 2 });
     expect(
@@ -323,7 +322,7 @@ describe('NotificationsService', () => {
       roleName: 'DOCTOR',
       title: 'Thông báo bác sĩ',
       content: 'Nội dung',
-    } as never);
+    });
 
     expect(result).toEqual({ targetedCount: 1 });
     expect(query.andWhere).toHaveBeenCalledWith('role.role_name = :role', {
@@ -355,7 +354,7 @@ describe('NotificationsService', () => {
       userIds: [1, 2, 3],
       title: 'Thông báo riêng',
       content: 'Nội dung',
-    } as never);
+    });
 
     expect(result).toEqual({ targetedCount: 2 });
     expect(query.andWhere).toHaveBeenCalledWith('user.id IN (:...userIds)', {
@@ -383,25 +382,23 @@ describe('NotificationsService', () => {
       return Promise.resolve(saved);
     });
     (notificationRepo.find as jest.Mock).mockImplementation(() =>
-      Promise.resolve(
-        lastSavedIds.map((id) => notificationEntity(id, id)),
-      ),
+      Promise.resolve(lastSavedIds.map((id) => notificationEntity(id, id))),
     );
 
     const result = await service.sendBroadcast({
       audience: NotificationAudience.ALL,
       title: 'Thông báo toàn hệ thống',
       content: 'Nội dung',
-    } as never);
+    });
 
     expect(result).toEqual({ targetedCount: totalUsers });
     expect(notificationRepo.save).toHaveBeenCalledTimes(2);
-    expect(
-      (notificationRepo.save as jest.Mock).mock.calls[0][0],
-    ).toHaveLength(500);
-    expect(
-      (notificationRepo.save as jest.Mock).mock.calls[1][0],
-    ).toHaveLength(100);
+    expect((notificationRepo.save as jest.Mock).mock.calls[0][0]).toHaveLength(
+      500,
+    );
+    expect((notificationRepo.save as jest.Mock).mock.calls[1][0]).toHaveLength(
+      100,
+    );
     expect(gateway.notifyNotificationNew).toHaveBeenCalledTimes(totalUsers);
   });
 
@@ -424,9 +421,12 @@ describe('NotificationsService', () => {
     expect(query.andWhere).toHaveBeenCalledWith('user.id = :userId', {
       userId: 21,
     });
-    expect(query.andWhere).toHaveBeenCalledWith('notification.is_read = :isRead', {
-      isRead: false,
-    });
+    expect(query.andWhere).toHaveBeenCalledWith(
+      'notification.is_read = :isRead',
+      {
+        isRead: false,
+      },
+    );
     expect(result.total).toBe(2);
     expect(result.notifications).toHaveLength(2);
   });
@@ -436,7 +436,7 @@ describe('NotificationsService', () => {
     query.getManyAndCount.mockResolvedValue([[notificationEntity(5, 21)], 1]);
     notificationRepo.createQueryBuilder.mockReturnValue(query as never);
 
-    const result = await service.findMine(21, { page: 1, limit: 20 } as never);
+    const result = await service.findMine(21, { page: 1, limit: 20 });
 
     expect(query.where).toHaveBeenCalledWith('notification.user_id = :userId', {
       userId: 21,
@@ -461,7 +461,7 @@ describe('NotificationsService', () => {
     notificationRepo.findOne.mockResolvedValue(entity);
     notificationRepo.save.mockResolvedValue({ ...entity, title: 'Mới' });
 
-    const result = await service.update(4, { title: 'Mới' } as never);
+    const result = await service.update(4, { title: 'Mới' });
 
     expect(entity.title).toBe('Mới');
     expect(entity.content).toBe('Cũ');
@@ -505,8 +505,6 @@ describe('NotificationsService', () => {
     expect(savedDrafts).toHaveLength(1);
     expect(savedDrafts[0].user.id).toBe(7);
     expect(savedDrafts[0].content).toContain('08:00 - 09:00');
-    expect(savedDrafts[0].dedupe_key).toBe(
-      'appointment-reminder:15:7',
-    );
+    expect(savedDrafts[0].dedupe_key).toBe('appointment-reminder:15:7');
   });
 });

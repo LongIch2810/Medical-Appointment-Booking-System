@@ -25,7 +25,7 @@ describe('AppointmentsController', () => {
 
     const result = await controller.createAppointment(body, {
       user: { userId: 7 },
-    } as never);
+    });
 
     expect(appointmentsService.createWithNotifications).toHaveBeenCalledWith(
       7,
@@ -39,7 +39,7 @@ describe('AppointmentsController', () => {
 
     const result = await controller.cancelAppointment(5, {
       user: { userId: 7 },
-    } as never);
+    });
 
     expect(appointmentsService.cancel).toHaveBeenCalledWith(7, 5);
     expect(result).toEqual({ message: 'cancelled' });
@@ -52,7 +52,7 @@ describe('AppointmentsController', () => {
     });
 
     const result = await controller.getPersonalAppointments(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       filters,
     );
 
@@ -67,7 +67,7 @@ describe('AppointmentsController', () => {
     appointmentsService.getAppointmentDetail.mockResolvedValue({ id: 3 });
 
     const result = await controller.getAppointmentDetail(
-      { user: { userId: 7, roles: ['PATIENT'] } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } },
       3,
     );
 
@@ -86,7 +86,7 @@ describe('AppointmentsController', () => {
     });
 
     const result = await controller.filterAndPaginationOfAdmin(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       filters,
     );
 
@@ -103,7 +103,7 @@ describe('AppointmentsController', () => {
     });
 
     const result = await controller.findAndPaginationOfDoctor(
-      { user: { userId: 9 } } as never,
+      { user: { userId: 9 } },
       filters,
     );
 
@@ -118,7 +118,7 @@ describe('AppointmentsController', () => {
     appointmentsService.updateStatus.mockResolvedValue({ id: 5 });
 
     const result = await controller.updateAppointmentStatus(
-      { user: { userId: 7, roles: ['doctor'] } } as never,
+      { user: { userId: 7, roles: ['doctor'] } },
       5,
       { status: 'CONFIRMED' } as never,
     );

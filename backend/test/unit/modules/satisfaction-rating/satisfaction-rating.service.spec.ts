@@ -241,9 +241,9 @@ describe('SatisfactionRatingService', () => {
 
   it('rejects missing rating details', async () => {
     repository.createQueryBuilder.mockReturnValue(builder(null));
-    await expect(
-      service.findById(404, 9, ['PATIENT']),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(service.findById(404, 9, ['PATIENT'])).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it("rejects a patient reading another user's rating (IDOR)", async () => {
@@ -254,8 +254,8 @@ describe('SatisfactionRatingService', () => {
       PERMISSIONS.SATISFACTION_RATING_READ,
     ]);
 
-    await expect(
-      service.findById(9, 99, ['PATIENT']),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(service.findById(9, 99, ['PATIENT'])).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 });

@@ -18,10 +18,7 @@ describe('MessagesController', () => {
     const expected = { id: 1 };
     messagesService.saveMessage.mockReturnValue(expected);
 
-    const result = controller.handleSaveMessage(
-      { user: { userId: 7 } } as never,
-      body,
-    );
+    const result = controller.handleSaveMessage({ user: { userId: 7 } }, body);
 
     expect(messagesService.saveMessage).toHaveBeenCalledWith(body, 7);
     expect(result).toBe(expected);
@@ -32,9 +29,9 @@ describe('MessagesController', () => {
     messagesService.getMessageByChannelId.mockReturnValue(expected);
 
     const result = controller.getMessagesByChannelId(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
-      { page: 2, limit: undefined } as never,
+      { page: 2, limit: undefined },
     );
 
     expect(messagesService.getMessageByChannelId).toHaveBeenCalledWith(
@@ -51,7 +48,7 @@ describe('MessagesController', () => {
     messagesService.markChannelMessagesAsRead.mockReturnValue(expected);
 
     const result = controller.markChannelMessagesAsRead(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
     );
 

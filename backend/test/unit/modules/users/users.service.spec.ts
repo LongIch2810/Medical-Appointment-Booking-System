@@ -75,7 +75,6 @@ describe('UsersService', () => {
 
       await service.updateRoles(9, [1]);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delData).toHaveBeenCalledWith('permissions:9');
     });
 
@@ -353,9 +352,9 @@ describe('UsersService', () => {
     it('returns true when a matching user is found', async () => {
       userRepo.findOne.mockResolvedValue({ id: 1 });
 
-      await expect(
-        service.isUserExistsByUsername('admin01'),
-      ).resolves.toBe(true);
+      await expect(service.isUserExistsByUsername('admin01')).resolves.toBe(
+        true,
+      );
     });
 
     it('returns false when no matching user is found', async () => {

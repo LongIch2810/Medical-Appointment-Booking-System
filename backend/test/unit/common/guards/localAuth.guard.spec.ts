@@ -60,7 +60,7 @@ describe('LocalAuthGuard', () => {
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({
         user: { id: 3, username: 'patient01' },
-      })) as any,
+      })),
     );
     const guard = new LocalAuthGuard();
     const req: any = {
@@ -76,7 +76,7 @@ describe('LocalAuthGuard', () => {
   it('throws UnauthorizedException when the local strategy rejects the credentials', async () => {
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })),
     );
     const guard = new LocalAuthGuard();
     const req: any = {
@@ -96,7 +96,9 @@ describe('LocalAuthGuard', () => {
     );
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ err: invalidCredsError })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({
+        err: invalidCredsError,
+      })),
     );
     const guard = new LocalAuthGuard();
     const req: any = {

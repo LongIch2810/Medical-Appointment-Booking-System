@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import { randomUUID } from 'crypto';
@@ -28,7 +28,7 @@ function nextDateMatchingDayOfWeek(targetDayOfWeek: string): string {
   for (let offset = 0; offset < 7; offset += 1) {
     const candidate = new Date(start);
     candidate.setDate(start.getDate() + offset);
-    if (dayNumberToEnum[candidate.getDay()] === targetDayOfWeek) {
+    if (String(dayNumberToEnum[candidate.getDay()]) === targetDayOfWeek) {
       return [
         candidate.getFullYear(),
         String(candidate.getMonth() + 1).padStart(2, '0'),

@@ -20,7 +20,6 @@ import { ArticlesService } from './articles.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { BodyCreateArticleDto } from './dto/request/bodyCreateArticle.dto';
 
-import { BodyFilterArticlesDto } from './dto/request/bodyFilterArticles.dto';
 import { BodyFilterArticlesImproveDto } from './dto/request/bodyFilterArticlesImprove.dto';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';

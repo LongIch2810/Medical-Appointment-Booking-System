@@ -8,9 +8,7 @@ describe('HealthProfileController', () => {
     getHealthProfile: jest.fn(),
     filterAndPagination: jest.fn(),
   };
-  const controller = new HealthProfileController(
-    healthProfileService as never,
-  );
+  const controller = new HealthProfileController(healthProfileService as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -23,7 +21,7 @@ describe('HealthProfileController', () => {
     });
 
     const result = await controller.getListHealthProfilesByPersonal(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       filters,
     );
 
@@ -38,17 +36,14 @@ describe('HealthProfileController', () => {
     healthProfileService.update.mockResolvedValue({ id: 3 });
 
     const result = await controller.updateHealthProfile(
-      { user: { userId: 7, roles: ['PATIENT'] } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } },
       3,
       body,
     );
 
-    expect(healthProfileService.update).toHaveBeenCalledWith(
-      7,
-      3,
-      body,
-      ['PATIENT'],
-    );
+    expect(healthProfileService.update).toHaveBeenCalledWith(7, 3, body, [
+      'PATIENT',
+    ]);
     expect(result).toEqual({ id: 3 });
   });
 
@@ -56,15 +51,13 @@ describe('HealthProfileController', () => {
     healthProfileService.getHealthProfile.mockResolvedValue({ id: 3 });
 
     const result = await controller.getHealthProfileByRelativeId(
-      { user: { userId: 7, roles: ['PATIENT'] } } as never,
+      { user: { userId: 7, roles: ['PATIENT'] } },
       3,
     );
 
-    expect(healthProfileService.getHealthProfile).toHaveBeenCalledWith(
-      7,
-      3,
-      ['PATIENT'],
-    );
+    expect(healthProfileService.getHealthProfile).toHaveBeenCalledWith(7, 3, [
+      'PATIENT',
+    ]);
     expect(result).toEqual({ id: 3 });
   });
 

@@ -8,9 +8,7 @@ describe('RelationshipsController', () => {
     update: jest.fn(),
     remove: jest.fn(),
   };
-  const controller = new RelationshipsController(
-    relationshipsService as never,
-  );
+  const controller = new RelationshipsController(relationshipsService as never);
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -51,9 +49,9 @@ describe('RelationshipsController', () => {
 
       const result = await controller.getRelationshipDetail('PARENT');
 
-      expect(
-        relationshipsService.getRelationshipDetail,
-      ).toHaveBeenCalledWith('PARENT');
+      expect(relationshipsService.getRelationshipDetail).toHaveBeenCalledWith(
+        'PARENT',
+      );
       expect(result).toBe(expected);
     });
   });
@@ -66,10 +64,7 @@ describe('RelationshipsController', () => {
 
       const result = await controller.updateRelationship('PARENT', body);
 
-      expect(relationshipsService.update).toHaveBeenCalledWith(
-        'PARENT',
-        body,
-      );
+      expect(relationshipsService.update).toHaveBeenCalledWith('PARENT', body);
       expect(result).toBe(expected);
     });
   });

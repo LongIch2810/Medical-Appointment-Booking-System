@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { AddressInfo } from 'net';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { io, Socket as ClientSocket } from 'socket.io-client';
 import { DataSource } from 'typeorm';

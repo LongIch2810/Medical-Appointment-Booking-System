@@ -65,7 +65,7 @@ describe('JwtRefreshAuthGuard', () => {
           sessionVersion: 2,
           appContext: 'patient',
         },
-      })) as any,
+      })),
     );
     const guard = new JwtRefreshAuthGuard();
     const req: any = {
@@ -85,7 +85,7 @@ describe('JwtRefreshAuthGuard', () => {
   it('throws UnauthorizedException when the jwt-refresh strategy reports no user (missing/invalid refresh token)', async () => {
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })),
     );
     const guard = new JwtRefreshAuthGuard();
     const req: any = { cookies: {}, headers: {} };
@@ -101,7 +101,7 @@ describe('JwtRefreshAuthGuard', () => {
     );
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ err: revokedError })),
     );
     const guard = new JwtRefreshAuthGuard();
     const req: any = {

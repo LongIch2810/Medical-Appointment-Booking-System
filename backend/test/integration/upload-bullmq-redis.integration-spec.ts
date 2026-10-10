@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { Queue } from 'bullmq';
 import Redis from 'ioredis';
@@ -76,9 +76,7 @@ describe('Upload -> BullMQ and Redis rate-limit (integration)', () => {
         public_id: 'uploads/one-pixel',
       },
     ] as never);
-    jest
-      .spyOn(cloudinaryService, 'deleteFile')
-      .mockResolvedValue(undefined as never);
+    jest.spyOn(cloudinaryService, 'deleteFile').mockResolvedValue(undefined);
   });
 
   afterEach(async () => {

@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddExecutedQueryToAiAdminReports1789200000000
-  implements MigrationInterface
-{
+export class AddExecutedQueryToAiAdminReports1789200000000 implements MigrationInterface {
   name = 'AddExecutedQueryToAiAdminReports1789200000000';
 
   async up(queryRunner: QueryRunner): Promise<void> {

@@ -390,14 +390,16 @@ export class ChatHistoryService {
       if (existingAssistantMessage) {
         return {
           conversation: this.mapPatientChatConversation(conversation),
-          userMessage: this.mapPatientChatMessage(userMessage!),
-          assistantMessage: this.mapPatientChatMessage(existingAssistantMessage),
+          userMessage: this.mapPatientChatMessage(userMessage),
+          assistantMessage: this.mapPatientChatMessage(
+            existingAssistantMessage,
+          ),
           appointment: existingAssistantMessage.appointment_id
             ? { id: existingAssistantMessage.appointment_id }
             : null,
         };
       }
-      if (latest?.id !== userMessage!.id) {
+      if (latest?.id !== userMessage.id) {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_TURN_STALE',

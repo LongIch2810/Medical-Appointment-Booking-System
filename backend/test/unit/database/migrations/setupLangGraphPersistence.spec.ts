@@ -45,15 +45,11 @@ describe('SetupLangGraphPersistence1788800000000', () => {
     expect(sql).toContain(
       'GRANT CONNECT ON DATABASE "lifehealth" TO "memory-role"',
     );
-    expect(sql).toContain(
-      'CREATE SCHEMA IF NOT EXISTS langgraph',
-    );
+    expect(sql).toContain('CREATE SCHEMA IF NOT EXISTS langgraph');
     expect(sql).toContain(
       'GRANT USAGE, CREATE ON SCHEMA langgraph TO "memory-role"',
     );
-    expect(sql).toContain(
-      'REVOKE ALL ON SCHEMA public FROM "memory-role"',
-    );
+    expect(sql).toContain('REVOKE ALL ON SCHEMA public FROM "memory-role"');
     expect(sql).toContain(
       'REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM "memory-role"',
     );

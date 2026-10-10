@@ -48,9 +48,7 @@ describe('DashboardService', () => {
     };
     appointmentsService = {
       numberOfUpcomingAppointmentsByUserId: jest.fn().mockResolvedValue(3),
-      numberOfAppointmentsToDayActiveByDoctorId: jest
-        .fn()
-        .mockResolvedValue(4),
+      numberOfAppointmentsToDayActiveByDoctorId: jest.fn().mockResolvedValue(4),
       numberOfUpcomingAppointmentsByDoctorId: jest.fn().mockResolvedValue(5),
       getAppoitnmentToDayEarlyOfDoctor: jest.fn().mockResolvedValue(null),
       numberOfAppointmentsToDayActive: jest.fn().mockResolvedValue(6),
@@ -99,9 +97,9 @@ describe('DashboardService', () => {
       expect(
         appointmentsService.numberOfUpcomingAppointmentsByUserId,
       ).toHaveBeenCalledWith(9);
-      expect(
-        relativesService.numberOfRelativesByUserId,
-      ).toHaveBeenCalledWith(9);
+      expect(relativesService.numberOfRelativesByUserId).toHaveBeenCalledWith(
+        9,
+      );
       expect(
         examinationResultService.numberOfExaminationResultsByUserId,
       ).toHaveBeenCalledWith(9);
@@ -175,12 +173,8 @@ describe('DashboardService', () => {
 
       expect(usersService.isUserExists).toHaveBeenCalledWith(9);
       expect(usersService.numberOfUsersByAllRoles).toHaveBeenCalled();
-      expect(
-        usersService.numberOfUsersByRoleDoctorActive,
-      ).toHaveBeenCalled();
-      expect(
-        usersService.numberOfUsersByRolePatientActive,
-      ).toHaveBeenCalled();
+      expect(usersService.numberOfUsersByRoleDoctorActive).toHaveBeenCalled();
+      expect(usersService.numberOfUsersByRolePatientActive).toHaveBeenCalled();
       expect(
         appointmentsService.numberOfAppointmentsToDayActive,
       ).toHaveBeenCalled();

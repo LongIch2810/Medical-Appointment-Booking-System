@@ -23,11 +23,9 @@ describe('DoctorSchedulesController', () => {
 
     const result = await controller.getPersonalSchedules({
       user: { userId: 7 },
-    } as never);
+    });
 
-    expect(doctorSchedulesService.getPersonalSchedules).toHaveBeenCalledWith(
-      7,
-    );
+    expect(doctorSchedulesService.getPersonalSchedules).toHaveBeenCalledWith(7);
     expect(result).toEqual([{ id: 1 }]);
   });
 
@@ -36,7 +34,7 @@ describe('DoctorSchedulesController', () => {
     doctorSchedulesService.create.mockResolvedValue({ id: 1 });
 
     const result = await controller.createSchedule(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       body,
     );
 
@@ -51,9 +49,9 @@ describe('DoctorSchedulesController', () => {
 
     const result = await controller.getDoctorSchedules(5);
 
-    expect(
-      doctorSchedulesService.getSchedulesByDoctorId,
-    ).toHaveBeenCalledWith(5);
+    expect(doctorSchedulesService.getSchedulesByDoctorId).toHaveBeenCalledWith(
+      5,
+    );
     expect(result).toEqual([{ id: 1 }]);
   });
 
@@ -62,7 +60,7 @@ describe('DoctorSchedulesController', () => {
     doctorSchedulesService.update.mockResolvedValue({ id: 3 });
 
     const result = await controller.updateSchedule(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
       body,
     );
@@ -75,7 +73,7 @@ describe('DoctorSchedulesController', () => {
     doctorSchedulesService.updateActive.mockResolvedValue({ id: 3 });
 
     const result = await controller.updateScheduleStatus(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
       true,
     );
@@ -91,10 +89,7 @@ describe('DoctorSchedulesController', () => {
   it('deletes a schedule owned by the authenticated doctor', async () => {
     doctorSchedulesService.remove.mockResolvedValue({ message: 'removed' });
 
-    const result = await controller.deleteSchedule(
-      { user: { userId: 7 } } as never,
-      3,
-    );
+    const result = await controller.deleteSchedule({ user: { userId: 7 } }, 3);
 
     expect(doctorSchedulesService.remove).toHaveBeenCalledWith(7, 3);
     expect(result).toEqual({ message: 'removed' });

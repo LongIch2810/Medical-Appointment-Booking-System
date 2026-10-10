@@ -30,9 +30,7 @@ function makeQb(overrides: Partial<Record<string, any>> = {}) {
     distinct: jest.fn().mockReturnThis(),
     getOne: jest.fn().mockResolvedValue(null),
     getCount: jest.fn().mockResolvedValue(0),
-    getRawAndEntities: jest
-      .fn()
-      .mockResolvedValue({ entities: [], raw: [] }),
+    getRawAndEntities: jest.fn().mockResolvedValue({ entities: [], raw: [] }),
     ...overrides,
   };
 }
@@ -133,10 +131,7 @@ describe('ChannelsService', () => {
 
       const result = await service.createChannel([1, 2, 2], 1);
 
-      expect(manager.save).toHaveBeenCalledWith(
-        Channel,
-        expect.anything(),
-      );
+      expect(manager.save).toHaveBeenCalledWith(Channel, expect.anything());
       expect(manager.findOne).toHaveBeenCalledWith(
         Channel,
         expect.objectContaining({ where: { id: 10 } }),
@@ -145,9 +140,13 @@ describe('ChannelsService', () => {
     });
 
     it('maps a unique-constraint race during creation to a ConflictException', async () => {
-      const raceError = new QueryFailedError('INSERT INTO channels...', undefined, {
-        code: '23505',
-      } as any);
+      const raceError = new QueryFailedError(
+        'INSERT INTO channels...',
+        undefined,
+        {
+          code: '23505',
+        } as any,
+      );
       dataSource.transaction.mockRejectedValue(raceError);
 
       await expect(service.createChannel([1, 2], 1)).rejects.toBeInstanceOf(
@@ -168,7 +167,7 @@ describe('ChannelsService', () => {
       page: 1,
       limit: 10,
       arrange: 'desc',
-    } as BodyFilterChannelsDto;
+    };
 
     it('throws BadRequestException when the user does not exist', async () => {
       usersService.isUserExists.mockResolvedValue(false);
@@ -206,7 +205,7 @@ describe('ChannelsService', () => {
         page: 0,
         limit: 0,
         arrange: 'asc',
-      } as BodyFilterChannelsDto);
+      });
 
       expect(result).toBeInstanceOf(PaginationResultDto);
       expect(result.total).toBe(5);
@@ -232,7 +231,7 @@ describe('ChannelsService', () => {
       await service.findChannelsByUserId(9, {
         ...baseFilters,
         search: 'John',
-      } as BodyFilterChannelsDto);
+      });
 
       expect(listQb.andWhere).toHaveBeenCalled();
       expect(listQb.setParameter).toHaveBeenCalledWith('search', '%John%');

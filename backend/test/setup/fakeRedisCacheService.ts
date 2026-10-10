@@ -70,7 +70,9 @@ export class FakeRedisCacheService {
   async incr(key: string): Promise<number> {
     const entry = this.store.get(key);
     const current =
-      typeof entry?.value === 'number' ? entry.value : Number(entry?.value) || 0;
+      typeof entry?.value === 'number'
+        ? entry.value
+        : Number(entry?.value) || 0;
     const next = current + 1;
     this.store.set(key, { value: next, expiresAt: entry?.expiresAt ?? null });
     return next;

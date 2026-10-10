@@ -74,7 +74,7 @@ describe('GoogleAuthGuard', () => {
       new FakeStrategy(STRATEGY_NAME, (_req, options) => {
         receivedOptions = options;
         return { user: { userId: 1, roles: ['PATIENT'] } };
-      }) as any,
+      }),
     );
     const guard = new GoogleAuthGuard();
     const req: any = { cookies: {}, headers: {}, query: {} };
@@ -92,7 +92,7 @@ describe('GoogleAuthGuard', () => {
       STRATEGY_NAME,
       new FakeStrategy(STRATEGY_NAME, () => ({
         user: { userId: 8, roles: ['PATIENT'] },
-      })) as any,
+      })),
     );
     const guard = new GoogleAuthGuard();
     const req: any = { cookies: {}, headers: {}, query: {} };
@@ -104,7 +104,7 @@ describe('GoogleAuthGuard', () => {
   it('throws UnauthorizedException when the google strategy reports no user', async () => {
     passport.use(
       STRATEGY_NAME,
-      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })) as any,
+      new FakeStrategy(STRATEGY_NAME, () => ({ user: false })),
     );
     const guard = new GoogleAuthGuard();
     const req: any = { cookies: {}, headers: {}, query: {} };

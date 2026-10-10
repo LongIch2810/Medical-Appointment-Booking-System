@@ -23,7 +23,7 @@ describe('ArticlesController', () => {
     articlesService.create.mockResolvedValue({ message: 'created' });
 
     const result = await controller.createArticle(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       body,
       files,
     );
@@ -90,13 +90,14 @@ describe('ArticlesController', () => {
     });
 
     const result = await controller.getMyArticles(
-      { user: { userId: 9 } } as never,
+      { user: { userId: 9 } },
       filters,
     );
 
-    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith(
-      { page: 1, author_id: 9 },
-    );
+    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith({
+      page: 1,
+      author_id: 9,
+    });
     expect(result).toEqual({ items: [] });
   });
 
@@ -106,11 +107,12 @@ describe('ArticlesController', () => {
       items: [],
     });
 
-    await controller.getMyArticles({ user: { userId: 9 } } as never, filters);
+    await controller.getMyArticles({ user: { userId: 9 } }, filters);
 
-    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith(
-      { page: 1, author_id: 9 },
-    );
+    expect(articlesService.filterAndPaginationByDoctors).toHaveBeenCalledWith({
+      page: 1,
+      author_id: 9,
+    });
   });
 });
 
@@ -123,7 +125,10 @@ describe('ArticlesController authorization metadata', () => {
     ['getMyArticles', PERMISSIONS.ARTICLE_READ],
   ] as const)('requires %s permission for %s', (method, permission) => {
     expect(
-      Reflect.getMetadata(PERMISSIONS_KEY, ArticlesController.prototype[method]),
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        ArticlesController.prototype[method],
+      ),
     ).toEqual([permission]);
   });
 });

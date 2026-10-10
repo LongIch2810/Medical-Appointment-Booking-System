@@ -88,7 +88,10 @@ describe('AdminReportsController', () => {
     await expect(controller.fileUrl(31, 'true')).resolves.toEqual({ url });
     expect(adminReportsService.file).toHaveBeenCalledWith(31, true);
     expect(
-      Reflect.getMetadata(PERMISSIONS_KEY, AdminReportsController.prototype.fileUrl),
+      Reflect.getMetadata(
+        PERMISSIONS_KEY,
+        AdminReportsController.prototype.fileUrl,
+      ),
     ).toEqual([PERMISSIONS.AI_COACH_REPORT_READ]);
   });
 });

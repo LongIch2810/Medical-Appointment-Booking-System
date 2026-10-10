@@ -25,7 +25,7 @@ describe('RedisRateLimitStorage', () => {
   afterEach(async () => {
     jest.useRealTimers();
     jest.restoreAllMocks();
-    await redisClient.disconnect();
+    redisClient.disconnect();
   });
 
   function createStorage(): RedisRateLimitStorage {

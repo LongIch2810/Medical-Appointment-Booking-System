@@ -2,9 +2,9 @@ import { validateRequiredEnv } from 'src/config/validateEnv';
 
 describe('validateRequiredEnv', () => {
   it('throws when ACCESS_TOKEN_SECRET is missing', () => {
-    expect(() =>
-      validateRequiredEnv({ REFRESH_TOKEN_SECRET: 'x' }),
-    ).toThrow(/ACCESS_TOKEN_SECRET/);
+    expect(() => validateRequiredEnv({ REFRESH_TOKEN_SECRET: 'x' })).toThrow(
+      /ACCESS_TOKEN_SECRET/,
+    );
   });
 
   it('throws when REFRESH_TOKEN_SECRET is empty', () => {

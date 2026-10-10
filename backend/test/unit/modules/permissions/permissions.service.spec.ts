@@ -5,7 +5,6 @@ import { Like } from 'typeorm';
 import Permission from 'src/entities/permission.entity';
 import { PermissionsService } from 'src/modules/permissions/permissions.service';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
-import { BodyFilterPermissionsDto } from 'src/modules/permissions/dto/request/bodyFilterPermissions.dto';
 
 describe('PermissionsService', () => {
   let service: PermissionsService;
@@ -43,15 +42,13 @@ describe('PermissionsService', () => {
         page: 0,
         limit: 0,
         arrange: 'asc',
-      } as BodyFilterPermissionsDto);
+      });
 
       expect(result).toBeInstanceOf(PaginationResultDto);
       expect(result.page).toBe(1);
       expect(result.limit).toBe(1);
       expect(result.total).toBe(1);
-      expect(result.permissions).toEqual([
-        { id: 1, name: 'user:manage' },
-      ]);
+      expect(result.permissions).toEqual([{ id: 1, name: 'user:manage' }]);
       expect(permissionRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
           skip: 0,
@@ -67,7 +64,7 @@ describe('PermissionsService', () => {
         limit: 10,
         search: '  manage  ',
         arrange: 'desc',
-      } as BodyFilterPermissionsDto);
+      });
 
       expect(permissionRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -86,7 +83,7 @@ describe('PermissionsService', () => {
         limit: 10,
         role_id: 3,
         arrange: 'desc',
-      } as BodyFilterPermissionsDto);
+      });
 
       expect(permissionRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -102,7 +99,7 @@ describe('PermissionsService', () => {
         search: 'manage',
         role_id: 3,
         arrange: 'asc',
-      } as BodyFilterPermissionsDto);
+      });
 
       expect(permissionRepo.findAndCount).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -179,17 +176,13 @@ describe('PermissionsService', () => {
     it('returns true when every requested id exists', async () => {
       permissionRepo.find.mockResolvedValue([{ id: 1 }, { id: 2 }]);
 
-      await expect(
-        service.isPermissionListExist([1, 2]),
-      ).resolves.toBe(true);
+      await expect(service.isPermissionListExist([1, 2])).resolves.toBe(true);
     });
 
     it('returns false when some requested ids are missing', async () => {
       permissionRepo.find.mockResolvedValue([{ id: 1 }]);
 
-      await expect(
-        service.isPermissionListExist([1, 2]),
-      ).resolves.toBe(false);
+      await expect(service.isPermissionListExist([1, 2])).resolves.toBe(false);
     });
   });
 });

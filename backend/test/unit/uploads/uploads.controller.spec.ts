@@ -43,11 +43,7 @@ describe('UploadsController', () => {
       const files = [{ originalname: '1.png' }] as Express.Multer.File[];
       const req = { user: { userId: 9, roles: ['PATIENT'] } };
 
-      const result = await controller.uploadFilesMessage(
-        req as never,
-        42,
-        files,
-      );
+      const result = await controller.uploadFilesMessage(req, 42, files);
 
       expect(messagesService.assertMessageSender).toHaveBeenCalledWith(9, 42);
       expect(cloudinaryService.uploadMultipleFiles).toHaveBeenCalledWith(files);
@@ -110,11 +106,7 @@ describe('UploadsController', () => {
         },
       ]);
 
-      const result = await controller.uploadFilesArticle(
-        req as never,
-        4,
-        files,
-      );
+      const result = await controller.uploadFilesArticle(req, 4, files);
 
       expect(articlesService.assertArticleUploadAccess).toHaveBeenCalledWith(
         9,

@@ -34,43 +34,40 @@ describe('ResponseInterceptor', () => {
     const response = { statusCode: 200, headersSent: false };
     const payload = { id: 1, name: 'John' };
 
-    runIntercept(
-      makeContext(response),
-      makeCallHandler(payload),
-    ).subscribe((result: any) => {
-      expect(result).toEqual({
-        statusCode: 200,
-        success: true,
-        data: payload,
-        error: null,
-      });
-      done();
-    });
+    runIntercept(makeContext(response), makeCallHandler(payload)).subscribe(
+      (result: any) => {
+        expect(result).toEqual({
+          statusCode: 200,
+          success: true,
+          data: payload,
+          error: null,
+        });
+        done();
+      },
+    );
   });
 
   it('reflects the response status code that was set at emission time (e.g. 201)', (done) => {
     const response = { statusCode: 201, headersSent: false };
 
-    runIntercept(
-      makeContext(response),
-      makeCallHandler({ id: 1 }),
-    ).subscribe((result: any) => {
-      expect(result.statusCode).toBe(201);
-      expect(result.success).toBe(true);
-      done();
-    });
+    runIntercept(makeContext(response), makeCallHandler({ id: 1 })).subscribe(
+      (result: any) => {
+        expect(result.statusCode).toBe(201);
+        expect(result.success).toBe(true);
+        done();
+      },
+    );
   });
 
   it('bypasses wrapping and returns the raw stream when headers were already sent', (done) => {
     const response = { statusCode: 200, headersSent: true };
     const rawValue = 'raw-stream-value';
 
-    runIntercept(
-      makeContext(response),
-      makeCallHandler(rawValue),
-    ).subscribe((result: any) => {
-      expect(result).toBe(rawValue);
-      done();
-    });
+    runIntercept(makeContext(response), makeCallHandler(rawValue)).subscribe(
+      (result: any) => {
+        expect(result).toBe(rawValue);
+        done();
+      },
+    );
   });
 });

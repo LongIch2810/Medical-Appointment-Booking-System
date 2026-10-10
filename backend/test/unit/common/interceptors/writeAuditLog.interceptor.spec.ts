@@ -44,7 +44,13 @@ describe('WriteAuditLogInterceptor', () => {
 
   it('skips auditing entirely when the handler has no @AuditLogAction metadata', () => {
     reflector.getAllAndOverride.mockReturnValue(undefined);
-    const request = { method: 'GET', url: '/x', originalUrl: '/x', ip: '1.1.1.1', headers: {} };
+    const request = {
+      method: 'GET',
+      url: '/x',
+      originalUrl: '/x',
+      ip: '1.1.1.1',
+      headers: {},
+    };
     const response = { statusCode: 200 };
     const nextHandler: CallHandler = { handle: () => of('value') };
 
@@ -173,22 +179,24 @@ describe('WriteAuditLogInterceptor', () => {
       handle: () => throwError(() => error),
     };
 
-    interceptor.intercept(makeContext(request, response), nextHandler).subscribe({
-      error: (err) => {
-        expect(err).toBe(error);
-        expect(auditLogsProducer.createAuditLog).toHaveBeenCalledTimes(1);
-        const auditData = auditLogsProducer.createAuditLog.mock.calls[0][0];
-        expect(auditData).toMatchObject({
-          action: 'DELETE',
-          entity_name: 'Appointment',
-          status_code: 403,
-          is_success: false,
-          error_message: 'not allowed',
-          user_id: 7,
-        });
-        done();
-      },
-    });
+    interceptor
+      .intercept(makeContext(request, response), nextHandler)
+      .subscribe({
+        error: (err) => {
+          expect(err).toBe(error);
+          expect(auditLogsProducer.createAuditLog).toHaveBeenCalledTimes(1);
+          const auditData = auditLogsProducer.createAuditLog.mock.calls[0][0];
+          expect(auditData).toMatchObject({
+            action: 'DELETE',
+            entity_name: 'Appointment',
+            status_code: 403,
+            is_success: false,
+            error_message: 'not allowed',
+            user_id: 7,
+          });
+          done();
+        },
+      });
   });
 
   it('defaults the failed-request status code to 500 when the error has no getStatus/status', (done) => {
@@ -210,13 +218,15 @@ describe('WriteAuditLogInterceptor', () => {
       handle: () => throwError(() => error),
     };
 
-    interceptor.intercept(makeContext(request, response), nextHandler).subscribe({
-      error: () => {
-        const auditData = auditLogsProducer.createAuditLog.mock.calls[0][0];
-        expect(auditData.status_code).toBe(500);
-        expect(auditData.user_id).toBeNull();
-        done();
-      },
-    });
+    interceptor
+      .intercept(makeContext(request, response), nextHandler)
+      .subscribe({
+        error: () => {
+          const auditData = auditLogsProducer.createAuditLog.mock.calls[0][0];
+          expect(auditData.status_code).toBe(500);
+          expect(auditData.user_id).toBeNull();
+          done();
+        },
+      });
   });
 });

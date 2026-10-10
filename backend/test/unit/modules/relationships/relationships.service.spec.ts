@@ -64,7 +64,7 @@ describe('RelationshipsService', () => {
       service.create({
         relationship_code: 'PARENT',
         relationship_name: 'Parent',
-      } as never),
+      }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 

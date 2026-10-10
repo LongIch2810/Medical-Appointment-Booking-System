@@ -1,4 +1,8 @@
-import { BadRequestException, CallHandler, ExecutionContext } from '@nestjs/common';
+import {
+  BadRequestException,
+  CallHandler,
+  ExecutionContext,
+} from '@nestjs/common';
 import { of } from 'rxjs';
 import { FileRequiredInterceptor } from 'src/common/interceptors/fileRequiredInterceptor.interceptor';
 
@@ -20,9 +24,9 @@ describe('FileRequiredInterceptor', () => {
   });
 
   it('throws BadRequestException when neither file nor files is present', () => {
-    expect(() =>
-      interceptor.intercept(makeContext({}), nextHandler),
-    ).toThrow(BadRequestException);
+    expect(() => interceptor.intercept(makeContext({}), nextHandler)).toThrow(
+      BadRequestException,
+    );
   });
 
   it('throws BadRequestException when files is an empty array', () => {
@@ -89,10 +93,7 @@ describe('FileRequiredInterceptor', () => {
   });
 
   it('respects custom allowedMimeTypes and maxFileSize passed via constructor', () => {
-    const customInterceptor = new FileRequiredInterceptor(
-      ['image/png'],
-      100,
-    );
+    const customInterceptor = new FileRequiredInterceptor(['image/png'], 100);
     const request = {
       file: { mimetype: 'image/jpeg', size: 50 },
     };

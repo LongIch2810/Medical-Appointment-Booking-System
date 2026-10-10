@@ -90,9 +90,7 @@ describe('SpecialtiesController', () => {
 
       const result = await controller.getSpecialties(body);
 
-      expect(specialtiesService.filterAndPagination).toHaveBeenCalledWith(
-        body,
-      );
+      expect(specialtiesService.filterAndPagination).toHaveBeenCalledWith(body);
       expect(result).toBe(expected);
     });
   });

@@ -1,6 +1,6 @@
 import { ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ThrottlerModuleOptions, ThrottlerStorage } from '@nestjs/throttler';
+import { ThrottlerModuleOptions } from '@nestjs/throttler';
 import { Socket } from 'socket.io';
 import { WsRateLimitException } from 'src/websockets/ws-rate-limit.exception';
 import { WsRateLimitGuard } from 'src/websockets/ws-rate-limit.guard';
@@ -40,7 +40,7 @@ describe('WsRateLimitGuard', () => {
           blockDuration: 300_000,
         },
       ] as ThrottlerModuleOptions,
-      { increment } as ThrottlerStorage,
+      { increment },
       new Reflector(),
     );
     await guard.onModuleInit();

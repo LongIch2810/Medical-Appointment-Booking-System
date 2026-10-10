@@ -81,7 +81,7 @@ describe('RelativesService', () => {
   describe('findRelativesByUserId', () => {
     it('keeps the ownership filter as a single top-level where and puts search in an andWhere(Brackets)', async () => {
       const qb = makeQb();
-      (relativeRepo.createQueryBuilder as jest.Mock).mockReturnValue(qb);
+      relativeRepo.createQueryBuilder.mockReturnValue(qb);
 
       await service.findRelativesByUserId(9, {
         page: 1,

@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import Topic from 'src/entities/topic.entity';
-import { Brackets, QueryFailedError, Repository } from 'typeorm';
+import { QueryFailedError, Repository } from 'typeorm';
 import { BodyFilterTopicsDto } from './dto/request/bodyFilterTopics.dto';
 import { startOfNextDay } from 'src/utils/filterDate';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';

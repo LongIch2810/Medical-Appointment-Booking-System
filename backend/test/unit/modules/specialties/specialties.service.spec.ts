@@ -62,7 +62,7 @@ describe('SpecialtiesService', () => {
       });
       specialtyRepo.save.mockResolvedValue({ id: 1, name: 'Old' });
 
-      await service.update(1, { description: 'new' } as any);
+      await service.update(1, { description: 'new' });
 
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'specialties:',

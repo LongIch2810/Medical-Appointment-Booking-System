@@ -108,13 +108,12 @@ describe('HealthProfileService', () => {
       });
       healthProfileRepo.save.mockResolvedValue({ id: 5 });
 
-      await service.update(9, 2, {} as any);
+      await service.update(9, 2, {});
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'healthProfiles:',
       );
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(redisCacheService.delData).toHaveBeenCalledWith(
         'healthProfile:relative:2',
       );

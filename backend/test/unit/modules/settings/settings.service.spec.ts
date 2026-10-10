@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { SystemConfig } from 'src/entities/systemConfigs.entity';
 import User from 'src/entities/user.entity';
 import { UserSetting } from 'src/entities/userSetting.entity';
@@ -19,19 +18,18 @@ describe('SettingsService', () => {
   let auditContext: { setOldData: jest.Mock; setNewData: jest.Mock };
   let service: SettingsService;
 
-  const systemSetting = (): SystemConfig =>
-    ({
-      id: 1,
-      reminder_appointment_before_minutes: 1440,
-      reminder_update_health_profile_after_minutes: 60,
-      appointment_reminders_enabled: true,
-      appointment_emails_enabled: true,
-      default_realtime_toasts_enabled: true,
-      default_email_notifications_enabled: true,
-      default_appointment_reminders_enabled: true,
-      created_at: now,
-      updated_at: now,
-    }) as SystemConfig;
+  const systemSetting = (): SystemConfig => ({
+    id: 1,
+    reminder_appointment_before_minutes: 1440,
+    reminder_update_health_profile_after_minutes: 60,
+    appointment_reminders_enabled: true,
+    appointment_emails_enabled: true,
+    default_realtime_toasts_enabled: true,
+    default_email_notifications_enabled: true,
+    default_appointment_reminders_enabled: true,
+    created_at: now,
+    updated_at: now,
+  });
 
   beforeEach(() => {
     userSettingRepo = {

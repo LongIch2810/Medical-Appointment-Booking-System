@@ -15,7 +15,10 @@ describe('ArticlesService', () => {
   let redisCacheService: jest.Mocked<RedisCacheService>;
   let uploadFileProducer: { uploadFilesArticle: jest.Mock };
   let rolePermissionService: { getPermissionsByRoles: jest.Mock };
-  let cloudinaryService: { uploadMultipleFiles: jest.Mock; deleteFile: jest.Mock };
+  let cloudinaryService: {
+    uploadMultipleFiles: jest.Mock;
+    deleteFile: jest.Mock;
+  };
   let dataSource: { transaction: jest.Mock };
   let articleRepo: {
     update: jest.Mock;
@@ -106,7 +109,7 @@ describe('ArticlesService', () => {
   describe('mutations invalidate the articles cache', () => {
     it('updateArticle wipes the list cache and the article detail key', async () => {
       articleRepo.findOne.mockResolvedValue({ id: 1 });
-      await service.updateArticle(1, { title: 'New title' } as any);
+      await service.updateArticle(1, { title: 'New title' });
 
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('articles:');
       expect(redisCacheService.delData).toHaveBeenCalledWith('article:1');
@@ -201,7 +204,7 @@ describe('ArticlesService', () => {
           summary: 'y'.repeat(30),
           tag_ids: [],
           topic_id: 3,
-        } as never,
+        },
         files,
       );
 

@@ -76,7 +76,7 @@ describe('AdminReportsService report assistant', () => {
         content: 'Follow-up',
         plan: null,
         created_at: new Date('2026-08-01T00:01:00Z'),
-      } as AiReportMessage),
+      }),
       find: jest.fn().mockResolvedValue(priorMessages),
       findOne: jest.fn().mockResolvedValue(assistantSaved),
     };
@@ -112,7 +112,8 @@ describe('AdminReportsService report assistant', () => {
       id: 44,
       report_type: 'CONVERSATIONAL',
       range_label: '01/09/2026 - 30/09/2026',
-      executed_query: 'SELECT status FROM chatbot_report_appointments_view LIMIT 1',
+      executed_query:
+        'SELECT status FROM chatbot_report_appointments_view LIMIT 1',
       table_rows: [],
       output_asset: null,
       created_at: new Date('2026-09-25T00:00:00Z'),
@@ -196,7 +197,7 @@ describe('AdminReportsService report assistant', () => {
           },
         },
       },
-    } as never);
+    });
 
     await expect(
       service.createAssistantConversation(9, 'token', {
@@ -216,7 +217,7 @@ describe('AdminReportsService report assistant', () => {
       data: {
         data: { action: 'ANSWER', message: 'Here is what the data supports.' },
       },
-    } as never);
+    });
 
     await service.sendAssistantMessage(9, 'real-user-jwt', 22, {
       message: 'Follow-up',
@@ -279,8 +280,8 @@ describe('AdminReportsService report assistant', () => {
         role: 'ASSISTANT',
         action: 'PROPOSE_PLAN',
         plan,
-      } as unknown as AiReportMessage)
-      .mockResolvedValueOnce({ id: 18 } as AiReportMessage);
+      })
+      .mockResolvedValueOnce({ id: 18 });
 
     await expect(
       service.sendAssistantMessage(9, 'token', 22, {
@@ -344,13 +345,13 @@ describe('AdminReportsService report assistant', () => {
         plan: null,
         report: null,
         created_at: new Date(),
-      } as AiReportMessage);
+      });
     messageRepo.save.mockResolvedValueOnce(confirmationMessage);
     mockedAxios.post
       .mockRejectedValueOnce({ isAxiosError: true, response: { status: 502 } })
       .mockResolvedValueOnce({
         data: { data: { action: 'ANSWER', message: 'Report generated.' } },
-      } as never);
+      });
 
     await expect(
       service.sendAssistantMessage(9, 'token', 22, {

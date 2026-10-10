@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
@@ -341,7 +337,7 @@ describe('AuthService', () => {
         email: 'newuser@example.com',
         password: 'Secret@123',
         fullname: 'New User',
-      } as any);
+      });
 
       expect(usersService.createUserWithDefaultProfile).toHaveBeenCalledWith(
         {},

@@ -155,7 +155,7 @@ describe('AuthController', () => {
       });
       const res = createMockResponse();
 
-      await controller.login({ body: {} } as never, res as never);
+      await controller.login({ body: {} }, res as never);
 
       expect(res.cookie).toHaveBeenCalledWith(
         'patientAccessToken',
@@ -174,7 +174,7 @@ describe('AuthController', () => {
       });
       const res = createMockResponse();
 
-      await controller.login({ body: {} } as never, res as never);
+      await controller.login({ body: {} }, res as never);
 
       expect(res.cookie).toHaveBeenCalledWith(
         'patientAccessToken',
@@ -191,7 +191,7 @@ describe('AuthController', () => {
       const res = createMockResponse();
 
       await controller.logout(
-        { headers: { 'x-app-context': 'patient' } } as never,
+        { headers: { 'x-app-context': 'patient' } },
         res as never,
       );
 
@@ -318,7 +318,7 @@ describe('AuthController', () => {
     configService.get.mockReturnValue(undefined);
     const res = createMockResponse();
 
-    await controller.googleAuthRedirect({} as never, res as never);
+    await controller.googleAuthRedirect({}, res as never);
 
     expect(res.redirect).toHaveBeenCalledWith('http://localhost:5173');
   });

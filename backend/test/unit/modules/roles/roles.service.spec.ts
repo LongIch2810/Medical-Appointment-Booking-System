@@ -36,7 +36,9 @@ describe('RolesService', () => {
 
     manager = {
       findOne: jest.fn(),
-      save: jest.fn((_entityOrRole, data) => Promise.resolve(data ?? _entityOrRole)),
+      save: jest.fn((_entityOrRole, data) =>
+        Promise.resolve(data ?? _entityOrRole),
+      ),
       create: jest.fn((_entity: unknown, data: unknown) => data),
       getRepository: jest.fn(() => ({
         find: jest.fn().mockResolvedValue([]),
@@ -73,7 +75,6 @@ describe('RolesService', () => {
 
       await service.updateRolePermissions(1, [10, 11]);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'permissions:',
       );
@@ -95,9 +96,9 @@ describe('RolesService', () => {
     it('throws NotFoundException when the permission id list is empty', async () => {
       manager.findOne.mockResolvedValue({ id: 1 });
 
-      await expect(
-        service.updateRolePermissions(1, []),
-      ).rejects.toBeInstanceOf(NotFoundException);
+      await expect(service.updateRolePermissions(1, [])).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
     });
 
     it('throws NotFoundException when one of the permission ids does not exist', async () => {
@@ -122,7 +123,6 @@ describe('RolesService', () => {
 
       await service.deleteRolePermissions(1, [10]);
 
-      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith(
         'permissions:',
       );
@@ -166,7 +166,7 @@ describe('RolesService', () => {
           role_code: 10001,
           description: 'desc',
           permission_ids: [1, 2],
-        } as never),
+        }),
       ).rejects.toBeInstanceOf(ConflictException);
     });
 
@@ -180,7 +180,7 @@ describe('RolesService', () => {
           role_code: 20000,
           description: 'desc',
           permission_ids: [999],
-        } as never),
+        }),
       ).rejects.toBeInstanceOf(NotFoundException);
     });
 
@@ -197,7 +197,7 @@ describe('RolesService', () => {
         role_code: 20000,
         description: 'desc',
         permission_ids: [1, 1, 2],
-      } as never);
+      });
 
       expect(result).toBeDefined();
       expect(manager.save).toHaveBeenCalled();

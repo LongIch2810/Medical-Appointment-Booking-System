@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { createServer, IncomingMessage, Server, ServerResponse } from 'http';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import {

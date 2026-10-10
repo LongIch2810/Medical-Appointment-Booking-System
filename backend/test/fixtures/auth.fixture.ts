@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { DataSource } from 'typeorm';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import Role from 'src/entities/role.entity';
 import UserRole from 'src/entities/userRole.entity';
@@ -70,10 +70,7 @@ export async function loginAs(
     })
     .expect(200);
 
-  return extractCookies(
-    response.headers['set-cookie'] as unknown as string[],
-    appContext,
-  );
+  return extractCookies(response.headers['set-cookie'], appContext);
 }
 
 export interface RegisteredUser {
@@ -125,7 +122,7 @@ export async function registerNewUser(
 export async function registerAndPromote(
   app: INestApplication,
   dataSource: DataSource,
-  roleName: typeof ROLE_NAME.ADMIN | typeof ROLE_NAME.DOCTOR,
+  roleName: typeof ROLE_NAME.ADMIN,
 ): Promise<RegisteredUser> {
   const user = await registerNewUser(app, dataSource);
 

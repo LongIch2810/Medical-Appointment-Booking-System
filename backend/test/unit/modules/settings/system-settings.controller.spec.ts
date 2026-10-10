@@ -31,9 +31,7 @@ describe('SystemSettingsController', () => {
 
       const result = controller.updateSettings(body);
 
-      expect(settingsService.updateSystemSettings).toHaveBeenCalledWith(
-        body,
-      );
+      expect(settingsService.updateSystemSettings).toHaveBeenCalledWith(body);
       expect(result).toBe(expected);
     });
   });

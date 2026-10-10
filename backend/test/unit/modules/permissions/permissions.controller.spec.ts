@@ -18,7 +18,7 @@ describe('PermissionsController', () => {
       page: 1,
       limit: 10,
       arrange: 'desc',
-    } as BodyFilterPermissionsDto;
+    };
     const expected = { permissions: [], total: 0 };
     permissionsService.filterAndPagination.mockResolvedValue(expected);
 

@@ -43,7 +43,7 @@ export default async function globalSetup(): Promise<void> {
       // nội suy chuỗi trực tiếp vào câu lệnh DDL.
       const safeName = dbName.replace(/"/g, '""');
       await maintenanceClient.query(`CREATE DATABASE "${safeName}"`);
-      // eslint-disable-next-line no-console
+
       console.log(`[globalSetup] Đã tạo database test "${dbName}".`);
     }
   } finally {

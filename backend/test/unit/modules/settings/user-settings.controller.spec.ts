@@ -16,7 +16,7 @@ describe('UserSettingsController', () => {
       const expected = { theme: 'dark' };
       settingsService.getMySettings.mockReturnValue(expected);
 
-      const result = controller.getMine({ user: { userId: 7 } } as never);
+      const result = controller.getMine({ user: { userId: 7 } });
 
       expect(settingsService.getMySettings).toHaveBeenCalledWith(7);
       expect(result).toBe(expected);
@@ -29,10 +29,7 @@ describe('UserSettingsController', () => {
       const expected = { theme: 'light' };
       settingsService.updateMySettings.mockReturnValue(expected);
 
-      const result = controller.updateMine(
-        { user: { userId: 7 } } as never,
-        body,
-      );
+      const result = controller.updateMine({ user: { userId: 7 } }, body);
 
       expect(settingsService.updateMySettings).toHaveBeenCalledWith(7, body);
       expect(result).toBe(expected);

@@ -19,9 +19,7 @@ describe('SatisfactionRatingController', () => {
     it('delegates to satisfactionRatingService.filterAndPagination with the request body', async () => {
       const body = { page: 1, limit: 10 } as never;
       const expected = { data: [], total: 0 };
-      satisfactionRatingService.filterAndPagination.mockResolvedValue(
-        expected,
-      );
+      satisfactionRatingService.filterAndPagination.mockResolvedValue(expected);
 
       const result = await controller.getSatisfactionRatings(body);
 
@@ -39,7 +37,7 @@ describe('SatisfactionRatingController', () => {
       satisfactionRatingService.create.mockResolvedValue(expected);
 
       const result = await controller.createSatisfactionRating(
-        { user: { userId: 7 } } as never,
+        { user: { userId: 7 } },
         body,
       );
 
@@ -54,15 +52,13 @@ describe('SatisfactionRatingController', () => {
       satisfactionRatingService.findById.mockResolvedValue(expected);
 
       const result = await controller.getSatisfactionRatingDetail(
-        { user: { userId: 7, roles: ['PATIENT'] } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } },
         1,
       );
 
-      expect(satisfactionRatingService.findById).toHaveBeenCalledWith(
-        1,
-        7,
-        ['PATIENT'],
-      );
+      expect(satisfactionRatingService.findById).toHaveBeenCalledWith(1, 7, [
+        'PATIENT',
+      ]);
       expect(result).toBe(expected);
     });
   });
@@ -74,7 +70,7 @@ describe('SatisfactionRatingController', () => {
       satisfactionRatingService.update.mockResolvedValue(expected);
 
       const result = await controller.updateSatisfactionRating(
-        { user: { userId: 7, roles: ['PATIENT'] } } as never,
+        { user: { userId: 7, roles: ['PATIENT'] } },
         1,
         body,
       );

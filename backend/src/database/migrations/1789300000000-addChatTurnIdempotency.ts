@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddChatTurnIdempotency1789300000000
-  implements MigrationInterface
-{
+export class AddChatTurnIdempotency1789300000000 implements MigrationInterface {
   name = 'AddChatTurnIdempotency1789300000000';
 
   async up(queryRunner: QueryRunner): Promise<void> {
@@ -23,8 +21,8 @@ export class AddChatTurnIdempotency1789300000000
     );
     await queryRunner.query(
       'UPDATE "patient_chat_conversations" AS conversation\n' +
-        "SET \"title\" = 'Cuộc trò chuyện mới'\n" +
-        "WHERE conversation.\"title\" <> 'Cuộc trò chuyện mới'\n" +
+        'SET "title" = \'Cuộc trò chuyện mới\'\n' +
+        'WHERE conversation."title" <> \'Cuộc trò chuyện mới\'\n' +
         'AND NOT EXISTS (SELECT 1 FROM "patient_chat_messages" AS message ' +
         'WHERE message."conversation_id" = conversation."id")',
     );

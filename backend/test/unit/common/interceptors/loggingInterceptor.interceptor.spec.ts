@@ -53,12 +53,10 @@ describe('LoggingInterceptor', () => {
     const payload = { hello: 'world' };
     const nextHandler: CallHandler = { handle: () => of(payload) };
 
-    interceptor
-      .intercept(makeContext(req), nextHandler)
-      .subscribe((result) => {
-        expect(result).toBe(payload);
-        done();
-      });
+    interceptor.intercept(makeContext(req), nextHandler).subscribe((result) => {
+      expect(result).toBe(payload);
+      done();
+    });
   });
 
   it('does not swallow errors emitted by the underlying handler', (done) => {

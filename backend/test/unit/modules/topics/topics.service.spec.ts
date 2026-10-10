@@ -80,7 +80,7 @@ describe('TopicsService', () => {
         slug: 'x',
       });
 
-      await service.create({ name: 'X', description: 'd' } as any);
+      await service.create({ name: 'X', description: 'd' });
 
       expect(redisCacheService.delByPrefix).toHaveBeenCalledWith('topics:');
     });

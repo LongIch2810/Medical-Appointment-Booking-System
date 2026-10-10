@@ -64,7 +64,7 @@ describe('RolePermissionService', () => {
       const result = await service.getPermissionsByRoles(9, ['ADMIN']);
 
       expect(result).toEqual(['article:read']);
-      // eslint-disable-next-line @typescript-eslint/unbound-method
+
       expect(redisCacheService.setData).toHaveBeenCalledWith(
         'permissions:9',
         ['article:read'],

@@ -70,19 +70,16 @@ describe('AuditLogAction decorator', () => {
     ['READ', 'HealthProfile'],
     ['LOGIN', 'User'],
     ['LOGOUT', 'User'],
-  ] as const)(
-    'supports the %s action for entity %s',
-    (action, entityName) => {
-      class SampleController {
-        @AuditLogAction({ action, entityName })
-        handler() {
-          return undefined;
-        }
+  ] as const)('supports the %s action for entity %s', (action, entityName) => {
+    class SampleController {
+      @AuditLogAction({ action, entityName })
+      handler() {
+        return undefined;
       }
+    }
 
-      expect(
-        Reflect.getMetadata(AUDIT_LOG_KEY, SampleController.prototype.handler),
-      ).toEqual({ action, entityName });
-    },
-  );
+    expect(
+      Reflect.getMetadata(AUDIT_LOG_KEY, SampleController.prototype.handler),
+    ).toEqual({ action, entityName });
+  });
 });

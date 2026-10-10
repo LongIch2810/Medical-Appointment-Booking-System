@@ -116,7 +116,9 @@ describe('DoctorsService', () => {
       const detailQuery = makeQb({
         getRawAndEntities: jest.fn().mockResolvedValue({
           entities: [{ id: 17, user: { id: 117 }, doctor_schedules: [] }],
-          raw: [{ doctor_id: 17, avg_rating: '0', appointments_completed: '0' }],
+          raw: [
+            { doctor_id: 17, avg_rating: '0', appointments_completed: '0' },
+          ],
         }),
       });
       doctorRepo.createQueryBuilder
@@ -139,7 +141,7 @@ describe('DoctorsService', () => {
         page: 1,
         limit: 20,
         search: 'An',
-      } as never);
+      });
 
       expect(qb.andWhere).toHaveBeenCalledWith(
         'UNACCENT(LOWER(user.fullname)) LIKE UNACCENT(LOWER(:search))',
@@ -160,7 +162,9 @@ describe('DoctorsService', () => {
           },
         ]),
       });
-      const specialtyQb = makeQb({ getRawMany: jest.fn().mockResolvedValue([]) });
+      const specialtyQb = makeQb({
+        getRawMany: jest.fn().mockResolvedValue([]),
+      });
       doctorRepo.createQueryBuilder.mockReturnValue(doctorQb);
       specialtyRepo.createQueryBuilder.mockReturnValue(specialtyQb);
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { DataSource, QueryFailedError } from 'typeorm';
@@ -105,7 +104,11 @@ describe('AppointmentsService', () => {
   };
   let usersService: { findByUserId: jest.Mock; isUserExists: jest.Mock };
   let specialtiesService: { findSpecialtyById: jest.Mock };
-  let dataSource: { transaction: jest.Mock; createQueryBuilder: jest.Mock; manager: any };
+  let dataSource: {
+    transaction: jest.Mock;
+    createQueryBuilder: jest.Mock;
+    manager: any;
+  };
   let gateway: {
     notifyBookAppointmentSuccess: jest.Mock;
     notifyBookAppointmentFail: jest.Mock;
@@ -418,10 +421,8 @@ describe('AppointmentsService', () => {
       appointmentRepo.createQueryBuilder.mockReturnValue(notificationQuery);
       jest
         .spyOn(service, 'isAppointmentExistAndPending')
-        .mockResolvedValue(true as any);
-      jest
-        .spyOn(service, 'getAppointmentDetail')
-        .mockResolvedValue({ id: 3 } as any);
+        .mockResolvedValue(true);
+      jest.spyOn(service, 'getAppointmentDetail').mockResolvedValue({ id: 3 });
 
       await service.cancel(9, 3);
 
@@ -465,10 +466,8 @@ describe('AppointmentsService', () => {
       dataSource.createQueryBuilder.mockReturnValue(patientOwnerQuery);
       jest
         .spyOn(service, 'isAppointmentExistAndPending')
-        .mockResolvedValue(true as any);
-      jest
-        .spyOn(service, 'getAppointmentDetail')
-        .mockResolvedValue({ id: 3 } as any);
+        .mockResolvedValue(true);
+      jest.spyOn(service, 'getAppointmentDetail').mockResolvedValue({ id: 3 });
 
       await service.cancel(9, 3);
 
@@ -729,11 +728,13 @@ describe('AppointmentsService', () => {
       });
       dataSource.manager = makeMockManager({ doctorScheduleQb });
 
-      await expect(service.previewAutoSelect({
-        appointment_date: futureDate,
-        specialty_id: 2,
-        start_time: '08:00',
-      })).resolves.toEqual({
+      await expect(
+        service.previewAutoSelect({
+          appointment_date: futureDate,
+          specialty_id: 2,
+          start_time: '08:00',
+        }),
+      ).resolves.toEqual({
         scheduleId: 42,
         doctorName: 'Bác sĩ An',
         appointmentDate: futureDate,
@@ -746,25 +747,31 @@ describe('AppointmentsService', () => {
     });
 
     it('refuses to book a different schedule from the one shown in the preview', async () => {
-      const relativeQb = makeManagerQb({ getOne: jest.fn().mockResolvedValue(patient) });
+      const relativeQb = makeManagerQb({
+        getOne: jest.fn().mockResolvedValue(patient),
+      });
       const doctorScheduleQb = makeManagerQb({
-        getMany: jest.fn().mockResolvedValue([{
-          id: 43,
-          start_time: '08:00:00',
-          end_time: '09:00:00',
-        }]),
+        getMany: jest.fn().mockResolvedValue([
+          {
+            id: 43,
+            start_time: '08:00:00',
+            end_time: '09:00:00',
+          },
+        ]),
       });
       const manager = makeMockManager({ relativeQb, doctorScheduleQb });
       wireTransaction(manager);
 
-      await expect(service.create(9, {
-        appointment_date: futureDate,
-        specialty_id: 2,
-        start_time: '08:00',
-        expected_doctor_schedule_id: 42,
-        relative_id: 5,
-        booking_mode: BookingMode.AI_SELECT,
-      })).rejects.toMatchObject({
+      await expect(
+        service.create(9, {
+          appointment_date: futureDate,
+          specialty_id: 2,
+          start_time: '08:00',
+          expected_doctor_schedule_id: 42,
+          relative_id: 5,
+          booking_mode: BookingMode.AI_SELECT,
+        }),
+      ).rejects.toMatchObject({
         response: { code: APPOINTMENT_SLOT_UNAVAILABLE },
         status: 409,
       });
@@ -1351,7 +1358,7 @@ describe('AppointmentsService', () => {
       appointmentRepo.findOne.mockResolvedValue(appointment);
       const detailSpy = jest
         .spyOn(service, 'getAppointmentDetail')
-        .mockResolvedValue(appointmentResponse as any);
+        .mockResolvedValue(appointmentResponse);
       const createSpy = jest.spyOn(service, 'create');
       const body: BodyCreateAppointmentDto = {
         appointment_date: '2099-01-05',

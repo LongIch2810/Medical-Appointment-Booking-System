@@ -38,7 +38,7 @@ describe('ExaminationResultController', () => {
     examinationResultService.create.mockResolvedValue({ id: 1 });
 
     const result = await controller.createExaminationResult(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       body,
     );
 
@@ -48,12 +48,12 @@ describe('ExaminationResultController', () => {
 
   it("lists the authenticated user's personal examination results", async () => {
     const filters = { page: 1 } as never;
-    examinationResultService.findExaminationResultsByUserId.mockResolvedValue(
-      { items: [] },
-    );
+    examinationResultService.findExaminationResultsByUserId.mockResolvedValue({
+      items: [],
+    });
 
     const result = await controller.getPersonalExaminationResults(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       filters,
     );
 
@@ -81,7 +81,7 @@ describe('ExaminationResultController', () => {
     examinationResultService.update.mockResolvedValue({ id: 3 });
 
     const result = await controller.updateExaminationResult(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
       body,
     );
@@ -94,7 +94,7 @@ describe('ExaminationResultController', () => {
     examinationResultService.remove.mockResolvedValue({ message: 'removed' });
 
     const result = await controller.deleteExaminationResult(
-      { user: { userId: 7 } } as never,
+      { user: { userId: 7 } },
       3,
     );
 
@@ -102,14 +102,14 @@ describe('ExaminationResultController', () => {
     expect(result).toEqual({ message: 'removed' });
   });
 
-  it("lists examination results created by the authenticated doctor", async () => {
+  it('lists examination results created by the authenticated doctor', async () => {
     const filters = { page: 1 } as never;
     examinationResultService.findExaminationResultsByDoctorUserId.mockResolvedValue(
       { items: [] },
     );
 
     const result = await controller.getDoctorExaminationResults(
-      { user: { userId: 9 } } as never,
+      { user: { userId: 9 } },
       filters,
     );
 

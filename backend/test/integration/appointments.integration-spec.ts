@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const request = require('supertest');
 import { DataSource } from 'typeorm';
 import {
@@ -31,7 +31,7 @@ function nextDateMatchingDayOfWeek(targetDayOfWeek: string): string {
   for (let i = 0; i < 7; i += 1) {
     const candidate = new Date(start);
     candidate.setDate(start.getDate() + i);
-    if (dayNumberToEnum[candidate.getDay()] === targetDayOfWeek) {
+    if (String(dayNumberToEnum[candidate.getDay()]) === targetDayOfWeek) {
       const y = candidate.getFullYear();
       const m = String(candidate.getMonth() + 1).padStart(2, '0');
       const d = String(candidate.getDate()).padStart(2, '0');
