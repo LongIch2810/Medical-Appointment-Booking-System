@@ -307,7 +307,7 @@ describe('AppointmentsService', () => {
 
   describe('sendAppointmentReminders', () => {
     it('creates a reminder once for an opted-in patient in the configured window', async () => {
-      jest.useFakeTimers().setSystemTime(new Date('2026-09-01T01:00:00.000Z'));
+      jest.useFakeTimers().setSystemTime(new Date('2026-09-01T12:00:00.000Z'));
       const appointment = {
         id: 44,
         status: AppointmentStatus.CONFIRMED,

@@ -28,6 +28,12 @@ jobs:
           cache-dependency-path: ${{ matrix.service }}/package-lock.json
       - run: npm ci
       - run: npm run test
+        if: matrix.service != 'chatbot'
+      - run: npm run test
+        if: matrix.service == 'chatbot'
+        env:
+          OPENAI_MODEL: gpt-4o-mini
+          OPENAI_API_KEY: test-key
       - if: matrix.service == 'backend'
         run: npm exec -- eslint "{src,apps,libs,test}/**/*.ts"
       - if: matrix.service == 'frontend' || matrix.service == 'admin'
