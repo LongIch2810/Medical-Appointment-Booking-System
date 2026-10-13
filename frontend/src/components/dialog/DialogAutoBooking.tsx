@@ -287,7 +287,7 @@ const DialogAutoBooking: React.FC<{ className?: string }> = ({
               </DialogTitle>
             </div>
             <DialogDescription className="text-xs sm:text-xs text-muted-foreground leading-normal">
-              Chọn ngày và khoảng thời gian thuận tiện. LifeHealth sẽ tự tìm bác
+              Chọn ngày và khoảng thời gian thuận tiện. Lifheora sẽ tự tìm bác
               sĩ cùng ca khám còn phù hợp.
             </DialogDescription>
           </DialogHeader>

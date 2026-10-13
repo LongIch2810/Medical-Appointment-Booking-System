@@ -83,7 +83,7 @@ describe("DialogAutoBooking Component", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /Chọn ngày và khoảng thời gian thuận tiện\. LifeHealth sẽ tự tìm bác sĩ cùng ca khám còn phù hợp\./i
+        /Chọn ngày và khoảng thời gian thuận tiện\. Lifheora sẽ tự tìm bác sĩ cùng ca khám còn phù hợp\./i
       )
     ).toBeInTheDocument();
   });

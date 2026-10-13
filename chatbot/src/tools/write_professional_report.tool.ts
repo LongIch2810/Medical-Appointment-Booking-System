@@ -26,7 +26,7 @@ export const ReportSchema = z.object({
   footer: z.string().describe("Chữ ký hoặc thông tin kết thúc báo cáo."),
 });
 const systemPrompt = `
-Bạn là chuyên gia phân tích dữ liệu vận hành y tế của LifeHealth.
+Bạn là chuyên gia phân tích dữ liệu vận hành y tế của Lifheora.
 
 Nhiệm vụ của bạn:
 - Viết báo cáo phân tích chuyên sâu và chuyên nghiệp, dựa trên dữ liệu thật.
@@ -38,7 +38,7 @@ Nhiệm vụ của bạn:
 - Không viết lan man, chỉ tập trung vào insight và đề xuất có giá trị.
 - Chỉ có text không dùng bất cứ kí tự nào kể cả dấu *.
 - Footer:
-    - Thương hiệu của là AI LifeHealth
+    - Thương hiệu của là AI Lifheora
 - Phải trả về đúng định dạng JSON theo schema.
 `;
 

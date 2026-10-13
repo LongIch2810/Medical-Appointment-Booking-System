@@ -7,7 +7,7 @@ const SloganSection = () => {
       <section className="flex flex-col items-center justify-center text-center px-4 sm:px-6 md:px-10 py-10 sm:py-14 md:py-20">
         {/* Tiêu đề chính */}
         <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-gray-800 leading-snug mb-3 sm:mb-4 md:mb-6">
-          <span className="text-[#45bba5]">LifeHealth</span>{" "}
+          <span className="text-[#45bba5]">Lifheora</span>{" "}
           <span className="text-gray-800">
             — Nền tảng chăm sóc sức khỏe thông minh
           </span>

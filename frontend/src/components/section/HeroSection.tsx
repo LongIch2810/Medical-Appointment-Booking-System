@@ -224,7 +224,7 @@ export const HeroSection: React.FC = () => {
               <div className="relative h-64 sm:h-72 w-full overflow-hidden bg-slate-100 dark:bg-[#1E293B]">
                 <img
                   src="/banner.png"
-                  alt="LifeHealth Medical Specialists"
+                  alt="Lifheora Medical Specialists"
                   width={440}
                   height={288}
                   className="w-full h-full object-cover object-center scale-105 hover:scale-100 transition-transform duration-700"

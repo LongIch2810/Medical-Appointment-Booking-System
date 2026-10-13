@@ -13,7 +13,7 @@ const teamMembers = [
     experience:
       "Hơn 20 năm kinh nghiệm trong lĩnh vực nội khoa, chuyên sâu về các bệnh mãn tính và quản lý chất lượng bệnh viện.",
     avatarUrl: "https://randomuser.me/api/portraits/men/32.jpg",
-    email: "minh.nguyen@lifehealth.vn",
+    email: "minh.nguyen@lifheora.vn",
     linkedin: "https://linkedin.com/in/nguyenvanminh",
   },
   {
@@ -24,7 +24,7 @@ const teamMembers = [
     experience:
       "Dẫn dắt phát triển sản phẩm với hơn 10 năm kinh nghiệm trong ngành công nghệ y tế.",
     avatarUrl: "https://randomuser.me/api/portraits/women/65.jpg",
-    email: "hoa.tran@lifehealth.vn",
+    email: "hoa.tran@lifheora.vn",
     linkedin: "https://linkedin.com/in/tranthihoa",
   },
   {
@@ -38,7 +38,7 @@ const teamMembers = [
     experience:
       "Chuyên gia phát triển hệ thống với nền tảng bảo mật cao, đảm bảo hoạt động ổn định và an toàn.",
     avatarUrl: "https://randomuser.me/api/portraits/men/45.jpg",
-    email: "dung.le@lifehealth.vn",
+    email: "dung.le@lifheora.vn",
     linkedin: "https://linkedin.com/in/lequocdung",
   },
   {
@@ -49,7 +49,7 @@ const teamMembers = [
     experience:
       "Có kinh nghiệm tư vấn và hỗ trợ người dùng trong lĩnh vực y tế trực tuyến, luôn tận tâm và nhiệt tình.",
     avatarUrl: "https://randomuser.me/api/portraits/women/75.jpg",
-    email: "giang.pham@lifehealth.vn",
+    email: "giang.pham@lifheora.vn",
     linkedin: "https://linkedin.com/in/phamhuonggiang",
   },
 ];

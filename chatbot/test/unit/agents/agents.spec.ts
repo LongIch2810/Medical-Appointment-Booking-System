@@ -180,11 +180,11 @@ test("topic guard: refuses an out-of-scope message without ever invoking the mai
   );
 });
 
-test("topic guard: sends LifeHealth contact requests to the grounded support flow", async () => {
+test("topic guard: sends Lifheora contact requests to the grounded support flow", async () => {
   globals.__AGENT_STUB__.guardMode = "out_of_scope";
 
   const result = await agent.invoke({
-    messages: [new HumanMessage("Số hotline chính thức của LifeHealth là gì?")],
+    messages: [new HumanMessage("Số hotline chính thức của Lifheora là gì?")],
   });
 
   assert.equal(globals.__AGENT_STUB__.guardCalls.length, 0);
@@ -227,7 +227,7 @@ test("topic guard: sends the full recent history (not just the latest message) s
   assert.equal(guardMessages.length, 1 + history.length);
   assert.match(
     String((guardMessages[0] as { content: string }).content),
-    /liên hệ\/hỗ trợ chính thức của LifeHealth/,
+    /liên hệ\/hỗ trợ chính thức của Lifheora/,
   );
 });
 

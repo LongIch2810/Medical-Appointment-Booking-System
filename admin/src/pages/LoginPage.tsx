@@ -30,7 +30,7 @@ export function LoginPage() {
       <div className="flex h-9 items-center justify-between bg-slate-900 px-6 text-xs text-white">
         <div className="flex items-center gap-2">
           <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-slate-300 font-medium">LifeHealth Medical Operations Portal</span>
+          <span className="text-slate-300 font-medium">Lifheora Medical Operations Portal</span>
         </div>
         <span className="text-[11px] text-slate-400 font-mono">RBAC Security Guarded</span>
       </div>
@@ -41,14 +41,14 @@ export function LoginPage() {
             <div className="flex items-center gap-4">
               <div className="flex size-14 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
                 <img
-                  src="/logo.jpg"
-                  alt="LifeHealth logo"
+                  src="/logo.png"
+                  alt="Lifheora logo"
                   className="size-full rounded-xl object-cover"
                 />
               </div>
               <div>
                 <div className="font-display text-2xl font-extrabold text-slate-900 dark:text-slate-100">
-                  LifeHealth
+                  Lifheora
                 </div>
                 <div className="mono-label mt-1 text-[11px] font-bold text-primary dark:text-emerald-400">
                   HEALTHCARE COMMAND CENTER
@@ -101,7 +101,7 @@ export function LoginPage() {
               <div className="bg-slate-100 dark:bg-slate-950/60 p-3 flex items-center justify-center">
                 <img
                   src="/banner.png"
-                  alt="LifeHealth clinical workspace"
+                  alt="Lifheora clinical workspace"
                   className="h-full min-h-[240px] w-full rounded-2xl object-cover shadow-inner"
                 />
               </div>
@@ -132,7 +132,7 @@ export function LoginPage() {
                   <Input
                     id="usernameOrEmail"
                     autoComplete="username"
-                    placeholder="admin hoặc doctor@lifehealth.vn"
+                    placeholder="admin hoặc doctor@lifheora.vn"
                     value={usernameOrEmail}
                     onChange={(event) => setUsernameOrEmail(event.target.value)}
                     disabled={isPending}
@@ -208,7 +208,7 @@ export function LoginPage() {
       </main>
 
       <footer className="py-3 text-center text-xs text-slate-400 border-t border-slate-200/60 dark:border-slate-800/60">
-        © {new Date().getFullYear()} LifeHealth Medical System • Dự án nghiên cứu & học thuật phi thương mại.
+        © {new Date().getFullYear()} Lifheora Medical System • Dự án nghiên cứu & học thuật phi thương mại.
       </footer>
     </div>
   );

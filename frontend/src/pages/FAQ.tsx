@@ -36,10 +36,10 @@ const FAQ = () => {
               className="border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-sm px-5 transition-colors"
             >
               <AccordionTrigger className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 hover:no-underline py-4">
-                LifeHealth là gì?
+                Lifheora là gì?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
-                LifeHealth là nền tảng đặt lịch khám bệnh trực tuyến, giúp người dùng kết nối với bác sĩ và bệnh viện uy tín trên toàn quốc chỉ qua vài bước chạm.
+                Lifheora là nền tảng đặt lịch khám bệnh trực tuyến, giúp người dùng kết nối với bác sĩ và bệnh viện uy tín trên toàn quốc chỉ qua vài bước chạm.
               </AccordionContent>
             </AccordionItem>
 
@@ -72,7 +72,7 @@ const FAQ = () => {
               className="border border-slate-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 shadow-sm px-5 transition-colors"
             >
               <AccordionTrigger className="text-sm md:text-base font-semibold text-slate-900 dark:text-slate-100 hover:no-underline py-4">
-                LifeHealth có miễn phí không?
+                Lifheora có miễn phí không?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
                 Việc đăng ký tài khoản và tìm kiếm bác sĩ là hoàn toàn miễn phí. Bạn chỉ thanh toán đúng mức phí dịch vụ khám bệnh theo quy định niêm yết của bác sĩ/phòng khám.
@@ -87,7 +87,7 @@ const FAQ = () => {
                 Thông tin cá nhân của tôi có được bảo mật không?
               </AccordionTrigger>
               <AccordionContent className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
-                Có. LifeHealth tuân thủ các tiêu chuẩn bảo mật y tế nghiêm ngặt như HIPAA và chứng nhận bảo mật thông tin ISO 27001 để đảm bảo hồ sơ của bạn an toàn tuyệt đối.
+                Có. Lifheora tuân thủ các tiêu chuẩn bảo mật y tế nghiêm ngặt như HIPAA và chứng nhận bảo mật thông tin ISO 27001 để đảm bảo hồ sơ của bạn an toàn tuyệt đối.
               </AccordionContent>
             </AccordionItem>
 
@@ -138,7 +138,7 @@ const FAQ = () => {
                 <div className="flex flex-wrap gap-4 pt-1">
                   <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Mail className="w-4 h-4 text-primary" />
-                    <span>support@lifehealth.vn</span>
+                    <span>support@lifheora.vn</span>
                   </div>
                   <div className="flex items-center gap-2 text-slate-700 dark:text-slate-300">
                     <Phone className="w-4 h-4 text-primary" />

@@ -127,7 +127,7 @@ export function formatBookingResult(result: any): string {
           "",
           `Hình thức đặt lịch: ${bookingMode}`,
         ].join("\n"),
-        note: "Cảm ơn bạn đã tin tưởng LifeHealth! Chúc bạn và gia đình nhiều sức khỏe.",
+        note: "Cảm ơn bạn đã tin tưởng Lifheora! Chúc bạn và gia đình nhiều sức khỏe.",
       });
     }
 

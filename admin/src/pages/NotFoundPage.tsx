@@ -15,7 +15,7 @@ export function NotFoundPage() {
             Không tìm thấy trang
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-            Đường dẫn yêu cầu không tồn tại trong hệ thống quản trị LifeHealth hoặc đã được chuyển đổi.
+            Đường dẫn yêu cầu không tồn tại trong hệ thống quản trị Lifheora hoặc đã được chuyển đổi.
           </p>
           <div className="pt-2">
             <Button asChild className="w-full rounded-xl font-bold">

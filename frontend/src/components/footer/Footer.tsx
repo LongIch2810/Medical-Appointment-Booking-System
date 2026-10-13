@@ -28,7 +28,7 @@ const Footer = () => {
             onClick={() => navigate("/")}
           >
             <img
-              src="/logo.jpg"
+              src="/logo.png"
               alt="logo"
               width={40}
               height={40}
@@ -37,7 +37,7 @@ const Footer = () => {
               className="w-10 h-10 rounded-xl object-cover border border-teal-400/30"
             />
             <span className="bg-gradient-to-r from-white via-slate-100 to-teal-200 bg-clip-text text-transparent">
-              LifeHealth
+              Lifheora
             </span>
           </div>
           <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
@@ -55,7 +55,7 @@ const Footer = () => {
             </div>
             <div className="flex items-center gap-2.5">
               <Mail className="w-4 h-4 text-primary shrink-0" />
-              <span>support@lifehealth.vn</span>
+              <span>support@lifheora.vn</span>
             </div>
           </div>
 
@@ -185,7 +185,7 @@ const Footer = () => {
               </div>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-4xl">
                 {t("footer.disclaimerText", {
-                  defaultValue: "Website LifeHealth được xây dựng phục vụ nghiên cứu công nghệ, học thuật và đồ án. Mọi hình ảnh bác sĩ và cơ sở y tế trên trang web được sử dụng nhằm mục đích minh họa giao diện & nghiên cứu phi lợi nhuận. Hệ thống không thực hiện hoạt động kinh doanh y tế hay thu phí."
+                  defaultValue: "Website Lifheora được xây dựng phục vụ nghiên cứu công nghệ, học thuật và đồ án. Mọi hình ảnh bác sĩ và cơ sở y tế trên trang web được sử dụng nhằm mục đích minh họa giao diện & nghiên cứu phi lợi nhuận. Hệ thống không thực hiện hoạt động kinh doanh y tế hay thu phí."
                 })}
               </p>
             </div>
@@ -204,7 +204,7 @@ const Footer = () => {
 
       {/* Bottom */}
       <div className="border-t border-[#293548]/70 text-center py-5 text-xs text-slate-400">
-        &copy; {new Date().getFullYear()} LifeHealth Medical Platform. {t("footer.copyrightDesc", { defaultValue: "Dự án nghiên cứu & học thuật phi thương mại." })}
+        &copy; {new Date().getFullYear()} Lifheora Medical Platform. {t("footer.copyrightDesc", { defaultValue: "Dự án nghiên cứu & học thuật phi thương mại." })}
       </div>
     </footer>
   );

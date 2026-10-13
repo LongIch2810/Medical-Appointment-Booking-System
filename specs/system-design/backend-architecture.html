@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>Backend architecture — LifeHealth</title>
+  <title>Backend architecture — Lifheora</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -126,7 +126,7 @@
 <body>
   <main class="frame">
     <header>
-      <p class="eyebrow">LifeHealth · as-is backend</p>
+      <p class="eyebrow">Lifheora · as-is backend</p>
       <h1>Backend architecture</h1>
       <p class="subtitle">Sơ đồ riêng cho NestJS API: đường đi HTTP và WebSocket, lớp auth/RBAC, các module nghiệp vụ, PostgreSQL, Redis/BullMQ, chatbot và dịch vụ ngoài. Các nhóm module được rút gọn ở mức kiến trúc; chi tiết hành vi nằm trong các luồng patient chat và report assistant.</p>
       <nav aria-label="Đi tới sơ đồ liên quan">
@@ -136,9 +136,9 @@
       </nav>
     </header>
 
-    <section class="diagram-wrap" aria-label="Sơ đồ kiến trúc backend LifeHealth">
+    <section class="diagram-wrap" aria-label="Sơ đồ kiến trúc backend Lifheora">
       <svg class="backend-architecture" viewBox="0 0 1500 960" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="backend-architecture-title backend-architecture-desc">
-        <title id="backend-architecture-title">LifeHealth backend architecture</title>
+        <title id="backend-architecture-title">Lifheora backend architecture</title>
         <desc id="backend-architecture-desc">Sơ đồ thể hiện browser clients gọi NestJS API, API dùng auth và RBAC để vào các module nghiệp vụ, lưu PostgreSQL, Redis và BullMQ, đồng thời kết nối WebSocket, chatbot và các dịch vụ ngoài.</desc>
         <defs>
           <marker id="backend-architecture-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
@@ -308,7 +308,7 @@
     </section>
 
     <footer>
-      <span>LifeHealth · backend system design · as-is</span>
+      <span>Lifheora · backend system design · as-is</span>
       <a class="back-link" href="./system-design.html">Quay lại sơ đồ toàn app →</a>
     </footer>
   </main>

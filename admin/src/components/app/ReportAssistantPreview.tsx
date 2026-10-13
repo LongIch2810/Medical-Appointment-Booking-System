@@ -474,7 +474,7 @@ export function ReportAssistantPreview({ report }: { report: AdminReport }) {
             Lưu ý kiểm soát:
           </strong>{" "}
           Bản phân tích và khuyến nghị được tổng hợp tự động từ dữ liệu truy vấn
-          thực tế của hệ thống LifeHealth. Báo cáo phục vụ công tác quản trị nội
+          thực tế của hệ thống Lifheora. Báo cáo phục vụ công tác quản trị nội
           bộ, không thay thế báo cáo tài chính đã kiểm toán chính thức.
         </p>
       </div>

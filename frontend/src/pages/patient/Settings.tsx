@@ -491,7 +491,7 @@ const Settings: React.FC = () => {
                 <Clock className="h-4.5 w-4.5 text-primary shrink-0" />
                 <p>
                   <strong className="font-semibold text-slate-800 dark:text-[#CBD5E1]">Thời gian nhắc lịch mặc định:</strong> Trước{" "}
-                  <span className="font-bold text-primary dark:text-sky-400">{reminderHours} giờ</span> theo quy định hệ thống LifeHealth. Bạn có thể kiểm tra danh sách lịch tại mục "Lịch khám".
+                  <span className="font-bold text-primary dark:text-sky-400">{reminderHours} giờ</span> theo quy định hệ thống Lifheora. Bạn có thể kiểm tra danh sách lịch tại mục "Lịch khám".
                 </p>
               </div>
             </CardContent>
@@ -716,7 +716,7 @@ const Settings: React.FC = () => {
                       {t("settings.languageSection", { defaultValue: "Ngôn ngữ hiển thị" })}
                     </p>
                     <p className="text-xs text-slate-600 dark:text-[#94A3B8] mt-0.5">
-                      {t("settings.languageSectionDesc", { defaultValue: "Lựa chọn ngôn ngữ giao diện của hệ thống LifeHealth" })}
+                      {t("settings.languageSectionDesc", { defaultValue: "Lựa chọn ngôn ngữ giao diện của hệ thống Lifheora" })}
                     </p>
                   </div>
                   <LanguageSwitcher variant="pills" />

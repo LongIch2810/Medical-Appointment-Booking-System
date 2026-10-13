@@ -197,13 +197,13 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
                   onMouseEnter={() => prefetchPatientRoute("/")}
                 >
                   <img
-                    src="/logo.jpg"
-                    alt="LifeHealth logo"
+                    src="/logo.png"
+                    alt="Lifheora logo"
                     className="w-10 h-10 rounded-xl object-cover shadow-xs border border-primary/20"
                   />
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-lg font-bold text-primary tracking-tight">LifeHealth</span>
+                      <span className="text-lg font-bold text-primary tracking-tight">Lifheora</span>
                       <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
                         CARE
                       </span>
@@ -419,11 +419,11 @@ const Header: React.FC<HeaderProps> = ({ userInfo }) => {
           className="flex items-center gap-x-2 sm:gap-x-3 lg:text-2xl text-xl font-bold text-primary cursor-pointer"
         >
           <img
-            src="/logo.jpg"
-            alt="LifeHealth Logo"
+            src="/logo.png"
+            alt="Lifheora Logo"
             className="w-10 h-10 lg:w-12 lg:h-12 rounded-xl object-cover shadow-xs border border-primary/10"
           />
-          <span className="hidden sm:block">LifeHealth</span>
+          <span className="hidden sm:block">Lifheora</span>
         </Link>
       </div>
 

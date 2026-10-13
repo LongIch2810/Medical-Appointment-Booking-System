@@ -26,7 +26,7 @@ const BannerSection = () => {
             className="text-2xl sm:text-4xl md:text-6xl font-extrabold leading-tight drop-shadow-lg"
           >
             Chăm sóc sức khỏe toàn diện <br />
-            cùng <span className="text-[#45bba5]">LifeHealth</span>
+            cùng <span className="text-[#45bba5]">Lifheora</span>
           </motion.h1>
 
           {/* Mô tả */}

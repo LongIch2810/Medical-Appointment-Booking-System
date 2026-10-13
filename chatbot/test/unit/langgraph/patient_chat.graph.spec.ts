@@ -83,12 +83,12 @@ test('loads saved scheduling preferences into trusted context for another thread
   assert.match(String(promptMessages[0].content), /soft scheduling preferences/);
 });
 
-test('answers LifeHealth contact requests with the verified contact page instead of generated contact details', async () => {
+test('answers Lifheora contact requests with the verified contact page instead of generated contact details', async () => {
   resetStub();
   const graph = makeGraph();
   const response = await runPatientChat(graph, makeInput({
-    message: 'Số hotline chính thức của LifeHealth là gì?',
-    historySeed: [{ role: 'user', content: 'Số hotline chính thức của LifeHealth là gì?' }],
+    message: 'Số hotline chính thức của Lifheora là gì?',
+    historySeed: [{ role: 'user', content: 'Số hotline chính thức của Lifheora là gì?' }],
   }));
 
   assert.equal(response.action, 'ANSWER');

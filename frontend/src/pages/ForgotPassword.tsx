@@ -114,13 +114,13 @@ const ForgotPassword: React.FC = () => {
         <div className="max-w-lg mx-auto md:mx-0">
           <div className="flex items-center gap-3.5 mb-8">
             <img
-              src="/logo.jpg"
-              alt="Logo LifeHealth"
+              src="/logo.png"
+              alt="Logo Lifheora"
               className="w-12 h-12 md:w-14 md:h-14 object-cover rounded-2xl shadow-md border-2 border-white/30"
             />
             <div>
               <span className="text-xl md:text-2xl font-extrabold tracking-tight text-white font-heading">
-                LifeHealth
+                Lifheora
               </span>
               <p className="text-[11px] uppercase tracking-widest text-teal-200/80 font-bold">
                 Security &amp; Account

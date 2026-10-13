@@ -11,7 +11,7 @@ const FindAndBookDoctorSection = () => {
         <div className="text-center mb-6">
           <Title text="Tìm và đặt lịch khám nhanh chóng cùng bác sĩ uy tín" />
           <p className="text-gray-500 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-            Với <span className="font-semibold text-[#45bba5]">LIFEHEALTH</span>
+            Với <span className="font-semibold text-[#45bba5]">LIFHEORA</span>
             , việc chăm sóc sức khỏe của bạn trở nên dễ dàng và thuận tiện hơn
             bao giờ hết.
             <br />

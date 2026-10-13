@@ -11,7 +11,7 @@ const FeelFreeFindAndBookDoctorSection = () => {
         <div className="text-center mb-6">
           <Title text="An tâm tìm và đặt bác sĩ" />
           <p className="text-gray-500 text-sm md:text-base max-w-2xl mx-auto">
-            Hơn 600 bác sĩ liên kết chính thức với LifeHealth.
+            Hơn 600 bác sĩ liên kết chính thức với Lifheora.
           </p>
         </div>
 

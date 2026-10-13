@@ -1,6 +1,6 @@
 # Patient UI Design System
 
-Tài liệu chuẩn hóa hệ thống thiết kế giao diện Người bệnh (Patient Portal & Public Web) của dự án **LifeHealth**. Tài liệu này đóng vai trò là kim chỉ nam (Single Source of Truth) dành cho lập trình viên (Developer) và Trợ lý lập trình AI (AI Coding Agent) khi xây dựng, mở rộng hoặc tối ưu giao diện trong thư mục `frontend/`.
+Tài liệu chuẩn hóa hệ thống thiết kế giao diện Người bệnh (Patient Portal & Public Web) của dự án **Lifheora**. Tài liệu này đóng vai trò là kim chỉ nam (Single Source of Truth) dành cho lập trình viên (Developer) và Trợ lý lập trình AI (AI Coding Agent) khi xây dựng, mở rộng hoặc tối ưu giao diện trong thư mục `frontend/`.
 
 ---
 
@@ -35,7 +35,7 @@ Hệ màu của Patient UI sử dụng mô hình màu hiện đại **OKLCH** k�
 
 | Token CSS | Hex Light | Hex Dark | Vai trò / Ngữ cảnh sử dụng |
 | :--- | :---: | :---: | :--- |
-| `--clinical-teal` | `#159a98` | `#2cd4d1` | Màu chủ đạo thương hiệu LifeHealth, nút CTA chính, icon điểm nhấn |
+| `--clinical-teal` | `#159a98` | `#2cd4d1` | Màu chủ đạo thương hiệu Lifheora, nút CTA chính, icon điểm nhấn |
 | `--clinical-teal-hover` | `#117d7b` | `#159a98` | Trạng thái hover của nút bấm và liên kết chính |
 | `--clinical-ink` | `#123b45` | `#eaf7f5` | Tiêu đề lớn, chữ có độ tương phản cao nhất trong các khối nổi bật |
 | `--care-mist` | `#eaf7f5` | `#152b31` | Nền thứ cấp, nền thẻ card tính năng, nền chip icon mềm mại |
@@ -383,7 +383,7 @@ const SpecialtiesSection = lazy(() => import("@/components/section/SpecialtiesSe
 
 ### 4.8. An Toàn Y Tế & Trợ Lý AI (AI Clinical Safety Patterns)
 
-LifeHealth tích hợp các tính năng AI chuyên sâu (MedAI RAG Chatbot, AI Health Coach). Nhằm đảm bảo an toàn tuyệt đối cho người bệnh và tuân thủ nguyên tắc y tế:
+Lifheora tích hợp các tính năng AI chuyên sâu (MedAI RAG Chatbot, AI Health Coach). Nhằm đảm bảo an toàn tuyệt đối cho người bệnh và tuân thủ nguyên tắc y tế:
 
 #### A. Khung Cảnh Báo Khuyến Cáo Bắt Buộc (Mandatory Medical Disclaimer Box)
 Bất kỳ màn hình hay section nào hiển thị thông tin do AI sinh ra phải có khối cảnh báo tiêu chuẩn:
@@ -416,7 +416,7 @@ Bất kỳ màn hình hay section nào hiển thị thông tin do AI sinh ra ph�
 
 | Yếu tố | Nên Dùng (Do) | Không Nên Dùng (Don't) |
 | :--- | :--- | :--- |
-| **Xưng hô** | Lịch sự, ân cần: *"Bạn"*, *"Bệnh nhân"*, *"Bác sĩ"*, *"LifeHealth"*. | Trống không, suồng sã (*"Mày/Tao"*), hoặc quá quan liêu (*"Đối tượng khám"*). |
+| **Xưng hô** | Lịch sự, ân cần: *"Bạn"*, *"Bệnh nhân"*, *"Bác sĩ"*, *"Lifheora"*. | Trống không, suồng sã (*"Mày/Tao"*), hoặc quá quan liêu (*"Đối tượng khám"*). |
 | **Thuật ngữ y khoa** | Giải thích bằng tiếng Việt dễ hiểu kèm thuật ngữ phụ trong ngoặc nếu cần. Ví dụ: *"Chỉ số khối cơ thể (BMI)"*, *"Huyết áp tâm thu"*. | Viết tắt từ viết tắt chuyên ngành không giải thích (*"HA", "CLS", "XN"*). |
 | **Thông điệp lỗi** | Trấn an và hướng dẫn cách khắc phục: *"Không thể kết nối với hệ thống đặt lịch. Vui lòng kiểm tra lại mạng hoặc thử lại sau ít phút."* | Báo lỗi kỹ thuật khô khan: *"Error 500: Internal Server Error"*, *"NullPointerException"*. |
 | **Thông điệp từ AI** | Gợi ý khiêm tốn: *"Dựa trên các triệu chứng bạn mô tả, bạn có thể cân nhắc thăm khám chuyên khoa Tiêu hóa..."* | Khẳng định chẩn đoán tuyệt đối: *"Bạn đã bị viêm loét dạ dày cấp tính, cần uống thuốc ngay."* |
@@ -485,7 +485,7 @@ export const DoctorCard: React.FC<{ doctor: Doctor }> = ({ doctor }) => {
           </h3>
           <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
             <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-            <span className="truncate">{doctor.clinic_address ?? "Bệnh viện LifeHealth"}</span>
+            <span className="truncate">{doctor.clinic_address ?? "Bệnh viện Lifheora"}</span>
           </p>
         </div>
 
@@ -522,7 +522,7 @@ export const AiMedicalDisclaimer: React.FC<{ context?: string }> = ({ context })
       <div className="space-y-1">
         <div className="flex items-center gap-1.5 font-bold text-amber-950 dark:text-amber-100 text-xs">
           <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-          <span>Lưu ý quan trọng từ Cố vấn Y tế LifeHealth</span>
+          <span>Lưu ý quan trọng từ Cố vấn Y tế Lifheora</span>
         </div>
         <p className="leading-relaxed text-amber-800 dark:text-amber-300">
           {context ??

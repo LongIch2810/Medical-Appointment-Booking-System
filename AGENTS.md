@@ -6,7 +6,7 @@ Every claim below was checked directly against source code, `package.json`, lock
 
 ## 1. Project Overview
 
-LifeHealth is a medical appointment booking and healthcare-management platform, built as **four independent Node.js/TypeScript services** with no root package manager or workspace tool (no root `package.json`; each service has its own `package.json` + `package-lock.json` and must be installed/run from its own directory).
+Lifheora is a medical appointment booking and healthcare-management platform, built as **four independent Node.js/TypeScript services** with no root package manager or workspace tool (no root `package.json`; each service has its own `package.json` + `package-lock.json` and must be installed/run from its own directory).
 
 - **`frontend/`** — patient-facing web portal: doctor search, booking, patient health records, messaging, AI chatbot UI.
 - **`admin/`** — console for doctors and administrators: schedules, appointments, patient records, RBAC administration, reporting.

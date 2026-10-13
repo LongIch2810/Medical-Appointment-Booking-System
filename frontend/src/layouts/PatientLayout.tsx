@@ -187,11 +187,11 @@ const PatientPortalShell: React.FC = () => {
                 <p className="text-xs md:text-sm font-medium text-white/80">{t("header.greeting", { defaultValue: "Xin chào," })}</p>
                 <Badge className="bg-white/20 hover:bg-white/25 text-white text-[11px] font-bold border-none backdrop-blur-xs gap-1">
                   <ShieldCheck className="h-3 w-3" />
-                  {t("header.patientBadge", { defaultValue: "Bệnh nhân LifeHealth" })}
+                  {t("header.patientBadge", { defaultValue: "Bệnh nhân Lifheora" })}
                 </Badge>
               </div>
               <h1 className="text-xl font-extrabold tracking-tight md:text-2xl truncate mt-0.5 text-white font-heading">
-                {profile?.fullname ?? profile?.username ?? "Bệnh nhân LifeHealth"}
+                {profile?.fullname ?? profile?.username ?? "Bệnh nhân Lifheora"}
               </h1>
               <p className="mt-1 max-w-xl text-xs md:text-sm text-teal-50/90 dark:text-slate-300 line-clamp-1">
                 {t("header.patientSubtitle", { defaultValue: "Quản lý lịch khám, hồ sơ sức khỏe, trao đổi bác sĩ và trợ lý y tế AI." })}

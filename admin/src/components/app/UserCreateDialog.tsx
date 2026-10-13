@@ -192,7 +192,7 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
             type="email"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
-            placeholder="doctor.an@lifehealth.vn"
+            placeholder="doctor.an@lifheora.vn"
           />
         </FormField>
         <FormField label="Mật khẩu" htmlFor="create-password" required>
@@ -394,7 +394,7 @@ export function UserCreateDialog({ trigger }: { trigger: ReactNode }) {
                 id="create-doctor-workplace"
                 value={form.doctor_workplace}
                 onChange={(e) => update("doctor_workplace", e.target.value)}
-                placeholder="Bệnh viện Chợ Rẫy / Phòng khám LifeHealth"
+                placeholder="Bệnh viện Chợ Rẫy / Phòng khám Lifheora"
               />
             </FormField>
             <div className="col-span-2">

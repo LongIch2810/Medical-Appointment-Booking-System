@@ -48,7 +48,7 @@ const Contact = () => {
   return (
     <section className="mt-16 md:mt-24 pb-16">
       <div className="max-w-5xl mx-auto py-10 px-4 sm:px-6 space-y-12">
-        {/* Phần giới thiệu về LifeHealth */}
+        {/* Phần giới thiệu về Lifheora */}
         <FadeInView>
           <section className="text-center space-y-4 max-w-3xl mx-auto">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
@@ -99,7 +99,7 @@ const Contact = () => {
                 +100.000 người dùng
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Đã và đang sử dụng LifeHealth để đặt khám và theo dõi sức khỏe định kỳ tin cậy.
+                Đã và đang sử dụng Lifheora để đặt khám và theo dõi sức khỏe định kỳ tin cậy.
               </p>
             </div>
           </section>
@@ -110,7 +110,7 @@ const Contact = () => {
           <section className="space-y-6">
             <div className="text-center space-y-1">
               <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-                Vì sao người bệnh tin chọn LifeHealth?
+                Vì sao người bệnh tin chọn Lifheora?
               </h2>
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Những giá trị cốt lõi tạo nên trải nghiệm y tế số an toàn và tiện lợi
@@ -266,7 +266,7 @@ const Contact = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{t("staticPages.contactEmailLabel")}</p>
-                    <p className="text-slate-500 dark:text-slate-400">support@lifehealth.vn</p>
+                    <p className="text-slate-500 dark:text-slate-400">support@lifheora.vn</p>
                   </div>
                 </div>
 

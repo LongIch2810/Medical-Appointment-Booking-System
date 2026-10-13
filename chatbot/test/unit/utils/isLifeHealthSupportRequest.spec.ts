@@ -7,6 +7,12 @@ test('recognizes explicit requests for LifeHealth support contacts', () => {
   assert.equal(isLifeHealthSupportRequest('Email hỗ trợ là gì?', 'Tôi muốn liên hệ LifeHealth.'), true);
 });
 
+test('recognizes Lifheora support contacts without changing legacy routing', () => {
+  assert.equal(isLifeHealthSupportRequest('Số hotline của Lifheora là gì?'), true);
+  assert.equal(isLifeHealthSupportRequest('Email hỗ trợ là gì?', 'Tôi muốn liên hệ Lifheora.'), true);
+  assert.equal(isLifeHealthSupportRequest('Lifheora có những chuyên khoa nào?'), false);
+});
+
 test('does not route general email definitions or non-contact product questions to the support fallback', () => {
   assert.equal(isLifeHealthSupportRequest('Email là gì?'), false);
   assert.equal(isLifeHealthSupportRequest('LifeHealth có những chuyên khoa nào?'), false);

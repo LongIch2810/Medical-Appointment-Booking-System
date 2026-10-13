@@ -1,6 +1,6 @@
-# LifeHealth
+# Lifheora
 
-LifeHealth is an enterprise-grade digital healthcare platform engineered to streamline patient appointment booking, doctor scheduling, electronic health records (EHR), clinical administration, and AI-assisted triage consultation. Built with a unified design system and powered by modern TypeScript microservices, LifeHealth connects patients, doctors, and healthcare administrators into a cohesive, responsive ecosystem.
+Lifheora is an enterprise-grade digital healthcare platform engineered to streamline patient appointment booking, doctor scheduling, electronic health records (EHR), clinical administration, and AI-assisted triage consultation. Built with a unified design system and powered by modern TypeScript microservices, Lifheora connects patients, doctors, and healthcare administrators into a cohesive, responsive ecosystem.
 
 > [!IMPORTANT]
 > **Lưu ý:** Đây là dự án học tập và trình diễn kỹ thuật, không được xây dựng cho mục đích kinh doanh hoặc thương mại.
@@ -11,7 +11,7 @@ LifeHealth is an enterprise-grade digital healthcare platform engineered to stre
 
 ## Overview
 
-Modern healthcare delivery demands friction-free access for patients and high-efficiency operational tools for clinicians and administrators. LifeHealth addresses both sides of the care equation:
+Modern healthcare delivery demands friction-free access for patients and high-efficiency operational tools for clinicians and administrators. Lifheora addresses both sides of the care equation:
 
 - **For Patients:** An accessible, intuitive self-service portal for discovering verified specialists, scheduling consultations in seconds, maintaining longitudinal family health records, and communicating securely with care providers.
 - **For Doctors:** A clinical workspace to manage daily queues, review patient histories, execute consultations, and leverage AI to summarize complex medical records and diagnostic files.
@@ -28,7 +28,7 @@ Modern healthcare delivery demands friction-free access for patients and high-ef
 - **Appointment Management:** Real-time lifecycle tracking (Chờ xác nhận, Đã xác nhận, Đã khám, Đã hủy) with visit history and cancellation controls.
 - **Longitudinal Health & Family Records:** Unified health profile for patients and linked relatives tracking blood group, vitals, medical history, medications, and vaccination records.
 - **Real-Time Doctor Messaging:** Instant messaging channel with active care specialists for pre- and post-visit inquiries.
-- **LifeHealth MedAI Consultation:** 24/7 intelligent clinical assistant providing symptom triage, preliminary medical guidance, and clinic recommendations.
+- **Lifheora MedAI Consultation:** 24/7 intelligent clinical assistant providing symptom triage, preliminary medical guidance, and clinic recommendations.
 - **Account & Security Settings:** Personal profile management, notification preferences, and password security.
 
 ### 👨‍⚕️ Doctor Workspace
@@ -48,7 +48,7 @@ Modern healthcare delivery demands friction-free access for patients and high-ef
 
 ## Product Showcase: Appointment Booking
 
-Appointment booking is the core LifeHealth experience: patients find the right specialty, choose an available date, and submit a booking while administrators and doctors monitor appointments from one operational workspace.
+Appointment booking is the core Lifheora experience: patients find the right specialty, choose an available date, and submit a booking while administrators and doctors monitor appointments from one operational workspace.
 
 The current deployments are available here:
 
@@ -57,19 +57,19 @@ The current deployments are available here:
 
 ### Patient portal
 
-![Current LifeHealth patient portal and sample appointment card](docs/screenshots/live/readme-patient-home.png)
+![Historical patient portal and sample appointment card](docs/screenshots/live/readme-patient-home.png)
 
-Current patient-facing interface captured from the local Docker demo. The appointment card is illustrative; booking is simulated and no real patient data is shown.
+Historical patient-facing interface captured from the local Docker demo before the Lifheora rebrand. The appointment card is illustrative; booking is simulated and no real patient data is shown.
 
 ### Admin and Doctor portal
 
-![Current LifeHealth Admin and Doctor sign-in portal](docs/screenshots/live/readme-admin-portal.png)
+![Historical Admin and Doctor sign-in portal](docs/screenshots/live/readme-admin-portal.png)
 
-Current role-based entry screen for the Admin and Doctor workspace, captured from the local Docker demo.
+Historical role-based entry screen for the Admin and Doctor workspace, captured before the Lifheora rebrand.
 
 ## UI / UX Design System
 
-The redesign of LifeHealth adheres to intentional healthcare design principles:
+The redesign of Lifheora adheres to intentional healthcare design principles:
 
 - **Calm & Trustworthy Palette:** Primary emerald and teal accents (`#059669`, `#0d9488`) combined with soft slate neutrals (`#f8fafc` to `#0f172a`), creating a soothing, medical-grade environment.
 - **Visual Hierarchy & Typography:** Inter and Outfit typography pairings with deliberate type scale, prominent primary CTAs, and scannable data badges.
@@ -412,4 +412,4 @@ For deep client-side conventions:
 
 ## License
 
-This project is licensed under the [LifeHealth Educational & Non-Commercial License](LICENSE) — free to use, study, and fork for personal learning, academic, and portfolio purposes, but not for commercial use. See the [LICENSE](LICENSE) file for the full terms.
+This project is licensed under the [Lifheora Educational & Non-Commercial License](LICENSE) — free to use, study, and fork for personal learning, academic, and portfolio purposes, but not for commercial use. See the [LICENSE](LICENSE) file for the full terms.

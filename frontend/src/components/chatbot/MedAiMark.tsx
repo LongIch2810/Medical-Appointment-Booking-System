@@ -4,7 +4,7 @@ interface MedAiMarkProps {
 }
 
 // Icon nhận diện dùng chung cho ChatHeader và nhãn AI trên mỗi tin nhắn —
-// logo LifeHealth + tích xanh verified (tái sử dụng đúng SVG check đã có ở
+// logo Lifheora + tích xanh verified (tái sử dụng đúng SVG check đã có ở
 // bản header cũ), chỉ 1 kích thước khác nhau tuỳ nơi đặt.
 export default function MedAiMark({
   imgClassName = "w-9 h-9",
@@ -13,8 +13,8 @@ export default function MedAiMark({
   return (
     <span className="relative inline-flex shrink-0">
       <img
-        src="/logo.jpg"
-        alt="LifeHealth"
+        src="/logo.png"
+        alt="Lifheora"
         className={`${imgClassName} rounded-xl object-cover border border-primary/20`}
       />
       <svg

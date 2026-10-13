@@ -51,15 +51,15 @@ function SidebarNav({ mobile = false }: { mobile?: boolean }) {
       <div className="flex items-center gap-3 px-2 border-b border-white/10 pb-4">
         <div className="flex size-11 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-md shrink-0">
           <img
-            src="/logo.jpg"
-            alt="LifeHealth logo"
+            src="/logo.png"
+            alt="Lifheora logo"
             className="size-full rounded-xl object-cover"
           />
         </div>
         {mobile || !collapsed ? (
           <div className="min-w-0 flex-1">
             <div className="font-display text-lg font-bold leading-tight tracking-tight flex items-center gap-1.5">
-              <span>LifeHealth</span>
+              <span>Lifheora</span>
               <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
             </div>
             <div className="mt-1 flex items-center gap-1.5">
@@ -181,7 +181,7 @@ export function AdminLayout() {
             >
               <div className="flex shrink-0 items-center gap-2 text-[11px] font-semibold text-emerald-400">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>LifeHealth Command Center v2.5</span>
+                <span>Lifheora Command Center v2.5</span>
               </div>
               <div className="hidden min-w-0 truncate text-[11px] text-slate-400 sm:block">
                 Hệ thống đồng bộ dữ liệu y tế trực tuyến &amp; Quản trị bảo mật RBAC
@@ -227,7 +227,7 @@ export function AdminLayout() {
                   </div>
                   <div className="flex min-w-0 items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-slate-100 sm:text-base">
                     {isDoctor ? <Stethoscope className="size-4 text-primary shrink-0" /> : <Shield className="size-4 text-primary shrink-0" />}
-                    <span className="truncate">{activeMenu?.label ?? "LifeHealth Admin"}</span>
+                    <span className="truncate">{activeMenu?.label ?? "Lifheora Admin"}</span>
                   </div>
                 </div>
               </div>

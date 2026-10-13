@@ -32,7 +32,7 @@ const jobOpenings = [
     location: "Làm việc tại văn phòng hoặc từ xa",
     type: "Toàn thời gian / Bán thời gian",
     description:
-      "Tư vấn, hỗ trợ bệnh nhân và khách hàng trong quá trình đặt lịch khám và sử dụng dịch vụ trên nền tảng LifeHealth.",
+      "Tư vấn, hỗ trợ bệnh nhân và khách hàng trong quá trình đặt lịch khám và sử dụng dịch vụ trên nền tảng Lifheora.",
     responsibilities: [
       "Tiếp nhận và giải đáp kịp thời yêu cầu của người bệnh",
       "Hỗ trợ hướng dẫn các dịch vụ khám chuyên khoa và MedAI",
@@ -50,7 +50,7 @@ const jobOpenings = [
     location: "Làm việc tại văn phòng hoặc từ xa",
     type: "Toàn thời gian",
     description:
-      "Phát triển và tối ưu nền tảng y tế số LifeHealth, bảo đảm hiệu năng cao, trải nghiệm trực quan và an toàn bảo mật dữ liệu y tế.",
+      "Phát triển và tối ưu nền tảng y tế số Lifheora, bảo đảm hiệu năng cao, trải nghiệm trực quan và an toàn bảo mật dữ liệu y tế.",
     responsibilities: [
       "Thiết kế, xây dựng và hoàn thiện các module giao diện người dùng",
       "Tối ưu hiệu năng, bảo mật và khả năng mở rộng hệ thống",
@@ -150,7 +150,7 @@ const Careers = () => {
                   <div className="pt-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-slate-100 dark:border-slate-800/80">
                     <p className="text-xs text-slate-400">
                       {t("staticPages.careersSendCv")}{" "}
-                      <strong className="text-slate-600 dark:text-slate-300">tuyendung@lifehealth.vn</strong>
+                      <strong className="text-slate-600 dark:text-slate-300">tuyendung@lifheora.vn</strong>
                     </p>
                     <Button
                       onClick={() => handleApply(job.title)}

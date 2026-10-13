@@ -101,7 +101,7 @@ const PATIENT_PROMPT_GROUPS: PromptTemplateGroup[] = [
       {
         title: "Giấy tờ bảo hiểm cần mang",
         tag: "Bảo hiểm Y tế",
-        prompt: "Khi đến khám tại LifeHealth, tôi cần mang theo những giấy tờ tùy thân và bảo hiểm gì để được hỗ trợ?",
+        prompt: "Khi đến khám tại Lifheora, tôi cần mang theo những giấy tờ tùy thân và bảo hiểm gì để được hỗ trợ?",
       },
     ],
   },

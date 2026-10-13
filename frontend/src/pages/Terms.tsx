@@ -42,7 +42,7 @@ const Terms = () => {
                 <ul className="space-y-2.5">
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    <span>Người dùng phải thực hiện chuyển khoản chính xác theo thông tin tài khoản hoặc mã VietQR do LifeHealth hiển thị tại bước xác nhận lịch.</span>
+                    <span>Người dùng phải thực hiện chuyển khoản chính xác theo thông tin tài khoản hoặc mã VietQR do Lifheora hiển thị tại bước xác nhận lịch.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
@@ -50,7 +50,7 @@ const Terms = () => {
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                    <span>LifeHealth không chịu trách nhiệm với các giao dịch chuyển nhầm số tài khoản hoặc sai cú pháp do người dùng nhập thủ công ngoài hướng dẫn.</span>
+                    <span>Lifheora không chịu trách nhiệm với các giao dịch chuyển nhầm số tài khoản hoặc sai cú pháp do người dùng nhập thủ công ngoài hướng dẫn.</span>
                   </li>
                   <li className="flex items-start gap-2.5">
                     <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />

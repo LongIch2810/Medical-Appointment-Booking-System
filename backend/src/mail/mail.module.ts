@@ -20,7 +20,7 @@ import { join } from 'path';
           },
         },
         defaults: {
-          from: '"LifeHealth Hỗ trợ" <no-reply@lifehealth.vn>',
+          from: `"Lifheora Hỗ trợ" <${configService.get<string>('MAIL_USER')}>`,
         },
         template: {
           dir: join(process.cwd(), 'dist/mail/templates'),

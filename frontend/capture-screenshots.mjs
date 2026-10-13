@@ -174,7 +174,7 @@ async function run() {
 
   // 10. MedAI Chatbot (navigate client-side to preserve user state)
   console.log("Capturing ai-consultation.png via client navigation...");
-  const chatbotLink = page.locator('a:has-text("LifeHealth MedAI")').first();
+  const chatbotLink = page.locator('a:has-text("Lifheora MedAI")').first();
   if (await chatbotLink.isVisible()) {
     await chatbotLink.click();
     await page.waitForTimeout(2500);

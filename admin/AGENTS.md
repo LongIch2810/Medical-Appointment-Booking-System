@@ -9,7 +9,7 @@ This repository contains the admin frontend for the Medical Appointment Booking 
 - `src/pages/` contains route-level screens such as dashboards, settings, messages, and error pages.
 - `src/components/ui/` contains reusable UI primitives; `src/components/app/` contains composed app components.
 - `src/layouts/`, `src/config/`, `src/store/`, `src/services/`, `src/mock/`, `src/lib/`, and `src/types/` hold layouts, navigation/config data, Zustand stores, API/mock data, helpers, and shared types.
-- `public/` stores static assets such as `logo.jpg` and `banner.png`.
+- `public/` stores static assets such as `logo.png` and `banner.png`.
 
 ## Build, Test, and Development Commands
 

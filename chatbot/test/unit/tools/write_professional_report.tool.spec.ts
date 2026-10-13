@@ -13,7 +13,7 @@ const validReport = {
   insights: ["Đội ngũ bác sĩ trẻ đang tăng trưởng."],
   strategic_recommendations: ["Đầu tư đào tạo chuyên sâu."],
   economic_context: "Bối cảnh kinh tế vĩ mô ổn định.",
-  footer: "AI LifeHealth",
+  footer: "AI Lifheora",
 };
 
 test("ReportSchema accepts a fully-populated report", () => {

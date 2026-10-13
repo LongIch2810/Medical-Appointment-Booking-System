@@ -53,8 +53,8 @@ export class MailService {
     await this.mailerService.sendMail({
       to,
       subject,
-      text: `${recipientName},\n\n${content}\n\nLifeHealth`,
-      html: `<p>Xin chào <strong>${this.escapeHtml(recipientName)}</strong>,</p><p>${this.escapeHtml(content)}</p><p>LifeHealth</p>`,
+      text: `${recipientName},\n\n${content}\n\nLifheora`,
+      html: `<p>Xin chào <strong>${this.escapeHtml(recipientName)}</strong>,</p><p>${this.escapeHtml(content)}</p><p>Lifheora</p>`,
     });
   }
 

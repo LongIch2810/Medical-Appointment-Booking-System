@@ -18,7 +18,7 @@ const fullReportData = {
   insights: ["Nhận định 1", "Nhận định 2"],
   strategic_recommendations: ["Khuyến nghị 1"],
   economic_context: "Bối cảnh kinh tế vĩ mô ổn định.",
-  footer: "AI LifeHealth",
+  footer: "AI Lifheora",
 };
 
 test("renders a PDF, uploads it to Cloudinary, and cleans up the local temp file", async (t) => {

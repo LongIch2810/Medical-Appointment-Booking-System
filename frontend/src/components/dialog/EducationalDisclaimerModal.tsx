@@ -106,7 +106,7 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
 
             <DialogDescription className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
               Vui lòng đọc kỹ thông tin dưới đây trước khi trải nghiệm hệ thống y tế{" "}
-              <span className="font-semibold text-primary">LifeHealth</span>.
+              <span className="font-semibold text-primary">Lifheora</span>.
             </DialogDescription>
           </div>
         </div>
@@ -170,10 +170,10 @@ const EducationalDisclaimerModal: React.FC<EducationalDisclaimerModalProps> = ({
               <p className="text-xs sm:text-sm text-emerald-900 dark:text-emerald-300 leading-relaxed">
                 Nếu bạn là chủ sở hữu bản quyền hình ảnh/thông tin cá nhân và có yêu cầu chỉnh sửa hoặc gỡ bỏ khỏi dự án học tập này, vui lòng liên hệ ban phát triển qua email{" "}
                 <a
-                  href="mailto:support@lifehealth.vn"
+                  href="mailto:support@lifheora.vn"
                   className="font-bold underline text-emerald-800 hover:text-emerald-950 dark:text-emerald-400 dark:hover:text-emerald-300"
                 >
-                  support@lifehealth.vn
+                  support@lifheora.vn
                 </a>{" "}
                 để được xử lý ngay lập tức.
               </p>
