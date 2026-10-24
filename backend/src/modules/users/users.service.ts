@@ -27,6 +27,7 @@ import {
 import { UsersMapper } from './users.mapper';
 import { BodyCreateUserDto } from './dto/request/bodyCreateUser.dto';
 import { BodyFilterUsersDto } from './dto/request/bodyFilterUsers.dto';
+import { PartialUpdateUserDto } from './dto/request/partialUpdateUser.dto';
 import { UserResponseDto } from './dto/response/userResponse.dto';
 import { PaginationResultDto } from 'src/common/dto/paginationResult.dto';
 import { RedisCacheService } from 'src/redis-cache/redis-cache.service';
@@ -319,7 +320,7 @@ export class UsersService {
     });
   }
 
-  async updateUserFields(userId: number, updateFields: Partial<User>) {
+  async updateUserFields(userId: number, updateFields: PartialUpdateUserDto) {
     return this.userRepo.update(userId, updateFields);
   }
 

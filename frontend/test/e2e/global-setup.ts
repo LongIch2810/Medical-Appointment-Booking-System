@@ -11,7 +11,7 @@ import { SEED_PATIENT } from "./fixtures/testData";
 // container Docker watch/serve nhầm các file output của Playwright).
 const AUTH_FILE = path.resolve(
   process.cwd(),
-  "../.playwright-output/.auth/user.json"
+  "../.playwright-output/.auth/user.json",
 );
 
 // Đăng nhập 1 lần qua UI thật trước khi chạy toàn bộ test suite, lưu
@@ -37,7 +37,7 @@ export default async function globalSetup() {
     .locator('input[name="usernameOrEmail"]')
     .fill(SEED_PATIENT.usernameOrEmail);
   await page.locator('input[name="password"]').fill(SEED_PATIENT.password);
-  await page.getByRole("button", { name: "Đăng nhập" }).click();
+  await page.getByRole("button", { name: "Đăng nhập", exact: true }).click();
   await page.waitForURL((url) => !url.pathname.includes("/sign-in"), {
     timeout: 20_000,
   });
