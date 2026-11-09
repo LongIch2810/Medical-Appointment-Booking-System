@@ -33,7 +33,7 @@ export class BodyFilterExaminationResultsDto extends PaginationDto {
   @IsBeforeOrEqual('toDate', { message: 'date must be before toDate' })
   toDate?: string;
 
-  @IsIn(['desc', 'asc'], { message: "'arrange pháº£i lÃ  asc hoáº·c desc'" })
+  @IsIn(['desc', 'asc'], { message: "'arrange phải là asc hoặc desc'" })
   arrange: Arrange = 'desc';
 
   @Type(() => Number)

@@ -22,13 +22,13 @@ import PatientChatMessage, {
 } from 'src/entities/patientChatMessage.entity';
 import { randomUUID } from 'node:crypto';
 
-// Má»i call ra chatbot Ä‘á»u pháº£i cÃ³ timeout rÃµ rÃ ng â€” trÆ°á»›c Ä‘Ã¢y axios dÃ¹ng
-// default (khÃ´ng timeout), request cÃ³ thá»ƒ treo vÃ´ thá»i háº¡n náº¿u chatbot
-// khÃ´ng pháº£n há»“i.
-// Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng cÃ³
-// traffic; cold-start pháº£i load xong Qdrant/LangChain trÆ°á»›c khi bind port,
-// Ä‘o thá»±c táº¿ máº¥t ~80-90s. 30s cÅ© luÃ´n timeout ngay láº§n chat Ä‘áº§u sau khi
-// service ngá»§ â€” ná»›i lÃªn 100s Ä‘á»ƒ chá» háº¿t cold-start thay vÃ¬ bÃ¡o lá»—i giáº£.
+// Mọi call ra chatbot đều phải có timeout rõ ràng — trước đây axios dùng
+// default (không timeout), request có thể treo vô thời hạn nếu chatbot
+// không phản hồi.
+// Chatbot service (Render free plan) tự spin-down sau ~15 phút không có
+// traffic; cold-start phải load xong Qdrant/LangChain trước khi bind port,
+// đo thực tế mất ~80-90s. 30s cũ luôn timeout ngay lần chat đầu sau khi
+// service ngủ — nới lên 100s để chờ hết cold-start thay vì báo lỗi giả.
 const CHATBOT_REQUEST_TIMEOUT_MS = 100_000;
 const CHATBOT_KEEP_ALIVE_TIMEOUT_MS = 5_000;
 const CHAT_HISTORY_CONTEXT_LIMIT = 10;
@@ -60,13 +60,13 @@ export class ChatHistoryService {
       where: { id, user: { id: userId } },
     });
     if (!conversation)
-      throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y cuá»™c trÃ² chuyá»‡n.');
+      throw new NotFoundException('Không tìm thấy cuộc trò chuyện.');
     return conversation;
   }
 
   async createPatientChatConversation(userId: number) {
     const user = await this.usersService.findByUserId(userId);
-    if (!user) throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
+    if (!user) throw new NotFoundException('Người dùng không tồn tại!');
     const conversation = await this.patientChatConversationRepo.save({
       user,
       title: 'Cuộc trò chuyện mới',
@@ -164,7 +164,7 @@ export class ChatHistoryService {
       throw new HttpException(
         {
           code: 'PATIENT_CHAT_INVALID_INPUT',
-          message: 'YÃªu cáº§u gá»­i tin nháº¯n khÃ´ng há»£p lá»‡.',
+          message: 'Yêu cầu gửi tin nhắn không hợp lệ.',
         },
         HttpStatus.BAD_REQUEST,
       );
@@ -263,7 +263,7 @@ export class ChatHistoryService {
                 ? 'PATIENT_CHAT_ACTION_STALE'
                 : 'PATIENT_CHAT_APPROVAL_NOT_FOUND',
             message:
-              'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
+              'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
           },
           status,
         );
@@ -279,7 +279,7 @@ export class ChatHistoryService {
           {
             code: 'PATIENT_CHAT_ACTION_STALE',
             message:
-              'YÃªu cáº§u xÃ¡c nháº­n Ä‘áº·t lá»‹ch khÃ´ng cÃ²n há»£p lá»‡.',
+              'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
           },
           HttpStatus.CONFLICT,
         );
@@ -310,7 +310,7 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_INVALID_INPUT',
-            message: 'Tin nháº¯n khÃ´ng há»£p lá»‡ hoáº·c quÃ¡ dÃ i.',
+            message: 'Tin nhắn không hợp lệ hoặc quá dài.',
           },
           HttpStatus.BAD_REQUEST,
         );
@@ -474,7 +474,7 @@ export class ChatHistoryService {
       throw new HttpException(
         {
           code: 'PATIENT_CHAT_INVALID_RESPONSE',
-          message: 'Chatbot tráº£ vá» pháº£n há»“i khÃ´ng há»£p lá»‡.',
+          message: 'Chatbot trả về phản hồi không hợp lệ.',
         },
         HttpStatus.BAD_GATEWAY,
       );
@@ -561,7 +561,7 @@ export class ChatHistoryService {
     const upstream = getChatbotUpstreamError(error);
     if (upstream.status === 401) {
       throw new UnauthorizedException(
-        'XÃƒÂ¡c thÃ¡Â»Â±c vÃ¡Â»â€ºi trÃ¡Â»Â£ lÃƒÂ½ khÃƒÂ´ng hÃ¡Â»Â£p lÃ¡Â»â€¡.',
+        'Xác thực với trợ lý không hợp lệ.',
       );
     }
     const status =
@@ -579,7 +579,7 @@ export class ChatHistoryService {
         code,
         message:
           upstream.message ||
-          'KhÃ´ng thá»ƒ nháº­n pháº£n há»“i tá»« trá»£ lÃ½ lÃºc nÃ y.',
+          'Không thể nhận phản hồi từ trợ lý lúc này.',
       },
       status,
     );
@@ -627,10 +627,10 @@ export class ChatHistoryService {
     return history.map(({ role, content }) => ({ role, content }));
   }
 
-  // Chatbot service (Render free plan) tá»± spin-down sau ~15 phÃºt khÃ´ng
-  // traffic vÃ  cold-start máº¥t ~80-90s, khiáº¿n tin nháº¯n chat Ä‘áº§u tiÃªn sau
-  // thá»i gian nghá»‰ luÃ´n bá»‹ chá» lÃ¢u/timeout. Ping /healthy Ä‘á»‹nh ká»³ Ä‘á»ƒ giá»¯
-  // service "áº¥m" trong lÃºc site cÃ²n cÃ³ ngÆ°á»i dÃ¹ng hoáº¡t Ä‘á»™ng.
+  // Chatbot service (Render free plan) tự spin-down sau ~15 phút không
+  // traffic và cold-start mất ~80-90s, khiến tin nhắn chat đầu tiên sau
+  // thời gian nghỉ luôn bị chờ lâu/timeout. Ping /healthy định kỳ để giữ
+  // service "ấm" trong lúc site còn có người dùng hoạt động.
   @Cron(CronExpression.EVERY_10_MINUTES)
   async pingChatbotKeepAlive() {
     try {
@@ -649,7 +649,7 @@ export class ChatHistoryService {
   async saveMessage(userId: number, role: RoleMessage, content: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
     await this.conversationRepo.save({
       user,
@@ -662,7 +662,7 @@ export class ChatHistoryService {
   async getChatHistoryContext(userId: number) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
     try {
       const cached = await this.redisCacheService.getData<CachedChatMessage[]>(
@@ -689,11 +689,11 @@ export class ChatHistoryService {
   async chatbotAnswer(userId: number, question: string, token: string) {
     const user = await this.usersService.findByUserId(userId);
     if (!user) {
-      throw new NotFoundException('NgÆ°á»i dÃ¹ng khÃ´ng tá»“n táº¡i!');
+      throw new NotFoundException('Người dùng không tồn tại!');
     }
 
     if (!token) {
-      throw new UnauthorizedException('KhÃ´ng cÃ³ token xÃ¡c thá»±c.');
+      throw new UnauthorizedException('Không có token xác thực.');
     }
 
     const conversation =

@@ -13,6 +13,6 @@ export class BodyFilterRelationshipsDto extends PaginationDto {
   @IsOptional()
   code?: string;
 
-  @IsIn(['desc', 'asc'], { message: "'arrange pháº£i lÃ  asc hoáº·c desc'" })
+  @IsIn(['desc', 'asc'], { message: "'arrange phải là asc hoặc desc'" })
   arrange: Arrange = 'desc';
 }

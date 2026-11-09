@@ -69,6 +69,6 @@ export class BodyFilterHealthProfilesDto extends PaginationDto {
   @IsOptional()
   maxHeight?: number;
 
-  @IsIn(['desc', 'asc'], { message: "'arrange pháº£i lÃ  asc hoáº·c desc'" })
+  @IsIn(['desc', 'asc'], { message: "'arrange phải là asc hoặc desc'" })
   arrange: Arrange = 'desc';
 }

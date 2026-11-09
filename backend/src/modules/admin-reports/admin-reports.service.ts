@@ -218,7 +218,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_ASSISTANT_FAILED',
-          message: 'Trá»£ lÃ½ bÃ¡o cÃ¡o chÆ°a sáºµn sÃ ng.',
+          message: 'Trợ lý báo cáo chưa sẵn sàng.',
         },
         500,
       );
@@ -430,7 +430,7 @@ export class AdminReportsService {
         throw new HttpException(
           {
             code: 'REPORT_ASSISTANT_INVALID_RESPONSE',
-            message: 'AI tráº£ vá» káº¿t quáº£ khÃ´ng há»£p lá»‡.',
+            message: 'AI trả về kết quả không hợp lệ.',
           },
           502,
         );
@@ -448,8 +448,8 @@ export class AdminReportsService {
             code: upstream.code,
             message:
               upstream.code === 'REPORT_ASSISTANT_MEMORY_FAILED'
-                ? 'KhÃ´ng thá»ƒ truy cáº­p sá»Ÿ thÃ­ch bÃ¡o cÃ¡o Ä‘Ã£ nhá»›.'
-                : 'Trá»£ lÃ½ bÃ¡o cÃ¡o Ä‘ang táº¡m thá»i chÆ°a sáºµn sÃ ng.',
+                ? 'Không thể truy cập sở thích báo cáo đã nhớ.'
+                : 'Trợ lý báo cáo đang tạm thời chưa sẵn sàng.',
           },
           503,
         );
@@ -475,10 +475,10 @@ export class AdminReportsService {
           code,
           message:
             status === 429
-              ? 'Báº¡n Ä‘Ã£ gá»­i quÃ¡ nhiá»u yÃªu cáº§u. Vui lÃ²ng thá»­ láº¡i sau.'
+              ? 'Bạn đã gửi quá nhiều yêu cầu. Vui lòng thử lại sau.'
               : status === 504
-                ? 'AI chÆ°a pháº£n há»“i ká»‹p thá»i. Vui lÃ²ng thá»­ láº¡i.'
-                : 'KhÃ´ng thá»ƒ xá»­ lÃ½ yÃªu cáº§u bÃ¡o cÃ¡o lÃºc nÃ y.',
+                ? 'AI chưa phản hồi kịp thời. Vui lòng thử lại.'
+                : 'Không thể xử lý yêu cầu báo cáo lúc này.',
         },
         status === 429 ? 429 : status === 504 ? 504 : 502,
       );
@@ -568,7 +568,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_ASSISTANT_PERSISTENCE_FAILED',
-          message: 'KhÃ´ng thá»ƒ lÆ°u káº¿t quáº£ trá»£ lÃ½ bÃ¡o cÃ¡o.',
+          message: 'Không thể lưu kết quả trợ lý báo cáo.',
         },
         500,
       );
@@ -609,7 +609,7 @@ export class AdminReportsService {
     if (!message || message.length > REPORT_ASSISTANT_MESSAGE_MAX_LENGTH) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'Tin nháº¯n khÃ´ng há»£p lá»‡.',
+        message: 'Tin nhắn không hợp lệ.',
       });
     }
     const requestId = dto.turnId;
@@ -715,7 +715,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_CONVERSATION_NOT_FOUND',
-          message: 'KhÃ´ng tÃ¬m tháº¥y há»™i thoáº¡i.',
+          message: 'Không tìm thấy hội thoại.',
         },
         404,
       );
@@ -725,7 +725,7 @@ export class AdminReportsService {
     ) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'MÃ£ tin nháº¯n khÃ´ng há»£p lá»‡.',
+        message: 'Mã tin nhắn không hợp lệ.',
       });
     }
     limit = normalizePage(limit, 50, 100);
@@ -766,7 +766,7 @@ export class AdminReportsService {
     ) {
       throw new BadRequestException({
         code: 'REPORT_ASSISTANT_INVALID_INPUT',
-        message: 'Gá»­i tin nháº¯n hoáº·c xÃ¡c nháº­n káº¿ hoáº¡ch.',
+        message: 'Gửi tin nhắn hoặc xác nhận kế hoạch.',
       });
     }
     const conversation = await this.conversationRepo.findOne({
@@ -776,7 +776,7 @@ export class AdminReportsService {
       throw new HttpException(
         {
           code: 'REPORT_CONVERSATION_NOT_FOUND',
-          message: 'KhÃ´ng tÃ¬m tháº¥y há»™i thoáº¡i.',
+          message: 'Không tìm thấy hội thoại.',
         },
         404,
       );
@@ -800,7 +800,7 @@ export class AdminReportsService {
         throw new HttpException(
           {
             code: 'REPORT_PLAN_NOT_FOUND',
-            message: 'KhÃ´ng tÃ¬m tháº¥y káº¿ hoáº¡ch bÃ¡o cÃ¡o.',
+            message: 'Không tìm thấy kế hoạch báo cáo.',
           },
           404,
         );
@@ -846,7 +846,7 @@ export class AdminReportsService {
             {
               code: 'REPORT_PLAN_STALE',
               message:
-                'Káº¿ hoáº¡ch Ä‘Ã£ cÅ©. HÃ£y yÃªu cáº§u trá»£ lÃ½ láº­p káº¿ hoáº¡ch má»›i.',
+                'Kế hoạch đã cũ. Hãy yêu cầu trợ lý lập kế hoạch mới.',
             },
             409,
           );
@@ -867,13 +867,13 @@ export class AdminReportsService {
       if (promptMessage.length > REPORT_ASSISTANT_MESSAGE_MAX_LENGTH) {
         throw new BadRequestException({
           code: 'REPORT_ASSISTANT_INVALID_INPUT',
-          message: 'Tin nháº¯n khÃ´ng há»£p lá»‡.',
+          message: 'Tin nhắn không hợp lệ.',
         });
       }
       if (!promptMessage)
         throw new BadRequestException({
           code: 'REPORT_ASSISTANT_INVALID_INPUT',
-          message: 'Tin nháº¯n khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng.',
+          message: 'Tin nhắn không được để trống.',
         });
       sourceRequest = promptMessage;
     }
@@ -1057,7 +1057,7 @@ export class AdminReportsService {
       where: { id },
       relations: { createdBy: true },
     });
-    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
     return this.toResponse(row);
   }
 
@@ -1073,7 +1073,7 @@ export class AdminReportsService {
 
   async file(id: number, download = false) {
     const row = await this.reportRepo.findOne({ where: { id } });
-    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
     return this.storage.getDownloadUrl(row.output_asset, download);
   }
 
@@ -1082,10 +1082,10 @@ export class AdminReportsService {
       where: { id },
       relations: { createdBy: true },
     });
-    if (!row) throw new NotFoundException('KhÃ´ng tÃ¬m tháº¥y bÃ¡o cÃ¡o.');
+    if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
     if (row.createdBy.id !== userId && !roles.includes('ADMIN'))
       throw new HttpException(
-        'Báº¡n khÃ´ng cÃ³ quyá»n xÃ³a bÃ¡o cÃ¡o nÃ y.',
+        'Bạn không có quyền xóa báo cáo này.',
         403,
       );
     await this.storage.deleteAsset(row.output_asset);

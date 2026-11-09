@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="color-scheme" content="light">
-  <title>Kiáº¿n trÃºc há»‡ thá»‘ng Lifheora</title>
+  <title>Kiến trúc hệ thống Lifheora</title>
   <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
@@ -212,16 +212,16 @@
 <body>
   <main class="frame">
     <header>
-      <p class="eyebrow">System architecture Â· as-is</p>
-      <h1>Kiáº¿n trÃºc há»‡ thá»‘ng Lifheora</h1>
-      <p class="subtitle">Hai á»©ng dá»¥ng web dÃ¹ng chung API nghiá»‡p vá»¥; dá»‹ch vá»¥ AI gá»i backend vÃ  dÃ¹ng cÃ¡c vÃ¹ng dá»¯ liá»‡u riÃªng cho truy váº¥n, há»™i thoáº¡i vÃ  bÃ¡o cÃ¡o.</p>
+      <p class="eyebrow">System architecture · as-is</p>
+      <h1>Kiến trúc hệ thống Lifheora</h1>
+      <p class="subtitle">Hai ứng dụng web dùng chung API nghiệp vụ; dịch vụ AI gọi backend và dùng các vùng dữ liệu riêng cho truy vấn, hội thoại và báo cáo.</p>
       <p class="subtitle">Chi tiết: <a href="./patient-chat.html">Patient chat</a> | <a href="./report-assistant.html">Report assistant</a> | <a href="./backend-architecture.html">Backend architecture</a></p>
     </header>
 
-    <section class="diagram-wrap" aria-label="SÆ¡ Ä‘á»“ kiáº¿n trÃºc Lifheora">
+    <section class="diagram-wrap" aria-label="Sơ đồ kiến trúc Lifheora">
       <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="system-design-title system-design-desc">
-        <title id="system-design-title">Kiáº¿n trÃºc há»‡ thá»‘ng Lifheora</title>
-        <desc id="system-design-desc">SÆ¡ Ä‘á»“ thá»ƒ hiá»‡n ngÆ°á»i dÃ¹ng qua hai á»©ng dá»¥ng web tá»›i API NestJS, dá»‹ch vá»¥ chatbot LangGraph, PostgreSQL, Redis, OpenAI vÃ  Qdrant, cÃ¹ng ranh giá»›i truy cáº­p dá»¯ liá»‡u cá»§a chatbot.</desc>
+        <title id="system-design-title">Kiến trúc hệ thống Lifheora</title>
+        <desc id="system-design-desc">Sơ đồ thể hiện người dùng qua hai ứng dụng web tới API NestJS, dịch vụ chatbot LangGraph, PostgreSQL, Redis, OpenAI và Qdrant, cùng ranh giới truy cập dữ liệu của chatbot.</desc>
         <defs>
           <marker id="system-design-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
             <polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/>
@@ -234,7 +234,7 @@
         <rect class="page-paper" x="0" y="0" width="1280" height="720"/>
 
         <!-- Zones sit behind all connectors and components. -->
-        <g aria-label="CÃ¡c vÃ¹ng kiáº¿n trÃºc">
+        <g aria-label="Các vùng kiến trúc">
           <rect class="zone" x="40" y="128" width="344" height="456" rx="8"/>
           <rect class="zone" x="408" y="128" width="296" height="456" rx="8"/>
           <rect class="zone" x="728" y="128" width="512" height="456" rx="8"/>
@@ -248,7 +248,7 @@
         </g>
 
         <!-- Connectors are drawn before nodes. -->
-        <g aria-label="Luá»“ng dá»¯ liá»‡u vÃ  yÃªu cáº§u">
+        <g aria-label="Luồng dữ liệu và yêu cầu">
           <path class="edge-link" d="M192,332 H216" marker-end="url(#system-design-arrow-link)"/>
           <path class="edge-link" d="M360,292 H432" marker-end="url(#system-design-arrow-link)"/>
 
@@ -263,23 +263,23 @@
         </g>
 
         <!-- Components. -->
-        <g aria-label="NgÆ°á»i dÃ¹ng">
+        <g aria-label="Người dùng">
           <rect class="node node-user" x="64" y="292" width="128" height="80" rx="6"/>
           <text class="node-tag" x="80" y="310">ACTORS</text>
-          <text class="node-title" x="80" y="330">NgÆ°á»i dÃ¹ng</text>
-          <text class="node-sub-small" x="80" y="348">Visitor Â· Patient</text>
-          <text class="node-sub-small" x="80" y="362">Doctor Â· Admin</text>
+          <text class="node-title" x="80" y="330">Người dùng</text>
+          <text class="node-sub-small" x="80" y="348">Visitor · Patient</text>
+          <text class="node-sub-small" x="80" y="362">Doctor · Admin</text>
         </g>
 
-        <g aria-label="Hai á»©ng dá»¥ng web">
+        <g aria-label="Hai ứng dụng web">
           <rect class="node" x="216" y="232" width="144" height="200" rx="6"/>
           <text class="node-tag" x="232" y="250">CLIENT APPS</text>
           <text class="node-title" x="232" y="270">Web clients</text>
           <text class="node-title" x="232" y="300">Patient portal</text>
-          <text class="node-sub-small" x="232" y="316">frontend/ Â· React</text>
+          <text class="node-sub-small" x="232" y="316">frontend/ · React</text>
           <line class="node-divider" x1="232" y1="332" x2="344" y2="332"/>
           <text class="node-title" x="232" y="354">Doctor/admin</text>
-          <text class="node-sub-small" x="232" y="370">admin/ Â· React</text>
+          <text class="node-sub-small" x="232" y="370">admin/ · React</text>
           <text class="node-sub-small" x="232" y="402">i18n: frontend only</text>
         </g>
 
@@ -287,18 +287,18 @@
           <rect class="node node-focus" x="432" y="236" width="240" height="112" rx="6"/>
           <text class="node-tag" x="448" y="254">PRIMARY API</text>
           <text class="node-title" x="448" y="276">Backend API</text>
-          <text class="node-sub" x="448" y="294">NestJS Â· REST Â· RBAC</text>
-          <text class="node-sub" x="448" y="312">Socket.IO Â· BullMQ workers</text>
-          <text class="node-sub-small" x="448" y="332">appointments Â· health Â· messaging</text>
+          <text class="node-sub" x="448" y="294">NestJS · REST · RBAC</text>
+          <text class="node-sub" x="448" y="312">Socket.IO · BullMQ workers</text>
+          <text class="node-sub-small" x="448" y="332">appointments · health · messaging</text>
         </g>
 
-        <g aria-label="Dá»‹ch vá»¥ chatbot">
+        <g aria-label="Dịch vụ chatbot">
           <rect class="node" x="432" y="408" width="240" height="112" rx="6"/>
           <text class="node-tag" x="448" y="426">AI SERVICE</text>
           <text class="node-title" x="448" y="448">Chatbot</text>
-          <text class="node-sub" x="448" y="466">Express Â· LangGraph</text>
-          <text class="node-sub" x="448" y="484">chat Â· roadmaps Â· reports</text>
-          <text class="node-sub-small" x="448" y="504">backend tools Â· approval flow</text>
+          <text class="node-sub" x="448" y="466">Express · LangGraph</text>
+          <text class="node-sub" x="448" y="484">chat · roadmaps · reports</text>
+          <text class="node-sub-small" x="448" y="504">backend tools · approval flow</text>
         </g>
 
         <g aria-label="PostgreSQL">
@@ -313,21 +313,21 @@
           <rect class="node node-store" x="1000" y="204" width="180" height="112" rx="6"/>
           <text class="node-tag" x="1016" y="222">CACHE / QUEUE</text>
           <text class="node-title" x="1016" y="244">Redis</text>
-          <text class="node-sub" x="1016" y="262">cache Â· sessions</text>
-          <text class="node-sub" x="1016" y="280">rate limit Â· BullMQ</text>
+          <text class="node-sub" x="1016" y="262">cache · sessions</text>
+          <text class="node-sub" x="1016" y="280">rate limit · BullMQ</text>
           <text class="node-sub-small" x="1016" y="300">same Redis instance</text>
         </g>
 
-        <g aria-label="OpenAI vÃ  Qdrant">
+        <g aria-label="OpenAI và Qdrant">
           <rect class="node node-external" x="760" y="408" width="180" height="112" rx="6"/>
           <text class="node-tag" x="776" y="426">AI / RETRIEVAL</text>
           <text class="node-title" x="776" y="448">OpenAI + Qdrant</text>
-          <text class="node-sub" x="776" y="466">LLM Â· embeddings</text>
+          <text class="node-sub" x="776" y="466">LLM · embeddings</text>
           <text class="node-sub" x="776" y="484">vector retrieval</text>
         </g>
 
         <!-- Arrow labels use opaque paper masks with a visible gap to their strokes. -->
-        <g aria-label="NhÃ£n luá»“ng">
+        <g aria-label="Nhãn luồng">
           <rect class="edge-label-mask" x="360" y="268" width="72" height="14" rx="2"/>
           <text class="edge-label" x="396" y="278">API + SOCKET</text>
 
@@ -349,7 +349,7 @@
         </g>
 
         <!-- Legend remains in its own horizontal footer strip. -->
-        <g aria-label="ChÃº giáº£i">
+        <g aria-label="Chú giải">
           <line class="legend-rule" x1="40" y1="640" x2="1240" y2="640"/>
           <text class="legend-label" x="40" y="678">LEGEND</text>
           <line class="edge-link" x1="132" y1="674" x2="172" y2="674" marker-end="url(#system-design-arrow-link)"/>
@@ -362,31 +362,31 @@
       </svg>
     </section>
 
-    <section class="summary" aria-label="Ghi chÃº kiáº¿n trÃºc">
+    <section class="summary" aria-label="Ghi chú kiến trúc">
       <article class="card">
         <p class="card-kicker">Request &amp; identity</p>
-        <h2><span class="dot dot-accent" aria-hidden="true"></span>Backend Ä‘iá»u phá»‘i nghiá»‡p vá»¥</h2>
-        <p>Hai web app gá»i API báº±ng cookie session; backend Ã¡p dá»¥ng JWT vÃ  RBAC. Backend gá»i chatbot báº±ng internal service key vÃ  chuyá»ƒn tiáº¿p access token cá»§a ngÆ°á»i dÃ¹ng. Chatbot gá»i ngÆ°á»£c backend cho history vÃ  cÃ¡c thao tÃ¡c Ä‘Æ°á»£c duyá»‡t.</p>
+        <h2><span class="dot dot-accent" aria-hidden="true"></span>Backend điều phối nghiệp vụ</h2>
+        <p>Hai web app gọi API bằng cookie session; backend áp dụng JWT và RBAC. Backend gọi chatbot bằng internal service key và chuyển tiếp access token của người dùng. Chatbot gọi ngược backend cho history và các thao tác được duyệt.</p>
       </article>
       <article class="card">
         <p class="card-kicker">Data boundaries</p>
-        <h2><span class="dot" aria-hidden="true"></span>Hai lá»›p dá»¯ liá»‡u chatbot</h2>
-        <p>Backend Ä‘á»c/ghi dá»¯ liá»‡u nghiá»‡p vá»¥. Chatbot chá»‰ Ä‘á»c cÃ¡c PostgreSQL view Ä‘Æ°á»£c cáº¥p quyá»n; checkpoint LangGraph náº±m trong schema riÃªng. Redis dÃ¹ng cho cache, session, rate limit vÃ  BullMQ.</p>
+        <h2><span class="dot" aria-hidden="true"></span>Hai lớp dữ liệu chatbot</h2>
+        <p>Backend đọc/ghi dữ liệu nghiệp vụ. Chatbot chỉ đọc các PostgreSQL view được cấp quyền; checkpoint LangGraph nằm trong schema riêng. Redis dùng cho cache, session, rate limit và BullMQ.</p>
       </article>
       <article class="card">
         <p class="card-kicker">Integrations &amp; hosting</p>
-        <h2><span class="dot dot-link" aria-hidden="true"></span>Dá»‹ch vá»¥ ngoÃ i</h2>
-        <p>Cloudinary lÆ°u media vÃ  PDF; backend dÃ¹ng Google OAuth, SMTP; patient web tra cá»©u Ä‘á»‹a chá»‰ qua <code>provinces.open-api.vn</code>.</p>
-        <p>Vercel: hai web app Â· Render: backend Â· Chatbot: host production chÆ°a xÃ¡c minh.</p>
+        <h2><span class="dot dot-link" aria-hidden="true"></span>Dịch vụ ngoài</h2>
+        <p>Cloudinary lưu media và PDF; backend dùng Google OAuth, SMTP; patient web tra cứu địa chỉ qua <code>provinces.open-api.vn</code>.</p>
+        <p>Vercel: hai web app · Render: backend · Chatbot: host production chưa xác minh.</p>
       </article>
     </section>
 
     <footer>
-      <span>Lifheora Â· runtime view Â· source snapshot in ../as-is</span>
+      <span>Lifheora · runtime view · source snapshot in ../as-is</span>
       <span>
-        Tham chiáº¿u:
-        <a href="../as-is/product-overview.md">product overview</a> Â·
-        <a href="../as-is/integrations.md">integrations</a> Â·
+        Tham chiếu:
+        <a href="../as-is/product-overview.md">product overview</a> ·
+        <a href="../as-is/integrations.md">integrations</a> ·
         <a href="../as-is/permissions.md">permissions</a>
       </span>
     </footer>
