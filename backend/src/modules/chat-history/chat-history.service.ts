@@ -262,8 +262,7 @@ export class ChatHistoryService {
               status === HttpStatus.CONFLICT
                 ? 'PATIENT_CHAT_ACTION_STALE'
                 : 'PATIENT_CHAT_APPROVAL_NOT_FOUND',
-            message:
-              'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
+            message: 'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
           },
           status,
         );
@@ -278,8 +277,7 @@ export class ChatHistoryService {
         throw new HttpException(
           {
             code: 'PATIENT_CHAT_ACTION_STALE',
-            message:
-              'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
+            message: 'Yêu cầu xác nhận đặt lịch không còn hợp lệ.',
           },
           HttpStatus.CONFLICT,
         );
@@ -560,9 +558,7 @@ export class ChatHistoryService {
   private throwPatientChatUpstreamError(error: any): never {
     const upstream = getChatbotUpstreamError(error);
     if (upstream.status === 401) {
-      throw new UnauthorizedException(
-        'Xác thực với trợ lý không hợp lệ.',
-      );
+      throw new UnauthorizedException('Xác thực với trợ lý không hợp lệ.');
     }
     const status =
       axios.isAxiosError(error) &&
@@ -578,8 +574,7 @@ export class ChatHistoryService {
       {
         code,
         message:
-          upstream.message ||
-          'Không thể nhận phản hồi từ trợ lý lúc này.',
+          upstream.message || 'Không thể nhận phản hồi từ trợ lý lúc này.',
       },
       status,
     );

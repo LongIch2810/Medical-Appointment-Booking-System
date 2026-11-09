@@ -845,8 +845,7 @@ export class AdminReportsService {
           throw new HttpException(
             {
               code: 'REPORT_PLAN_STALE',
-              message:
-                'Kế hoạch đã cũ. Hãy yêu cầu trợ lý lập kế hoạch mới.',
+              message: 'Kế hoạch đã cũ. Hãy yêu cầu trợ lý lập kế hoạch mới.',
             },
             409,
           );
@@ -1084,10 +1083,7 @@ export class AdminReportsService {
     });
     if (!row) throw new NotFoundException('Không tìm thấy báo cáo.');
     if (row.createdBy.id !== userId && !roles.includes('ADMIN'))
-      throw new HttpException(
-        'Bạn không có quyền xóa báo cáo này.',
-        403,
-      );
+      throw new HttpException('Bạn không có quyền xóa báo cáo này.', 403);
     await this.storage.deleteAsset(row.output_asset);
     await this.reportRepo.softDelete(id);
     return { success: true };
