@@ -1,4 +1,5 @@
 import { WebsocketGateway } from 'src/websockets/websocket.gateway';
+import { GATEWAY_OPTIONS } from '@nestjs/websockets/constants';
 
 function createClient(overrides: Record<string, unknown> = {}) {
   return {
@@ -169,6 +170,24 @@ describe('WebsocketGateway authorization', () => {
       (guard: any) => guard?.name ?? guard?.constructor?.name,
     );
     expect(guardNames).toContain('WsCookieAuthGuard');
+  });
+
+  it('allows FRONTEND_URL as a WebSocket CORS origin', () => {
+    const options = Reflect.getMetadata(GATEWAY_OPTIONS, WebsocketGateway) as {
+      cors: { origin: (origin: string, callback: jest.Mock) => void };
+    };
+    const callback = jest.fn();
+    const previousFrontendUrl = process.env.FRONTEND_URL;
+    try {
+      process.env.FRONTEND_URL = 'https://custom-patient.example.com';
+      options.cors.origin(process.env.FRONTEND_URL, callback);
+      expect(callback).toHaveBeenLastCalledWith(null, true);
+      options.cors.origin('https://unlisted.example.com', callback);
+      expect(callback).toHaveBeenLastCalledWith(null, false);
+    } finally {
+      if (previousFrontendUrl === undefined) delete process.env.FRONTEND_URL;
+      else process.env.FRONTEND_URL = previousFrontendUrl;
+    }
   });
 
   it('uses the configured per-event rate-limit policies', () => {

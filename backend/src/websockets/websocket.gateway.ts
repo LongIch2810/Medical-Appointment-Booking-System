@@ -28,21 +28,27 @@ import {
 
 @WebSocketGateway({
   cors: {
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:4173',
-      'http://127.0.0.1:4173',
-      'http://localhost:5000',
-      'http://127.0.0.1:5000',
-      'http://localhost:5183',
-      'http://127.0.0.1:5183',
-      'http://localhost:4183',
-      'http://127.0.0.1:4183',
-      'https://patientuilifehealth.vercel.app',
-      'https://medical-appointment-booking-system-u75m.onrender.com',
-      'https://adminmanagementuilifehealth.vercel.app',
-    ],
+    origin: (origin, callback) =>
+      callback(
+        null,
+        !origin ||
+          [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://localhost:4173',
+            'http://127.0.0.1:4173',
+            'http://localhost:5000',
+            'http://127.0.0.1:5000',
+            'http://localhost:5183',
+            'http://127.0.0.1:5183',
+            'http://localhost:4183',
+            'http://127.0.0.1:4183',
+            'https://patientuilifehealth.vercel.app',
+            'https://medical-appointment-booking-system-u75m.onrender.com',
+            'https://adminmanagementuilifehealth.vercel.app',
+          ].includes(origin) ||
+          origin === process.env.FRONTEND_URL,
+      ),
     credentials: true,
   },
 })

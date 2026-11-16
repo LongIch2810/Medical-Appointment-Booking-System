@@ -51,6 +51,7 @@ async function bootstrap() {
       'https://medical-appointment-booking-system-u75m.onrender.com',
       'https://medical-appointment-booking-system-ya7e.onrender.com',
       'https://adminmanagementuilifehealth.vercel.app',
+      configService.get<string>('FRONTEND_URL') || '',
     ],
     credentials: true,
     exposedHeaders: [...RATE_LIMIT_RESPONSE_HEADERS],
