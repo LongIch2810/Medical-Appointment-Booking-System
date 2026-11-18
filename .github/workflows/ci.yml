@@ -3,10 +3,15 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [master]
+    branches: ['**']
 
 permissions:
   contents: read
+
+# Hủy run cũ của cùng ref khi có push mới (tránh tốn runner khi CI chạy trên mọi nhánh).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check:
@@ -41,3 +46,87 @@ jobs:
       - if: matrix.service == 'chatbot'
         run: npm run typecheck:test
       - run: npm run build
+
+  backend-migrations:
+    name: backend migrations (postgres)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci_migrations
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci_migrations"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_USER: ci
+      DB_PASSWORD: ci
+      DB_NAME: ci_migrations
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - name: Run all migrations on empty database
+        run: npm run migration:run
+      - name: Entities match migrations (no schema drift)
+        run: >-
+          npx ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js
+          migration:generate -d src/database/data-source.ts --check ci-drift-check
+      - name: Revert latest migration and re-apply
+        run: |
+          npm run migration:revert
+          npm run migration:run
+
+  backend-integration:
+    name: backend integration (postgres + redis)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ci" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    # Biến process.env được ưu tiên hơn backend/.env.test (dotenv không ghi đè).
+    env:
+      DB_HOST: localhost
+      DB_PORT: '5432'
+      DB_USER: ci
+      DB_PASSWORD: ci
+      REDIS_HOST: localhost
+      REDIS_PORT: '6379'
+      REDIS_PASSWORD: ''
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run test:e2e
